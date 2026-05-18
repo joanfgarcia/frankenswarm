@@ -5,7 +5,7 @@
 Este laboratorio es un entorno seguro para experimentar con la arquitectura **"Frankenswarm"**, una teoría unificada de topologías neuronales dinámicas propuesta en las profundidades del ecosistema Red-Pill.
 
 ### La Ecuación
-`Frankenswarm = BitNet (1.58b) + NEAT (Evolución) + Net2Net (Crecimiento) + MoE Dinámico (Enrutamiento)`
+`Frankenswarm = BitNet (1.58b) + NEAT (Evolución) + Net2Net (Crecimiento) + MoE Dinámico (Prolog) + Metaprogramación (Lisp)`
 
 ### El Ciclo de Vida del Enjambre Neuronal
 
@@ -22,8 +22,8 @@ Este laboratorio es un entorno seguro para experimentar con la arquitectura **"F
 3. **Especialización (MoE Dinámico)**
    - A medida que la población crece y se diversifica, identificamos a los "campeones" de diferentes nichos (ej. uno se vuelve bueno en matemáticas, otro en lógica de programación).
    - Congelamos a estos campeones y los nombramos **Expertos**.
-   - Entrenamos una pequeña red enrutadora (Router) que recibe un *prompt* y decide a qué "Experto BitNet" mandárselo. 
-   - Si llega una tarea que ningún experto domina con confianza (umbral de entropía alto), el Router invoca un *Génesis* de emergencia para criar un nuevo experto.
+   - El Router (ahora guiado por **Prolog** como Árbitro Estricto) recibe el vector de embeddings y decide a qué "Experto BitNet" mandárselo basado en restricciones lógicas deterministas.
+   - Si la arquitectura necesita mutar en caliente, el Orquestador **Lisp** manipula el sistema (NEAT/Net2Net) tratando la red como código/datos modificables en tiempo real sin reiniciar el enjambre.
 
 ### El Reto Técnico
 - **PyTorch no es amigo de lo dinámico**: Cambiar las dimensiones (Shape) de los tensores de PyTorch durante el paso de *Forward* o *Backward* suele corromper el grafo computacional.

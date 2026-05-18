@@ -22,12 +22,16 @@ The goal is to breed a **Swarm of Local Experts** that can run entirely within a
    - **Why**: When a sub-network (Expert) plateaus in fitness, we use Net2Net to inject new "empty" neurons (initialized to `0`). The network retains all previous knowledge while acquiring new dimensionality for further NEAT mutation.
    - **Reference**: *Net2Net: Accelerating Learning via Knowledge Transfer* ([arXiv:1511.05641](https://arxiv.org/abs/1511.05641))
 
-4. **MoE (Mixture of Experts) - The Router**
-   - **Concept**: A sparse gating mechanism that selects a subset of experts to process an input token, rather than activating the entire network.
-   - **Why**: As the population of BitNet mutants grows, they specialize. The Router dispatches tasks to the most fit experts, allowing infinite functional scaling without increasing the per-token computational cost.
+4. **MoE (Mixture of Experts) - The Router (Prolog)**
+   - **Concept**: A sparse gating mechanism governed by an strict **Prolog Expert**. It selects a subset of experts based on deterministic logical constraints rather than mere probabilistic weights.
+   - **Why**: As the population of BitNet mutants grows, they specialize and communicate via pure multidimensional embeddings. Prolog validates the logical sequence and routes tasks efficiently without hallucinations.
    - **Reference**: *Outrageously Large Neural Networks: The Sparsely-Gated Mixture-of-Experts Layer* ([arXiv:1701.06538](https://arxiv.org/abs/1701.06538))
 
-5. **TurboQuant (QJL + PolarQuant) - The Compressor**
+5. **The Genetic Engineer - The Orchestrator (Lisp)**
+   - **Concept**: A metaprogramming layer governed by a **Lisp Expert**. Treats the entire NEAT/Net2Net topologies as data structures (Homoiconicity).
+   - **Why**: Allows the Frankenswarm to mutate, rewrite its own code, and inject Net2Net nodes at runtime without shutting down. Lisp orchestrates the evolutionary process.
+
+6. **TurboQuant (QJL + PolarQuant) - The Compressor**
    - **Concept**: Aggressive KV Cache compression down to 2.5-3.5 bits using Quantized Johnson-Lindenstrauss projections while isolating outliers.
    - **Why**: The fatal bottleneck for MoE routing is VRAM exhaustion due to decentralized KV caches. TurboQuant shrinks the Attention State footprint by ~80%, allowing the Frankenswarm to route thousands of tokens across hundreds of experts without OOM.
 
