@@ -35,6 +35,10 @@ The goal is to breed a **Swarm of Local Experts** that can run entirely within a
    - **Concept**: Aggressive KV Cache compression down to 2.5-3.5 bits using Quantized Johnson-Lindenstrauss projections while isolating outliers.
    - **Why**: The fatal bottleneck for MoE routing is VRAM exhaustion due to decentralized KV caches. TurboQuant shrinks the Attention State footprint by ~80%, allowing the Frankenswarm to route thousands of tokens across hundreds of experts without OOM.
 
+7. **Latent Space Fluidity (The Babel Fish Protocol) - The Upgrader**
+   - **Concept**: If the universal embedding model (The Translator) is upgraded (e.g., shifting from 384D to 768D latent space), the swarm uses Linear Projection (Procrustes Alignment) combined with Net2Net.
+   - **Why**: Avoids "Evolutionary Genocide." A small projection matrix acts as a temporary translator from the new space to the old space. Concurrently, the Lisp Mutator uses Net2Net to zero-pad the input layers of all experts to the new dimensionality. Through NEAT, the swarm organically assimilates the new dimensions over time without losing previous domain mastery.
+
 ## The Lifecycle
 
 ```mermaid
