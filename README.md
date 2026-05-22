@@ -75,6 +75,7 @@ Because **code is data**. A neural network topology is an S-expression. A Lisp f
 - [ARCHITECTURE.md](docs/ARCHITECTURE.md) — Full system design, Lisp thesis, lifecycle diagrams
 - [EXPERTS_ROSTER.md](docs/EXPERTS_ROSTER.md) — Expert ↔ silicon bindings with benchmarks
 - [ROADMAP.md](docs/ROADMAP.md) — Phase-by-phase implementation plan
+- [REFERENCES.md](docs/REFERENCES.md) — Prior art, bibliography, and novelty analysis
 - [PROLOG_RESEARCH.md](docs/PROLOG_RESEARCH.md) — Prolog router research and design
 - [FRANKENSWARM_SCHEMA.md](docs/FRANKENSWARM_SCHEMA.md) — Visual topology diagrams
 
