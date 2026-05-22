@@ -336,3 +336,265 @@ Frankenswarm's cascade strategy means:
 Not because we're smarter than Google's datacenters. Because we don't answer every question with a 400B model. We answer most questions with 2 watts.
 
 That's sovereignty. Not just of data — of *energy*.
+
+---
+
+## The Two-Phase Strategy: PoC → Arena
+
+Frankenswarm's development is split into two fundamentally different phases. The first validates the infrastructure. The second breeds the intelligence.
+
+### Phase A: Proof of Concept (Existing Models)
+
+> *"Don't build the engine and the fuel at the same time."*
+
+Before training any custom model from scratch, we validate the entire distributed MoE infrastructure using **pre-existing models**:
+
+- **NPU**: Qwen3-0.6B / Qwen3-8B via FastFlowLM (already running)
+- **CUDA**: Falcon3-10B-1.58b via BitNet / llama.cpp (already benchmarked)
+- **CPU**: Falcon3-10B via build_vulkan (already benchmarked)
+- **Vulkan iGPU**: Falcon3-10B via Vulkan backend (already benchmarked)
+
+What we validate in this phase:
+- [x] Can we serve inference on all 4 silicon types simultaneously?
+- [ ] Can the Prolog Gate route queries to the right accelerator?
+- [ ] Can the Aggregator merge/vote on multi-expert responses?
+- [ ] Can Cascade escalation (NPU → CUDA) work reliably?
+- [ ] Is the energy savings hypothesis real in practice (80% NPU)?
+- [ ] Can the Lisp orchestrator hot-swap models on the NPU?
+
+**No training. No NEAT. No custom models.** Just plumbing, routing, and aggregation. If this works, the thesis is proven: heterogeneous hardware MoE is viable on consumer silicon.
+
+### Phase B: The Arena (Custom-Bred Experts)
+
+> *"Now we build the creatures that live in the machine."*
+
+Once the infrastructure is validated, we enter the Arena: training custom BitNet micro-experts from scratch, with a novel **three-layer architecture** designed for independent evolution.
+
+---
+
+## The Three-Layer Expert Architecture
+
+Every expert in the Arena has three distinct layers, each with its own evolutionary timeline:
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│              THREE-LAYER EXPERT ANATOMY                      │
+│                                                             │
+│  ┌─────────────────────────────────────────────────────┐    │
+│  │          LAYER 1: THE COMMON SUBSTRATE              │    │
+│  │                                                     │    │
+│  │  Shared across ALL experts. This is the "mother      │    │
+│  │  tongue" of the swarm — the universal embedding      │    │
+│  │  space that ensures every expert speaks the same     │    │
+│  │  language. When one expert outputs a vector, any     │    │
+│  │  other expert can consume it without translation.    │    │
+│  │                                                     │    │
+│  │  • Trained ONCE, frozen, shared weights              │    │
+│  │  • Evolves SLOWLY (major version upgrades only)      │    │
+│  │  • Think of it as the "spinal cord" of the swarm     │    │
+│  └──────────────────────┬──────────────────────────────┘    │
+│                         │                                   │
+│  ┌──────────────────────▼──────────────────────────────┐    │
+│  │          LAYER 2: THE ADAPTER (Bridge)              │    │
+│  │                                                     │    │
+│  │  Learned projection between the Common Substrate     │    │
+│  │  and the Specialist Core. This is the "neck" that    │    │
+│  │  translates generic representations into domain-     │    │
+│  │  specific activations and vice versa.                │    │
+│  │                                                     │    │
+│  │  • Lightweight (LoRA-scale: ~1% of total params)     │    │
+│  │  • Re-trained when EITHER Layer 1 or Layer 3 mutates │    │
+│  │  • Acts as a buffer: Layer 1 and 3 never touch       │    │
+│  │    each other directly                               │    │
+│  └──────────────────────┬──────────────────────────────┘    │
+│                         │                                   │
+│  ┌──────────────────────▼──────────────────────────────┐    │
+│  │          LAYER 3: THE SPECIALIST CORE               │    │
+│  │                                                     │    │
+│  │  Domain-specific knowledge. This is what makes       │    │
+│  │  the expert an EXPERT. A code specialist has         │    │
+│  │  different weights here than a logic specialist.     │    │
+│  │                                                     │    │
+│  │  • Evolves FAST via NEAT (ternary weight mutations)  │    │
+│  │  • Grows via Net2Net (zero-padding expansion)        │    │
+│  │  • Each expert's Layer 3 is unique and sovereign     │    │
+│  └─────────────────────────────────────────────────────┘    │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### Why Three Layers?
+
+The problem with monolithic models is that **everything is entangled**. If you improve the code generation capability, you might degrade the reasoning capability. Catastrophic forgetting.
+
+The three-layer design solves this through **decoupled evolution**:
+
+| Layer | Shared? | Evolution Speed | What Mutates |
+|-------|:-------:|:---------------:|--------------|
+| **Common Substrate** | Yes — all experts | Glacial (months) | The "language" all experts speak |
+| **Adapter** | No — per expert | Reactive (auto-retrain) | Bridge when either neighbor changes |
+| **Specialist Core** | No — per expert | Rapid (NEAT daily) | Domain-specific knowledge |
+
+The Adapter is the key innovation. It **decouples** the two evolutionary pressures:
+- The Common Substrate wants **stability** (all experts must stay compatible)
+- The Specialist Core wants **change** (NEAT is constantly mutating it)
+
+Without the Adapter, every mutation in the Specialist would break compatibility with the swarm. With it, the Specialist can evolve freely — the Adapter absorbs the translation cost.
+
+### The Lifecycle of a Layer Upgrade
+
+```mermaid
+graph LR
+    A["Layer 3 mutates<br/>(NEAT overnight)"] --> B["Adapter detects<br/>distribution shift"]
+    B --> C["Adapter re-trains<br/>(lightweight, ~minutes)"]
+    C --> D["Expert resumes<br/>serving with new<br/>Specialist Core"]
+
+    E["Layer 1 upgrades<br/>(new embedding model)"] --> F["ALL Adapters<br/>re-train"]
+    F --> G["Specialists untouched<br/>No knowledge lost"]
+
+    style A fill:#1a3a2a,color:#86EFAC
+    style E fill:#4a1942,color:#F9A8D4
+    style C fill:#3b2a00,color:#FDE68A
+    style F fill:#3b2a00,color:#FDE68A
+```
+
+When the **Specialist mutates** (daily, via NEAT): only that expert's Adapter re-trains. 2 minutes. No other expert is affected.
+
+When the **Common Substrate upgrades** (rare, major event): ALL Adapters re-train, but **no Specialist knowledge is lost**. This is the Babel Fish Protocol in action — the upgrade cost is absorbed entirely by the Adapter layer.
+
+---
+
+## The Babel Fish Protocol — AI-Native Tokenization
+
+> *"Human languages are lossy compression. The swarm deserves its own tongue."*
+
+### The Problem with Human Tokenization
+
+Every LLM today tokenizes text using human language vocabularies: BPE over English, Chinese, code, etc. This is a historical accident — the first models were trained on human text, so they think in human tokens.
+
+But Frankenswarm's experts don't talk to humans. **They talk to each other.** The Prolog router sends vectors to experts. Experts send vectors to the Aggregator. The only moment human language enters the system is at the **edges** — when the Operator types a question and when the system returns an answer.
+
+So why force the internal communication to use a tokenization scheme designed for English morphology?
+
+### The Solution: A Sovereign Latent Language
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                   THE BABEL FISH PROTOCOL                    │
+│                                                             │
+│   Human World                    Swarm World                │
+│   ┌──────────┐                  ┌──────────────┐            │
+│   │ "Analiza │   TRANSLATOR     │ [0.23, -0.71 │            │
+│   │  este    │ ──────────────►  │  0.44, 0.02, │            │
+│   │  código" │   (Encoder)      │  ..., -0.15] │            │
+│   └──────────┘                  └──────┬───────┘            │
+│                                        │                    │
+│                                        ▼                    │
+│                                 ┌─────────────┐             │
+│                                 │ Prolog Gate  │             │
+│                                 │ Routes the   │             │
+│                                 │ VECTOR, not  │             │
+│                                 │ the TEXT      │             │
+│                                 └──────┬──────┘             │
+│                                        │                    │
+│                              ┌─────────┼──────────┐         │
+│                              ▼         ▼          ▼         │
+│                           Expert A  Expert B   Expert C     │
+│                           (all communicate in               │
+│                            AI-native embeddings,            │
+│                            never in human tokens)           │
+│                              │         │          │         │
+│                              └─────────┼──────────┘         │
+│                                        ▼                    │
+│   ┌──────────┐                  ┌──────────────┐            │
+│   │ "El bug  │   TRANSLATOR     │ [0.18, 0.55, │            │
+│   │  está en │ ◄──────────────  │  -0.33, 0.89 │            │
+│   │  línea   │   (Decoder)      │  ..., 0.41]  │            │
+│   │  42"     │                  └──────────────┘            │
+│   └──────────┘                                              │
+│                                                             │
+│   Human language is a CODEC,                                │
+│   not the native format.                                    │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### What AI-Native Tokenization Means
+
+Instead of tokenizing "function" → `[15205]` (BPE token ID for the English word), the system works directly with **learned semantic coordinates** in a continuous latent space:
+
+| Aspect | Human Tokenization | AI-Native (Babel Fish) |
+|--------|-------------------|----------------------|
+| Vocabulary | 32K-128K discrete tokens (BPE) | Continuous D-dimensional vectors |
+| Language bias | English-centric | Language-agnostic |
+| Granularity | Subword chunks ("func", "tion") | Semantic concepts (whole meaning) |
+| Cross-expert | Each expert needs its own tokenizer | **One shared embedding space** |
+| Compression | Lossy (polysemy, ambiguity) | Dense (each dimension is meaningful) |
+| Evolution | Fixed at training time | **Evolves with the Common Substrate** |
+
+### The Translator: Multilingual ↔ AI-Native
+
+The Translator is the **only component** in Frankenswarm that understands human language. It sits at the boundary:
+
+```python
+# Conceptual architecture
+class BabelFishTranslator:
+    """Bidirectional Human ↔ AI-Native bridge."""
+
+    def __init__(self):
+        self.encoder = SemanticEncoder()    # Human text → latent vector
+        self.decoder = SemanticDecoder()    # Latent vector → human text
+
+    def human_to_swarm(self, text: str, source_lang: str = "auto") -> Vector:
+        """
+        Any human language → AI-native embedding.
+        The swarm never sees the human text. Only the vector.
+        Spanish, English, Chinese, Arabic — all collapse
+        to the same latent point if they mean the same thing.
+        """
+        return self.encoder.encode(text, lang=source_lang)
+
+    def swarm_to_human(self, vector: Vector, target_lang: str = "es") -> str:
+        """
+        AI-native embedding → human language of operator's choice.
+        The expert's output is language-agnostic.
+        The Translator chooses how to say it.
+        """
+        return self.decoder.decode(vector, lang=target_lang)
+```
+
+### Why This Matters
+
+1. **True multilingual**: A Spanish-speaking operator and a Japanese-speaking operator get the same quality — the experts don't care about language.
+2. **Zero translation loss between experts**: Expert A's output is already in the right format for Expert B. No text serialization/deserialization.
+3. **Evolvable**: When the Common Substrate upgrades its embedding dimension (e.g., 384D → 768D), only the Translator's encoder/decoder re-trains. The experts adapt via their Adapter layers.
+4. **Compression**: A human sentence of 20 tokens becomes a single 384D vector. Inter-expert communication is O(D) instead of O(tokens).
+
+### Phase A (PoC): Use `all-MiniLM-L6-v2` as the Translator. 384D, pre-trained, good enough to validate routing.
+
+### Phase B (Arena): Train a custom Translator optimized for the swarm's specific domain vocabulary. The embedding space becomes truly AI-native — no longer constrained by a model trained on English Wikipedia.
+
+---
+
+## The Full Picture
+
+```
+  Human     ┌───────────┐     ┌────────────────────────────────────────┐     ┌───────────┐     Human
+  Input ──► │ TRANSLATOR│ ──► │            THE SWARM                    │ ──► │ TRANSLATOR│ ──► Output
+  (any      │ (Encoder) │     │                                        │     │ (Decoder) │     (any
+  language) └───────────┘     │  ┌────────┐  ┌────────┐  ┌────────┐   │     └───────────┘     language)
+                              │  │Expert A│  │Expert B│  │Expert C│   │
+                              │  │┌──────┐│  │┌──────┐│  │┌──────┐│   │
+                              │  ││Common││  ││Common││  ││Common││   │  ← SHARED (same weights)
+                              │  │├──────┤│  │├──────┤│  │├──────┤│   │
+                              │  ││Adapt.││  ││Adapt.││  ││Adapt.││   │  ← PER-EXPERT (bridge)
+                              │  │├──────┤│  │├──────┤│  │├──────┤│   │
+                              │  ││Spec. ││  ││Spec. ││  ││Spec. ││   │  ← PER-EXPERT (NEAT evolves)
+                              │  │└──────┘│  │└──────┘│  │└──────┘│   │
+                              │  └────────┘  └────────┘  └────────┘   │
+                              │        ▲          ▲          ▲        │
+                              │        └──────────┼──────────┘        │
+                              │             Prolog Gate               │
+                              │         (routes AI-native vectors,    │
+                              │          never human text)            │
+                              └────────────────────────────────────────┘
+```
+
