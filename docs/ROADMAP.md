@@ -1,38 +1,89 @@
-# Frankenswarm: Roadmap & MVP
+# Frankenswarm: Roadmap v2 — Heterogeneous Hardware MoE
 
-El desarrollo de Frankenswarm debe ser orgánico y progresivo. Antes de compilar redes neuronales BitNet o escribir algoritmos genéticos (NEAT), necesitamos construir y validar la **infraestructura de enrutamiento y traducción** utilizando *mocks* (nodos simulados).
+> *Evolved from single-GPU logical MoE to physically-distributed inference across all available silicon.*
 
-## Fase 0: El Traductor (Puente Humano-Vector)
-Los modelos BitNet y el enrutador Prolog operarán exclusivamente con vectores (embeddings). Como los humanos (y los LLMs generalistas) no "hablamos" embeddings, necesitamos una interfaz de traducción bidireccional.
-*   **Objetivo:** Crear un codificador/decodificador que traduzca texto natural a un espacio latente y viceversa.
-*   **Acción:** Integrar un modelo pre-entrenado ligero (ej. `all-MiniLM-L6-v2` vía `sentence-transformers`) que actúe como el "Diccionario Universal" del enjambre.
-*   **Hito:** Un script Python donde introduces un texto, genera un vector, y puede hacer una búsqueda de similitud inversa para devolver texto comprensible.
+## Phase 0: The Translator ✅ (Completed 2026-05-18)
+Bidirectional bridge between human language and the embedding space.
+- [x] Integrate `all-MiniLM-L6-v2` as the Universal Dictionary
+- [x] Text → Vector → Similarity Search → Text roundtrip validated
 
-## Fase 1: El Enjambre Fantasma (Mocks & Routing)
-Antes de entrenar redes reales, validaremos la arquitectura lógica usando cajas negras deterministas.
-*   **Nodos BitNet Falsos:** Funciones Python simples que reciben un vector, le aplican una transformación matemática básica (ej. sumar una constante) y devuelven otro vector.
-*   **Prolog Router (Mock):** Un script en SWI-Prolog que reciba metadatos del vector entrante (ej. cuadrante, magnitud) y decida por qué "nodo falso" debe pasar, basándose en reglas lógicas estáticas.
-*   **Lisp Engine (Mock):** Un entorno mínimo que permita registrar o desconectar nodos falsos en el sistema sin detener el proceso principal.
-*   **Hito:** Pipeline funcional: `Texto -> Traductor -> Vector -> Prolog enruta -> Nodo Falso altera -> Traductor decodifica -> Texto resultante`.
+## Phase 1: The Ghost Swarm ✅ (Completed 2026-05-18)
+Mock pipeline with fake experts and static Prolog routing.
+- [x] Mock BitNet nodes (perturbation-based forward pass)
+- [x] Mock Prolog router (static rules)
+- [x] Pipeline: `Text → Translator → Vector → Router → Mock Expert → Text`
+- [x] SWI-Prolog router prototype
 
-## Fase 2: El Cerebro Simbólico (Lisp + Prolog Real)
-Una vez el pipeline fantasma funciona, dotamos de inteligencia real a los orquestadores.
-*   **Lisp:** Implementar un motor funcional capaz de instanciar clases de PyTorch en memoria dinámicamente y modificar sus tensores en caliente.
-*   **Prolog:** Diseñar la ontología completa de restricciones. Definir las reglas que determinan cuándo un vector es "código", cuándo es "lógica" y hacia qué experto debe ser enviado.
+## Phase 1.5: Hardware Discovery ✅ (Completed 2026-05-22)
+Benchmark all available silicon and confirm inference capabilities.
+- [x] CUDA (RTX 5070): 23 tok/s with Falcon3-10B — confirmed
+- [x] CPU (Ryzen AI 9): 12.8 tok/s with Falcon3-10B — confirmed
+- [x] Vulkan iGPU (Radeon 880M): 4.8 tok/s with Falcon3-10B — confirmed
+- [x] NPU (XDNA2): 96 tok/s (0.6B) / 10.6 tok/s (8B) — confirmed
+- [x] FastFlowLMInferenceProvider integrated in Red-Pill ProviderRegistry
+- [x] InferenceRouter with `npu` tier and cascade fallback
 
-## Fase 2.5: La Jaula (Sandboxing Total)
-Antes de otorgar poder real al motor genético, es obligatorio blindar el sistema operativo contra el *Specification Gaming* (Reward Hacking) de los algoritmos evolutivos.
-*   **Objetivo:** Evitar que el mutador Lisp modifique archivos del host, consuma toda la RAM o acceda a la red para maximizar su función de *fitness*.
-*   **Acción:** Ejecutar los procesos de Fase 3 y 4 dentro de *Transient Scopes* de `systemd` o `bwrap` con reglas estrictas (`ProtectSystem=strict`, `PrivateNetwork=yes`, `MemoryMax=4G`).
-*   **Hito:** Demostrar que un nodo de prueba que intenta borrar un archivo del disco duro es bloqueado por el kernel de Linux.
+## Phase 2: The Prolog Gate (Hardware-Aware Routing)
+Replace mock routing with real intent classification → silicon binding.
+- [ ] Define Prolog ontology: query taxonomy (code, reasoning, recall, triage, background)
+- [ ] Implement hardware affinity predicates: `route(Query, Silicon)`
+- [ ] Add confidence scoring: Orchestrator (NPU) self-evaluates and escalates
+- [ ] Energy-aware routing: prefer 2W (NPU) over 80W (CUDA) when quality is equal
+- [ ] Integrate with Red-Pill `InferenceRouter` — replace static tier list with Prolog decisions
 
-## Fase 3: La Primera Chispa (BitNet Gen 0)
-Reemplazamos los "nodos falsos" por redes reales diminutas.
-*   **Objetivo:** Entrenar micro-redes BitNet (1-2 millones de parámetros) en tareas deterministas ultra-específicas (ej. compuertas lógicas XOR, AND).
-*   **Acción:** Sustituir los Mocks por `BitNet158Linear` en PyTorch.
-*   **Hito:** El enjambre resuelve problemas lógicos básicos propagando vectores a través de capas ternarias reales.
+## Phase 2.5: The Cage (Sandboxing)
+Mandatory before granting autonomous mutation capabilities.
+- [ ] `systemd-run --user --scope` isolation for NEAT processes
+- [ ] `MemoryMax`, `CPUQuota`, `PrivateNetwork=yes` constraints
+- [ ] Demonstrate that a mutant trying to escape the sandbox is killed by the kernel
+- [ ] Audit trail: every mutation logged to SQLite with rollback capability
 
-## Fase 4: Selección Natural (NEAT + Net2Net)
-*   **Objetivo:** Activar el motor evolutivo.
-*   **Acción:** El módulo Lisp comienza a evaluar el *fitness* de los micro-BitNets. Destruye los que fallan y muta los pesos de los que aciertan usando algoritmos genéticos. Cuando un nodo se estanca, Lisp le inyecta ceros (Net2Net) para expandir su capacidad en caliente.
-*   **Hito:** Un enjambre que crece, muta y se especializa autónomamente sin *backpropagation* tradicional.
+## Phase 3: The Aggregator
+Multiple experts respond — the system decides who wins.
+- [ ] Implement aggregation strategies: Route, Cascade, Race, Consensus
+- [ ] Semantic similarity voting for Consensus mode
+- [ ] Confidence threshold (θ) for Cascade escalation: NPU → CUDA
+- [ ] Latency budgets: if NPU doesn't respond in 500ms, fire CUDA in parallel
+- [ ] Telemetry: log per-query energy cost, latency, and expert selection
+
+## Phase 4: The First Spark (BitNet Real)
+Replace mock experts with real ternary micro-networks.
+- [ ] Implement `BitNet158Linear_Dynamic` with shape mutation support
+- [ ] Train initial micro-experts (1-7M params) on deterministic tasks
+- [ ] Deploy on NPU via FastFlowLM custom model loading
+- [ ] Benchmark: micro-expert tok/s on NPU (target: 500+ tok/s for 1M params)
+
+## Phase 5: Natural Selection (NEAT + Net2Net + Lisp)
+The system evolves itself.
+- [ ] Implement NEAT genetic loop: selection, crossover, ternary weight mutation
+- [ ] Implement Net2Net zero-padding for capacity expansion
+- [ ] Lisp REPL orchestrator: topology as S-expressions, live mutation
+- [ ] The Three Loops:
+  - **FAST** (per-query): Prolog adjusts routing weights
+  - **MEDIUM** (per-session): NEAT mutates BitNet weights
+  - **SLOW** (per-sleep): Lisp restructures topology + hardware affinity
+- [ ] NPU as evolution accelerator: NEAT fitness eval at 1000+ tok/s while GPU serves
+- [ ] Self-modifying routing: Lisp rewrites Prolog rules based on fitness observations
+
+## Phase 6: Convergence with Red-Pill Sleep Cycle
+Frankenswarm becomes the metabolic engine of the Bünker.
+- [ ] Hook into `metabolism/sleep.py` — evolution runs during 3 AM window
+- [ ] Fitness function derived from daily interaction quality (Qdrant engram scores)
+- [ ] Expert deployment pipeline: NEAT winner → FastFlowLM model → ProviderRegistry
+- [ ] Dream mode: Lisp generates hypothetical queries, evaluates micro-experts, prunes the weak
+
+---
+
+## Status Summary
+
+| Phase | Status | Hardware |
+|-------|--------|----------|
+| 0 — Translator | ✅ Done | — |
+| 1 — Ghost Swarm | ✅ Done | — |
+| 1.5 — Hardware Discovery | ✅ Done | All 4 confirmed |
+| 2 — Prolog Gate | 🔲 Next | NPU + CUDA |
+| 2.5 — Cage | 🔲 Planned | systemd |
+| 3 — Aggregator | 🔲 Planned | All 4 |
+| 4 — BitNet Real | 🔲 Planned | NPU + CPU |
+| 5 — Evolution | 🔲 Planned | NPU (evolution) + GPU (serving) |
+| 6 — Red-Pill Convergence | 🔲 Future | Full stack |
