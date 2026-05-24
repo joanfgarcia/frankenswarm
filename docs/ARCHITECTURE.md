@@ -304,192 +304,133 @@ Once the infrastructure is validated, we enter the Arena: training custom BitNet
 
 ## The Three-Layer Expert Architecture
 
-Every expert in the Arena has three distinct layers, each with its own adaptation timeline:
+Every expert in the Arena is designed as a **four-layer sovereign architecture** compiled and executed directly as a single hardware graph. All custom experts in the swarm share the same internal tokenized vocabulary (the Base language), enabling high-speed, noise-free local execution:
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│              THREE-LAYER EXPERT ANATOMY                      │
+│              FOUR-LAYER SOVEREIGN ANATOMY                   │
 │                                                             │
 │  ┌─────────────────────────────────────────────────────┐    │
-│  │          LAYER 1: THE COMMON SUBSTRATE              │    │
+│  │          LAYER 1: THE SOVEREIGN BASE                │    │
 │  │                                                     │    │
-│  │  Shared base model (e.g., Qwen-1.5B/TinyLlama).     │    │
-│  │  This is the frozen foundation layer that provides   │    │
-│  │  universal representations and syntax.               │    │
+│  │  Shared discrete Token Vocabulary (e.g., 8K dense    │    │
+│  │  tokens optimized for logic, code, and agent states).│    │
+│  │  This is the universal discrete interface of the    │    │
+│  │  entire internal swarm.                             │    │
 │  │                                                     │    │
-│  │  • Frozen base weights, loaded once in memory       │    │
-│  │  • Never trained directly on local interaction data │    │
-│  │  • Upgraded only via major model revisions          │    │
+│  │  • Frozen, static vocab token mapping               │    │
+│  │  • Defines the common discrete tongue of all nodes  │    │
 │  └──────────────────────┬──────────────────────────────┘    │
-│                         │                                   │
+│                         │ (Token ID - 2 bytes)              │
 │  ┌──────────────────────▼──────────────────────────────┐    │
-│  │          LAYER 2: THE ADAPTER (LoRA)                │    │
+│  │          LAYER 2: INBOUND TRANSLATOR ($W_E$)        │    │
 │  │                                                     │    │
-│  │  Lightweight parameter-efficient adapter.           │    │
-│  │  Dynamically loaded and swapped at runtime to        │    │
-│  │  specialize the base model on specific domains.      │    │
+│  │  Embedding layer mapping the shared token IDs into  │    │
+│  │  the expert's specific continuous hidden space.     │    │
 │  │                                                     │    │
-│  │  • PEFT/LoRA weight modules (~10MB-100MB scale)      │    │
-│  │  • Swapped dynamically in <10ms by the orchestrator  │    │
-│  │  • Prevents catastrophic forgetting via isolation    │    │
+│  │  • Lightweight projection matrix                    │    │
+│  │  • Re-trained/adjusted when Layer 3 mutates         │    │
 │  └──────────────────────┬──────────────────────────────┘    │
-│                         │                                   │
+│                         │ (Expert Latent Space)             │
 │  ┌──────────────────────▼──────────────────────────────┐    │
-│  │          LAYER 3: THE SPECIALIST CORE               │    │
+│  │          LAYER 3: SPECIALIST CORE (Core)            │    │
 │  │                                                     │    │
-│  │  Task-specific optimization layers. Evolved via      │    │
-│  │  genetic search for micro-nets, or fine-tuned       │    │
-│  │  via gradient descent (QLoRA) for larger targets.     │    │
+│  │  Ternary BitNet layers `{-1, 0, 1}` containing      │    │
+│  │  specialized domain logic and learned patterns.     │    │
 │  │                                                     │    │
-│  │  • Seeded via NEAT for micro-nets (10K-100K params)  │    │
-│  │  • Scaled structurally using Net2Net expansion      │    │
-│  │  • Gradients (QLoRA/Backprop) refine weights up to   │    │
-│  │    the 7M parameter threshold                       │    │
+│  │  • Seeded via NEAT ($10\text{K}-100\text{K}$ params) │    │
+│  │  • Grown structurally using Net2Net expansion       │    │
+│  │  • Refined via backpropagation/QLoRA up to 7M params│    │
+│  └──────────────────────┬──────────────────────────────┘    │
+│                         │ (Expert Latent Space)             │
+│  ┌──────────────────────▼──────────────────────────────┐    │
+│  │    LAYER 4: OUTBOUND TRANSLATOR ($W_{LM\_Head}$)    │    │
+│  │                                                     │    │
+│  │  Language Model Head mapping the internal expert    │    │
+│  │  features back into the shared Base Token IDs.       │    │
+│  │                                                     │    │
+│  │  • Lightweight projection matrix                    │    │
+│  │  • Re-aligned to Layer 1 vocabulary after mutations  │    │
 │  └─────────────────────────────────────────────────────┘    │
 └─────────────────────────────────────────────────────────────┘
 ```
 
-### Why Three Layers?
+### Why Four Layers?
 
-Monolithic models suffer from **catastrophic forgetting** and representational entanglement. If you improve the code generation capability, you might degrade the reasoning capability. Catastrophic forgetting.
+The 4-layer design solves the structural and physical bottlenecks of multi-expert systems:
 
-The three-layer design solves this through **decoupled adaptation**:
+- **Catastrophic Forgetting & Drift Isolation**: If the **Specialist Core (Layer 3)** mutates or changes its internal hidden dimensions, we do not need to re-train the other experts. We simply freeze Layer 3 and re-train the **Inbound Translator (Layer 2)** and **Outbound Translator (Layer 4)**. This re-aligns the mutated expert to the shared **Sovereign Base (Layer 1)**, keeping the rest of the swarm untouched.
+- **Zero I/O PCIE Bottleneck**: When Expert A routes its output to Expert B, it sends Token IDs (only 2 bytes per token) over the hardware bus, bypassing the 384x memory bloat of continuous float vectors.
+- **Noise Reset (Quantization)**: Projecting the continuous output back to discrete Token IDs at Layer 4 acts as a low-pass filter, resetting the representation noise to zero at each step and preventing latent space drift.
 
 | Layer | Shared? | Adaptation Speed | What Adapts |
 |-------|:-------:|:---------------:|--------------|
-| **Common Substrate** | Yes — all experts | Frozen (static) | Base linguistic and representational capabilities |
-| **Adapter (PEFT)** | No — per expert | Rapid (LoRA training) | Dynamic weight adaptations loaded per task |
-| **Specialist Core** | No — per expert | Hybrid (NEAT $\rightarrow$ Backprop) | Topology evolution & task-specific weights |
+| **Base (Vocab)** | Yes — all experts | Frozen (static) | The shared discrete token vocabulary configuration |
+| **Inbound ($W_E$)** | No — per expert | Rapid (LoRA/projection) | Embedding projection aligned to the common vocab |
+| **Specialist Core** | No — per expert | Hybrid (NEAT $\rightarrow$ Backprop) | Internal ternary weight topologies & logic |
+| **Outbound ($W_{LM}$)** | No — per expert | Rapid (LoRA/projection) | LM Head projection aligned to the common vocab |
 
-The PEFT Adapter is the key bridge. It isolates the specialist weights from the shared base layers, allowing independent specialization without polluting or corrupting other experts.
-
-### The Lifecycle of an Adapter Upgrade
+### The Lifecycle of an Expert Upgrade
 
 ```mermaid
 graph LR
-    A["Specialist/Adapter fine-tunes<br/>(QLoRA overnight)"] --> B["Verify regressions<br/>via local benchmarks"]
-    B --> C["Quantize & register adapter<br/>(~minutes)"]
-    C --> D["Orchestrator hot-swaps<br/>adapter in active serving"]
-
-    E["Common Substrate updates<br/>(new base model)"] --> F["Adapters re-train<br/>on cached daily logs"]
-    F --> G["No knowledge lost<br/>(distilled into new adapter)"]
+    A["Specialist Core mutates<br/>(NEAT / QLoRA)"] --> B["Freeze Core weights"]
+    B --> C["Tune Layers 2 & 4 projections<br/>(~minutes via gradients)"]
+    C --> D["Verify alignment to Base vocab<br/>via local test benchmarks"]
+    D --> E["Orchestrator deploys updated<br/>4-layer hardware graph"]
 
     style A fill:#1a3a2a,color:#86EFAC
-    style E fill:#4a1942,color:#F9A8D4
     style C fill:#3b2a00,color:#FDE68A
-    style F fill:#3b2a00,color:#FDE68A
+    style E fill:#1e3a5f,color:#93C5FD
 ```
-
-When a **Specialist/Adapter is updated** (daily, via overnight QLoRA): only that adapter's weights are compiled and registered. The base model remains running.
-
-When the **Common Substrate upgrades** (e.g. migrating from TinyLlama to Qwen-1.5B): the specialist cores are not lost; instead, we re-train the adapter layers using the cached daily interaction engrams against the new base representation.
-
-## Embedding-Guided Routing & Token Flow
-
-> *"Vector embeddings determine where the queries land, while text tokens keep the conversation coherent."*
-
-### The Coherence Constraint
-
-While purely vector-based inter-expert communication is theoretically elegant, it results in representational drift and prevents the integration of pre-trained models. Pre-trained weights are aligned to discrete token vocabularies. To maintain compatibility and leverage massive pre-existing model representations:
-- **Inter-expert communication** is conducted using standard text tokens.
-- **Routing & Cascade Triage** is token-free, operating on latent semantic coordinates (embeddings) of the user query and expert outputs.
-
-### The Embedding-Guided Routing Protocol
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│          EMBEDDING-GUIDED ROUTING & FLOW                    │
-│                                                             │
-│   Human World                Prolog Gate (Router)           │
-│   ┌──────────┐              ┌──────────────────┐            │
-│   │ "Analiza │ ──────────►  │ Query Vector     │            │
-│   │  este    │   Embed      │ (e.g. MiniLM)    │            │
-│   │  código" │   Vector     │ [0.23, -0.71...] │            │
-│   └──────────┘              └────────┬─────────┘            │
-│                                      │ (Hardware & Intent)  │
-│                                      ▼                      │
-│                               ┌─────────────┐               │
-│                               │ Selects     │               │
-│                               │ Expert(s)   │               │
-│                               └──────┬──────┘               │
-│                                      │                      │
-│                            ┌─────────┼──────────┐           │
-│                            ▼         ▼          ▼           │
-│                         Expert A  Expert B   Expert C       │
-│                         (Communicate using standard text    │
-│                          tokens to maintain coherence)     │
-│                            │         │          │           │
-│                            └─────────┼──────────┘           │
-│                                      ▼                      │
-│                                ┌──────────┐                 │
-│                                │ Consensus│                 │
-│                                │ / Aggreg.│                 │
-│                                └─────┬────┘                 │
-│                                      │ (Text response)      │
-│                                      ▼                      │
-│                                ┌──────────┐                 │
-│                                │ Operator │                 │
-│                                │ Response │                 │
-│                                └──────────┘                 │
-└─────────────────────────────────────────────────────────────┘
-```
-
-### The Role of Embeddings in Routing
-
-Instead of translating intermediate layer activations across experts, Frankenswarm uses standard semantic embeddings (e.g. from `all-MiniLM-L6-v2` or `nomic-embed-text`) as a high-density classification signal for the Prolog Gate:
-
-| Aspect | Classic Router | Embedding-Guided Routing |
-|--------|----------------|--------------------------|
-| Routing Mechanism | Static rules / keyword matching | Semantic similarity + hardware profile |
-| Classification | Hardcoded domains | Dynamic vector coordinates |
-| Handoff Protocol | Text serialization only | Embeddings determine threshold violation |
-| Multilingual | Language-specific parsers | Shared multilingual embedding space |
-| Adaptive Optimization | Manual weight tuning | Heuristic/genetic search (NAS) over thresholds |
-
-### The Dynamic Router Implementation
-
-```python
-# Embedding-Guided Router & Cascade
-class SwarmRouter:
-	def __init__(self, embedding_model, prolog_engine):
-		self.embedder = embedding_model
-		self.prolog = prolog_engine
-
-	def route_query(self, query: str) -> str:
-		# 1. Generate semantic vector for intent classification
-		query_vector = self.embedder.encode(query)
-		
-		# 2. Run Prolog classification over vector metadata
-		metadata = self.extract_metadata(query, query_vector)
-		destination = self.prolog.query(f"route({metadata}, Destination)")
-		return destination
-```
-
-### Phase A (PoC): Use pre-trained `all-MiniLM-L6-v2` embeddings (384D) to generate routing signals.
-### Phase B (Arena): Optimize the classification boundaries and cascade thresholds using Network Architecture Search (NAS) during the sleep cycle.
 
 ---
 
-## The Full Picture
+## Hardware Execution & Swarm Routing
+
+> *"The NPU executes the entire 4-layer graph locally, while Prolog directs the traffic at the boundaries."*
+
+### 1. Local NPU Execution (No Runtime Hacking)
+Rather than hacking low-level C++ engines like `llama.cpp` to expose and route continuous activations, each custom expert's 4 layers are compiled as a **single, unified ONNX computational graph** executed locally on the NPU (via ONNX Runtime with the Ryzen AI Execution Provider).
+- The input is a sequence of shared Token IDs.
+- The NPU performs the forward pass: `Embedding (L2) ──► BitNet Core (L3) ──► LM Head (L4)`.
+- The output is a sequence of shared Token IDs.
+- The host system reads and routes these Token IDs with minimal memory bandwidth.
+
+### 2. Integration with External Models (GGUF Codecs)
+If the swarm needs to call an external commercial model (e.g. a Llama-70B running on CUDA), we treat it as a black box and wrap it in a **Boundary Translation Codec (Traductor Inverso)**:
+- **Input path**: The codec takes our sovereign Token IDs, decodes them to raw UTF-8 text, and tokenizes the text using the external model's proprietary tokenizer.
+- **Output path**: The codec decodes the external model's output tokens back to raw UTF-8 text, and tokenizes it using our sovereign Tokenizer back into Capa 1 Token IDs.
+- Using UTF-8 text as the translation boundary eliminates token-alignment errors and ensures 100% compatibility with any model.
+
+### 3. The Chained Inference Protocol (Example)
+For a chained query like `(2+2) / 3`:
+1. The **Prolog Gate** parses the execution graph and routes the query metadata.
+2. **Expert A (Addition)** executes: receives `[VAL_2, ADD, VAL_2]` in sovereign tokens, processes it, and generates `[VAL_4]` in sovereign tokens.
+3. The orchestrator routes the token list `[VAL_4]` and the remainder `/ 3` directly into **Expert B (Division)**.
+4. **Expert B (Division)** processes `[VAL_4, DIV, VAL_3]` and outputs `[VAL_1_33]` in sovereign tokens.
+5. The boundary decoder translates `[VAL_1_33]` into the human-readable text `"1.33"`.
 
 ```
   Human     ┌───────────┐     ┌────────────────────────────────────────┐     ┌───────────┐     Human
-  Input ──► │  PROLOG   │ ──► │            THE SWARM                    │ ──► │ AGGREGATOR│ ──► Output
-  (Text)    │  ROUTER   │     │                                        │     │ (Consensus│     (Text)
-            │ (Embed.)  │     │  ┌────────┐  ┌────────┐  ┌────────┐   │     │  / Vote)  │
+  Input ──► │ BOUNDARY  │ ──► │            THE SWARM                    │ ──► │ BOUNDARY  │ ──► Output
+  (Text)    │  CODEC    │     │                                        │     │  CODEC    │     (Text)
+            │ (Encoder) │     │  ┌────────┐  ┌────────┐  ┌────────┐   │     │ (Decoder) │
             └───────────┘     │  │Expert A│  │Expert B│  │Expert C│   │     └───────────┘
                               │  │┌──────┐│  │┌──────┐│  │┌──────┐│   │
-                              │  ││Common││  ││Common││  ││Common││   │  ← Frozen Base Weights
+                              │  ││Vocab ││  ││Vocab ││  ││Vocab ││   │  ← Capa 1: Shared Base (Sovereign Vocab)
                               │  │├──────┤│  │├──────┤│  │├──────┤│   │
-                              │  ││Adapt.││  ││Adapt.││  ││Adapt.││   │  ← LoRA / PEFT (Dynamic)
+                              │  ││Embed ││  ││Embed ││  ││Embed ││   │  ← Capa 2: Inbound ($W_E$)
                               │  │├──────┤│  │├──────┤│  │├──────┤│   │
-                              │  ││Spec. ││  ││Spec. ││  ││Spec. ││   │  ← Trained (NAS/Backprop)
+                              │  ││Core  ││  ││Core  ││  ││Core  ││   │  ← Capa 3: Specialist Core (Ternary)
+                              │  │├──────┤│  │├──────┤│  │├──────┤│   │
+                              │  ││Head  ││  ││Head  ││  ││Head  ││   │  ← Capa 4: Outbound ($W_{LM}$)
                               │  │└──────┘│  │└──────┘│  │└──────┘│   │
                               │  └────────┘  └────────┘  └────────┘   │
                               │        ▲          ▲          ▲        │
                               │        └──────────┼──────────┘        │
-                              │            Text Tokens                │
-                              │       (legible & compatible)          │
+                              │            Sovereign Tokens           │
+                              │       (2 bytes, discrete, clean)      │
                               └────────────────────────────────────────┘
 ```
 
