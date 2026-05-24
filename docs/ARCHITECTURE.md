@@ -2,11 +2,11 @@
 
 ## The Thesis
 
-> *"No esperes a tener el hardware perfecto. Conquista el hardware que tienes."*
+> _"No esperes a tener el hardware perfecto. Conquista el hardware que tienes."_
 
 Frankenswarm is a **physically-distributed Mixture of Experts** that treats every accelerator in the host machine as a specialized inference node. Instead of running N tiny models inside one GPU, we run N models across **every available silicon**: discrete GPU, integrated GPU, CPU, and Neural Processing Unit — each one an expert with different strengths, speeds, and energy costs.
 
-The router doesn't just decide *what* expert answers. It decides *where* the computation happens.
+The router doesn't just decide _what_ expert answers. It decides _where_ the computation happens.
 
 ## The Hardware Topology (Measured — 2026-05-22)
 
@@ -43,12 +43,12 @@ The router doesn't just decide *what* expert answers. It decides *where* the com
 
 Classical MoE assumes homogeneous compute. Every expert runs on the same hardware class. Frankenswarm **inverts** this: heterogeneity is the architecture. Each accelerator has a natural personality:
 
-| Silicon | Personality | Natural Tasks | Energy | Latency |
-|---------|-------------|---------------|--------|---------|
-| **CUDA (dGPU)** | The Heavyweight | Complex reasoning, code generation, multi-step planning | High | Low |
-| **CPU** | The Scholar | Massive context windows (128K+), long-document analysis | Medium | Medium |
-| **Vulkan (iGPU)** | The Sentinel | Background monitoring, always-on health checks | Low | High |
-| **NPU (XDNA2)** | The Scout | Fast triage, classification, simple Q&A, sleep distillation | Minimal | Ultra-Low |
+| Silicon           | Personality     | Natural Tasks                                               | Energy  | Latency   |
+| ----------------- | --------------- | ----------------------------------------------------------- | ------- | --------- |
+| **CUDA (dGPU)**   | The Heavyweight | Complex reasoning, code generation, multi-step planning     | High    | Low       |
+| **CPU**           | The Scholar     | Massive context windows (128K+), long-document analysis     | Medium  | Medium    |
+| **Vulkan (iGPU)** | The Sentinel    | Background monitoring, always-on health checks              | Low     | High      |
+| **NPU (XDNA2)**   | The Scout       | Fast triage, classification, simple Q&A, sleep distillation | Minimal | Ultra-Low |
 
 ### 2. The Prolog Gate — Intent-Aware Routing
 
@@ -76,16 +76,17 @@ strategy(Query, race)      :- latency_critical(Query), is_simple(Query).
 
 The aggregator combines expert outputs based on the routing strategy:
 
-| Strategy | Description | When |
-|----------|-------------|------|
-| **Route** | Single expert responds. Fastest. | Default for clear-domain queries |
-| **Cascade** | NPU answers first. If confidence < θ, escalate to CUDA. | Most common — energy-optimal |
-| **Race** | All available experts start in parallel. First response wins. | Latency-critical, simple queries |
-| **Consensus** | All experts respond. Semantic vote picks the winner. | Critical decisions, code review |
+| Strategy      | Description                                                   | When                             |
+| ------------- | ------------------------------------------------------------- | -------------------------------- |
+| **Route**     | Single expert responds. Fastest.                              | Default for clear-domain queries |
+| **Cascade**   | NPU answers first. If confidence < θ, escalate to CUDA.       | Most common — energy-optimal     |
+| **Race**      | All available experts start in parallel. First response wins. | Latency-critical, simple queries |
+| **Consensus** | All experts respond. Semantic vote picks the winner.          | Critical decisions, code review  |
 
 ### 4. BitNet Substrate (Preserved)
 
 The original BitNet thesis remains valid — but repositioned:
+
 - **Ternary weights** (`{-1, 0, 1}`) are ideal for NPU and CPU where FP16 throughput is limited
 - **NEAT evolution** breeds specialized micro-topologies ($10\text{K}-100\text{K}$ params) that run on the NPU at 96 tok/s
 - **Net2Net expansion** grows experts structurally without losing learned knowledge
@@ -93,19 +94,21 @@ The original BitNet thesis remains valid — but repositioned:
 - **The Heavyweight models** on CUDA don't need to be ternary — they use standard GGUF/INT4 quantization
 
 This creates a **dual-tier system**:
+
 - **Tier 1 (Hybrid Evolved)**: BitNet micro-experts evolved via NEAT and optimized via gradients up to 7M parameters, deployed on NPU/CPU
 - **Tier 2 (Pre-trained)**: Foundation models (Qwen3, Falcon3, LLaMA) deployed on CUDA/Vulkan
 
 ### 5. TurboQuant KV Cache (Preserved)
 
 With 4 accelerators maintaining independent KV caches, memory pressure multiplies. TurboQuant (3-bit QJL compression) becomes even more critical:
+
 - Compress shared context to ~20% of FP16 size
 - Enable cross-expert context handoff without recomputation
 - Allow the CPU expert to hold 128K+ token contexts in DDR5
 
 ### 6. The Python Orchestrator & Dynamic PEFT Management
 
-> *"Why rebuild the compiler when you can hot-swap the weights? Direct hardware execution beats runtime abstraction."*
+> _"Why rebuild the compiler when you can hot-swap the weights? Direct hardware execution beats runtime abstraction."_
 
 This is the core engine that manages the active topology dynamically, replacing theoretical compilation chains with a pragmatic, high-performance execution flow.
 
@@ -114,6 +117,7 @@ This is the core engine that manages the active topology dynamically, replacing 
 Instead of a custom Lisp REPL that re-compiles topologies on the fly, Frankenswarm v2 uses **Python Orchestration** to swap **LoRA/QLoRA adapters** dynamically over frozen shared base models. The orchestrator represents the active swarm configuration as a standard JSON schema, updating the runtime graphs on standard acceleration frameworks (ONNX Runtime, llama.cpp, vLLM) in milliseconds.
 
 This means:
+
 - The base models (e.g., Qwen-1.5B, TinyLlama) are loaded once into hardware memory (NPU/iGPU).
 - The routing policy is managed via Prolog/Python mappings.
 - Specific domain experts are represented as lightweight **PEFT adapter weights** (~10MB–100MB) that are hot-swapped dynamically into the active context without restarting the inference server.
@@ -174,17 +178,18 @@ Frankenswarm operates on three distinct feedback loops at different timescales:
 #### Why Python + GGUF/ONNX?
 
 Custom compiled environments add friction. By sticking to Python and standard serialization formats:
+
 - **Native Hardware Access**: ONNX Runtime and llama.cpp provide direct, optimized execution paths for CUDA, ROCm, Vulkan, and NPU (XDNA2) without custom compilation overhead.
-- **No Compilation Barrier**: Dynamic PEFT loading allows adapter hot-swapping in $<10\text{ms}$ without interrupting active inference streams.
+- **No Compilation Barrier**: Dynamic PEFT loading allows adapter hot-swapping theoretically in $<10\text{ms}$ without interrupting active inference streams. _(Note: Empirical practice will dictate if we need an L1 RAM cache for the most frequently used expert adapters, should the NPU memory bus bottleneck the physical hot-swap latency)._
 - **Interoperability**: Direct integration with the Hugging Face and PyTorch ecosystems allows us to leverage state-of-the-art distillation and quantization tools out of the box.
 
 #### The Hybrid Evolutionary Strategy
 
 Evolving model weights for parameters scaling towards 7M is mathematically impractical due to the Curse of Dimensionality. Genetic algorithms suffer from evolutionary noise and stagnation at scale. Frankenswarm resolves this via a hybrid model:
+
 1. **Seed Phase (NEAT)**: Genetically breed micro-topologies ($10\text{K}-100\text{K}$ parameters) for basic logic gates and classification tasks where low dimensionality makes genetic search highly efficient.
 2. **Growth Phase (Net2Net)**: Expand the micro-expert architectures structurally using Net2Net expansion without losing learned functions.
 3. **Consolidation Phase (PEFT/Backpropagation)**: Once the network scales beyond $100\text{K}$ parameters towards the 7M threshold, we transition to gradient-based learning (QLoRA, distillation) to consolidate representation learning and refine weights.
-
 
 ## The Lifecycle (Evolved)
 
@@ -224,15 +229,15 @@ graph TD
 
 ## The Difference
 
-| | Classical LLM | Original Frankenswarm (v1) | Frankenswarm v2 (Distributed) |
-|---|---|---|---|
-| Hardware | 1 GPU | 1 GPU | **All available silicon** |
-| Experts | 1 monolithic model | N × 7M BitNet in VRAM | **N models across 4 accelerators** |
-| Routing | None (single model) | Prolog on embeddings | **Prolog on intent + hardware affinity** |
-| Energy | Fixed (~250W) | Fixed (~80W on GPU) | **2W–80W adaptive** |
-| Scaling | Bigger GPU | More micro-experts | **More accelerator types** |
-| Evolution | Retraining | NEAT + Net2Net | **NAS + QLoRA + Net2Net growth** |
-| Latency | Fixed | Variable (swap overhead) | **Cascade: 200ms (NPU) → 2s (CUDA)** |
+|           | Classical LLM       | Original Frankenswarm (v1) | Frankenswarm v2 (Distributed)            |
+| --------- | ------------------- | -------------------------- | ---------------------------------------- |
+| Hardware  | 1 GPU               | 1 GPU                      | **All available silicon**                |
+| Experts   | 1 monolithic model  | N × 7M BitNet in VRAM      | **N models across 4 accelerators**       |
+| Routing   | None (single model) | Prolog on embeddings       | **Prolog on intent + hardware affinity** |
+| Energy    | Fixed (~250W)       | Fixed (~80W on GPU)        | **2W–80W adaptive**                      |
+| Scaling   | Bigger GPU          | More micro-experts         | **More accelerator types**               |
+| Evolution | Retraining          | NEAT + Net2Net             | **NAS + QLoRA + Net2Net growth**         |
+| Latency   | Fixed               | Variable (swap overhead)   | **Cascade: 200ms (NPU) → 2s (CUDA)**     |
 
 ## Integration with Red-Pill
 
@@ -257,6 +262,7 @@ The most transgressive aspect of Frankenswarm v2 is not speed — it's **energy 
 A cloud API call to GPT-4 consumes an estimated 0.001–0.01 kWh per request. That's invisible to the user, but real. Over a year of heavy use, it's ~100+ kWh of someone else's electricity, on someone else's hardware, with someone else's rules.
 
 Frankenswarm's cascade strategy means:
+
 - **80% of queries** are handled by the NPU at 2W → 0.000006 kWh/request
 - **15% of queries** escalate to CUDA at 80W → 0.0002 kWh/request
 - **5% of queries** go to consensus (all 4) → 0.0004 kWh/request
@@ -265,7 +271,7 @@ Frankenswarm's cascade strategy means:
 
 Not because we're smarter than Google's datacenters. Because we don't answer every question with a 400B model. We answer most questions with 2 watts.
 
-That's sovereignty. Not just of data — of *energy*.
+That's sovereignty. Not just of data — of _energy_.
 
 ---
 
@@ -275,7 +281,7 @@ Frankenswarm's development is split into two fundamentally different phases. The
 
 ### Phase A: Proof of Concept (Existing Models)
 
-> *"Don't build the engine and the fuel at the same time."*
+> _"Don't build the engine and the fuel at the same time."_
 
 Before training any custom model from scratch, we validate the entire distributed MoE infrastructure using **pre-existing models**:
 
@@ -285,6 +291,7 @@ Before training any custom model from scratch, we validate the entire distribute
 - **Vulkan iGPU**: Falcon3-10B via Vulkan backend (already benchmarked)
 
 What we validate in this phase:
+
 - [x] Can we serve inference on all 4 silicon types simultaneously?
 - [ ] Can the Prolog Gate route queries to the right accelerator?
 - [ ] Can the Aggregator merge/vote on multi-expert responses?
@@ -296,7 +303,7 @@ What we validate in this phase:
 
 ### Phase B: The Arena (Custom-Bred Experts)
 
-> *"Now we build the creatures that live in the machine."*
+> _"Now we build the creatures that live in the machine."_
 
 Once the infrastructure is validated, we enter the Arena: training custom BitNet micro-experts from scratch, with a novel **three-layer architecture** designed for independent evolution.
 
@@ -363,12 +370,12 @@ The 4-layer design solves the structural and physical bottlenecks of multi-exper
 - **Zero I/O PCIE Bottleneck**: When Expert A routes its output to Expert B, it sends Token IDs (only 2 bytes per token) over the hardware bus, bypassing the 384x memory bloat of continuous float vectors.
 - **Noise Reset (Quantization)**: Projecting the continuous output back to discrete Token IDs at Layer 4 acts as a low-pass filter, resetting the representation noise to zero at each step and preventing latent space drift.
 
-| Layer | Shared? | Adaptation Speed | What Adapts |
-|-------|:-------:|:---------------:|--------------|
-| **Base (Vocab)** | Yes — all experts | Frozen (static) | The shared discrete token vocabulary configuration |
-| **Inbound ($W_E$)** | No — per expert | Rapid (LoRA/projection) | Embedding projection aligned to the common vocab |
-| **Specialist Core** | No — per expert | Hybrid (NEAT $\rightarrow$ Backprop) | Internal ternary weight topologies & logic |
-| **Outbound ($W_{LM}$)** | No — per expert | Rapid (LoRA/projection) | LM Head projection aligned to the common vocab |
+| Layer                   |      Shared?      |           Adaptation Speed           | What Adapts                                        |
+| ----------------------- | :---------------: | :----------------------------------: | -------------------------------------------------- |
+| **Base (Vocab)**        | Yes — all experts |           Frozen (static)            | The shared discrete token vocabulary configuration |
+| **Inbound ($W_E$)**     |  No — per expert  |       Rapid (LoRA/projection)        | Embedding projection aligned to the common vocab   |
+| **Specialist Core**     |  No — per expert  | Hybrid (NEAT $\rightarrow$ Backprop) | Internal ternary weight topologies & logic         |
+| **Outbound ($W_{LM}$)** |  No — per expert  |       Rapid (LoRA/projection)        | LM Head projection aligned to the common vocab     |
 
 ### The Lifecycle of an Expert Upgrade
 
@@ -388,23 +395,29 @@ graph LR
 
 ## Hardware Execution & Swarm Routing
 
-> *"The NPU executes the entire 4-layer graph locally, while Prolog directs the traffic at the boundaries."*
+> _"The NPU executes the entire 4-layer graph locally, while Prolog directs the traffic at the boundaries."_
 
 ### 1. Local NPU Execution (No Runtime Hacking)
+
 Rather than hacking low-level C++ engines like `llama.cpp` to expose and route continuous activations, each custom expert's 4 layers are compiled as a **single, unified ONNX computational graph** executed locally on the NPU (via ONNX Runtime with the Ryzen AI Execution Provider).
+
 - The input is a sequence of shared Token IDs.
 - The NPU performs the forward pass: `Embedding (L2) ──► BitNet Core (L3) ──► LM Head (L4)`.
 - The output is a sequence of shared Token IDs.
 - The host system reads and routes these Token IDs with minimal memory bandwidth.
 
 ### 2. Integration with External Models (GGUF Codecs)
+
 If the swarm needs to call an external commercial model (e.g. a Llama-70B running on CUDA), we treat it as a black box and wrap it in a **Boundary Translation Codec (Traductor Inverso)**:
+
 - **Input path**: The codec takes our sovereign Token IDs, decodes them to raw UTF-8 text, and tokenizes the text using the external model's proprietary tokenizer.
 - **Output path**: The codec decodes the external model's output tokens back to raw UTF-8 text, and tokenizes it using our sovereign Tokenizer back into Capa 1 Token IDs.
 - Using UTF-8 text as the translation boundary eliminates token-alignment errors and ensures 100% compatibility with any model.
 
 ### 3. The Chained Inference Protocol (Example)
+
 For a chained query like `(2+2) / 3`:
+
 1. The **Prolog Gate** parses the execution graph and routes the query metadata.
 2. **Expert A (Addition)** executes: receives `[VAL_2, ADD, VAL_2]` in sovereign tokens, processes it, and generates `[VAL_4]` in sovereign tokens.
 3. The orchestrator routes the token list `[VAL_4]` and the remainder `/ 3` directly into **Expert B (Division)**.
@@ -433,4 +446,3 @@ For a chained query like `(2+2) / 3`:
                               │       (2 bytes, discrete, clean)      │
                               └────────────────────────────────────────┘
 ```
-
