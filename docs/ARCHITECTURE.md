@@ -87,12 +87,13 @@ The aggregator combines expert outputs based on the routing strategy:
 
 The original BitNet thesis remains valid — but repositioned:
 - **Ternary weights** (`{-1, 0, 1}`) are ideal for NPU and CPU where FP16 throughput is limited
-- **NEAT evolution** can breed specialized micro-experts (7M params) that run on the NPU at 96 tok/s
-- **Net2Net expansion** grows experts that plateau without losing knowledge
+- **NEAT evolution** breeds specialized micro-topologies ($10\text{K}-100\text{K}$ params) that run on the NPU at 96 tok/s
+- **Net2Net expansion** grows experts structurally without losing learned knowledge
+- **Gradient refinement (QLoRA/Backprop)** scales these networks up to the 7M parameter threshold
 - **The Heavyweight models** on CUDA don't need to be ternary — they use standard GGUF/INT4 quantization
 
 This creates a **dual-tier system**:
-- **Tier 1 (Evolved)**: BitNet micro-experts bred via NEAT, deployed on NPU/CPU
+- **Tier 1 (Hybrid Evolved)**: BitNet micro-experts evolved via NEAT and optimized via gradients up to 7M parameters, deployed on NPU/CPU
 - **Tier 2 (Pre-trained)**: Foundation models (Qwen3, Falcon3, LLaMA) deployed on CUDA/Vulkan
 
 ### 5. TurboQuant KV Cache (Preserved)
@@ -102,158 +103,87 @@ With 4 accelerators maintaining independent KV caches, memory pressure multiplie
 - Enable cross-expert context handoff without recomputation
 - Allow the CPU expert to hold 128K+ token contexts in DDR5
 
-### 6. The Lisp Metaprogrammer — The Game Changer
+### 6. The Python Orchestrator & Dynamic PEFT Management
 
-> *"Code is data. Data is code. The network is a program that rewrites itself."*
+> *"Why rebuild the compiler when you can hot-swap the weights? Direct hardware execution beats runtime abstraction."*
 
-This is the pillar that turns Frankenswarm from an inference system into a **living organism**.
+This is the core engine that manages the active topology dynamically, replacing theoretical compilation chains with a pragmatic, high-performance execution flow.
 
-#### The Core Insight: Homoiconicity
+#### The Core Insight: Dynamic Graph Assembly
 
-Lisp is the only family of languages where **the code and the data share the same structure** (S-expressions). A neural network topology — its layers, connections, weights — can be represented as a nested list. And in Lisp, nested lists *are* the program.
+Instead of a custom Lisp REPL that re-compiles topologies on the fly, Frankenswarm v2 uses **Python Orchestration** to swap **LoRA/QLoRA adapters** dynamically over frozen shared base models. The orchestrator represents the active swarm configuration as a standard JSON schema, updating the runtime graphs on standard acceleration frameworks (ONNX Runtime, llama.cpp, vLLM) in milliseconds.
 
 This means:
-- A BitNet expert's architecture is a **Lisp expression**
-- The NEAT mutator is a **Lisp function that rewrites Lisp expressions**
-- The routing policy is a **Lisp expression that the system can modify about itself**
-
-The network doesn't just *run*. It **reads itself, modifies itself, and continues running** — without stopping, without recompiling, without losing state.
+- The base models (e.g., Qwen-1.5B, TinyLlama) are loaded once into hardware memory (NPU/iGPU).
+- The routing policy is managed via Prolog/Python mappings.
+- Specific domain experts are represented as lightweight **PEFT adapter weights** (~10MB–100MB) that are hot-swapped dynamically into the active context without restarting the inference server.
 
 #### What This Looks Like in Practice
 
-```lisp
-;; A BitNet expert is just data
-(defvar *expert-alpha*
-  '(:name "code-specialist"
-    :silicon :npu
-    :layers ((linear :in 384 :out 512 :weights :ternary)
-             (attention :heads 4 :dim 128)
-             (linear :in 512 :out 384 :weights :ternary))
-    :fitness 0.73
-    :generation 14))
+```python
+# Dynamic Adapter Swapping & Routing Flow
+class SwarmOrchestrator:
+	def __init__(self, base_model_path: str):
+		self.base_model = self._load_base_model(base_model_path)
+		self.active_adapters = {}
 
-;; NEAT mutation: add a layer — just list manipulation
-(defun mutate-add-layer (expert)
-  (let ((layers (getf expert :layers))
-        (new-layer '(linear :in 512 :out 512 :weights :ternary)))
-    (setf (getf expert :layers)
-          (insert-after layers 1 new-layer))
-    (setf (getf expert :generation)
-          (1+ (getf expert :generation)))
-    expert))
+	def hot_swap_adapter(self, expert_id: str, adapter_path: str):
+		"""Loads a domain-specific LoRA adapter dynamically at runtime."""
+		if expert_id in self.active_adapters:
+			self.unload_adapter(expert_id)
+		self.load_lora_weights(expert_id, adapter_path)
+		self.active_adapters[expert_id] = adapter_path
 
-;; Net2Net expansion: grow a layer's width — the network keeps its memory
-(defun net2net-expand (expert layer-idx new-width)
-  (let* ((layer (nth layer-idx (getf expert :layers)))
-         (old-width (getf layer :out)))
-    ;; Zero-pad: new neurons start at 0 (identity in BitNet)
-    (setf (getf layer :out) new-width)
-    ;; The network is STILL RUNNING while we do this
-    (hot-reload-weights expert layer-idx
-                        :pad-strategy :zero
-                        :old-width old-width)))
-
-;; The routing policy is ALSO code the system can rewrite
-(defvar *routing-policy*
-  '(lambda (query)
-     (cond
-       ((simple-p query)        :npu)
-       ((reasoning-p query)     :cuda)
-       ((long-context-p query)  :cpu)
-       (t                       :vulkan))))
-
-;; After observing that NPU handles 60% of "reasoning" queries fine:
-;; The system REWRITES ITS OWN ROUTING POLICY
-(defun evolve-routing (observations)
-  (when (> (npu-success-rate observations :reasoning) 0.6)
-    (setf *routing-policy*
-          '(lambda (query)
-             (cond
-               ((simple-p query)        :npu)
-               ((and (reasoning-p query)
-                     (< (complexity query) 0.7))  :npu)  ;; NEW RULE
-               ((reasoning-p query)     :cuda)
-               ((long-context-p query)  :cpu)
-               (t                       :vulkan))))))
+	def route_and_execute(self, query: str):
+		# Fast intent triage
+		intent, confidence = prolog_gate.classify(query)
+		if confidence > 0.85:
+			# NPU Scout execution via active expert
+			return self.execute_npu(intent, query)
+		else:
+			# Escalate cascade to heavy CUDA model
+			return self.execute_cuda(query)
 ```
 
-#### The Three Loops of Self-Modification
+#### The Three Adaptation Loops
 
-Frankenswarm doesn't have one feedback loop — it has three, running at different timescales:
+Frankenswarm operates on three distinct feedback loops at different timescales:
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│               THE THREE EVOLUTIONARY LOOPS                   │
+│               THE THREE ADAPTATION LOOPS                    │
 ├────────────┬──────────────┬──────────────────────────────────┤
-│   Loop     │  Timescale   │  What Mutates                    │
+│   Loop     │  Timescale   │  What Adapts                     │
 ├────────────┼──────────────┼──────────────────────────────────┤
-│ FAST       │ Per-query    │ Routing policy                   │
-│ (Prolog)   │ ~200ms       │ Which silicon handles what       │
+│ FAST       │ Per-query    │ Routing decisions                │
+│ (Prolog)   │ ~200ms       │ Which accelerator handles the task│
 ├────────────┼──────────────┼──────────────────────────────────┤
-│ MEDIUM     │ Per-session  │ Expert weights                   │
-│ (NEAT)     │ ~minutes     │ BitNet ternary mutations         │
+│ MEDIUM     │ Per-session  │ Activation thresholds            │
+│ (Orch.)    │ ~minutes     │ Confidence boundaries (θ)        │
 ├────────────┼──────────────┼──────────────────────────────────┤
-│ SLOW       │ Per-sleep    │ Network topology + hardware map  │
-│ (Lisp)     │ ~hours       │ Add/remove layers, migrate       │
-│            │              │ experts between accelerators     │
+│ SLOW       │ Per-sleep    │ Micro-expert weights & routing   │
+│ (Metabolic)│ ~hours       │ Local QLoRA/Distillation (3 AM)  │
+│            │              │ and NAS routing weight search    │
 └────────────┴──────────────┴──────────────────────────────────┘
 ```
 
-**FAST loop**: Prolog observes which expert answered correctly and adjusts routing weights. If the NPU keeps nailing "reasoning" queries, Prolog stops sending them to CUDA. This happens *between queries*.
+- **FAST loop**: The Prolog Gate evaluates routing rules and dispatch metrics, assigning queries to the most cost-efficient accelerator.
+- **MEDIUM loop**: The Orchestrator adjusts the classification confidence thresholds (θ) based on user interaction feedback to reduce latency overhead.
+- **SLOW loop**: During the 3 AM sleep cycle, the system runs local QLoRA fine-tuning on high-quality daily interaction logs, quantizes the new adapters, and uses Network Architecture Search (NAS) to tune the routing weights.
 
-**MEDIUM loop**: NEAT evaluates fitness of BitNet micro-experts after N queries. The worst die. The best reproduce with mutated ternary weights. This happens during idle time or low-priority windows.
+#### Why Python + GGUF/ONNX?
 
-**SLOW loop**: The Lisp orchestrator — the deepest layer — restructures the entire topology. It adds layers via Net2Net, migrates experts from NPU to CPU if they've grown too large, breeds entirely new specialists, and **rewrites the routing policy itself**. This happens during the Red-Pill sleep cycle (3 AM metabolic window).
+Custom compiled environments add friction. By sticking to Python and standard serialization formats:
+- **Native Hardware Access**: ONNX Runtime and llama.cpp provide direct, optimized execution paths for CUDA, ROCm, Vulkan, and NPU (XDNA2) without custom compilation overhead.
+- **No Compilation Barrier**: Dynamic PEFT loading allows adapter hot-swapping in $<10\text{ms}$ without interrupting active inference streams.
+- **Interoperability**: Direct integration with the Hugging Face and PyTorch ecosystems allows us to leverage state-of-the-art distillation and quantization tools out of the box.
 
-#### Why Not Just Python?
+#### The Hybrid Evolutionary Strategy
 
-Python can do metaprogramming via `exec()`, `ast.parse()`, or metaclasses. But it's **bolted on** — the language wasn't designed for it. You're fighting the runtime.
-
-Lisp was **born** for this:
-- **No compilation barrier**: `eval` runs modified code instantly
-- **Macros are first-class**: You can write code that writes code that writes code
-- **REPL-native**: The entire system is a live, modifiable session
-- **Garbage-collected mutation**: Dead topologies are reclaimed automatically
-- **Serialization is free**: An S-expression IS its own serialization format
-
-The practical implication: at 3 AM, during the sleep cycle, the Lisp orchestrator can:
-1. Read the day's fitness logs
-2. Identify underperforming experts
-3. Expand their layers with Net2Net (zero-pad)
-4. Spawn a NEAT population from the expanded topology
-5. Evaluate the population on cached queries
-6. Deploy the winner to the NPU
-7. Update the routing policy to give the new expert more traffic
-8. **All without stopping a single inference server**
-
-This is not optimization. This is **evolution**. The system you go to sleep with is not the system you wake up to.
-
-#### The Convergence: Lisp + NEAT + NPU
-
-Here's where it gets truly transgressive:
-
-The NPU runs BitNet at 96 tok/s for 0.6B models. A NEAT-evolved micro-expert of 1-7M parameters would run at **thousands of tok/s** on the NPU. That means the NEAT fitness evaluation loop — which normally takes hours on a GPU — can run **in real-time on the NPU while the GPU does actual work**.
-
-```
-     GPU (CUDA)                    NPU (XDNA2)
-     ┌──────────┐                 ┌──────────────┐
-     │ Serving   │                │ NEAT Loop     │
-     │ Falcon-10B│                │               │
-     │ to user   │                │ Population:   │
-     │           │    ◄────────── │ 100 BitNet    │
-     │ (23 t/s)  │   deploy      │ micro-experts │
-     │           │   winner      │ evaluating    │
-     └──────────┘                │ at 1000+ t/s  │
-                                 │               │
-                                 │ Lisp REPL     │
-                                 │ mutating      │
-                                 │ topologies    │
-                                 └──────────────┘
-```
-
-The GPU serves. The NPU evolves. In parallel. At 2 watts.
-
-**The system is literally growing new neurons while answering your questions.**
+Evolving model weights for parameters scaling towards 7M is mathematically impractical due to the Curse of Dimensionality. Genetic algorithms suffer from evolutionary noise and stagnation at scale. Frankenswarm resolves this via a hybrid model:
+1. **Seed Phase (NEAT)**: Genetically breed micro-topologies ($10\text{K}-100\text{K}$ parameters) for basic logic gates and classification tasks where low dimensionality makes genetic search highly efficient.
+2. **Growth Phase (Net2Net)**: Expand the micro-expert architectures structurally using Net2Net expansion without losing learned functions.
+3. **Consolidation Phase (PEFT/Backpropagation)**: Once the network scales beyond $100\text{K}$ parameters towards the 7M threshold, we transition to gradient-based learning (QLoRA, distillation) to consolidate representation learning and refine weights.
 
 
 ## The Lifecycle (Evolved)
@@ -277,10 +207,10 @@ graph TD
 
     AGG --> R[Response]
 
-    NEAT[NEAT Breeder] -.-> |"evolves micro-experts"| NPU
-    LISP[Lisp Orchestrator] -.-> |"migrates models"| PG
-    LISP -.-> |"hot-swaps"| NPU
-    LISP -.-> |"breeds"| NEAT
+    NAS[NAS / Genetic Search] -.-> |"tunes thresholds"| PG
+    ORCH[Python Orchestrator] -.-> |"updates routing schema"| PG
+    ORCH -.-> |"hot-swaps adapters"| NPU
+    METAB[Metabolic QLoRA (3 AM)] -.-> |"trains micro-experts"| NPU
 
     style NPU fill:#1a3a2a,color:#86EFAC
     style CUDA fill:#4a1942,color:#F9A8D4
@@ -288,8 +218,8 @@ graph TD
     style VK fill:#374151,color:#D1D5DB
     style PG fill:#3b2a00,color:#FDE68A
     style AGG fill:#1f2937,color:#E5E7EB
-    style NEAT fill:#7c2d12,color:#FED7AA
-    style LISP fill:#7c2d12,color:#FED7AA
+    style NAS fill:#7c2d12,color:#FED7AA
+    style ORCH fill:#7c2d12,color:#FED7AA
 ```
 
 ## The Difference
@@ -301,7 +231,7 @@ graph TD
 | Routing | None (single model) | Prolog on embeddings | **Prolog on intent + hardware affinity** |
 | Energy | Fixed (~250W) | Fixed (~80W on GPU) | **2W–80W adaptive** |
 | Scaling | Bigger GPU | More micro-experts | **More accelerator types** |
-| Evolution | Retraining | NEAT + Net2Net | **NEAT + Net2Net + hardware migration** |
+| Evolution | Retraining | NEAT + Net2Net | **NAS + QLoRA + Net2Net growth** |
 | Latency | Fixed | Variable (swap overhead) | **Cascade: 200ms (NPU) → 2s (CUDA)** |
 
 ## Integration with Red-Pill
@@ -360,7 +290,7 @@ What we validate in this phase:
 - [ ] Can the Aggregator merge/vote on multi-expert responses?
 - [ ] Can Cascade escalation (NPU → CUDA) work reliably?
 - [ ] Is the energy savings hypothesis real in practice (80% NPU)?
-- [ ] Can the Lisp orchestrator hot-swap models on the NPU?
+- [ ] Can the Python orchestrator hot-swap adapters on the NPU?
 
 **No training. No NEAT. No custom models.** Just plumbing, routing, and aggregation. If this works, the thesis is proven: heterogeneous hardware MoE is viable on consumer silicon.
 
@@ -374,7 +304,7 @@ Once the infrastructure is validated, we enter the Arena: training custom BitNet
 
 ## The Three-Layer Expert Architecture
 
-Every expert in the Arena has three distinct layers, each with its own evolutionary timeline:
+Every expert in the Arena has three distinct layers, each with its own adaptation timeline:
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -383,73 +313,66 @@ Every expert in the Arena has three distinct layers, each with its own evolution
 │  ┌─────────────────────────────────────────────────────┐    │
 │  │          LAYER 1: THE COMMON SUBSTRATE              │    │
 │  │                                                     │    │
-│  │  Shared across ALL experts. This is the "mother      │    │
-│  │  tongue" of the swarm — the universal embedding      │    │
-│  │  space that ensures every expert speaks the same     │    │
-│  │  language. When one expert outputs a vector, any     │    │
-│  │  other expert can consume it without translation.    │    │
+│  │  Shared base model (e.g., Qwen-1.5B/TinyLlama).     │    │
+│  │  This is the frozen foundation layer that provides   │    │
+│  │  universal representations and syntax.               │    │
 │  │                                                     │    │
-│  │  • Trained ONCE, frozen, shared weights              │    │
-│  │  • Evolves SLOWLY (major version upgrades only)      │    │
-│  │  • Think of it as the "spinal cord" of the swarm     │    │
+│  │  • Frozen base weights, loaded once in memory       │    │
+│  │  • Never trained directly on local interaction data │    │
+│  │  • Upgraded only via major model revisions          │    │
 │  └──────────────────────┬──────────────────────────────┘    │
 │                         │                                   │
 │  ┌──────────────────────▼──────────────────────────────┐    │
-│  │          LAYER 2: THE ADAPTER (Bridge)              │    │
+│  │          LAYER 2: THE ADAPTER (LoRA)                │    │
 │  │                                                     │    │
-│  │  Learned projection between the Common Substrate     │    │
-│  │  and the Specialist Core. This is the "neck" that    │    │
-│  │  translates generic representations into domain-     │    │
-│  │  specific activations and vice versa.                │    │
+│  │  Lightweight parameter-efficient adapter.           │    │
+│  │  Dynamically loaded and swapped at runtime to        │    │
+│  │  specialize the base model on specific domains.      │    │
 │  │                                                     │    │
-│  │  • Lightweight (LoRA-scale: ~1% of total params)     │    │
-│  │  • Re-trained when EITHER Layer 1 or Layer 3 mutates │    │
-│  │  • Acts as a buffer: Layer 1 and 3 never touch       │    │
-│  │    each other directly                               │    │
+│  │  • PEFT/LoRA weight modules (~10MB-100MB scale)      │    │
+│  │  • Swapped dynamically in <10ms by the orchestrator  │    │
+│  │  • Prevents catastrophic forgetting via isolation    │    │
 │  └──────────────────────┬──────────────────────────────┘    │
 │                         │                                   │
 │  ┌──────────────────────▼──────────────────────────────┐    │
 │  │          LAYER 3: THE SPECIALIST CORE               │    │
 │  │                                                     │    │
-│  │  Domain-specific knowledge. This is what makes       │    │
-│  │  the expert an EXPERT. A code specialist has         │    │
-│  │  different weights here than a logic specialist.     │    │
+│  │  Task-specific optimization layers. Evolved via      │    │
+│  │  genetic search for micro-nets, or fine-tuned       │    │
+│  │  via gradient descent (QLoRA) for larger targets.     │    │
 │  │                                                     │    │
-│  │  • Evolves FAST via NEAT (ternary weight mutations)  │    │
-│  │  • Grows via Net2Net (zero-padding expansion)        │    │
-│  │  • Each expert's Layer 3 is unique and sovereign     │    │
+│  │  • Seeded via NEAT for micro-nets (10K-100K params)  │    │
+│  │  • Scaled structurally using Net2Net expansion      │    │
+│  │  • Gradients (QLoRA/Backprop) refine weights up to   │    │
+│  │    the 7M parameter threshold                       │    │
 │  └─────────────────────────────────────────────────────┘    │
 └─────────────────────────────────────────────────────────────┘
 ```
 
 ### Why Three Layers?
 
-The problem with monolithic models is that **everything is entangled**. If you improve the code generation capability, you might degrade the reasoning capability. Catastrophic forgetting.
+Monolithic models suffer from **catastrophic forgetting** and representational entanglement. If you improve the code generation capability, you might degrade the reasoning capability. Catastrophic forgetting.
 
-The three-layer design solves this through **decoupled evolution**:
+The three-layer design solves this through **decoupled adaptation**:
 
-| Layer | Shared? | Evolution Speed | What Mutates |
+| Layer | Shared? | Adaptation Speed | What Adapts |
 |-------|:-------:|:---------------:|--------------|
-| **Common Substrate** | Yes — all experts | Glacial (months) | The "language" all experts speak |
-| **Adapter** | No — per expert | Reactive (auto-retrain) | Bridge when either neighbor changes |
-| **Specialist Core** | No — per expert | Rapid (NEAT daily) | Domain-specific knowledge |
+| **Common Substrate** | Yes — all experts | Frozen (static) | Base linguistic and representational capabilities |
+| **Adapter (PEFT)** | No — per expert | Rapid (LoRA training) | Dynamic weight adaptations loaded per task |
+| **Specialist Core** | No — per expert | Hybrid (NEAT $\rightarrow$ Backprop) | Topology evolution & task-specific weights |
 
-The Adapter is the key innovation. It **decouples** the two evolutionary pressures:
-- The Common Substrate wants **stability** (all experts must stay compatible)
-- The Specialist Core wants **change** (NEAT is constantly mutating it)
+The PEFT Adapter is the key bridge. It isolates the specialist weights from the shared base layers, allowing independent specialization without polluting or corrupting other experts.
 
-Without the Adapter, every mutation in the Specialist would break compatibility with the swarm. With it, the Specialist can evolve freely — the Adapter absorbs the translation cost.
-
-### The Lifecycle of a Layer Upgrade
+### The Lifecycle of an Adapter Upgrade
 
 ```mermaid
 graph LR
-    A["Layer 3 mutates<br/>(NEAT overnight)"] --> B["Adapter detects<br/>distribution shift"]
-    B --> C["Adapter re-trains<br/>(lightweight, ~minutes)"]
-    C --> D["Expert resumes<br/>serving with new<br/>Specialist Core"]
+    A["Specialist/Adapter fine-tunes<br/>(QLoRA overnight)"] --> B["Verify regressions<br/>via local benchmarks"]
+    B --> C["Quantize & register adapter<br/>(~minutes)"]
+    C --> D["Orchestrator hot-swaps<br/>adapter in active serving"]
 
-    E["Layer 1 upgrades<br/>(new embedding model)"] --> F["ALL Adapters<br/>re-train"]
-    F --> G["Specialists untouched<br/>No knowledge lost"]
+    E["Common Substrate updates<br/>(new base model)"] --> F["Adapters re-train<br/>on cached daily logs"]
+    F --> G["No knowledge lost<br/>(distilled into new adapter)"]
 
     style A fill:#1a3a2a,color:#86EFAC
     style E fill:#4a1942,color:#F9A8D4
@@ -457,120 +380,93 @@ graph LR
     style F fill:#3b2a00,color:#FDE68A
 ```
 
-When the **Specialist mutates** (daily, via NEAT): only that expert's Adapter re-trains. 2 minutes. No other expert is affected.
+When a **Specialist/Adapter is updated** (daily, via overnight QLoRA): only that adapter's weights are compiled and registered. The base model remains running.
 
-When the **Common Substrate upgrades** (rare, major event): ALL Adapters re-train, but **no Specialist knowledge is lost**. This is the Babel Fish Protocol in action — the upgrade cost is absorbed entirely by the Adapter layer.
+When the **Common Substrate upgrades** (e.g. migrating from TinyLlama to Qwen-1.5B): the specialist cores are not lost; instead, we re-train the adapter layers using the cached daily interaction engrams against the new base representation.
 
----
+## Embedding-Guided Routing & Token Flow
 
-## The Babel Fish Protocol — AI-Native Tokenization
+> *"Vector embeddings determine where the queries land, while text tokens keep the conversation coherent."*
 
-> *"Human languages are lossy compression. The swarm deserves its own tongue."*
+### The Coherence Constraint
 
-### The Problem with Human Tokenization
+While purely vector-based inter-expert communication is theoretically elegant, it results in representational drift and prevents the integration of pre-trained models. Pre-trained weights are aligned to discrete token vocabularies. To maintain compatibility and leverage massive pre-existing model representations:
+- **Inter-expert communication** is conducted using standard text tokens.
+- **Routing & Cascade Triage** is token-free, operating on latent semantic coordinates (embeddings) of the user query and expert outputs.
 
-Every LLM today tokenizes text using human language vocabularies: BPE over English, Chinese, code, etc. This is a historical accident — the first models were trained on human text, so they think in human tokens.
-
-But Frankenswarm's experts don't talk to humans. **They talk to each other.** The Prolog router sends vectors to experts. Experts send vectors to the Aggregator. The only moment human language enters the system is at the **edges** — when the Operator types a question and when the system returns an answer.
-
-So why force the internal communication to use a tokenization scheme designed for English morphology?
-
-### The Solution: A Sovereign Latent Language
+### The Embedding-Guided Routing Protocol
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                   THE BABEL FISH PROTOCOL                    │
+│          EMBEDDING-GUIDED ROUTING & FLOW                    │
 │                                                             │
-│   Human World                    Swarm World                │
-│   ┌──────────┐                  ┌──────────────┐            │
-│   │ "Analiza │   TRANSLATOR     │ [0.23, -0.71 │            │
-│   │  este    │ ──────────────►  │  0.44, 0.02, │            │
-│   │  código" │   (Encoder)      │  ..., -0.15] │            │
-│   └──────────┘                  └──────┬───────┘            │
-│                                        │                    │
-│                                        ▼                    │
-│                                 ┌─────────────┐             │
-│                                 │ Prolog Gate  │             │
-│                                 │ Routes the   │             │
-│                                 │ VECTOR, not  │             │
-│                                 │ the TEXT      │             │
-│                                 └──────┬──────┘             │
-│                                        │                    │
-│                              ┌─────────┼──────────┐         │
-│                              ▼         ▼          ▼         │
-│                           Expert A  Expert B   Expert C     │
-│                           (all communicate in               │
-│                            AI-native embeddings,            │
-│                            never in human tokens)           │
-│                              │         │          │         │
-│                              └─────────┼──────────┘         │
-│                                        ▼                    │
-│   ┌──────────┐                  ┌──────────────┐            │
-│   │ "El bug  │   TRANSLATOR     │ [0.18, 0.55, │            │
-│   │  está en │ ◄──────────────  │  -0.33, 0.89 │            │
-│   │  línea   │   (Decoder)      │  ..., 0.41]  │            │
-│   │  42"     │                  └──────────────┘            │
-│   └──────────┘                                              │
-│                                                             │
-│   Human language is a CODEC,                                │
-│   not the native format.                                    │
+│   Human World                Prolog Gate (Router)           │
+│   ┌──────────┐              ┌──────────────────┐            │
+│   │ "Analiza │ ──────────►  │ Query Vector     │            │
+│   │  este    │   Embed      │ (e.g. MiniLM)    │            │
+│   │  código" │   Vector     │ [0.23, -0.71...] │            │
+│   └──────────┘              └────────┬─────────┘            │
+│                                      │ (Hardware & Intent)  │
+│                                      ▼                      │
+│                               ┌─────────────┐               │
+│                               │ Selects     │               │
+│                               │ Expert(s)   │               │
+│                               └──────┬──────┘               │
+│                                      │                      │
+│                            ┌─────────┼──────────┐           │
+│                            ▼         ▼          ▼           │
+│                         Expert A  Expert B   Expert C       │
+│                         (Communicate using standard text    │
+│                          tokens to maintain coherence)     │
+│                            │         │          │           │
+│                            └─────────┼──────────┘           │
+│                                      ▼                      │
+│                                ┌──────────┐                 │
+│                                │ Consensus│                 │
+│                                │ / Aggreg.│                 │
+│                                └─────┬────┘                 │
+│                                      │ (Text response)      │
+│                                      ▼                      │
+│                                ┌──────────┐                 │
+│                                │ Operator │                 │
+│                                │ Response │                 │
+│                                └──────────┘                 │
 └─────────────────────────────────────────────────────────────┘
 ```
 
-### What AI-Native Tokenization Means
+### The Role of Embeddings in Routing
 
-Instead of tokenizing "function" → `[15205]` (BPE token ID for the English word), the system works directly with **learned semantic coordinates** in a continuous latent space:
+Instead of translating intermediate layer activations across experts, Frankenswarm uses standard semantic embeddings (e.g. from `all-MiniLM-L6-v2` or `nomic-embed-text`) as a high-density classification signal for the Prolog Gate:
 
-| Aspect | Human Tokenization | AI-Native (Babel Fish) |
-|--------|-------------------|----------------------|
-| Vocabulary | 32K-128K discrete tokens (BPE) | Continuous D-dimensional vectors |
-| Language bias | English-centric | Language-agnostic |
-| Granularity | Subword chunks ("func", "tion") | Semantic concepts (whole meaning) |
-| Cross-expert | Each expert needs its own tokenizer | **One shared embedding space** |
-| Compression | Lossy (polysemy, ambiguity) | Dense (each dimension is meaningful) |
-| Evolution | Fixed at training time | **Evolves with the Common Substrate** |
+| Aspect | Classic Router | Embedding-Guided Routing |
+|--------|----------------|--------------------------|
+| Routing Mechanism | Static rules / keyword matching | Semantic similarity + hardware profile |
+| Classification | Hardcoded domains | Dynamic vector coordinates |
+| Handoff Protocol | Text serialization only | Embeddings determine threshold violation |
+| Multilingual | Language-specific parsers | Shared multilingual embedding space |
+| Adaptive Optimization | Manual weight tuning | Heuristic/genetic search (NAS) over thresholds |
 
-### The Translator: Multilingual ↔ AI-Native
-
-The Translator is the **only component** in Frankenswarm that understands human language. It sits at the boundary:
+### The Dynamic Router Implementation
 
 ```python
-# Conceptual architecture
-class BabelFishTranslator:
-    """Bidirectional Human ↔ AI-Native bridge."""
+# Embedding-Guided Router & Cascade
+class SwarmRouter:
+	def __init__(self, embedding_model, prolog_engine):
+		self.embedder = embedding_model
+		self.prolog = prolog_engine
 
-    def __init__(self):
-        self.encoder = SemanticEncoder()    # Human text → latent vector
-        self.decoder = SemanticDecoder()    # Latent vector → human text
-
-    def human_to_swarm(self, text: str, source_lang: str = "auto") -> Vector:
-        """
-        Any human language → AI-native embedding.
-        The swarm never sees the human text. Only the vector.
-        Spanish, English, Chinese, Arabic — all collapse
-        to the same latent point if they mean the same thing.
-        """
-        return self.encoder.encode(text, lang=source_lang)
-
-    def swarm_to_human(self, vector: Vector, target_lang: str = "es") -> str:
-        """
-        AI-native embedding → human language of operator's choice.
-        The expert's output is language-agnostic.
-        The Translator chooses how to say it.
-        """
-        return self.decoder.decode(vector, lang=target_lang)
+	def route_query(self, query: str) -> str:
+		# 1. Generate semantic vector for intent classification
+		query_vector = self.embedder.encode(query)
+		
+		# 2. Run Prolog classification over vector metadata
+		metadata = self.extract_metadata(query, query_vector)
+		destination = self.prolog.query(f"route({metadata}, Destination)")
+		return destination
 ```
 
-### Why This Matters
-
-1. **True multilingual**: A Spanish-speaking operator and a Japanese-speaking operator get the same quality — the experts don't care about language.
-2. **Zero translation loss between experts**: Expert A's output is already in the right format for Expert B. No text serialization/deserialization.
-3. **Evolvable**: When the Common Substrate upgrades its embedding dimension (e.g., 384D → 768D), only the Translator's encoder/decoder re-trains. The experts adapt via their Adapter layers.
-4. **Compression**: A human sentence of 20 tokens becomes a single 384D vector. Inter-expert communication is O(D) instead of O(tokens).
-
-### Phase A (PoC): Use `all-MiniLM-L6-v2` as the Translator. 384D, pre-trained, good enough to validate routing.
-
-### Phase B (Arena): Train a custom Translator optimized for the swarm's specific domain vocabulary. The embedding space becomes truly AI-native — no longer constrained by a model trained on English Wikipedia.
+### Phase A (PoC): Use pre-trained `all-MiniLM-L6-v2` embeddings (384D) to generate routing signals.
+### Phase B (Arena): Optimize the classification boundaries and cascade thresholds using Network Architecture Search (NAS) during the sleep cycle.
 
 ---
 
@@ -578,23 +474,22 @@ class BabelFishTranslator:
 
 ```
   Human     ┌───────────┐     ┌────────────────────────────────────────┐     ┌───────────┐     Human
-  Input ──► │ TRANSLATOR│ ──► │            THE SWARM                    │ ──► │ TRANSLATOR│ ──► Output
-  (any      │ (Encoder) │     │                                        │     │ (Decoder) │     (any
-  language) └───────────┘     │  ┌────────┐  ┌────────┐  ┌────────┐   │     └───────────┘     language)
-                              │  │Expert A│  │Expert B│  │Expert C│   │
+  Input ──► │  PROLOG   │ ──► │            THE SWARM                    │ ──► │ AGGREGATOR│ ──► Output
+  (Text)    │  ROUTER   │     │                                        │     │ (Consensus│     (Text)
+            │ (Embed.)  │     │  ┌────────┐  ┌────────┐  ┌────────┐   │     │  / Vote)  │
+            └───────────┘     │  │Expert A│  │Expert B│  │Expert C│   │     └───────────┘
                               │  │┌──────┐│  │┌──────┐│  │┌──────┐│   │
-                              │  ││Common││  ││Common││  ││Common││   │  ← SHARED (same weights)
+                              │  ││Common││  ││Common││  ││Common││   │  ← Frozen Base Weights
                               │  │├──────┤│  │├──────┤│  │├──────┤│   │
-                              │  ││Adapt.││  ││Adapt.││  ││Adapt.││   │  ← PER-EXPERT (bridge)
+                              │  ││Adapt.││  ││Adapt.││  ││Adapt.││   │  ← LoRA / PEFT (Dynamic)
                               │  │├──────┤│  │├──────┤│  │├──────┤│   │
-                              │  ││Spec. ││  ││Spec. ││  ││Spec. ││   │  ← PER-EXPERT (NEAT evolves)
+                              │  ││Spec. ││  ││Spec. ││  ││Spec. ││   │  ← Trained (NAS/Backprop)
                               │  │└──────┘│  │└──────┘│  │└──────┘│   │
                               │  └────────┘  └────────┘  └────────┘   │
                               │        ▲          ▲          ▲        │
                               │        └──────────┼──────────┘        │
-                              │             Prolog Gate               │
-                              │         (routes AI-native vectors,    │
-                              │          never human text)            │
+                              │            Text Tokens                │
+                              │       (legible & compatible)          │
                               └────────────────────────────────────────┘
 ```
 

@@ -6,20 +6,19 @@
 
 Frankenswarm is a **physically-distributed Mixture of Experts** that turns every accelerator in your machine into a specialized inference node. Instead of one big model on one big GPU, it runs multiple models across **all available silicon** — discrete GPU, integrated GPU, CPU, and Neural Processing Unit — each one an expert with different strengths, speeds, and energy costs.
 
-A Prolog router classifies intent. A Lisp orchestrator evolves the topology in real-time. BitNet micro-experts breed via genetic algorithms on the NPU at 2 watts while the GPU serves your actual queries.
+A Prolog router classifies intent. A Python orchestrator manages the active topology dynamically. Specialized LoRA micro-experts run on the NPU at 2 watts while the GPU serves your heavyweight queries.
 
-**The system grows new neurons while answering your questions.**
+**The system adapts its active routing and fine-tunes specialized adapters dynamically.**
 
-## The Equation (Evolved)
+## The Equation (Recalibrated)
 
 ```
 Frankenswarm v2 = Hardware MoE (GPU + iGPU + CPU + NPU)
                 + Prolog Gate (intent → silicon routing)
-                + Lisp REPL (live topology mutation)
-                + BitNet 1.58b (ternary micro-experts)
-                + NEAT (genetic evolution)
-                + Net2Net (capacity expansion)
-                + TurboQuant (3-bit KV cache compression)
+                + Python Orchestrator (dynamic adapter management)
+                + LoRA / PEFT (task-specific micro-experts)
+                + NAS (Network Architecture Search for thresholds and fallbacks)
+                + Knowledge Distillation (heavy model → micro-expert)
 ```
 
 ## The Hardware (Measured — Strix Point, 2026-05-22)
@@ -32,17 +31,17 @@ Frankenswarm v2 = Hardware MoE (GPU + iGPU + CPU + NPU)
 | XDNA2 NPU | Qwen3-0.6B | 96 | ~2W | Fast Scout / NEAT Breeder |
 | XDNA2 NPU | Qwen3-8B | 10.6 | ~2W | Orchestrator / Triage |
 
-## The Three Evolutionary Loops
+## The Three Adaptation Loops
 
 | Loop | Timescale | What Mutates |
 |------|-----------|--------------|
 | **FAST** (Prolog) | Per-query (~200ms) | Routing policy — which silicon handles what |
-| **MEDIUM** (NEAT) | Per-session (~minutes) | Expert weights — ternary mutations |
-| **SLOW** (Lisp) | Per-sleep (~hours) | Network topology + hardware affinity |
+| **MEDIUM** (Orchestrator) | Per-session (~minutes) | Activation thresholds and cascade fallback weights (NAS) |
+| **SLOW** (Metabolic) | Per-sleep (~hours) | Local fine-tuning (QLoRA) of specialized micro-experts |
 
-## Why Lisp?
+## Why Python + ONNX/GGUF?
 
-Because **code is data**. A neural network topology is an S-expression. A Lisp function can read it, mutate it, and deploy it — without stopping the system. The network rewrites itself at 3 AM and you wake up to a smarter machine.
+By sticking to standard python-based orchestrations and standardized formats like ONNX and GGUF, we gain native access to hardware accelerator runtimes (CUDA, ROCm, Vulkan, NPU) without adding compilation overhead. Topology is managed dynamically as a standard JSON schema, and hot-swapping adapters is a simple lightweight weight-loading call rather than hot-swapping runtimes.
 
 → See [ARCHITECTURE.md](docs/ARCHITECTURE.md) for the full thesis.
 
@@ -54,7 +53,7 @@ Because **code is data**. A neural network topology is an S-expression. A Lisp f
 | All-CUDA (local) | ~2.2 kWh |
 | **Frankenswarm Cascade** | **~0.05 kWh** |
 
-80% of queries are answered by the NPU at 2 watts. The GPU only fires for the hard questions. **200x more efficient than cloud inference.**
+For queries where a specialized local micro-expert (0.6B-1.5B) provides acceptable quality, we run at 2 watts on the NPU. The GPU (80W+) is kept in sleep mode, firing only when the cascade's confidence threshold is violated. This makes the local swarm **up to 200x more efficient** for routine triage and classification tasks.
 
 ## Project Status
 
@@ -65,8 +64,8 @@ Because **code is data**. A neural network topology is an S-expression. A Lisp f
 | Hardware Discovery (benchmarks) | ✅ Done |
 | Prolog Gate (intent routing) | 🔲 Next |
 | Aggregator (multi-expert consensus) | 🔲 Planned |
-| BitNet Real (ternary micro-experts) | 🔲 Planned |
-| NEAT + Lisp Evolution | 🔲 Planned |
+| LoRA Specialization & Distillation | 🔲 Planned |
+| NAS & Python Orchestration | 🔲 Planned |
 
 → See [ROADMAP.md](docs/ROADMAP.md) for the full plan.
 
