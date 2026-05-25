@@ -166,14 +166,14 @@ Frankenswarm operates on three distinct feedback loops at different timescales:
 │ (Orch.)    │ ~minutes     │ Confidence boundaries (θ)        │
 ├────────────┼──────────────┼──────────────────────────────────┤
 │ SLOW       │ Per-sleep    │ Micro-expert weights & routing   │
-│ (Metabolic)│ ~hours       │ Local QLoRA/Distillation (3 AM)  │
-│            │              │ and NAS routing weight search    │
+│ (Metabolic)│ ~hours       │ PopuLoRA Asymmetric Self-Play   │
+│            │              │ and weight-space SVD crossovers  │
 └────────────┴──────────────┴──────────────────────────────────┘
 ```
 
 - **FAST loop**: The Prolog Gate evaluates routing rules and dispatch metrics, assigning queries to the most cost-efficient accelerator.
 - **MEDIUM loop**: The Orchestrator adjusts the classification confidence thresholds (θ) based on user interaction feedback to reduce latency overhead.
-- **SLOW loop**: During the 3 AM sleep cycle, the system runs local QLoRA fine-tuning on high-quality daily interaction logs, quantizes the new adapters, and uses Network Architecture Search (NAS) to tune the routing weights.
+- **SLOW loop**: During the 3 AM sleep cycle, the system runs a **PopuLoRA asymmetric self-play session** overnight: GPU-bound models (Teacher role) generate frontier-difficulty tasks while NPU/iGPU/CPU-bound micro-experts (Student role) attempt them. Weak adapters are replaced using low-rank weight crossovers (SVD rotations, module swaps) to keep the curriculum actively moving.
 
 #### Why Python + GGUF/ONNX?
 
@@ -189,7 +189,7 @@ Evolving model weights for parameters scaling towards 7M is mathematically impra
 
 1. **Seed Phase (NEAT)**: Genetically breed micro-topologies ($10\text{K}-100\text{K}$ parameters) for basic logic gates and classification tasks where low dimensionality makes genetic search highly efficient.
 2. **Growth Phase (Net2Net)**: Expand the micro-expert architectures structurally using Net2Net expansion without losing learned functions.
-3. **Consolidation Phase (PEFT/Backpropagation)**: Once the network scales beyond $100\text{K}$ parameters towards the 7M threshold, we transition to gradient-based learning (QLoRA, distillation) to consolidate representation learning and refine weights.
+3. **Consolidation Phase (PEFT/PopuLoRA)**: Once the network scales beyond $100\text{K}$ parameters towards the 7M threshold, we transition to gradient-based learning combined with **PopuLoRA asymmetric self-play**. GPU-bound teachers and NPU-bound students engage in a co-evolutionary arms race, using low-rank crossovers on LoRA tensors to retain parent capabilities.
 
 ## The Lifecycle (Evolved)
 

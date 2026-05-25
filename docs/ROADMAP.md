@@ -48,10 +48,12 @@ Multiple experts respond — the system decides who wins.
 ## ── END OF PHASE A: PoC (Existing Models) ──
 ## ── BEGIN PHASE B: THE ARENA (Specialized Adapters & Distillation) ──
 
-## Phase 4: QLoRA Specialization Pipeline (Local Training)
-Establish a structured workflow to train task-specific micro-experts from daily interaction datasets.
+## Phase 4: QLoRA Specialization Pipeline (Local Training & PopuLoRA Arena)
+Establish a structured workflow to train task-specific micro-experts from daily interaction datasets and autonomous self-play.
 - [ ] Implement automatic training dataset compilation from Qdrant engram scores (filtering high-quality interactions)
 - [ ] Configure QLoRA parameter-efficient fine-tuning scripts for local base models (e.g. Qwen-1.5B/TinyLlama)
+- [ ] Integrate **PopuLoRA asymmetric self-play** to generate local coding and reasoning tasks autonomously, bypassing the dataset bottleneck
+- [ ] Implement low-rank weight-space crossovers and mutations to evolve the student populations directly in PyTorch/Safetensors space
 - [ ] Set up evaluation pipelines (using LM-Eval or custom benchmark query sets) to confirm no task regression
 - [ ] Validate adapter performance under low-resource constraints (NPU/iGPU execution)
 - [ ] Embed training metadata directly into the adapter artifacts for registry versioning
@@ -64,9 +66,9 @@ Manage dynamic loading and hot-swapping of PEFT adapters over a shared base mode
 - [ ] Enable parallel execution of multiple adapters via batching or sequential forward pass pooling
 - [ ] Support fallback to base model weights when classifier confidence (θ) is below routing thresholds
 
-## Phase 6: Knowledge Distillation & Quantization
+## Phase 6: Knowledge Distillation & Quantization (Teacher-Student Self-Play)
 Compress heavyweight capabilities into hyper-fast, low-wattage local micro-experts.
-- [ ] Establish a distillation pipeline: parent model (RTX 5070 CUDA, 10B+) $\rightarrow$ student micro-expert (1.5B/0.6B)
+- [ ] Establish an online distillation pipeline using the **PopuLoRA RLVR loop**: parent model (RTX 5070 CUDA, 10B+, as Teacher) $\rightarrow$ student micro-expert (1.5B/0.6B, as Student)
 - [ ] Quantize distilled student models to GGUF / AWQ formats optimized for CPU and Vulkan iGPU execution
 - [ ] Benchmark token throughput on NPU (target: $150+\text{ tok/s}$ for quantized distilled micro-experts)
 - [ ] Integrate distilled models with FastFlowLM custom model loaders on XDNA2
