@@ -128,7 +128,7 @@ def run_arena():
 			# 3. Calcular Pérdida conjunta (Entropía cruzada conceptual + afectiva)
 			loss_concept = F.cross_entropy(pred_concept_logits, concept_token_ids_tensor)
 			loss_emotion = F.cross_entropy(pred_emotion_logits, emotion_token_ids_tensor)
-			loss = loss_concept + loss_emotion
+			loss = loss_concept + 0.3 * loss_emotion
 			loss.backward()
 
 			# Actualizar parámetros (Capa 3 y proyecciones de Capa 2/4)

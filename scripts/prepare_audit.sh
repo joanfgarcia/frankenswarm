@@ -30,7 +30,11 @@ append_file "frankenswarm_core.pl"
 append_file "pyswip_bridge.py"
 
 # Deep Documentation
-find docs -type f -name "*.md" 2>/dev/null | sort | while read -r line; do
+# NOTE: docs/extern/ is INTENTIONALLY EXCLUDED from the digest.
+# It contains external audit reports and third-party opinions.
+# Including them would bias future auditors by exposing prior conclusions,
+# compromising the independence of their assessment.
+find docs -type f -name "*.md" -not -path "docs/extern/*" 2>/dev/null | sort | while read -r line; do
 	append_file "$line"
 done
 
