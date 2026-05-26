@@ -659,3 +659,52 @@ Emocionales: alegría↔tristeza (2121), miedo→tristeza (966), ira↔dolor (89
 | Confusiones conceptuales (fuego≈sol) | ❌ Heredadas de fastembed |
 | Anomalía "agente" | 🟡 Estructural (token ambiguo) |
 
+---
+
+## Experimento 005b — Unfrozen Embeddings (respuesta a Sonnet)
+
+**Fecha**: 2026-05-26 21:38 CEST
+**Script**: `src/bitnet/train_unfrozen.py`
+**Cambio**: `register_buffer` → `nn.Parameter(requires_grad=True)`
+**Estado**: ✅ COMPLETADO — Resultado: descongelar EMPEORA todo
+
+### Comparativa 005 vs 005b
+
+| Métrica | 🧊 Frozen (005) | 🔓 Unfrozen (005b) |
+|---|---|---|
+| Conjunta μ | **93.48%** | 76.53% |
+| Conjunta σ | **6.10%** | 12.14% |
+| Conjunta min | **75.83%** | 39.34% |
+| Consistencia mensajes | **84.0%** | 47.7% |
+| Gramática [C,C,E] | ✅ Clara | ❌ Difusa |
+
+### Embedding drift
+
+- Conceptos: drift L2 = 2.1—3.3 (movimiento masivo)
+- Emociones: drift L2 = 1.1—1.5 (menos movimiento)
+- **fuego↔sol**: coseno 0.567 → **-0.258** (se separaron a anti-correlación)
+- **agua↔gato**: coseno 0.529 → 0.246 (se separaron parcialmente)
+
+### Diagnóstico
+
+Los agentes SÍ separaron fuego de sol, pero al mover los embeddings desestabilizaron el espacio completo:
+- Aparecieron confusiones NUEVAS peores (tierra↔código 805, perro↔gato 786)
+- La gramática posicional se deshizo (diversidad ~10-12 en las 3 posiciones, ya no hay estructura)
+- La consistencia del proto-léxico cayó de 84% a 48%
+
+> [!IMPORTANT]
+> **Lección: Los embeddings congelados son el SUELO del jardín.**
+> Las confusiones heredadas (fuego≈sol) son el precio de tener un terreno estable.
+> Sin ese suelo, los agentes no pueden coordinar un proto-lenguaje.
+> La emergencia requiere un mapa compartido e inmutable como punto de partida.
+
+### Actualización de la tabla emergencia vs herencia
+
+| Componente | ¿Emergente? | ¿Requiere suelo estable? |
+|---|---|---|
+| Gramática posicional [C,C,E] | ✅ Emergente | ✅ Sí — desaparece sin embeddings fijos |
+| Redundancia conceptual (repetición) | ✅ Emergente | ✅ Sí — se pierde sin estabilidad |
+| Cifrado emocional (sol=miedo) | ✅ Emergente | ✅ Sí — consistencia cae 84%→48% |
+| Confusiones conceptuales | ❌ Fastembed | N/A — se resuelven pero crean caos nuevo |
+
+### Decisión: MANTENER embeddings congelados para toda la línea de investigación
