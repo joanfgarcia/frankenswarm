@@ -86,9 +86,11 @@ class ExperimentLogger:
 		emotion_correct: int,
 		joint_correct: int,
 		batch_size: int,
+		message_tokens: list[str] | None = None,
+		tf_ratio: float | None = None,
 	) -> None:
 		"""Log a single training step."""
-		self._write({
+		record = {
 			"type": "step",
 			"epoch": epoch,
 			"step": step,
@@ -107,7 +109,12 @@ class ExperimentLogger:
 			"emotion_correct": emotion_correct,
 			"joint_correct": joint_correct,
 			"batch_size": batch_size,
-		})
+		}
+		if message_tokens is not None:
+			record["message_tokens"] = message_tokens
+		if tf_ratio is not None:
+			record["tf_ratio"] = round(tf_ratio, 4)
+		self._write(record)
 
 	def log_epoch(
 		self,
