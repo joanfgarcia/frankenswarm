@@ -48,15 +48,25 @@ Multiple experts respond — the system decides who wins.
 ## ── END OF PHASE A: PoC (Existing Models) ──
 ## ── BEGIN PHASE B: THE ARENA (Specialized Adapters & Distillation) ──
 
-## Phase 4: QLoRA Specialization Pipeline (Local Training & PopuLoRA Arena)
-Establish a structured workflow to train task-specific micro-experts from daily interaction datasets and autonomous self-play.
-- [ ] Implement automatic training dataset compilation from Qdrant engram scores (filtering high-quality interactions)
-- [ ] Configure QLoRA parameter-efficient fine-tuning scripts for local base models (e.g. Qwen-1.5B/TinyLlama)
-- [ ] Integrate **PopuLoRA asymmetric self-play** to generate local coding and reasoning tasks autonomously, bypassing the dataset bottleneck
-- [ ] Implement low-rank weight-space crossovers and mutations to evolve the student populations directly in PyTorch/Safetensors space
-- [ ] Set up evaluation pipelines (using LM-Eval or custom benchmark query sets) to confirm no task regression
-- [ ] Validate adapter performance under low-resource constraints (NPU/iGPU execution)
-- [ ] Embed training metadata directly into the adapter artifacts for registry versioning
+## Phase 4: Ternary BitNet & PopuLoRA Arena (Grado 0 — Preescolar)
+Establish a structured workflow to train custom 4-layer ternary BitNet (1.58b) models from scratch using emergent referential signaling games with homeostatic registers and active vocabulary subsetting.
+- [x] Implement the 4-layer BitNet architecture with frozen translators (Capa 2 and 4) and ternary weight quantization (STE / BitLinear)
+- [x] Implement dual Referential Dataset Breeder generating physical concept + emotional state targets
+- [x] Configure PopuLoRA training arena with joint multitask cross-entropy loss, SVD crossover, and CUDA execution
+- [ ] **Plan de Ataque de 4 Semanas para el MVP Afectivo**:
+	- **Semana 1: MVP Homeostático**
+		- [ ] Implementar la clase de Homeostasis Física (Energía, Temperatura, Integridad) acoplada a las señales afectivas del Hablante
+		- [ ] Implementar Active Vocabulary Subsetting (enmascaramiento dinámico a 256 tokens) en el Outbound Head
+		- [ ] Validar paso forward/backward homeostático unitario (1 vs 1)
+	- **Semana 2: Matchmaking y Arena PopuLoRA Afectiva**
+		- [ ] Integrar matchmaking por TrueSkill en la Arena con población de 4 agentes
+		- [ ] Validar supervivencia colectiva y evolución de dialectos en GPU (RTX 5070)
+	- **Semana 3: Dynamic Vocabulary & Empathy Annealing**
+		- [ ] Implementar escalador dinámico de vocabulario expandiendo de 256 a 8.192 tokens según el éxito del swarm
+		- [ ] Realizar recocido de temperatura de Gumbel-Softmax en paralelo con la expansión del léxico
+	- **Semana 4: Compilación ONNX y Router Frankenswarm**
+		- [ ] Exportar el micro-experto ternario entrenado a ONNX INT8 e integrarlo en el enrutador Prolog de Frankenswarm
+		- [ ] Validar inferencia local en NPU de bajísimo consumo (<2W)
 
 ## Phase 5: Mixture of Adapters (MoA) Orchestration
 Manage dynamic loading and hot-swapping of PEFT adapters over a shared base model.
@@ -112,7 +122,7 @@ Scale the orchestration to multi-agent, collaborative routing architectures.
 | 2.5 — Cage | 🔲 Planned | PoC | systemd |
 | 3 — Aggregator | 🔲 Planned | PoC | All 4 |
 | **── PoC validated ──** | | | |
-| 4 — QLoRA Pipeline | 🔲 Planned | Arena | NPU / GPU / CPU |
+| 4 — Ternary BitNet (Grado 0) | 🔲 In Progress | Arena | NPU / GPU / CPU |
 | 5 — Mixture of Adapters | 🔲 Planned | Arena | GPU / CPU / iGPU |
 | 6 — Distillation & Quantization | 🔲 Planned | Arena | NPU + CPU |
 | 7 — NAS & Python Orchestration | 🔲 Planned | Arena | Orchestrator |
