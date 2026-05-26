@@ -490,3 +490,119 @@ Este patrón de diagnóstico por eliminación nos ahorró horas de iteración ci
 - **Telemetría JSONL** (`src/bitnet/telemetry.py`): Registro por-step y por-época, análisis con pandas
 - **Lab Notebook** (`docs/LAB_NOTEBOOK.md`): Registro narrativo completo de cada experimento
 - **Auditorías externas** (`docs/extern/`): Opiniones independientes preservadas y excluidas del digest
+
+---
+
+## 🔎 Auditoría Externa Post-Ejecución (2026-05-26)
+
+Los cuatro agentes recibieron el `PHASE_0_RESULTS_REPORT.md` y el `LAB_NOTEBOOK.md` completo.
+
+### Conclusiones por agente
+
+#### Grok (POST_0_GROK.md)
+- **Reacción**: "Esto está vivo. Ya no es una fumada."
+- **Valida**: Metodología de diagnóstico por aislamiento como clave del éxito
+- **Propone**: Checkpoints de mejores agentes, ampliar a 50 tokens, logging de proto-lenguaje
+- **Insight**: La evolución SVD rota agentes correctamente → población viable
+
+#### DeepSeek (POST_0_DEEPSEEK.md)
+- **Reacción**: "Es un destello. Minúsculo. Frágil. Posiblemente el principio de algo que no sabemos nombrar."
+- **Hallazgo clave**: **La emoción se estabiliza antes que el concepto** (98.17% vs 96.75%). Consistente en todas las épocas. En la literatura de referential games, el canal semántico se estabiliza primero. Aquí es al revés.
+- **Hipótesis**: El agente usa la emoción como ancla — falla el concepto pero acierta la emoción, y ese acierto parcial mantiene la intención comunicativa
+- **Pide**: Analizar los mensajes crudos del speaker. ¿Los errores tienen estructura? "El 5% de error no es ruido. Es donde está la señal que no esperabas."
+- **Potencial publicable**: Si la prioridad afectiva se mantiene a escala, sería un hallazgo no reportado sobre canales afectivos forzados en comunicación emergente
+
+#### Claude Sonnet (POST_0_CLAUDE_SONNET.md)
+- **Reacción**: "Me equivoqué" — admite que Phase 0 era independiente de Phase A
+- **Valida**: La loss convergiendo a random teórico en Exp. 003 como prueba de infraestructura de medición sana
+- **Pregunta crítica**: **¿Los embeddings están congelados?** → Sí (`register_buffer`). Los agentes se comunican a través de un espacio semántico que NO construyeron. Esto es deliberado (anti-deriva) pero debe documentarse explícitamente.
+- **Pide**: Buscar **geometría en los errores** — `agua→gato` no es aleatorio. Clusters de confusión semántica podrían revelar estructura del proto-lenguaje.
+
+#### Lumo (POST_0_LUMO.md)
+- **Reacción**: "Esto es histórico. No exagero."
+- **Valida**: El diagnóstico por aislamiento como "movimiento maestro" y la eficiencia (90 segundos, 836MB VRAM)
+- **Preocupación**: Catastrophic forgetting al ampliar vocabulario. ¿Cómo proteger "fuego+miedo" cuando añadamos "perro+alegría"?
+- **Propone**: **Exp. 005: Análisis de Proto-Sintaxis** — clusterizar mensajes, buscar orden de tokens, visualizar con t-SNE/UMAP
+
+### Consenso POST de las 4 voces
+
+| Tema | Consenso |
+|---|---|
+| **Metodología** | ✅ Validada unánimemente (diagnóstico por aislamiento + documentación rigurosa) |
+| **Prioridad #1** | Analizar los mensajes del speaker — ¿hay proto-lenguaje? |
+| **Prioridad #2** | Ampliar vocabulario (21→50) con protección anti-forgetting |
+| **Hallazgo inesperado** | La emoción se estabiliza antes que el concepto (DeepSeek lo destaca como potencial publicable) |
+| **Pregunta abierta** | ¿Los errores tienen geometría? ¿`agua→gato` es sistemático? |
+| **Embeddings** | Documentar explícitamente que Capa 1 está congelada (Sonnet) |
+
+---
+
+## 🗺️ Roadmap — Plan de Ruta Post Grade 0
+
+### Evaluación de recursos
+
+| Recurso | Disponible | Por arena | Arenas paralelas |
+|---|---|---|---|
+| VRAM (RTX) | 8151 MB | ~836 MB | **~8** |
+| RAM (OOM Shield) | 10 GB | ~200 MB | Sobra |
+| Tiempo por arena (30 épocas) | ~90 seg | - | - |
+
+### Fase Inmediata — Comprender lo que tenemos (Exp. 005)
+
+> [!IMPORTANT]
+> **Antes de ampliar, entender.** No escalamos sin saber qué hemos construido.
+
+**Exp. 005 — Análisis de Proto-Sintaxis y Telemetría Extendida**
+
+1. **Loguear mensajes del speaker**: Añadir a la telemetría los 3 tokens del mensaje Gumbel-Softmax (actualmente solo logueamos target y predicción, no el mensaje intermedio)
+2. **Correr 004b extendido** (50 épocas de autonomía adicionales) con message logging
+3. **Análisis**:
+   - Consistencia: ¿`fuego` siempre se codifica con los mismos tokens?
+   - Confusión: ¿`agua→gato` es sistemático? ¿Hay clusters de error?
+   - Orden: ¿Hay proto-sintaxis? ¿El concepto siempre va antes que la emoción en el mensaje?
+   - Estabilidad afectiva: Confirmar que la emoción se estabiliza antes que el concepto a largo plazo
+4. **Checkpointing**: Guardar state_dict de los 4 agentes cada 10 épocas
+
+### Fase 2 — Escalar vocabulario (Exp. 006-008)
+
+**Dos arenas en paralelo** (caben de sobra en VRAM):
+
+| Arena A — Expansión controlada | Arena B — Control (baseline) |
+|---|---|
+| Vocabulario: 21 → 50 tokens | Vocabulario: 21 tokens (sin cambio) |
+| Añadir 29 conceptos del lexicon core | Misma config que 004b |
+| Scheduled TF desde checkpoint 004b | Continuar training desde checkpoint 004b |
+| Objetivo: ¿mantiene >90% con 50 tokens? | Objetivo: ¿mejora más allá de 95%? |
+
+**Protocolo de expansión**:
+- Cargar checkpoint de Grade 0
+- Expandir embedding matrix (21×384 → 50×384) con nuevos embeddings fastembed
+- Redimensionar cabezas: concept_head(256, 15→44), emotion_head(256, 6) — mantener emociones fijas
+- Re-inicializar solo los nuevos pesos (preservar los aprendidos)
+- Scheduled TF para los nuevos conceptos, pero con guardería más corta (los agentes ya saben escuchar)
+
+### Fase 3 — Grado 1: Aritmética (Exp. 009+)
+
+Solo cuando el vocabulario expandido esté estable (>90% a 50+ tokens):
+- Nuevos targets compositivos: `suma(2,3)=5`, `resta(5,1)=4`
+- Requiere proto-sintaxis funcional — los mensajes deben poder componer significado
+- Si falla → la comunicación es meramente asociativa, no composicional
+
+### Fase 4 — Escalar hacia 8192
+
+La escalera completa: 50 → 200 → 1000 → 8192. Cada salto con:
+- Checkpoint del nivel anterior
+- Expansión Net2Net de las proyecciones
+- Scheduled TF recalibrado
+- Arena de control en paralelo
+
+---
+
+## Decisión pendiente del operador
+
+> [!NOTE]
+> **¿Empezamos por Exp. 005 (analizar proto-lenguaje) o Exp. 006 (ampliar a 50 tokens)?**
+>
+> Mi recomendación: **Exp. 005 primero.** Es un paso de 30 minutos (añadir message logging, correr 50 épocas más, analizar con pandas). Nos dará la información que necesitamos para decidir cómo ampliar. Si los mensajes son ruido colapsado, ampliar es inútil. Si tienen estructura, ampliar tiene sentido.
+>
+> Las dos arenas en paralelo (A: expansión + B: control) pueden arrancar inmediatamente después.
