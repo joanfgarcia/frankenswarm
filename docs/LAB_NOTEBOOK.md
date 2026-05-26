@@ -397,9 +397,63 @@ El Exp. 004a demostró que el listener alcanza 100% en 350 steps con teacher for
 | `transition_end` | 20 | nuevo |
 | `architecture` | **dual_head_unified** | nuevo (DualHeadAgent) |
 
-### Resultados
+### Resultados — 🏆 ÉXITO
 
-_(Pendiente de ejecución)_
+| Época | Fase | TF | Loss | Concepto | Emoción | Conjunta |
+|---|---|---|---|---|---|---|
+| 1 | 🍼 Guardería | 100% | 3.282 | 20.09% | 27.66% | 9.38% |
+| 2 | 🍼 Guardería | 100% | 1.127 | 70.50% | 72.34% | 54.39% |
+| 3 | 🍼 Guardería | 100% | 0.160 | 96.69% | 97.66% | 94.47% |
+| 4 | 🍼 Guardería | 100% | 0.034 | 99.30% | 99.52% | 98.83% |
+| 5 | 🍼 Guardería | 100% | 0.015 | 99.67% | 99.80% | 99.48% |
+| 6 | 🎮 Recreo | 93% | 0.143 | 96.70% | 98.77% | 95.64% |
+| 7 | 🎮 Recreo | 87% | 0.121 | 97.34% | 99.06% | 96.47% |
+| 8 | 🎮 Recreo | 80% | 0.142 | 97.19% | 98.61% | 95.89% |
+| 9 | 🎮 Recreo | 73% | 0.266 | 95.25% | 97.45% | 92.89% |
+| 10 | 🎮 Recreo | 67% | 0.309 | 94.89% | 97.27% | 92.38% |
+| 11 | 🎮 Recreo | 67% | 0.341 | 94.27% | 97.03% | 91.81% |
+| 12 | 🎮 Recreo | 60% | 0.429 | 93.36% | 95.06% | 89.22% |
+| 13 | 🎮 Recreo | 53% | 0.480 | 92.27% | 94.67% | 88.02% |
+| 14 | 🎮 Recreo | 47% | 0.183 | 97.39% | 98.64% | 96.19% |
+| 15 | 🎮 Recreo | 40% | 0.197 | 96.89% | 98.91% | 95.86% |
+| 16 | 🎮 Recreo | 33% | 0.207 | 97.45% | 98.08% | 95.64% |
+| 17 | 🎮 Recreo | 27% | 0.500 | 92.92% | 94.86% | 88.30% |
+| 18 | 🎮 Recreo | 20% | 0.150 | 97.22% | 99.31% | 96.56% |
+| 19 | 🎮 Recreo | 13% | 0.344 | 94.30% | 97.81% | 92.52% |
+| 20 | 🎮 Recreo | 7% | 0.166 | 97.44% | 99.31% | 96.75% |
+| **21** | **🦅 Autonomía** | **0%** | **0.277** | **96.75%** | **98.17%** | **95.08%** |
+
+> [!IMPORTANT]
+> **🏆 PROMOTED TO GRADE 1 en Época 21.**
+> Cuatro agentes BitNet de 1.58 bits se comunican autónomamente con 95.08% de entendimiento mutuo conjunto (concepto + emoción) sin ningún teacher forcing.
+
+### Observaciones clave
+
+#### 1. ✅ La guardería funciona (0% → 99% en 5 épocas)
+Los 4 agentes aprendieron a decodificar concepto+emoción desde ground truth en solo 1000 steps. Confirma los resultados de Exp. 004a con población completa.
+
+#### 2. ✅ La transición TF → autonomía es estable
+Al bajar teacher forcing de 100% a 7%, la accuracy conjunta oscila entre 88-97% pero **nunca colapsa**. Los agentes mantienen el conocimiento adquirido incluso cuando la mayoría de los mensajes son del speaker (no del profesor).
+
+#### 3. ✅ La autonomía total mantiene el 95%
+En la época 21 (TF=0%), primer epoch completamente autónomo: **95.08% conjunta**. Los agentes han desarrollado un protocolo de comunicación emergente funcional.
+
+#### 4. 🟡 La emoción se aprende más rápido que el concepto
+Consistentemente, Acc. Emoción > Acc. Concepto (~2-3 puntos porcentuales). Con 6 clases emocionales vs 15 conceptos, esto es esperado — menos opciones = convergencia más rápida.
+
+#### 5. 🟡 La evolución SVD funciona correctamente
+El peor agente rota entre los 4 (ya no es siempre Agent_0). Los hijos SVD arrancan con conocimiento transferido y se recuperan rápidamente. Fitness de la población en autonomía: todos entre 93-96%.
+
+### Muestra de comunicación autónoma (Época 21, TF=0%)
+
+```
+target=(tierra,ira)     → pred=(tierra,ira)     ✅
+target=(gato,alegría)   → pred=(gato,alegría)   ✅
+target=(agua,ira)       → pred=(gato,ira)       ❌ (concepto incorrecto)
+target=(sol,ira)        → pred=(sol,ira)        ✅
+target=(casa,tristeza)  → pred=(casa,tristeza)  ✅
+```
+
 
 ---
 
