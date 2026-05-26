@@ -1,0 +1,19 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+
+# IDE / Editor configuration
+.vscode/
+.idea/
+
+# Ruff
+.ruff_cache/
+
+# Project generated artifacts
+FRANKENSWARM_DIGEST.txt
