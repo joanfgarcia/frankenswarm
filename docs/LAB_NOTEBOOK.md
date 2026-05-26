@@ -598,11 +598,64 @@ La escalera completa: 50 → 200 → 1000 → 8192. Cada salto con:
 
 ---
 
-## Decisión pendiente del operador
+## Decisión: Exp. 005 ejecutado primero
 
-> [!NOTE]
-> **¿Empezamos por Exp. 005 (analizar proto-lenguaje) o Exp. 006 (ampliar a 50 tokens)?**
->
-> Mi recomendación: **Exp. 005 primero.** Es un paso de 30 minutos (añadir message logging, correr 50 épocas más, analizar con pandas). Nos dará la información que necesitamos para decidir cómo ampliar. Si los mensajes son ruido colapsado, ampliar es inútil. Si tienen estructura, ampliar tiene sentido.
->
-> Las dos arenas en paralelo (A: expansión + B: control) pueden arrancar inmediatamente después.
+Se implementó Exp. 005 (proto-syntax analysis) antes de escalar vocabulario.
+
+---
+
+## Experimento 005 — Proto-Syntax Analysis (60 épocas, message logging)
+
+**Fecha**: 2026-05-26 21:19 CEST
+**Script**: `src/bitnet/train_proto_syntax.py`
+**Duración**: ~180 seg | **Checkpoints**: épocas 10, 20, 30, 40, 50, 60
+**Estado**: ✅ ÉXITO — Proto-lenguaje emergente descubierto
+
+### Autonomía (40 épocas, TF=0%)
+
+| Métrica | μ | σ | Min | Max |
+|---|---|---|---|---|
+| Concepto | 98.07% | 1.72% | 93.89% | 100.00% |
+| Emoción | 95.21% | 5.56% | 78.23% | 100.00% |
+| Conjunta | 93.48% | 6.10% | 75.83% | 100.00% |
+
+### 🧬 Proto-Lenguaje Emergente
+
+Gramática posicional descubierta: `[CONCEPTO, CONCEPTO, EMOCIÓN_CIFRADA]`
+
+| Emoción | Cifrado (Pos 2) | Consistencia |
+|---|---|---|
+| miedo | **sol** | 95.0% |
+| alegría | **peligro** | 95.8% |
+| tristeza | **tristeza** | 95.5% |
+| dolor | **agua** | 96.2% |
+| hambre | **código** | 96.3% |
+| ira | ira/agente | 34.7% (inestable) |
+
+**Anomalías**: "fuego"→`[tristeza,tristeza,X]`, "agente" oscila entre identidad y emoción.
+
+### Confusiones
+
+Conceptuales: fuego↔sol (301), gato→fuego (244), peligro↔árbol (230)
+Emocionales: alegría↔tristeza (2121), miedo→tristeza (966), ira↔dolor (890)
+
+---
+
+## 🔎 Auditoría POST Exp. 005
+
+| Agente | Hallazgo clave |
+|---|---|
+| **Grok** | Redundancia posicional = corrección de errores auto-descubierta |
+| **DeepSeek** | "Anomalía Agente": único concepto sustituible por emoción → categoría ontológica diferente |
+| **Sonnet** | Confusiones heredadas de fastembed (congelados). Proto-gramática SÍ es emergente. Propone descongelar antes de ampliar |
+| **Lumo** | Emociones = eje binario (positivo/negativo + alta/baja energía). "Agente" como semilla de Díscolo |
+
+### Consenso: lo emergente vs lo heredado
+
+| Componente | ¿Emergente? |
+|---|---|
+| Gramática posicional [C,C,E] | ✅ 100% emergente |
+| Cifrado emocional (sol=miedo) | ✅ Emergente (arbitrario) |
+| Confusiones conceptuales (fuego≈sol) | ❌ Heredadas de fastembed |
+| Anomalía "agente" | 🟡 Estructural (token ambiguo) |
+
