@@ -103,9 +103,24 @@ Para que cualquiera entienda este léxico táctico, podemos traducirlo a cómo u
 
 ---
 
+## 🏫 3.6. El Eco del Error: Gradientes, Castigos y Alarmas
+
+Para entender cómo aprenden los agentes y cómo corregimos sus sesgos (como el fallo en las restas), traducimos la optimización matemática a la dinámica de supervivencia dentro del búnker:
+
+*   **La Pérdida (Loss / El Lamento del Búnker)**:
+    *   *Matemáticas*: La función de Entropía Cruzada $\mathcal{L} = -\sum y_i \log(\hat{y}_i)$.
+    *   *En el Lore*: **El Lamento**. Cada vez que un agente comete un error al calcular o decodificar, suena una sirena de alarma en el búnker. Cuanto mayor es el fallo, más alto es el volumen del Lamento. El objetivo de los agentes es ajustar sus mentes hasta que el búnker esté en absoluto silencio (Loss cercano a 0).
+*   **El Gradiente (Gradient / El Eco del Error)**:
+    *   *Matemáticas*: La derivada de la pérdida respecto a los pesos $\nabla_w \mathcal{L}$.
+    *   *En el Lore*: **El Eco del Error**. Cuando suena la alarma, el sonido viaja hacia atrás por los cables de la radio (Retropropagación / *Backpropagation*). Este eco golpea las neuronas de los agentes y les indica exactamente qué conexiones sinápticas causaron el fallo y en qué dirección deben girar sus diales internos (pesos de 1.58 bits) para que la próxima vez la alarma suene más floja.
+*   **El Castigo Amplificado (Loss Weighting / La Alarma Roja)**:
+    *   *Matemáticas*: Multiplicador de gradiente $\mathcal{L}_{\text{weighted}} = \mathcal{L} \times (1.0 + 1.0 \cdot \mathbb{I}(\text{op} = \text{resta}))$.
+    *   *En el Lore*: **La Alarma Roja**. En el búnker, equivocarse en una suma es un problema, pero equivocarse en una resta es una brecha de seguridad letal (un error al restar puede hacer que sobreestimemos los recursos de defensa). Para solucionarlo, configuramos la radio para que, si el fallo ocurre en una resta, el volumen del Lamento se duplique. El Eco del Error golpea las neuronas con el doble de fuerza, forzando a los agentes a recalibrar la lógica de la resta con máxima prioridad.
+
+---
+
 ## 🗺️ 4. El Mapa del Silicio: De la Red Neuronal al LORE
 
-Aquí tienes el mapeo exacto de cómo la arquitectura técnica de nuestros agentes de 1.58 bits se traduce a los conceptos de nuestro universo narrativo:
 
 | Componente Técnico | Nombre de Campo | Función en el Lore |
 |---|---|---|
