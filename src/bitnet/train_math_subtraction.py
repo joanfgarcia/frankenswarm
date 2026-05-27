@@ -99,6 +99,12 @@ def run_math_subtraction_arena():
 	breeder = CompositionalMathDatasetBreeder(translator, split_ratio=split_ratio, seed=seed)
 	print(f"📊 Partición Aritmética Completa: Train={len(breeder.train_equations)} | Test={len(breeder.test_equations)}")
 
+	curriculum_mode = config.get("curriculum_mode", None)
+	train_eqs_stage1 = None
+	if curriculum_mode == "stage_restas":
+		train_eqs_stage1 = [eq for eq in breeder.train_equations if eq[1] == 1 and eq[3] > 0]
+		print(f"🎓 Curriculum Mode: stage_restas | Etapa 1 (Restas R>0): {len(train_eqs_stage1)} | Etapa 2 (Completo): {len(breeder.train_equations)}")
+
 	# 3. Inicializar Población
 	pop_size = config["pop_size"]
 	hidden_dim = config["hidden_dim"]
@@ -177,7 +183,15 @@ def run_math_subtraction_arena():
 			tau = max(tau_min, tau_start * (1.0 - current_step / total_steps))
 
 			# Lote aritmético del conjunto de entrenamiento: (A, op, B, R)
-			op_a_targets, op_a_token_ids, operator_targets, operator_token_ids, op_b_targets, op_b_token_ids, result_targets, result_token_ids = breeder.generate_batch(batch_size, mode="train")
+			current_eqs = None
+			if curriculum_mode == "stage_restas" and epoch < 25:
+				current_eqs = train_eqs_stage1
+			else:
+				current_eqs = breeder.train_equations
+
+			op_a_targets, op_a_token_ids, operator_targets, operator_token_ids, op_b_targets, op_b_token_ids, result_targets, result_token_ids = breeder.generate_batch(
+				batch_size, mode="train", custom_eqs=current_eqs
+			)
 			
 			op_a_token_ids_tensor = torch.from_numpy(op_a_token_ids).long().to(device)
 			operator_token_ids_tensor = torch.from_numpy(operator_token_ids).long().to(device)

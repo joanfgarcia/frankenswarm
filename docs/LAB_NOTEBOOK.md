@@ -1054,6 +1054,53 @@ Evaluación final del mejor agente autónomo comparando sumas y restas:
 
 *Diagnóstico*: EXP_015 valida con éxito que la regularización por Weight Decay ($\lambda=0.1$) combinada con un split de entrenamiento más rico (90/10) evita la memorización por fuerza bruta en redes ternarias de baja capacidad. Aunque la lógica de restas (40%) es intrínsecamente más difícil de mapear debido a su asimetría en comparación con las sumas (100%), este agente autónomo logra un récord del **78.57% de consenso conjunto en test**, demostrando que la fricción en la optimización induce un lenguaje mucho más resiliente y generalizable.
 
+---
+
+## Experimento 016 — Currículo en 2 Etapas (Etapa 1: Restas R>0, Etapa 2: Sumas y Cero, Split 90/10, WD 0.1, Capacidad 128-dim, 2-layer)
+
+**Fecha**: 2026-05-27 15:10 CEST  
+**Script**: `src/bitnet/train_math_subtraction.py` --config `configs/experiments/EXP_016.json`  
+**Device**: CUDA (RTX 4060 Ti)  
+**Estado**: 🏆 ÉXITO — Ejecución completa de 50 épocas. Valida el impacto de la secuenciación de tareas (Curriculum Learning) en redes ternarias de baja capacidad.
+
+### Parámetros de EXP_016
+- `curriculum_mode`: `"stage_restas"` (Etapa 1: Épocas 1-25 solo restas con $R > 0$; Etapa 2: Épocas 26-50 completo)
+- `subtraction_loss_weight`: 1.2
+- `weight_decay`: 0.1
+- `split_ratio`: 0.90
+- `hidden_dim`: 128
+- `num_layers`: 2
+- `epochs`: 50
+- `tf_min`: 0.20
+- `svd_phases`: `["recreo", "autonomia"]`
+- `seed`: 42
+
+### Resultados del Entrenamiento y Validación
+- **Etapa 1 (Épocas 1-25, Solo restas R>0)**:
+  - Consensus de train en restas alcanzó rápidamente el **100.00%** (época 2).
+  - La precisión en test de restas fluctuó en torno al **8-13%**.
+  - La precisión en test de sumas se mantuvo en **0.00%** (esperado, no entrenado).
+- **Etapa 2 (Épocas 26-50, Sumas y Cero reintroducidos)**:
+  - **El Choque (Época 26)**: Pérdida saltó a **5.7338** y train consensus cayó a **41.69%** debido al shock del nuevo operador y el cero.
+  - **Recuperación Rápida**: Hacia la época 30, el train consensus rebotó al **87.88%** y las sumas en test escalaron a **78.70%**.
+  - Train consensus finalizó en **98.03%** en la época 50.
+
+### Evaluación de Dominio de Restas (`scripts/eval_math_subtraction.py`)
+Evaluación final del mejor agente autónomo comparando sumas y restas:
+
+#### Conjunto TRAIN (118 ecuaciones vistas):
+- **Consenso Global**: **95.76%** (113/118)  <-- (+5% vs EXP_015)
+- **➕ SUMAS**: **98.25%** (56/57)  <-- (+10.5% vs EXP_015)
+- **➖ RESTAS**: **93.44%** (57/61)  <-- (Igual que EXP_015)
+
+#### Conjunto TEST (14 ecuaciones NO VISTAS - Zero-Shot):
+- **Consenso Global**: **71.43%** (10/14)  <-- (-7% vs EXP_015)
+- **➕ SUMAS**: **88.89%** (8/9)  <-- (-11% vs EXP_015)
+- **➖ RESTAS**: **40.00%** (2/5)  <-- (Igual que EXP_015)
+
+*Diagnóstico*: El experimento EXP_016 demuestra que estructurar el aprendizaje en etapas temporales segregadas (Curriculum) no mejora la capacidad de generalización final en restas (se estanca en el **40.00%**) y degrada ligeramente la generalización en sumas (**88.89%** vs 100% en EXP_015). El choque térmico/pérdida al reintroducir las sumas en la época 26 desestabiliza las representaciones numéricas que el modelo había asentado en la Etapa 1. Aunque el consensus de entrenamiento se recupera extraordinariamente bien (95.76% global, 98% en sumas), la desorganización de los diales durante el shock limita la flexibilidad composicional zero-shot.
+
+
 
 
 

@@ -87,7 +87,7 @@ class CompositionalMathDatasetBreeder:
 			else:
 				temp_seed += 1
 
-	def generate_batch(self, batch_size: int, mode: str = "train") -> tuple:
+	def generate_batch(self, batch_size: int, mode: str = "train", custom_eqs: list = None) -> tuple:
 		"""
 		Genera un lote de operaciones consistentes a partir del split seleccionado.
 		Devuelve:
@@ -100,7 +100,10 @@ class CompositionalMathDatasetBreeder:
 		- result_targets: Índices locales (0..10)
 		- result_token_ids: Token IDs del translator
 		"""
-		eqs = self.train_equations if mode == "train" else self.test_equations
+		if custom_eqs is not None:
+			eqs = custom_eqs
+		else:
+			eqs = self.train_equations if mode == "train" else self.test_equations
 		indices = np.random.randint(0, len(eqs), size=(batch_size,))
 
 		op_a_list = []
