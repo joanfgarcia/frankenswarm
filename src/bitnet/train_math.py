@@ -6,7 +6,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from src.bitnet.dataset_breeder import ReferentialDatasetBreeder
+from src.bitnet.dataset_breeder import MathDatasetBreeder
 from src.bitnet.modeling_bitnet import BitNet4LayerModel
 from src.bitnet.translator import SovereignTranslator
 from src.bitnet.telemetry import ExperimentLogger
@@ -24,31 +24,24 @@ def svd_crossover(parent_a: nn.Module, parent_b: nn.Module, child: nn.Module, al
 			p_a = parent_a.state_dict()[name]
 			p_b = parent_b.state_dict()[name]
 
-			# Solo aplicamos SVD a tensores bidimensionales (matrices de pesos de proyección)
 			if p_a.ndim == 2:
-				# Interpolación lineal de las matrices de peso
 				w_avg = alpha * p_a + (1.0 - alpha) * p_b
 				try:
-					# Descomposición SVD
 					u, s, vh = torch.linalg.svd(w_avg, full_matrices=False)
-					# Perturbación de valores singulares
 					noise = torch.randn_like(s) * sigma
 					s_perturbed = s + noise
 					s_perturbed.clamp_(min=0.0)
-					# Reconstrucción de la matriz cruzada
 					w_child = u @ torch.diag(s_perturbed) @ vh
 					param.copy_(w_child)
 				except Exception:
-					# Fallback en caso de error numérico en SVD
 					param.copy_(w_avg)
 			else:
-				# Para vectores (bias, escalas), hacemos interpolación simple con ruido
 				noise = torch.randn_like(p_a) * sigma
 				param.copy_(alpha * p_a + (1.0 - alpha) * p_b + noise)
 
 
 def load_config() -> dict:
-	parser = argparse.ArgumentParser(description="Arena de Entrenamiento Frankenswarm")
+	parser = argparse.ArgumentParser(description="Arena Aritmética Frankenswarm")
 	parser.add_argument("--config", type=str, default=None, help="Ruta al archivo de configuración JSON del experimento")
 	args, unknown = parser.parse_known_args()
 
@@ -73,14 +66,13 @@ def load_config() -> dict:
 	return config
 
 
-def run_arena():
+def run_math_arena():
 	config = load_config()
 	experiment_id = config["experiment_id"]
-	print(f"=== 🌋 Iniciando Arena de Comunicación Emergente PopuLoRA — {experiment_id} ===")
+	print(f"=== 🧮 Iniciando Arena Aritmética de Grado 1 — {experiment_id} ===")
 	device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 	print(f"[Device]: {device}")
 
-	# Fijar semilla aleatoria si se especifica en la configuración
 	seed = config.get("seed")
 	if seed is not None:
 		print(f"🌱 [SEED] Fijando semilla aleatoria: {seed}")
@@ -89,31 +81,28 @@ def run_arena():
 		if torch.cuda.is_available():
 			torch.cuda.manual_seed_all(seed)
 
-	# Crear directorios específicos para el experimento
 	base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 	exp_dir = os.path.join(base_dir, "storage", "experiments", experiment_id)
 	os.makedirs(exp_dir, exist_ok=True)
 
-	# Guardar copia de los parámetros reales utilizados
 	config_copy_path = os.path.join(exp_dir, "config.json")
 	with open(config_copy_path, "w", encoding="utf-8") as f:
 		json.dump(config, f, ensure_ascii=False, indent=4)
 	print(f"📄 Parámetros del experimento guardados en {config_copy_path}")
 
-	# 1. Cargar el Traductor de Capa 1
+	# 1. Cargar Traductor
 	translator = SovereignTranslator()
 	vocab_embeddings = translator.get_concept_embeddings()
 
-	# 2. Inicializar Breeder
-	breeder = ReferentialDatasetBreeder(translator)
+	# 2. Inicializar Math Breeder
+	breeder = MathDatasetBreeder(translator)
 
-	# 3. Inicializar Población de Alumnos (BitNet de 4 capas)
+	# 3. Inicializar Población (sin hotstart para evitar colisión de IDs reestructurados)
 	pop_size = config["pop_size"]
 	hidden_dim = config["hidden_dim"]
 	num_layers = config["num_layers"]
 	population = [BitNet4LayerModel(vocab_embeddings=vocab_embeddings, hidden_dim=hidden_dim, num_layers=num_layers).to(device) for _ in range(pop_size)]
 
-	# Cargar checkpoint anterior para heredar la proto-sintaxis si se configura
 	resume_checkpoint = config.get("resume_checkpoint")
 	if resume_checkpoint:
 		if not os.path.isabs(resume_checkpoint):
@@ -130,20 +119,18 @@ def run_arena():
 		else:
 			print(f"ℹ️ Checkpoint {resume_checkpoint} no encontrado. Inicializando con pesos aleatorios.")
 
-	# Optimizadores individuales
 	lr = config["lr"]
 	optimizers = [torch.optim.AdamW(filter(lambda p: p.requires_grad, model.parameters()), lr=lr) for model in population]
 
-	# 4. Definir Micro-Vocabulario mediante logit mask si está configurado
+	# 4. Logit Masking
 	use_logit_mask = config["use_logit_mask"]
 	logit_mask = None
 	if use_logit_mask:
 		micro_vocab_words = config["micro_vocab_words"]
 		if not micro_vocab_words:
 			micro_vocab_words = [
-				"gato", "perro", "casa", "árbol", "agua", "fuego", "tierra", "aire", "sol", "luna",
-				"peligro", "seguridad", "búnker", "agente", "código", "miedo", "alegría", "ira",
-				"tristeza", "dolor", "hambre", "neutral", "urgencia"
+				"cero", "uno", "dos", "tres", "cuatro", "cinco",
+				"seis", "siete", "ocho", "nueve", "diez", "suma", "resta"
 			]
 		micro_vocab_words = list(set(micro_vocab_words))
 		logit_mask = torch.zeros(8192, dtype=torch.bool, device=device)
@@ -153,23 +140,19 @@ def run_arena():
 				logit_mask[tids[0]] = True
 		print(f"🔒 Logit Masking activado: {len(micro_vocab_words)} palabras permitidas.")
 
-	# Telemetría de TrueSkill/Fitness
 	fitness = np.zeros(pop_size)
 	epochs = config["epochs"]
 	steps_per_epoch = config["steps_per_epoch"]
 	batch_size = config["batch_size"]
 
-	# Parámetros de Gumbel-Softmax
 	tau_start = config["tau_start"]
 	tau_min = config["tau_min"]
 	total_steps = epochs * steps_per_epoch
 
-	# Teacher Forcing Schedule y Anclaje Semántico
 	nursery_end = config["nursery_end"]
 	transition_end = config["transition_end"]
 	tf_min = config["tf_min"]
 
-	# Configurar Logger para escribir en el subdirectorio del experimento
 	telemetry_log_path = os.path.join(exp_dir, "telemetry.jsonl")
 	params = dict(config)
 	params["device"] = str(device)
@@ -192,26 +175,26 @@ def run_arena():
 		print(f"\n--- Época {epoch + 1}/{epochs} [{phase_name}] TF={tf_ratio:.0%} ---")
 		epoch_losses = []
 		epoch_correct = 0
-		epoch_concept_correct = 0
-		epoch_emotion_correct = 0
-		epoch_homeostasis_correct = 0
+		epoch_a_correct = 0
+		epoch_op_correct = 0
+		epoch_b_correct = 0
+		epoch_r_correct = 0
 		epoch_total = 0
 
-		# Matriz de interacción para evaluar fitness
 		interactions = np.zeros((pop_size, pop_size))
 		successes = np.zeros((pop_size, pop_size))
 
 		for step in range(steps_per_epoch):
-			# Decaimiento (annealing) de temperatura Gumbel
 			tau = max(tau_min, tau_start * (1.0 - current_step / total_steps))
 
-			# Generar lote de conceptos objetivos, estados emocionales y homeostasis
-			concept_targets, concept_token_ids, emotion_targets, emotion_token_ids, homeostasis_targets, homeostasis_token_ids = breeder.generate_batch(batch_size)
-			concept_token_ids_tensor = torch.from_numpy(concept_token_ids).long().to(device)
-			emotion_token_ids_tensor = torch.from_numpy(emotion_token_ids).long().to(device)
-			homeostasis_token_ids_tensor = torch.from_numpy(homeostasis_token_ids).long().to(device)
+			# Lote aritmético: (A, op, B, R)
+			op_a_targets, op_a_token_ids, operator_targets, operator_token_ids, op_b_targets, op_b_token_ids, result_targets, result_token_ids = breeder.generate_batch(batch_size)
+			
+			op_a_token_ids_tensor = torch.from_numpy(op_a_token_ids).long().to(device)
+			operator_token_ids_tensor = torch.from_numpy(operator_token_ids).long().to(device)
+			op_b_token_ids_tensor = torch.from_numpy(op_b_token_ids).long().to(device)
+			result_token_ids_tensor = torch.from_numpy(result_token_ids).long().to(device)
 
-			# Seleccionar dos agentes distintos de la población
 			idx_speaker = np.random.randint(0, pop_size)
 			idx_listener = np.random.randint(0, pop_size)
 			while idx_listener == idx_speaker:
@@ -226,130 +209,127 @@ def run_arena():
 			opt_speaker.zero_grad()
 			opt_listener.zero_grad()
 
-			# 1. El Hablante recibe el target conceptual, estado emocional y homeostático, y emite un mensaje de longitud 4
-			# Construir entrada: [concept_token_id, emotion_token_id, homeostasis_token_id, 0]
+			# 1. Entrada del Hablante: [A, op, B, 0] (no sabe R a nivel de tokens de entrada)
 			speaker_input = torch.zeros((batch_size, 4), dtype=torch.long, device=device)
-			speaker_input[:, 0] = concept_token_ids_tensor
-			speaker_input[:, 1] = emotion_token_ids_tensor
-			speaker_input[:, 2] = homeostasis_token_ids_tensor
+			speaker_input[:, 0] = op_a_token_ids_tensor
+			speaker_input[:, 1] = operator_token_ids_tensor
+			speaker_input[:, 2] = op_b_token_ids_tensor
 
-			# ── Scheduled Teacher Forcing ──
+			# Ejecución del Speaker para calcular logits del mensaje
+			speaker_logits = speaker(speaker_input, logit_mask=logit_mask)  # (batch_size, 4, 8192)
+
+			# Canal Diferenciable (Gumbel-Softmax)
+			speaker_message = speaker.generate_message(speaker_input, tau=tau, hard=True, logit_mask=logit_mask)
+
+			# 2. Entrada de Profesor (Teacher Message con R)
+			teacher_input = torch.zeros((batch_size, 4), dtype=torch.long, device=device)
+			teacher_input[:, 0] = op_a_token_ids_tensor
+			teacher_input[:, 1] = operator_token_ids_tensor
+			teacher_input[:, 2] = op_b_token_ids_tensor
+			teacher_input[:, 3] = result_token_ids_tensor
+
+			teacher_onehot = F.one_hot(teacher_input, num_classes=8192).float()
+
+			# Scheduled Teacher Forcing
 			use_teacher = torch.rand(batch_size, device=device) < tf_ratio
-
 			if use_teacher.all():
-				message_input = speaker_input
+				message_input = teacher_onehot
 			elif use_teacher.any():
-				speaker_message = speaker.generate_message(speaker_input, tau=tau, hard=True, logit_mask=logit_mask)
-				teacher_onehot = F.one_hot(speaker_input, num_classes=8192).float()
 				mask = use_teacher.view(-1, 1, 1).float()
 				message_input = mask * teacher_onehot + (1 - mask) * speaker_message
 			else:
-				message_input = speaker.generate_message(speaker_input, tau=tau, hard=True, logit_mask=logit_mask)
+				message_input = speaker_message
 
-			# 2. El Oyente recibe el mensaje y predice:
-			# - El concepto en el paso 1 (logits[:, 1, :])
-			# - La emoción en el paso 2 (logits[:, 2, :])
-			# - La homeostasis en el paso 3 (logits[:, 3, :])
+			# 3. El Oyente decodifica la secuencia en los 4 pasos:
+			# - Paso 0: Operando A (basado en m_0)
+			# - Paso 1: Operador   (basado en m_0, m_1)
+			# - Paso 2: Operando B (basado en m_0, m_1, m_2)
+			# - Paso 3: Resultado  (basado en m_0, m_1, m_2, m_3)
 			logits = listener(message_input, logit_mask=logit_mask)  # (batch_size, 4, 8192)
-			pred_concept_logits = logits[:, 1, :]  # (batch_size, 8192)
-			pred_emotion_logits = logits[:, 2, :]  # (batch_size, 8192)
-			pred_homeostasis_logits = logits[:, 3, :]  # (batch_size, 8192)
+			pred_a_logits = logits[:, 0, :]
+			pred_op_logits = logits[:, 1, :]
+			pred_b_logits = logits[:, 2, :]
+			pred_r_logits = logits[:, 3, :]
 
-			# 3. Calcular Pérdida conjunta (Entropía cruzada conceptual + afectiva + homeostática)
-			loss_concept = F.cross_entropy(pred_concept_logits, concept_token_ids_tensor)
-			loss_emotion = F.cross_entropy(pred_emotion_logits, emotion_token_ids_tensor)
-			loss_homeostasis = F.cross_entropy(pred_homeostasis_logits, homeostasis_token_ids_tensor)
-			loss = loss_concept + 1.0 * loss_emotion + 0.5 * loss_homeostasis
+			# Pérdidas del Oyente
+			loss_a = F.cross_entropy(pred_a_logits, op_a_token_ids_tensor)
+			loss_op = F.cross_entropy(pred_op_logits, operator_token_ids_tensor)
+			loss_b = F.cross_entropy(pred_b_logits, op_b_token_ids_tensor)
+			loss_r = F.cross_entropy(pred_r_logits, result_token_ids_tensor)
+			loss_listener = loss_a + loss_op + loss_b + loss_r
+
+			# 4. Pérdida de Consistencia del Emisor (Speaker Consistency Loss)
+			# Fuerza al Speaker a calcular R en la posición 4 de sus logits de salida
+			loss_speaker_cons = F.cross_entropy(speaker_logits[:, 3, :], result_token_ids_tensor)
+
+			# Pérdida Conjunta Total
+			loss = loss_listener + 1.0 * loss_speaker_cons
 			loss.backward()
 
-			# Actualizar parámetros (Capa 3 y proyecciones de Capa 2/4)
 			opt_speaker.step()
 			opt_listener.step()
 
-			# Registrar telemetría
 			epoch_losses.append(loss.item())
 
-			preds_concept = torch.argmax(pred_concept_logits, dim=-1)
-			preds_emotion = torch.argmax(pred_emotion_logits, dim=-1)
-			preds_homeostasis = torch.argmax(pred_homeostasis_logits, dim=-1)
+			# Evaluación de aciertos
+			preds_a = torch.argmax(pred_a_logits, dim=-1)
+			preds_op = torch.argmax(pred_op_logits, dim=-1)
+			preds_b = torch.argmax(pred_b_logits, dim=-1)
+			preds_r = torch.argmax(pred_r_logits, dim=-1)
 
-			c_ok = (preds_concept == concept_token_ids_tensor).sum().item()
-			e_ok = (preds_emotion == emotion_token_ids_tensor).sum().item()
-			h_ok = (preds_homeostasis == homeostasis_token_ids_tensor).sum().item()
+			a_ok = (preds_a == op_a_token_ids_tensor).sum().item()
+			op_ok = (preds_op == operator_token_ids_tensor).sum().item()
+			b_ok = (preds_b == op_b_token_ids_tensor).sum().item()
+			r_ok = (preds_r == result_token_ids_tensor).sum().item()
 
-			# Entendimiento mutuo exitoso si se descodifican correctamente los TRES componentes
-			correct_joint = ((preds_concept == concept_token_ids_tensor) & (preds_emotion == emotion_token_ids_tensor) & (preds_homeostasis == homeostasis_token_ids_tensor)).sum().item()
+			# Consenso absoluto: los 4 elementos decodificados perfectamente
+			correct_joint = ((preds_a == op_a_token_ids_tensor) & 
+							 (preds_op == operator_token_ids_tensor) & 
+							 (preds_b == op_b_token_ids_tensor) & 
+							 (preds_r == result_token_ids_tensor)).sum().item()
 
 			epoch_correct += correct_joint
-			epoch_concept_correct += c_ok
-			epoch_emotion_correct += e_ok
-			epoch_homeostasis_correct += h_ok
+			epoch_a_correct += a_ok
+			epoch_op_correct += op_ok
+			epoch_b_correct += b_ok
+			epoch_r_correct += r_ok
 			epoch_total += batch_size
 
 			interactions[idx_speaker, idx_listener] += batch_size
 			successes[idx_speaker, idx_listener] += correct_joint
 
-			# Extraer tokens del mensaje (para el primer elemento del lote)
-			if message_input.ndim == 2:
-				token_ids = message_input[0].tolist()
-			else:
-				token_ids = torch.argmax(message_input[0], dim=-1).tolist()
-			message_tokens = [translator.decode([tid]) for tid in token_ids]
-
-			sample_c = breeder.get_concept_name(concept_targets[0])
-			sample_e = breeder.get_emotion_name(emotion_targets[0])
-			sample_h = breeder.get_homeostasis_name(homeostasis_targets[0])
-			pred_c_name = translator.decode([preds_concept[0].item()])
-			pred_e_name = translator.decode([preds_emotion[0].item()])
-			pred_h_name = translator.decode([preds_homeostasis[0].item()])
-
-			logger.log_step(
-				epoch=epoch + 1,
-				step=step,
-				loss=loss.item(),
-				loss_concept=loss_concept.item(),
-				loss_emotion=loss_emotion.item(),
-				tau=tau,
-				speaker_id=idx_speaker,
-				listener_id=idx_listener,
-				target_concept=sample_c,
-				target_emotion=sample_e,
-				pred_concept=pred_c_name,
-				pred_emotion=pred_e_name,
-				concept_correct=c_ok,
-				emotion_correct=e_ok,
-				joint_correct=correct_joint,
-				batch_size=batch_size,
-				message_tokens=message_tokens,
-				tf_ratio=tf_ratio,
-				loss_homeostasis=loss_homeostasis.item(),
-				target_homeostasis=sample_h,
-				pred_homeostasis=pred_h_name,
-				homeostasis_correct=h_ok,
-			)
-
+			# Logging
 			if step % 40 == 0:
+				sample_a_name = breeder.get_operand_name(op_a_targets[0])
+				sample_op_name = breeder.get_operator_name(operator_targets[0])
+				sample_b_name = breeder.get_operand_name(op_b_targets[0])
+				sample_r_name = breeder.get_operand_name(result_targets[0])
+
+				pred_a_name = translator.decode([preds_a[0].item()])
+				pred_op_name = translator.decode([preds_op[0].item()])
+				pred_b_name = translator.decode([preds_b[0].item()])
+				pred_r_name = translator.decode([preds_r[0].item()])
+
 				print(f"  step {step:3d} | τ={tau:.3f} TF={tf_ratio:.0%} | loss={loss.item():.3f} | "
-					  f"target=({sample_c},{sample_e},{sample_h}) → pred=({pred_c_name},{pred_e_name},{pred_h_name})")
+					  f"target=({sample_a_name} {sample_op_name} {sample_b_name} = {sample_r_name}) → pred=({pred_a_name} {pred_op_name} {pred_b_name} = {pred_r_name})")
 
 			current_step += 1
 
-		# Calcular fitness acumulado de cada agente (accuracy promedio)
+		# Calcular fitness acumulado de cada agente
 		for i in range(pop_size):
 			sent_total = interactions[i, :].sum() + interactions[:, i].sum()
 			sent_correct = successes[i, :].sum() + successes[:, i].sum()
 			fitness[i] = sent_correct / (sent_total + 1e-10)
 
 		avg_loss = np.mean(epoch_losses)
-		acc_c = (epoch_concept_correct / epoch_total) * 100
-		acc_e = (epoch_emotion_correct / epoch_total) * 100
-		acc_h = (epoch_homeostasis_correct / epoch_total) * 100
+		acc_a = (epoch_a_correct / epoch_total) * 100
+		acc_op = (epoch_op_correct / epoch_total) * 100
+		acc_b = (epoch_b_correct / epoch_total) * 100
 		acc_j = (epoch_correct / epoch_total) * 100
 
-		print(f"Pérdida promedio: {avg_loss:.4f} | Concepto: {acc_c:.2f}% | Emoción: {acc_e:.2f}% | Homeostasis: {acc_h:.2f}% | Entendimiento Mutuo (Accuracy): {acc_j:.2f}%")
+		print(f"Pérdida promedio: {avg_loss:.4f} | Operando A: {acc_a:.2f}% | Operador: {acc_op:.2f}% | Operando B: {acc_b:.2f}% | Consenso Aritmético: {acc_j:.2f}%")
 		print(f"Fitness de la Población: {[f'Agent_{i}: {f * 100:.2f}%' for i, f in enumerate(fitness)]}")
 
-		# Determinar la fase actual del schedule para co-evolución
 		if epoch < nursery_end:
 			current_phase = "guarderia"
 		elif epoch < transition_end:
@@ -360,47 +340,37 @@ def run_arena():
 		svd_interval = config.get("svd_interval", 1)
 		svd_phases = config.get("svd_phases", ["recreo", "autonomia"])
 
-		# Co-evolución dinámica basada en config
+		worst_idx = -1
+		parent_a_idx = -1
+		parent_b_idx = -1
+
 		if current_phase in svd_phases and epoch % svd_interval == 0:
 			worst_idx = int(np.argmin(fitness))
-			best_indices = np.argsort(fitness)[-2:]  # Los dos mejores
+			best_indices = np.argsort(fitness)[-2:]
 			parent_a_idx = int(best_indices[1])
 			parent_b_idx = int(best_indices[0])
-			print(f"[Evolución] Reemplazando Agent_{worst_idx} (peor fitness) con hijo SVD de Agent_{parent_a_idx} y Agent_{parent_b_idx}")
+			print(f"[Evolución] Reemplazando Agent_{worst_idx} con hijo SVD de Agent_{parent_a_idx} y Agent_{parent_b_idx}")
 			svd_crossover(parent_a=population[parent_a_idx], parent_b=population[parent_b_idx], child=population[worst_idx], alpha=0.5, sigma=0.01)
-			# Reiniciar el optimizador del peor agente tras la mutación de pesos
 			optimizers[worst_idx] = torch.optim.AdamW(filter(lambda p: p.requires_grad, population[worst_idx].parameters()), lr=lr)
-			logger.log_event("evolution", {
-				"worst": worst_idx,
-				"parent_a": parent_a_idx,
-				"parent_b": parent_b_idx,
-			})
-		else:
-			worst_idx = -1
-			parent_a_idx = -1
-			parent_b_idx = -1
 
 		logger.log_epoch(
 			epoch=epoch + 1,
 			loss_avg=avg_loss,
-			acc_concept=acc_c,
-			acc_emotion=acc_e,
+			acc_concept=acc_a,
+			acc_emotion=acc_op,
 			acc_joint=acc_j,
 			fitness=fitness.tolist(),
 			worst_agent=worst_idx,
 			parent_a=parent_a_idx,
 			parent_b=parent_b_idx,
-			acc_homeostasis=acc_h,
+			acc_homeostasis=acc_b,
 		)
 
-		# Promoción de grado académica
 		if epoch >= transition_end and acc_j >= 80.0:
-			print("\n🏆 ¡HIT ALCANZADO! La población ha superado el 80% de entendimiento mutuo.")
-			print("PROMOTED TO GRADE 1: Lengua adquirida de forma emergente. Desbloqueando Aritmética.")
+			print(f"\n🏆 ¡HIT ALCANZADO! La población ha superado el 80% de entendimiento aritmético ({acc_j:.2f}%).")
 			logger.log_event("promotion", {"grade": 1, "acc_joint": acc_j})
 			break
 
-	# Guardar el mejor agente entrenado en el directorio del experimento
 	best_idx = np.argsort(fitness)[-1]
 	checkpoint_save_path = os.path.join(exp_dir, "best_agent.pt")
 	torch.save(population[best_idx].state_dict(), checkpoint_save_path)
@@ -410,4 +380,4 @@ def run_arena():
 
 
 if __name__ == "__main__":
-	run_arena()
+	run_math_arena()

@@ -159,7 +159,7 @@ class BitNet4LayerModel(nn.Module):
 		# Capa 4: Outbound Translator (Proyección del espacio oculto de 256-dim al espacio conceptual de 384-dim)
 		self.outbound_proj = nn.Linear(hidden_dim, self.vocab_dim, bias=False)
 
-	def forward(self, x: torch.Tensor) -> torch.Tensor:
+	def forward(self, x: torch.Tensor, logit_mask: torch.Tensor = None) -> torch.Tensor:
 		"""
 		Paso forward.
 		x puede ser:
@@ -190,14 +190,16 @@ class BitNet4LayerModel(nn.Module):
 		# Mapear a logits multiplicando por la transpuesta de los embeddings del vocabulario fijos
 		# (batch_size, seq_len, 384) x (384, 8192) -> (batch_size, seq_len, 8192)
 		logits = torch.matmul(concept_proj, self.vocab_embeddings.T)
+		if logit_mask is not None:
+			logits = logits.masked_fill(~logit_mask, -1e9)
 		return logits
 
-	def generate_message(self, x: torch.Tensor, tau: float = 1.0, hard: bool = True) -> torch.Tensor:
+	def generate_message(self, x: torch.Tensor, tau: float = 1.0, hard: bool = True, logit_mask: torch.Tensor = None) -> torch.Tensor:
 		"""
 		Genera un mensaje utilizando Gumbel-Softmax para mantener la diferenciabilidad del canal.
 		Devuelve un tensor de vectores one-hot relajados.
 		"""
-		logits = self.forward(x)
+		logits = self.forward(x, logit_mask=logit_mask)
 		# Aplicamos Gumbel-Softmax sobre la dimensión del vocabulario
 		message = F.gumbel_softmax(logits, tau=tau, hard=hard, dim=-1)
 		return message

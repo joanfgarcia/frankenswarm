@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cómo Aprenden los Agentes — Frankenswarm</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+  :root {
+    --bg: #0a0a0f;
+    --surface: #12121a;
+    --surface2: #1a1a28;
+    --border: #2a2a3a;
+    --text: #e0e0f0;
+    --text2: #8888aa;
+    --accent: #6366f1;
+    --green: #22c55e;
+    --red: #ef4444;
+    --orange: #f59e0b;
+    --blue: #3b82f6;
+    --pink: #ec4899;
+    --cyan: #06b6d4;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    min-height: 100vh;
+    padding: 2rem;
+    line-height: 1.6;
+  }
+
+  h1 {
+    text-align: center;
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    background: linear-gradient(135deg, var(--accent), var(--pink));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .subtitle {
+    text-align: center;
+    color: var(--text2);
+    margin-bottom: 3rem;
+    font-size: 0.95rem;
+  }
+
+  .diagram-container {
+    max-width: 900px;
+    margin: 0 auto 3rem;
+  }
+
+  svg {
+    width: 100%;
+    height: auto;
+  }
+
+  .phase-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+    max-width: 900px;
+    margin: 0 auto 3rem;
+  }
+
+  .phase-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 1.5rem;
+    transition: transform 0.3s, border-color 0.3s;
+  }
+
+  .phase-card:hover {
+    transform: translateY(-4px);
+    border-color: var(--accent);
+  }
+
+  .phase-card h3 {
+    font-size: 1.1rem;
+    margin-bottom: 0.3rem;
+  }
+
+  .phase-card .tag {
+    font-size: 0.75rem;
+    padding: 2px 8px;
+    border-radius: 999px;
+    display: inline-block;
+    margin-bottom: 0.75rem;
+    font-weight: 500;
+  }
+
+  .phase-card p {
+    color: var(--text2);
+    font-size: 0.85rem;
+  }
+
+  .nursery .tag { background: rgba(34,197,94,0.15); color: var(--green); }
+  .playground .tag { background: rgba(245,158,11,0.15); color: var(--orange); }
+  .autonomy .tag { background: rgba(99,102,241,0.15); color: var(--accent); }
+
+  .analogy {
+    max-width: 900px;
+    margin: 0 auto 3rem;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 2rem;
+  }
+
+  .analogy h2 {
+    font-size: 1.3rem;
+    margin-bottom: 1rem;
+    color: var(--cyan);
+  }
+
+  .analogy-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+  }
+
+  .analogy-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+
+  .analogy-item .icon {
+    font-size: 1.5rem;
+    flex-shrink: 0;
+    width: 2rem;
+    text-align: center;
+  }
+
+  .analogy-item .label {
+    font-weight: 600;
+    font-size: 0.9rem;
+  }
+
+  .analogy-item .desc {
+    color: var(--text2);
+    font-size: 0.8rem;
+  }
+
+  .result-box {
+    max-width: 900px;
+    margin: 0 auto;
+    background: linear-gradient(135deg, rgba(99,102,241,0.1), rgba(236,72,153,0.1));
+    border: 1px solid var(--accent);
+    border-radius: 16px;
+    padding: 2rem;
+    text-align: center;
+  }
+
+  .result-box h2 { color: var(--accent); margin-bottom: 1rem; }
+
+  .proto-example {
+    font-family: 'Courier New', monospace;
+    font-size: 1.1rem;
+    background: var(--surface);
+    padding: 1rem;
+    border-radius: 8px;
+    margin: 1rem auto;
+    display: inline-block;
+  }
+
+  .token-concept { color: var(--green); font-weight: 700; }
+  .token-emotion { color: var(--pink); font-weight: 700; }
+  .arrow { color: var(--text2); }
+
+  @media (max-width: 700px) {
+    .phase-grid { grid-template-columns: 1fr; }
+    .analogy-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<h1>🌱 Cómo Aprenden Nuestros Agentes</h1>
+<p class="subtitle">Frankenswarm — Juego Referencial con Teacher Forcing Progresivo</p>
+
+<div class="diagram-container">
+<svg viewBox="0 0 880 520" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="880" height="520" fill="#0a0a0f" rx="16"/>
+
+  <!-- Title -->
+  <text x="440" y="35" text-anchor="middle" fill="#8888aa" font-family="Inter" font-size="13">Cada ronda del juego</text>
+
+  <!-- STEP 1: The World gives a target -->
+  <rect x="30" y="55" width="180" height="80" rx="12" fill="#1a1a28" stroke="#2a2a3a"/>
+  <text x="120" y="82" text-anchor="middle" fill="#06b6d4" font-family="Inter" font-size="12" font-weight="600">🎯 EL MUNDO</text>
+  <text x="120" y="102" text-anchor="middle" fill="#e0e0f0" font-family="Inter" font-size="11">Elige al azar:</text>
+  <text x="120" y="120" text-anchor="middle" fill="#22c55e" font-family="Inter" font-size="12" font-weight="600">"fuego" + "miedo"</text>
+
+  <!-- Arrow 1 -->
+  <path d="M 210 95 L 260 95" stroke="#3b82f6" stroke-width="2" marker-end="url(#arrowBlue)"/>
+  <text x="235" y="87" text-anchor="middle" fill="#3b82f6" font-family="Inter" font-size="9">target</text>
+
+  <!-- STEP 2: Speaker -->
+  <rect x="265" y="55" width="160" height="80" rx="12" fill="#1a1a28" stroke="#6366f1"/>
+  <text x="345" y="78" text-anchor="middle" fill="#6366f1" font-family="Inter" font-size="12" font-weight="600">🗣️ SPEAKER</text>
+  <text x="345" y="95" text-anchor="middle" fill="#e0e0f0" font-family="Inter" font-size="10">Cerebro BitNet 1.58-bit</text>
+  <text x="345" y="112" text-anchor="middle" fill="#8888aa" font-family="Inter" font-size="9">Traduce a 3 tokens</text>
+  <text x="345" y="128" text-anchor="middle" fill="#ec4899" font-family="Inter" font-size="11" font-weight="600">→ "fuego, fuego, sol"</text>
+
+  <!-- Arrow 2: Message -->
+  <path d="M 425 95 L 490 95" stroke="#ec4899" stroke-width="2.5" stroke-dasharray="6 3" marker-end="url(#arrowPink)"/>
+  <text x="458" y="82" text-anchor="middle" fill="#ec4899" font-family="Inter" font-size="9" font-weight="600">mensaje</text>
+  <text x="458" y="110" text-anchor="middle" fill="#8888aa" font-family="Inter" font-size="8">(Gumbel-Softmax)</text>
+
+  <!-- STEP 3: Listener -->
+  <rect x="495" y="55" width="160" height="80" rx="12" fill="#1a1a28" stroke="#22c55e"/>
+  <text x="575" y="78" text-anchor="middle" fill="#22c55e" font-family="Inter" font-size="12" font-weight="600">👂 LISTENER</text>
+  <text x="575" y="95" text-anchor="middle" fill="#e0e0f0" font-family="Inter" font-size="10">Otro cerebro BitNet</text>
+  <text x="575" y="112" text-anchor="middle" fill="#8888aa" font-family="Inter" font-size="9">Decodifica el mensaje</text>
+  <text x="575" y="128" text-anchor="middle" fill="#f59e0b" font-family="Inter" font-size="11" font-weight="600">→ "fuego" + "miedo"</text>
+
+  <!-- Arrow 3 -->
+  <path d="M 655 95 L 710 95" stroke="#f59e0b" stroke-width="2" marker-end="url(#arrowOrange)"/>
+  <text x="683" y="87" text-anchor="middle" fill="#f59e0b" font-family="Inter" font-size="9">predicción</text>
+
+  <!-- STEP 4: Judge -->
+  <rect x="715" y="55" width="140" height="80" rx="12" fill="#1a1a28" stroke="#2a2a3a"/>
+  <text x="785" y="78" text-anchor="middle" fill="#f59e0b" font-family="Inter" font-size="12" font-weight="600">⚖️ JUEZ</text>
+  <text x="785" y="98" text-anchor="middle" fill="#e0e0f0" font-family="Inter" font-size="10">¿Acertó?</text>
+  <text x="785" y="118" text-anchor="middle" fill="#22c55e" font-family="Inter" font-size="14" font-weight="700">✅ ¡SÍ!</text>
+
+  <!-- Backpropagation arrow -->
+  <path d="M 785 140 L 785 175 L 345 175 L 345 140" stroke="#ef4444" stroke-width="2" fill="none" stroke-dasharray="4 3" marker-end="url(#arrowRed)"/>
+  <text x="565" y="168" text-anchor="middle" fill="#ef4444" font-family="Inter" font-size="10" font-weight="600">← Backpropagation: "ajusta tus pesos"</text>
+  <text x="565" y="183" text-anchor="middle" fill="#8888aa" font-family="Inter" font-size="9">Si falló → gradiente grande. Si acertó → gradiente pequeño.</text>
+
+  <!-- ═══ TEACHER FORCING SECTION ═══ -->
+  <rect x="30" y="210" width="820" height="140" rx="12" fill="#12121a" stroke="#2a2a3a"/>
+  <text x="440" y="235" text-anchor="middle" fill="#06b6d4" font-family="Inter" font-size="13" font-weight="600">🎓 EL TRUCO: Teacher Forcing Progresivo</text>
+  <text x="440" y="255" text-anchor="middle" fill="#8888aa" font-family="Inter" font-size="10">¿De dónde viene el mensaje que recibe el Listener?</text>
+
+  <!-- Phase 1 -->
+  <rect x="50" y="268" width="240" height="70" rx="8" fill="rgba(34,197,94,0.08)" stroke="rgba(34,197,94,0.3)"/>
+  <text x="170" y="288" text-anchor="middle" fill="#22c55e" font-family="Inter" font-size="11" font-weight="600">🍼 Guardería (100% TF)</text>
+  <text x="170" y="305" text-anchor="middle" fill="#e0e0f0" font-family="Inter" font-size="10">El mensaje viene del PROFESOR</text>
+  <text x="170" y="320" text-anchor="middle" fill="#8888aa" font-family="Inter" font-size="9">(tokens correctos directamente)</text>
+
+  <!-- Phase 2 -->
+  <rect x="310" y="268" width="250" height="70" rx="8" fill="rgba(245,158,11,0.08)" stroke="rgba(245,158,11,0.3)"/>
+  <text x="435" y="288" text-anchor="middle" fill="#f59e0b" font-family="Inter" font-size="11" font-weight="600">🎮 Recreo (100%→0% TF)</text>
+  <text x="435" y="305" text-anchor="middle" fill="#e0e0f0" font-family="Inter" font-size="10">Mezcla: a veces profesor, a veces speaker</text>
+  <text x="435" y="320" text-anchor="middle" fill="#8888aa" font-family="Inter" font-size="9">(cada vez menos ayuda)</text>
+
+  <!-- Phase 3 -->
+  <rect x="580" y="268" width="250" height="70" rx="8" fill="rgba(99,102,241,0.08)" stroke="rgba(99,102,241,0.3)"/>
+  <text x="705" y="288" text-anchor="middle" fill="#6366f1" font-family="Inter" font-size="11" font-weight="600">🦅 Autonomía (0% TF)</text>
+  <text x="705" y="305" text-anchor="middle" fill="#e0e0f0" font-family="Inter" font-size="10">El mensaje viene SOLO del speaker</text>
+  <text x="705" y="320" text-anchor="middle" fill="#8888aa" font-family="Inter" font-size="9">(comunicación emergente pura)</text>
+
+  <!-- Progress arrow -->
+  <path d="M 290 303 L 305 303" stroke="#f59e0b" stroke-width="2" marker-end="url(#arrowOrange)"/>
+  <path d="M 560 303 L 575 303" stroke="#6366f1" stroke-width="2" marker-end="url(#arrowAccent)"/>
+
+  <!-- ═══ EVOLUTION SECTION ═══ -->
+  <rect x="30" y="370" width="820" height="130" rx="12" fill="#12121a" stroke="#2a2a3a"/>
+  <text x="440" y="395" text-anchor="middle" fill="#ec4899" font-family="Inter" font-size="13" font-weight="600">🧬 Evolución: Supervivencia del más apto</text>
+
+  <!-- 4 agents -->
+  <rect x="60" y="410" width="90" height="40" rx="8" fill="rgba(34,197,94,0.15)" stroke="rgba(34,197,94,0.4)"/>
+  <text x="105" y="435" text-anchor="middle" fill="#22c55e" font-family="Inter" font-size="11" font-weight="600">A0: 96%</text>
+
+  <rect x="170" y="410" width="90" height="40" rx="8" fill="rgba(34,197,94,0.15)" stroke="rgba(34,197,94,0.4)"/>
+  <text x="215" y="435" text-anchor="middle" fill="#22c55e" font-family="Inter" font-size="11" font-weight="600">A1: 98%</text>
+
+  <rect x="280" y="410" width="90" height="40" rx="8" fill="rgba(34,197,94,0.15)" stroke="rgba(34,197,94,0.4)"/>
+  <text x="325" y="435" text-anchor="middle" fill="#22c55e" font-family="Inter" font-size="11" font-weight="600">A2: 95%</text>
+
+  <rect x="390" y="410" width="90" height="40" rx="8" fill="rgba(239,68,68,0.15)" stroke="rgba(239,68,68,0.4)"/>
+  <text x="435" y="435" text-anchor="middle" fill="#ef4444" font-family="Inter" font-size="11" font-weight="600">A3: 72% 💀</text>
+
+  <!-- Arrow to crossover -->
+  <path d="M 480 430 L 540 430" stroke="#ec4899" stroke-width="2" marker-end="url(#arrowPink)"/>
+
+  <!-- Crossover box -->
+  <rect x="545" y="408" width="280" height="75" rx="8" fill="rgba(236,72,153,0.08)" stroke="rgba(236,72,153,0.3)"/>
+  <text x="685" y="430" text-anchor="middle" fill="#ec4899" font-family="Inter" font-size="11" font-weight="600">SVD Crossover</text>
+  <text x="685" y="450" text-anchor="middle" fill="#e0e0f0" font-family="Inter" font-size="10">A3 muere → renace como hijo de A1 × A0</text>
+  <text x="685" y="468" text-anchor="middle" fill="#8888aa" font-family="Inter" font-size="9">Hereda los mejores pesos + mutación σ=0.01</text>
+
+  <!-- Arrow markers -->
+  <defs>
+    <marker id="arrowBlue" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><path d="M 0 0 L 8 3 L 0 6 Z" fill="#3b82f6"/></marker>
+    <marker id="arrowPink" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><path d="M 0 0 L 8 3 L 0 6 Z" fill="#ec4899"/></marker>
+    <marker id="arrowOrange" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><path d="M 0 0 L 8 3 L 0 6 Z" fill="#f59e0b"/></marker>
+    <marker id="arrowRed" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><path d="M 0 0 L 8 3 L 0 6 Z" fill="#ef4444"/></marker>
+    <marker id="arrowAccent" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><path d="M 0 0 L 8 3 L 0 6 Z" fill="#6366f1"/></marker>
+  </defs>
+</svg>
+</div>
+
+<!-- Phase cards -->
+<div class="phase-grid">
+  <div class="phase-card nursery">
+    <h3>🍼 Fase 1: Guardería</h3>
+    <span class="tag">100% Teacher Forcing</span>
+    <p>El listener recibe los tokens correctos directamente — como un padre que dice la palabra para que el niño la escuche. El listener aprende a decodificar sin ruido.</p>
+    <p style="margin-top:0.5rem; color: #22c55e; font-weight:600;">0% → 99% en 5 épocas</p>
+  </div>
+  <div class="phase-card playground">
+    <h3>🎮 Fase 2: Recreo</h3>
+    <span class="tag">TF decrece 100%→0%</span>
+    <p>Progresivamente, el mensaje del speaker reemplaza al del profesor. A veces acierta, a veces no. El listener aprende a tolerar ruido y el speaker aprende qué funciona.</p>
+    <p style="margin-top:0.5rem; color: #f59e0b; font-weight:600;">Se mantiene 88-97%</p>
+  </div>
+  <div class="phase-card autonomy">
+    <h3>🦅 Fase 3: Autonomía</h3>
+    <span class="tag">0% Teacher Forcing</span>
+    <p>Sin profesor. El speaker emite su mensaje, el listener lo interpreta. Si se entienden → recompensa. Si no → ajuste. Lo que emerge aquí es lenguaje genuino.</p>
+    <p style="margin-top:0.5rem; color: #6366f1; font-weight:600;">95% de entendimiento mutuo</p>
+  </div>
+</div>
+
+<!-- Human analogy -->
+<div class="analogy">
+  <h2>🧒 La analogía humana</h2>
+  <div class="analogy-grid">
+    <div class="analogy-item">
+      <div class="icon">👶</div>
+      <div>
+        <div class="label">Guardería = Bebé escuchando</div>
+        <div class="desc">Los padres dicen "perro" señalando al perro. El bebé asocia sonido con concepto. Aprende a escuchar antes de hablar.</div>
+      </div>
+    </div>
+    <div class="analogy-item">
+      <div class="icon">🧒</div>
+      <div>
+        <div class="label">Recreo = Niño intentando hablar</div>
+        <div class="desc">El niño dice "pego" queriendo decir "perro". A veces le corrigen, a veces se entiende. Cada interacción refina el lenguaje.</div>
+      </div>
+    </div>
+    <div class="analogy-item">
+      <div class="icon">🗣️</div>
+      <div>
+        <div class="label">Autonomía = Adultos conversando</div>
+        <div class="desc">Dos personas hablan con su propio vocabulario. Se entienden porque compartieron un proceso de aprendizaje. El lenguaje ya es suyo.</div>
+      </div>
+    </div>
+    <div class="analogy-item">
+      <div class="icon">🧬</div>
+      <div>
+        <div class="label">Evolución = Selección natural</div>
+        <div class="desc">El agente que peor se comunica "muere" y es reemplazado por un hijo de los dos mejores. Los buenos comunicadores sobreviven.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Result -->
+<div class="result-box">
+  <h2>🧬 Lo que inventaron solos</h2>
+  <p style="color: var(--text2); margin-bottom: 1rem;">Nadie les dijo cómo estructurar el mensaje. Decidieron por su cuenta:</p>
+  <div class="proto-example">
+    <span class="arrow">Para decir</span> <span class="token-concept">"búnker"</span> + <span class="token-emotion">"miedo"</span><br>
+    <span class="arrow">Emiten →</span> [<span class="token-concept">búnker</span>, <span class="token-concept">búnker</span>, <span class="token-emotion">sol</span>]
+  </div>
+  <p style="color: var(--text2); margin-top: 1rem; font-size: 0.9rem;">
+    Concepto repetido dos veces (redundancia = corrección de errores)<br>
+    Emoción codificada con un cifrado arbitrario: <span style="color: var(--pink)">sol = miedo</span>, <span style="color: var(--pink)">peligro = alegría</span>, <span style="color: var(--pink)">código = hambre</span>
+  </p>
+</div>
+
+</body>
+</html>

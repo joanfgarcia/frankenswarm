@@ -89,10 +89,15 @@ def analyze(experiment_id: str = "005"):
 	print("   ¿El speaker usa siempre los mismos tokens para el mismo target?")
 	print("=" * 60)
 
-	# Group messages by target pair
+	# Group messages by target
 	target_messages = defaultdict(list)
+	is_3d = "target_homeostasis" in autonomy_steps[0]
+	
 	for s in autonomy_steps:
-		key = (s["target_concept"], s["target_emotion"])
+		if is_3d:
+			key = (s["target_concept"], s["target_emotion"], s["target_homeostasis"])
+		else:
+			key = (s["target_concept"], s["target_emotion"])
 		msg = tuple(s["message_tokens"])
 		target_messages[key].append(msg)
 
@@ -108,18 +113,20 @@ def analyze(experiment_id: str = "005"):
 	# Top 10 most consistent
 	sorted_targets = sorted(consistency_scores.items(), key=lambda x: -x[1])
 	print("\n  Top 10 más consistentes:")
-	for (concept, emotion), score in sorted_targets[:10]:
-		msgs = target_messages[(concept, emotion)]
+	for target, score in sorted_targets[:10]:
+		msgs = target_messages[target]
 		top_msg = Counter(msgs).most_common(1)[0][0]
-		print(f"    ({concept:12s}, {emotion:8s}) → [{', '.join(top_msg)}] | {score:.1f}% ({len(msgs)} muestras)")
+		target_str = ", ".join(target)
+		print(f"    ({target_str}) → [{', '.join(top_msg)}] | {score:.1f}% ({len(msgs)} muestras)")
 
 	# Bottom 5 least consistent
 	print("\n  Bottom 5 menos consistentes:")
-	for (concept, emotion), score in sorted_targets[-5:]:
-		msgs = target_messages[(concept, emotion)]
+	for target, score in sorted_targets[-5:]:
+		msgs = target_messages[target]
 		top2 = Counter(msgs).most_common(2)
 		msg_strs = [f"[{', '.join(m)}]×{c}" for m, c in top2]
-		print(f"    ({concept:12s}, {emotion:8s}) → {' | '.join(msg_strs)} | {score:.1f}%")
+		target_str = ", ".join(target)
+		print(f"    ({target_str}) → {' | '.join(msg_strs)} | {score:.1f}%")
 
 	avg_consistency = np.mean(list(consistency_scores.values()))
 	print(f"\n  📈 Consistencia media: {avg_consistency:.1f}%")
@@ -130,66 +137,91 @@ def analyze(experiment_id: str = "005"):
 	print("   ¿Hay orden en los tokens del mensaje?")
 	print("=" * 60)
 
-	# Check if position 0 correlates with concept, position 1 with emotion, etc.
-	pos0_by_concept = defaultdict(Counter)
-	pos1_by_concept = defaultdict(Counter)
-	pos2_by_concept = defaultdict(Counter)
-	pos0_by_emotion = defaultdict(Counter)
-	pos1_by_emotion = defaultdict(Counter)
-	pos2_by_emotion = defaultdict(Counter)
+	msg_len = len(autonomy_steps[0]["message_tokens"])
+	
+	pos_by_concept = [defaultdict(Counter) for _ in range(msg_len)]
+	pos_by_emotion = [defaultdict(Counter) for _ in range(msg_len)]
+	pos_by_homeostasis = [defaultdict(Counter) for _ in range(msg_len)] if is_3d else None
 
 	for s in autonomy_steps:
 		msg = s["message_tokens"]
 		concept = s["target_concept"]
 		emotion = s["target_emotion"]
-		pos0_by_concept[concept][msg[0]] += 1
-		pos1_by_concept[concept][msg[1]] += 1
-		pos2_by_concept[concept][msg[2]] += 1
-		pos0_by_emotion[emotion][msg[0]] += 1
-		pos1_by_emotion[emotion][msg[1]] += 1
-		pos2_by_emotion[emotion][msg[2]] += 1
+		homeo = s.get("target_homeostasis", "") if is_3d else None
+		
+		for pos in range(min(len(msg), msg_len)):
+			token = msg[pos]
+			pos_by_concept[pos][concept][token] += 1
+			pos_by_emotion[pos][emotion][token] += 1
+			if is_3d:
+				pos_by_homeostasis[pos][homeo][token] += 1
 
-	# Mutual information proxy: for each position, does the token distribution
-	# change significantly by concept vs by emotion?
-	def entropy_score(counter_dict):
-		"""How much does the token vary across different keys?"""
-		all_tokens = set()
-		for c in counter_dict.values():
-			all_tokens.update(c.keys())
-		if len(all_tokens) <= 1:
-			return 0.0
-		# Average number of unique tokens per key
-		uniques = [len(c) for c in counter_dict.values()]
-		return np.mean(uniques)
+	def entropy_score(pos_dict_list):
+		scores = []
+		for pos in range(msg_len):
+			counter_dict = pos_dict_list[pos]
+			all_tokens = set()
+			for c in counter_dict.values():
+				all_tokens.update(c.keys())
+			if len(all_tokens) <= 1:
+				scores.append(0.0)
+			else:
+				uniques = [len(c) for c in counter_dict.values()]
+				scores.append(np.mean(uniques))
+		return scores
+
+	concept_div = entropy_score(pos_by_concept)
+	emotion_div = entropy_score(pos_by_emotion)
+	homeo_div = entropy_score(pos_by_homeostasis) if is_3d else None
 
 	print("\n  Diversidad de tokens por posición (más alto = más variado):")
-	print(f"                      Pos 0    Pos 1    Pos 2")
-	print(f"    Por concepto:     {entropy_score(pos0_by_concept):5.1f}    {entropy_score(pos1_by_concept):5.1f}    {entropy_score(pos2_by_concept):5.1f}")
-	print(f"    Por emoción:      {entropy_score(pos0_by_emotion):5.1f}    {entropy_score(pos1_by_emotion):5.1f}    {entropy_score(pos2_by_emotion):5.1f}")
+	pos_headers = "      ".join([f"Pos {p}" for p in range(msg_len)])
+	print(f"                      {pos_headers}")
+	concept_div_str = "    ".join([f"{val:5.1f}" for val in concept_div])
+	emotion_div_str = "    ".join([f"{val:5.1f}" for val in emotion_div])
+	print(f"    Por concepto:     {concept_div_str}")
+	print(f"    Por emoción:      {emotion_div_str}")
+	if is_3d:
+		homeo_div_str = "    ".join([f"{val:5.1f}" for val in homeo_div])
+		print(f"    Por homeostasis:  {homeo_div_str}")
 
-	# Show what token each concept uses most at each position
 	print("\n  Proto-léxico por concepto (token más frecuente en cada posición):")
-	print(f"    {'Concepto':12s}  {'Pos 0':12s}  {'Pos 1':12s}  {'Pos 2':12s}")
-	print(f"    {'─' * 12}  {'─' * 12}  {'─' * 12}  {'─' * 12}")
+	pos_cols = "    ".join([f"{f'Pos {p}':12s}" for p in range(msg_len)])
+	print(f"    {'Concepto':12s}  {pos_cols}")
+	print(f"    {'─' * 12}  " + "    ".join([f"{'─' * 12}" for _ in range(msg_len)]))
 	for concept in CONCEPTS:
-		p0 = pos0_by_concept[concept].most_common(1)[0][0] if pos0_by_concept[concept] else "?"
-		p1 = pos1_by_concept[concept].most_common(1)[0][0] if pos1_by_concept[concept] else "?"
-		p2 = pos2_by_concept[concept].most_common(1)[0][0] if pos2_by_concept[concept] else "?"
-		print(f"    {concept:12s}  {p0:12s}  {p1:12s}  {p2:12s}")
+		p_tokens = []
+		for p in range(msg_len):
+			tok = pos_by_concept[p][concept].most_common(1)[0][0] if pos_by_concept[p][concept] else "?"
+			p_tokens.append(f"{tok:12s}")
+		print(f"    {concept:12s}  " + "    ".join(p_tokens))
 
-	print(f"\n  Proto-léxico por emoción:")
-	print(f"    {'Emoción':12s}  {'Pos 0':12s}  {'Pos 1':12s}  {'Pos 2':12s}")
-	print(f"    {'─' * 12}  {'─' * 12}  {'─' * 12}  {'─' * 12}")
+	print("\n  Proto-léxico por emoción:")
+	print(f"    {'Emoción':12s}  {pos_cols}")
+	print(f"    {'─' * 12}  " + "    ".join([f"{'─' * 12}" for _ in range(msg_len)]))
 	for emotion in EMOTIONS:
-		p0 = pos0_by_emotion[emotion].most_common(1)[0][0] if pos0_by_emotion[emotion] else "?"
-		p1 = pos1_by_emotion[emotion].most_common(1)[0][0] if pos1_by_emotion[emotion] else "?"
-		p2 = pos2_by_emotion[emotion].most_common(1)[0][0] if pos2_by_emotion[emotion] else "?"
-		print(f"    {emotion:12s}  {p0:12s}  {p1:12s}  {p2:12s}")
+		p_tokens = []
+		for p in range(msg_len):
+			tok = pos_by_emotion[p][emotion].most_common(1)[0][0] if pos_by_emotion[p][emotion] else "?"
+			p_tokens.append(f"{tok:12s}")
+		print(f"    {emotion:12s}  " + "    ".join(p_tokens))
 
-	# ── 4. Affective stability ──
+	if is_3d:
+		HOMEOSTASIS = ["neutral", "dolor", "hambre", "urgencia", "seguridad"]
+		print("\n  Proto-léxico por homeostasis:")
+		print(f"    {'Homeostasis':12s}  {pos_cols}")
+		print(f"    {'─' * 12}  " + "    ".join([f"{'─' * 12}" for _ in range(msg_len)]))
+		for homeo in HOMEOSTASIS:
+			p_tokens = []
+			for p in range(msg_len):
+				tok = pos_by_homeostasis[p][homeo].most_common(1)[0][0] if pos_by_homeostasis[p][homeo] else "?"
+				p_tokens.append(f"{tok:12s}")
+			print(f"    {homeo:12s}  " + "    ".join(p_tokens))
+
+	# ── 4. Learning stability ──
 	print("\n" + "=" * 60)
-	print("3️⃣  ESTABILIDAD AFECTIVA")
-	print("   ¿La emoción se estabiliza antes que el concepto?")
+	print("3️⃣  ESTABILIDAD DE APRENDIZAJE")
+	print("   ¿Cuáles componentes se estabilizan antes?")
 	print("=" * 60)
 
 	epochs = load_epochs(experiment_id)
@@ -198,18 +230,16 @@ def analyze(experiment_id: str = "005"):
 		concept_accs = [e["acc_concept"] for e in autonomy_epochs]
 		emotion_accs = [e["acc_emotion"] for e in autonomy_epochs]
 		joint_accs = [e["acc_joint"] for e in autonomy_epochs]
+		has_h = "acc_homeostasis" in autonomy_epochs[0]
+		if has_h:
+			homeo_accs = [e["acc_homeostasis"] for e in autonomy_epochs]
 
 		print(f"\n  Épocas de autonomía ({len(autonomy_epochs)} epochs):")
-		print(f"    Concepto:  μ={np.mean(concept_accs):.2f}%  σ={np.std(concept_accs):.2f}%  min={np.min(concept_accs):.2f}%  max={np.max(concept_accs):.2f}%")
-		print(f"    Emoción:   μ={np.mean(emotion_accs):.2f}%  σ={np.std(emotion_accs):.2f}%  min={np.min(emotion_accs):.2f}%  max={np.max(emotion_accs):.2f}%")
-		print(f"    Conjunta:  μ={np.mean(joint_accs):.2f}%  σ={np.std(joint_accs):.2f}%  min={np.min(joint_accs):.2f}%  max={np.max(joint_accs):.2f}%")
-
-		emo_advantage = np.mean(emotion_accs) - np.mean(concept_accs)
-		print(f"\n  📊 Ventaja emocional: +{emo_advantage:.2f} puntos porcentuales")
-		if emo_advantage > 0:
-			print(f"  ✅ CONFIRMADO: La emoción se mantiene más estable que el concepto (DeepSeek)")
-		else:
-			print(f"  ❌ NO CONFIRMADO: El concepto es igual o más estable que la emoción")
+		print(f"    Concepto:     μ={np.mean(concept_accs):.2f}%  σ={np.std(concept_accs):.2f}%  min={np.min(concept_accs):.2f}%  max={np.max(concept_accs):.2f}%")
+		print(f"    Emoción:      μ={np.mean(emotion_accs):.2f}%  σ={np.std(emotion_accs):.2f}%  min={np.min(emotion_accs):.2f}%  max={np.max(emotion_accs):.2f}%")
+		if has_h:
+			print(f"    Homeostasis:  μ={np.mean(homeo_accs):.2f}%  σ={np.std(homeo_accs):.2f}%  min={np.min(homeo_accs):.2f}%  max={np.max(homeo_accs):.2f}%")
+		print(f"    Conjunta:     μ={np.mean(joint_accs):.2f}%  σ={np.std(joint_accs):.2f}%  min={np.min(joint_accs):.2f}%  max={np.max(joint_accs):.2f}%")
 
 	# ── 5. Confusion geometry ──
 	print("\n" + "=" * 60)
@@ -247,8 +277,6 @@ def analyze(experiment_id: str = "005"):
 	print("\n" + "=" * 60)
 	print("🔬 Análisis completo.")
 	print("=" * 60)
-
-
 if __name__ == "__main__":
 	exp_id = sys.argv[1] if len(sys.argv) > 1 else "005"
 	analyze(exp_id)

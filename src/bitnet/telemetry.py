@@ -50,9 +50,12 @@ def _get_telemetry_dir() -> str:
 class ExperimentLogger:
 	"""Structured JSONL logger for PopuLoRA experiments."""
 
-	def __init__(self, experiment_id: str, params: dict[str, Any]):
+	def __init__(self, experiment_id: str, params: dict[str, Any], log_path: str = None):
 		self.experiment_id = experiment_id
-		self.path = os.path.join(_get_telemetry_dir(), f"EXP_{experiment_id}.jsonl")
+		if log_path:
+			self.path = log_path
+		else:
+			self.path = os.path.join(_get_telemetry_dir(), f"EXP_{experiment_id}.jsonl")
 		self._file = open(self.path, "a", encoding="utf-8")
 		self._start_time = time.monotonic()
 
@@ -88,6 +91,10 @@ class ExperimentLogger:
 		batch_size: int,
 		message_tokens: list[str] | None = None,
 		tf_ratio: float | None = None,
+		loss_homeostasis: float | None = None,
+		target_homeostasis: str | None = None,
+		pred_homeostasis: str | None = None,
+		homeostasis_correct: int | None = None,
 	) -> None:
 		"""Log a single training step."""
 		record = {
@@ -114,6 +121,14 @@ class ExperimentLogger:
 			record["message_tokens"] = message_tokens
 		if tf_ratio is not None:
 			record["tf_ratio"] = round(tf_ratio, 4)
+		if loss_homeostasis is not None:
+			record["loss_homeostasis"] = round(loss_homeostasis, 6)
+		if target_homeostasis is not None:
+			record["target_homeostasis"] = target_homeostasis
+		if pred_homeostasis is not None:
+			record["pred_homeostasis"] = pred_homeostasis
+		if homeostasis_correct is not None:
+			record["homeostasis_correct"] = homeostasis_correct
 		self._write(record)
 
 	def log_epoch(
@@ -127,9 +142,10 @@ class ExperimentLogger:
 		worst_agent: int,
 		parent_a: int,
 		parent_b: int,
+		acc_homeostasis: float | None = None,
 	) -> None:
 		"""Log epoch-level aggregated metrics."""
-		self._write({
+		record = {
 			"type": "epoch",
 			"epoch": epoch,
 			"elapsed_s": round(time.monotonic() - self._start_time, 3),
@@ -141,7 +157,10 @@ class ExperimentLogger:
 			"worst_agent": worst_agent,
 			"parent_a": parent_a,
 			"parent_b": parent_b,
-		})
+		}
+		if acc_homeostasis is not None:
+			record["acc_homeostasis"] = round(acc_homeostasis, 4)
+		self._write(record)
 
 	def log_event(self, event: str, data: dict[str, Any] | None = None) -> None:
 		"""Log a freeform event (promotion, early stop, error, etc.)."""
@@ -162,7 +181,13 @@ class ExperimentLogger:
 		"""Load experiment data as a pandas DataFrame."""
 		import pandas as pd
 
-		path = os.path.join(_get_telemetry_dir(), f"EXP_{experiment_id}.jsonl")
+		base = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+		new_path = os.path.join(base, "storage", "experiments", experiment_id, "telemetry.jsonl")
+		if os.path.exists(new_path):
+			path = new_path
+		else:
+			path = os.path.join(_get_telemetry_dir(), f"EXP_{experiment_id}.jsonl")
+
 		records = []
 		with open(path, encoding="utf-8") as f:
 			for line in f:

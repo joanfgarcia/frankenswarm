@@ -158,6 +158,13 @@ class SovereignTranslator:
 			"uno",
 			"dos",
 			"tres",
+			"cuatro",
+			"cinco",
+			"seis",
+			"siete",
+			"ocho",
+			"nueve",
+			"diez",
 		]
 		nouns_verbs = [
 			"gato",
@@ -279,12 +286,19 @@ class SovereignTranslator:
 			"tristeza",
 			"dolor",
 			"hambre",
+			"neutral",
+			"urgencia",
+			"daño",
+			"batería",
 			"fear",
 			"joy",
 			"anger",
 			"sadness",
 			"pain",
 			"hunger",
+			"urgency",
+			"damage",
+			"battery",
 		]
 
 		core = list(set(conjunctions + prepositions + pronouns + math_ops + nouns_verbs))

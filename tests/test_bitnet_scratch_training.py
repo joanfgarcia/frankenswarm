@@ -85,19 +85,22 @@ def test_svd_crossover():
 			assert not torch.equal(param, p_b)
 
 
-def test_dataset_breeder_dual():
-	"""Verifica que ReferentialDatasetBreeder genera lotes duales correctos."""
+def test_dataset_breeder_3d():
+	"""Verifica que ReferentialDatasetBreeder genera lotes 3D correctos."""
 	from src.bitnet.dataset_breeder import ReferentialDatasetBreeder
 
 	translator = SovereignTranslator()
 	breeder = ReferentialDatasetBreeder(translator)
 
-	concept_targets, concept_token_ids, emotion_targets, emotion_token_ids = breeder.generate_batch(4)
+	concept_targets, concept_token_ids, emotion_targets, emotion_token_ids, homeostasis_targets, homeostasis_token_ids = breeder.generate_batch(4)
 
 	assert concept_targets.shape == (4,)
 	assert concept_token_ids.shape == (4,)
 	assert emotion_targets.shape == (4,)
 	assert emotion_token_ids.shape == (4,)
+	assert homeostasis_targets.shape == (4,)
+	assert homeostasis_token_ids.shape == (4,)
 
 	assert breeder.get_concept_name(concept_targets[0]) in breeder.target_concepts
 	assert breeder.get_emotion_name(emotion_targets[0]) in breeder.target_emotions
+	assert breeder.get_homeostasis_name(homeostasis_targets[0]) in breeder.target_homeostasis
