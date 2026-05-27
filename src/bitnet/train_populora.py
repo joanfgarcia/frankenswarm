@@ -130,6 +130,15 @@ def run_arena():
 		else:
 			print(f"ℹ️ Checkpoint {resume_checkpoint} no encontrado. Inicializando con pesos aleatorios.")
 
+	freeze_core = config.get("freeze_core", False)
+	if freeze_core:
+		print("🔒 [SOVEREIGN LAYER] Congelando Specialist Core (Capa 3). Solo se entrenan Traductores (Capas 2 y 4).")
+		for model in population:
+			for param in model.core_layers.parameters():
+				param.requires_grad = False
+			if getattr(model, "pos_embedding", None) is not None:
+				model.pos_embedding.requires_grad = False
+
 	# Optimizadores individuales
 	lr = config["lr"]
 	optimizers = [torch.optim.AdamW(filter(lambda p: p.requires_grad, model.parameters()), lr=lr) for model in population]

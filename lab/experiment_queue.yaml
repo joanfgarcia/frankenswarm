@@ -1,5 +1,5 @@
 current_experiment: null
-last_updated: '2026-05-27T20:29:04.943463+02:00'
+last_updated: '2026-05-27T20:45:34.299446+02:00'
 last_run_by: minion_scheduler
 completed:
 - id: '001'
@@ -68,9 +68,12 @@ completed:
 - id: '020'
   result: PASS
   note: 'Pérdida: 2.2975 | Test Acc: 80.56% | Duración: 1.4 min'
+- id: '021'
+  result: PASS
+  note: 'Pérdida: 1.7532 | Test Acc: 74.66% | Duración: 1.3 min'
 queue:
-- id: '020'
-  name: Control de Colapso con Early Stopping (EXP_020)
-  description: Ejecuta los parámetros extremos de EXP_019 pero con Early Stopping
-    activado al superar el 70% en el test de resta.
-  script: src.bitnet.train_generic
+- id: '021'
+  name: Alineación de Vocabulario sobre Core Matemático (EXP_021)
+  description: Carga los pesos entrenados de EXP_020, congela el Core (Capa 3) y entrena
+    los traductores en el juego referencial de conceptos del LORE.
+  script: src.bitnet.train_populora
