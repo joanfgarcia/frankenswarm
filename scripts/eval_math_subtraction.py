@@ -1,6 +1,6 @@
-import os
 import json
-import numpy as np
+import os
+
 import torch
 
 from src.bitnet.generalization_breeder import CompositionalMathDatasetBreeder
@@ -26,7 +26,11 @@ def eval_subtraction_mastery(experiment_id: str = "EXP_014"):
 	vocab_embeddings = translator.get_concept_embeddings()
 	seed = config.get("seed", 42)
 	split_ratio = config.get("split_ratio", 0.8)
-	breeder = CompositionalMathDatasetBreeder(translator, split_ratio=split_ratio, seed=seed)
+	operators_config = config.get("operators", {})
+	enabled_operators = [name for name, op_conf in operators_config.items() if op_conf.get("enabled", True)]
+	if not enabled_operators:
+		enabled_operators = ["suma", "resta"]
+	breeder = CompositionalMathDatasetBreeder(translator, split_ratio=split_ratio, seed=seed, enabled_operators=enabled_operators)
 
 	# 2. Inicializar Modelo y cargar pesos
 	hidden_dim = config["hidden_dim"]
@@ -59,11 +63,13 @@ def eval_subtraction_mastery(experiment_id: str = "EXP_014"):
 		correct_joint = 0
 		total = len(equations)
 
-		# Desglose sumas y restas
+		# Desglose sumas, restas y multiplicaciones
 		sum_total = 0
 		sum_joint_ok = 0
 		sub_total = 0
 		sub_joint_ok = 0
+		mul_total = 0
+		mul_joint_ok = 0
 
 		print(f"\n--- Evaluando {total} ecuaciones en el conjunto de {set_name} ---")
 
@@ -94,10 +100,14 @@ def eval_subtraction_mastery(experiment_id: str = "EXP_014"):
 				sum_total += 1
 				if joint_ok:
 					sum_joint_ok += 1
-			else:
+			elif op == 1:
 				sub_total += 1
 				if joint_ok:
 					sub_joint_ok += 1
+			elif op == 2:
+				mul_total += 1
+				if joint_ok:
+					mul_joint_ok += 1
 
 			if joint_ok:
 				correct_joint += 1
@@ -127,11 +137,13 @@ def eval_subtraction_mastery(experiment_id: str = "EXP_014"):
 		print("-" * 65)
 		print(f"📊 RESULTADOS DE AUTO-COMUNICACIÓN - {set_name.upper()}")
 		print("-" * 65)
-		print(f"  - CONJUNTO GLOBAL:  {correct_joint/total*100:.2f}% ({correct_joint}/{total})")
+		print(f"  - CONJUNTO GLOBAL:            {correct_joint/total*100:.2f}% ({correct_joint}/{total})")
 		if sum_total > 0:
-			print(f"  - ➕ SUMAS:         {sum_joint_ok/sum_total*100:.2f}% ({sum_joint_ok}/{sum_total})")
+			print(f"  - ➕ SUMAS:                   {sum_joint_ok/sum_total*100:.2f}% ({sum_joint_ok}/{sum_total})")
 		if sub_total > 0:
-			print(f"  - ➖ RESTAS (Sub):  {sub_joint_ok/sub_total*100:.2f}% ({sub_joint_ok}/{sub_total})")
+			print(f"  - ➖ RESTAS (Sub):            {sub_joint_ok/sub_total*100:.2f}% ({sub_joint_ok}/{sub_total})")
+		if mul_total > 0:
+			print(f"  - ✖️ MULTIPLICACIONES (Mul):  {mul_joint_ok/mul_total*100:.2f}% ({mul_joint_ok}/{mul_total})")
 		print("-" * 65)
 
 	run_eval_set(breeder.train_equations, "TRAIN (Visto)")

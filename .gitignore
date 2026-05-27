@@ -18,3 +18,4 @@ ENV/
 # Project generated artifacts
 FRANKENSWARM_DIGEST.txt
 storage/
+lab/.inbox/

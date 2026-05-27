@@ -1,6 +1,6 @@
-import os
 import json
-import numpy as np
+import os
+
 import torch
 
 from src.bitnet.generalization_breeder import CompositionalMathDatasetBreeder
@@ -26,7 +26,11 @@ def eval_generalization(experiment_id: str = "EXP_013"):
 	vocab_embeddings = translator.get_concept_embeddings()
 	seed = config.get("seed", 42)
 	split_ratio = config.get("split_ratio", 0.8)
-	breeder = CompositionalMathDatasetBreeder(translator, split_ratio=split_ratio, seed=seed)
+	operators_config = config.get("operators", {})
+	enabled_operators = [name for name, op_conf in operators_config.items() if op_conf.get("enabled", True)]
+	if not enabled_operators:
+		enabled_operators = ["suma", "resta"]
+	breeder = CompositionalMathDatasetBreeder(translator, split_ratio=split_ratio, seed=seed, enabled_operators=enabled_operators)
 
 	# 2. Inicializar Modelo y cargar pesos
 	hidden_dim = config["hidden_dim"]

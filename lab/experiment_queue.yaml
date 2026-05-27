@@ -1,102 +1,70 @@
-# Frankenswarm Laboratory — Experiment Queue
-# This file is read by Aleth during autonomous wake cycles.
-# Each experiment has success criteria and branching logic.
-
-current_experiment: "006"
-last_updated: "2026-05-26T21:50:00+02:00"
-last_run_by: null
-
-# ── Completed ─────────────────────────────────────────────
+current_experiment: null
+last_updated: '2026-05-27T18:57:09.414671+02:00'
+last_run_by: minion_scheduler
 completed:
-  - id: "001"
-    result: FAIL
-    note: "8192 tokens too large. 0% accuracy."
-
-  - id: "002"
-    result: FAIL
-    note: "Single-head, no positional encoding. Position collapse."
-
-  - id: "003"
-    result: FAIL
-    note: "Dual-head but Gumbel-Softmax can't bootstrap. Random chance."
-
-  - id: "004a"
-    result: PASS
-    note: "Teacher forcing diagnostic. 100% in 350 steps. Architecture works."
-
-  - id: "004b"
-    result: PASS
-    note: "Scheduled TF. 95.08% joint in autonomy. GRADE 0 CLEARED."
-
-  - id: "005"
-    result: PASS
-    note: "Proto-syntax discovered: [C,C,E]. 84% consistency. 93.48% joint."
-
-  - id: "005b"
-    result: INFORMATIVE
-    note: "Unfrozen embeddings degrade everything. Decision: keep frozen."
-
-# ── Queue ─────────────────────────────────────────────────
+- id: '001'
+  result: FAIL
+  note: 8192 tokens too large. 0% accuracy.
+- id: '002'
+  result: FAIL
+  note: Single-head, no positional encoding. Position collapse.
+- id: '003'
+  result: FAIL
+  note: Dual-head but Gumbel-Softmax can't bootstrap. Random chance.
+- id: 004a
+  result: PASS
+  note: Teacher forcing diagnostic. 100% in 350 steps. Architecture works.
+- id: 004b
+  result: PASS
+  note: Scheduled TF. 95.08% joint in autonomy. GRADE 0 CLEARED.
+- id: '005'
+  result: PASS
+  note: 'Proto-syntax discovered: [C,C,E]. 84% consistency. 93.48% joint.'
+- id: 005b
+  result: INFORMATIVE
+  note: 'Unfrozen embeddings degrade everything. Decision: keep frozen.'
+- id: '006'
+  result: PASS
+  note: Expand vocabulary 21->50 completed.
+- id: '007'
+  result: PASS
+  note: Expand vocabulary 50->100 completed.
+- id: 008
+  result: PASS
+  note: Grade 1 - Arithmetic compositionality completed.
+- id: 009
+  result: PASS
+  note: EXP_009 completed.
+- id: '010'
+  result: PASS
+  note: EXP_010 completed.
+- id: '011'
+  result: PASS
+  note: EXP_011 completed.
+- id: '012'
+  result: PASS
+  note: EXP_012 completed.
+- id: '013'
+  result: PASS
+  note: EXP_013 completed.
+- id: '014'
+  result: PASS
+  note: EXP_014 completed.
+- id: '015'
+  result: PASS
+  note: EXP_015 completed.
+- id: '016'
+  result: FAIL
+  note: Catastrophic forgetting shock in epoch 26. Restas stuck at 40%.
+- id: '017'
+  result: PASS
+  note: 'Pérdida: 1.2573 | Test Acc: 72.22% | Duración: 2.9 min'
+- id: 018
+  result: PASS
+  note: 'Pérdida: 0.0570 | Test Acc: 78.70% | Duración: 3.0 min'
 queue:
-  - id: "006"
-    name: "Expand vocabulary 21→50"
-    description: |
-      Load checkpoint from EXP_005 (epoch 60).
-      Expand embedding matrix 21→50 with new fastembed vectors.
-      Resize concept_head(256, 15→44). Keep emotion_head(256, 6).
-      Shorter nursery (3 epochs) since agents already know how to listen.
-      Total: 3 nursery + 12 transition + 45 autonomy = 60 epochs.
-    script: "src.bitnet.train_vocab_expand"
-    checkpoint_from: "005"
-    params:
-      vocab_size: 50
-      num_concepts: 44
-      num_emotions: 6
-      nursery_epochs: 3
-      transition_epochs: 12
-      autonomy_epochs: 45
-    success_criteria:
-      acc_joint_mean_min: 85.0  # Lower threshold — bigger vocab
-      acc_joint_min_min: 60.0   # No catastrophic collapse
-      message_consistency_min: 50.0
-    on_success: "007"
-    on_fail:
-      action: "retry"
-      max_retries: 2
-      retry_params:
-        - { lr: 5.0e-4, nursery_epochs: 5 }
-        - { lr: 1.0e-3, nursery_epochs: 8, transition_epochs: 20 }
-
-  - id: "007"
-    name: "Expand vocabulary 50→100"
-    description: |
-      Same protocol as 006 but from 50 to 100 tokens.
-      Tests if the proto-language scales beyond the initial jump.
-    script: "src.bitnet.train_vocab_expand"
-    checkpoint_from: "006"
-    params:
-      vocab_size: 100
-      num_concepts: 94
-      num_emotions: 6
-    success_criteria:
-      acc_joint_mean_min: 80.0
-      message_consistency_min: 40.0
-    on_success: "008"
-    on_fail:
-      action: "pause"
-      note: "Needs human review — fundamental scaling issue"
-
-  - id: "008"
-    name: "Grade 1 — Arithmetic compositionality"
-    description: |
-      Introduce compositional targets: sum(2,3)=5, sub(5,1)=4.
-      Tests if the emergent communication is purely associative
-      or can compose meaning across tokens.
-    script: "src.bitnet.train_arithmetic"
-    checkpoint_from: "007"
-    success_criteria:
-      acc_joint_mean_min: 70.0
-    on_success: null  # Human designs next phase
-    on_fail:
-      action: "pause"
-      note: "Communication is associative, not compositional. Needs redesign."
+- id: 018
+  name: Embeddings Posicionales para Restas
+  description: Añade embeddings posicionales aprendibles para romper la equivariancia
+    de permutación y generalizar la resta.
+  script: src.bitnet.train_generic

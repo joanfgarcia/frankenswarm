@@ -141,16 +141,23 @@ class BitNet4LayerModel(nn.Module):
 	Implementa la ruta diferenciable para Gumbel-Softmax en el juego referencial.
 	"""
 
-	def __init__(self, vocab_embeddings: np.ndarray, hidden_dim: int = 256, num_layers: int = 4):
+	def __init__(self, vocab_embeddings: np.ndarray, hidden_dim: int = 256, num_layers: int = 4, use_pos_embedding: bool = False):
 		super().__init__()
 		self.vocab_size, self.vocab_dim = vocab_embeddings.shape
 		self.hidden_dim = hidden_dim
+		self.use_pos_embedding = use_pos_embedding
 
 		# Registrar los embeddings del vocabulario conceptual como un buffer no entrenable (Capa 1 fija)
 		self.register_buffer("vocab_embeddings", torch.from_numpy(vocab_embeddings).float())
 
 		# Capa 2: Inbound Translator (Proyección del embedding de 384-dim al espacio oculto del Core de 256-dim)
 		self.inbound_proj = nn.Linear(self.vocab_dim, hidden_dim, bias=False)
+
+		# Capa de Posición: Embeddings Posicionales Aprendibles (Longitud máxima 4)
+		if self.use_pos_embedding:
+			self.pos_embedding = nn.Parameter(torch.randn(1, 4, hidden_dim) * 0.02)
+		else:
+			self.register_parameter("pos_embedding", None)
 
 		# Capa 3: Specialist Core (Ternary Transformer)
 		self.core_layers = nn.ModuleList([BitNetTransformerBlock(dim=hidden_dim, num_heads=4, mlp_ratio=4) for _ in range(num_layers)])
@@ -166,6 +173,7 @@ class BitNet4LayerModel(nn.Module):
 		- Un tensor de enteros de tamaño (batch_size, seq_len) conteniendo Token IDs discretos.
 		- Un tensor float de tamaño (batch_size, seq_len, vocab_size) conteniendo vectores one-hot relajados (Gumbel-Softmax).
 		"""
+		seq_len = x.shape[1]
 		# Capa 1 a Capa 2: Proyección al espacio oculto
 		if x.ndim == 2:
 			# Ruta discreta convencional (Token IDs)
@@ -177,6 +185,10 @@ class BitNet4LayerModel(nn.Module):
 			embeds = torch.matmul(x, self.vocab_embeddings)  # (batch_size, seq_len, 384)
 
 		h = self.inbound_proj(embeds)  # (batch_size, seq_len, 256)
+
+		# Sumar embeddings posicionales si están habilitados o presentes
+		if getattr(self, "pos_embedding", None) is not None:
+			h = h + self.pos_embedding[:, :seq_len, :]
 
 		# Capa 3: Specialist Core
 		for layer in self.core_layers:
@@ -203,3 +215,11 @@ class BitNet4LayerModel(nn.Module):
 		# Aplicamos Gumbel-Softmax sobre la dimensión del vocabulario
 		message = F.gumbel_softmax(logits, tau=tau, hard=hard, dim=-1)
 		return message
+
+	def _load_from_state_dict(self, state_dict, prefix, local_metadata, strict, missing_keys, unexpected_keys, error_msgs):
+		key = prefix + "pos_embedding"
+		if key in state_dict and state_dict[key] is not None and getattr(self, "pos_embedding", None) is None:
+			param_shape = state_dict[key].shape
+			self.pos_embedding = nn.Parameter(torch.zeros(param_shape, device=state_dict[key].device))
+			self.use_pos_embedding = True
+		super()._load_from_state_dict(state_dict, prefix, local_metadata, strict, missing_keys, unexpected_keys, error_msgs)
