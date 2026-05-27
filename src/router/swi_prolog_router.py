@@ -134,6 +134,8 @@ def route(task: str) -> NodeTarget:
 		domain = "code_python"
 	elif any(kw in task.lower() for kw in ("why ", "explain ", "what is ", "how does ")):
 		domain = "logic_math"
+	elif any(kw in task.lower() for kw in ("suma", "resta", "multiplica", ">", "<", "igual", "verdad", "falsedad")):
+		domain = "logic_math"
 	elif any(kw in task.lower() for kw in ("hola", "buenos días", "buenos dias", "saludo")):
 		domain = "general"
 	else:
