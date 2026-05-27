@@ -1,5 +1,5 @@
 current_experiment: null
-last_updated: '2026-05-27T18:57:09.414671+02:00'
+last_updated: '2026-05-27T20:29:04.943463+02:00'
 last_run_by: minion_scheduler
 completed:
 - id: '001'
@@ -62,9 +62,15 @@ completed:
 - id: 018
   result: PASS
   note: 'Pérdida: 0.0570 | Test Acc: 78.70% | Duración: 3.0 min'
+- id: 019
+  result: PASS
+  note: 'Pérdida: 6.8444 | Test Acc: 55.56% | Duración: 2.9 min'
+- id: '020'
+  result: PASS
+  note: 'Pérdida: 2.2975 | Test Acc: 80.56% | Duración: 1.4 min'
 queue:
-- id: 018
-  name: Embeddings Posicionales para Restas
-  description: Añade embeddings posicionales aprendibles para romper la equivariancia
-    de permutación y generalizar la resta.
+- id: '020'
+  name: Control de Colapso con Early Stopping (EXP_020)
+  description: Ejecuta los parámetros extremos de EXP_019 pero con Early Stopping
+    activado al superar el 70% en el test de resta.
   script: src.bitnet.train_generic
