@@ -1,4 +1,5 @@
 import argparse
+import json
 import os
 import sys
 
@@ -107,44 +108,219 @@ def inspect_homeostasis(model: torch.nn.Module):
 def inspect_linguistics(model: torch.nn.Module, translator: SovereignTranslator):
 	print_header("SONDA LINGÜÍSTICA DE CAPA 1")
 
-	concept_test = "fuego"
-	emotion_test = "miedo"
+	# Detección heurística de la especialidad del espécimen
+	specimen_type = "legacy_vocab"
+	config_data = {}
 
-	concept_ids = translator.encode(concept_test)
-	emotion_ids = translator.encode(emotion_test)
+	# Buscar la ruta del espécimen a través de los argumentos pasados
+	specimen_path = None
+	for arg in sys.argv:
+		if arg.endswith(".pt") or "best_agent" in arg:
+			specimen_path = arg
+			break
 
-	if not concept_ids or not emotion_ids:
-		print("Error: No se pudieron codificar los conceptos de prueba.")
-		return
+	if specimen_path:
+		# Si la TUI pasó la ruta completa del checkpoint best_agent.pt,
+		# podemos buscar config.json en su mismo directorio
+		parent_dir = os.path.dirname(specimen_path)
+		config_file = os.path.join(parent_dir, "config.json")
+		if os.path.exists(config_file):
+			try:
+				with open(config_file, "r", encoding="utf-8") as f:
+					config_data = json.load(f)
+					exp_id = config_data.get("experiment_id", "")
+					if "EXP_023" in exp_id or "logic" in exp_id or ("operators" in config_data and "mayor_que" in config_data["operators"]):
+						specimen_type = "relational_logic"
+					elif "EXP_020" in exp_id or "EXP_018" in exp_id or "EXP_017" in exp_id or "math" in exp_id or ("operators" in config_data and "resta" in config_data["operators"]):
+						specimen_type = "arithmetic"
+					elif "EXP_021" in exp_id or "EXP_022" in exp_id or "populora" in exp_id or "micro_vocab_words" in config_data:
+						specimen_type = "vocab_3d"
+			except Exception:
+				pass
 
-	c_id = concept_ids[0]
-	e_id = emotion_ids[0]
-
-	print("Entrada del Hablante:")
-	print(f"  • Concepto Objetivo: '{concept_test}' (ID {c_id})")
-	print(f"  • Estado Afectivo:   '{emotion_test}' (ID {e_id})")
+	# Heurística fallback en base a pos_embedding o tokens del vocabulario
+	if specimen_type == "legacy_vocab":
+		has_pos = getattr(model, "pos_embedding", None) is not None
+		if has_pos:
+			# Si tiene pos embedding pero no hay config, decidimos por codificación de relaciones
+			tids_gt = translator.encode(">")
+			if tids_gt:
+				specimen_type = "relational_logic"
+			else:
+				specimen_type = "arithmetic"
 
 	device = next(model.parameters()).device
-	speaker_input = torch.zeros((1, 3), dtype=torch.long, device=device)
-	speaker_input[0, 0] = c_id
-	speaker_input[0, 1] = e_id
-
 	model.eval()
-	with torch.no_grad():
-		# Generar mensaje (one-hot relajado)
-		message = model.generate_message(speaker_input, tau=0.1, hard=True)
-		msg_tokens = message.argmax(dim=-1)[0].tolist()
 
-		# Decodificar mensaje
-		msg_words = translator.decode(msg_tokens)
-		print("\nMensaje emitido por el Hablante (Capa 1):")
-		print(f"  • Token IDs: {msg_tokens}")
-		print(f"  • Conceptos: '{msg_words}'")
+	print(f"Tipo de Diagnóstico Clínico: {specimen_type.upper()}")
+	print("-" * 80)
 
-		# Probar descodificación del Oyente
-		logits = model(message)
-		pred_c_id = logits[0, 1, :].argmax().item()
-		pred_e_id = logits[0, 2, :].argmax().item()
+	if specimen_type == "arithmetic":
+		# Test aritmético: cinco - dos = tres
+		op_a, op_val, op_b = "cinco", "resta", "dos"
+		tids_a = translator.encode(op_a)
+		tids_op = translator.encode(op_val)
+		tids_b = translator.encode(op_b)
+
+		tid_a = tids_a[0] if tids_a else 0
+		tid_op = tids_op[0] if tids_op else 0
+		tid_b = tids_b[0] if tids_b else 0
+
+		print("Entrada de Aritmética:")
+		print(f"  • Operando A: '{op_a}' (ID {tid_a})")
+		print(f"  • Operador:   '{op_val}' (ID {tid_op})")
+		print(f"  • Operando B: '{op_b}' (ID {tid_b})")
+
+		# Secuencia: [A, op, B, 0]
+		speaker_input = torch.tensor([[tid_a, tid_op, tid_b, 0]], dtype=torch.long, device=device)
+
+		with torch.no_grad():
+			logits = model(speaker_input)
+			pred_tid = torch.argmax(logits[0, 3, :]).item()
+			pred_word = translator.decode([pred_tid])
+
+		print(f"\nResultado de la Inferencia (Paso 4):")
+		print(f"  • Token ID Predicho: {pred_tid}")
+		print(f"  • Decodificado:      '{pred_word}'")
+		print("-" * 80)
+		print(f"Resultado del Test Clínico: {'✓ ÉXITO (Cálculo Correcto)' if pred_word == 'tres' else '✗ ERROR (Cálculo Incorrecto)'}")
+
+	elif specimen_type == "relational_logic":
+		# Test de lógica relacional: cinco > dos = verdad
+		op_a, relation, op_b = "cinco", ">", "dos"
+		tids_a = translator.encode(op_a)
+		tids_rel = translator.encode(relation)
+		tids_b = translator.encode(op_b)
+
+		tid_a = tids_a[0] if tids_a else 0
+		tid_rel = tids_rel[0] if tids_rel else 0
+		tid_b = tids_b[0] if tids_b else 0
+
+		print("Entrada de Lógica Relacional (Test 1 - Mayor que):")
+		print(f"  • Operando A: '{op_a}' (ID {tid_a})")
+		print(f"  • Relación:   '{relation}' (ID {tid_rel})")
+		print(f"  • Operando B: '{op_b}' (ID {tid_b})")
+
+		speaker_input_1 = torch.tensor([[tid_a, tid_rel, tid_b, 0]], dtype=torch.long, device=device)
+
+		with torch.no_grad():
+			logits_1 = model(speaker_input_1)
+			pred_tid_1 = torch.argmax(logits_1[0, 3, :]).item()
+			pred_word_1 = translator.decode([pred_tid_1])
+
+		print(f"\nResultado de la Inferencia 1 (Paso 4):")
+		print(f"  • Token ID Predicho: {pred_tid_1}")
+		print(f"  • Decodificado:      '{pred_word_1}'")
+
+		# Test 2: conmutación asimétrica: dos > cinco = falsedad
+		print("\nEntrada de Lógica Relacional (Test 2 - Asimetría posicional):")
+		print(f"  • Operando A: '{op_b}' (ID {tid_b})")
+		print(f"  • Relación:   '{relation}' (ID {tid_rel})")
+		print(f"  • Operando B: '{op_a}' (ID {tid_a})")
+
+		speaker_input_2 = torch.tensor([[tid_b, tid_rel, tid_a, 0]], dtype=torch.long, device=device)
+
+		with torch.no_grad():
+			logits_2 = model(speaker_input_2)
+			pred_tid_2 = torch.argmax(logits_2[0, 3, :]).item()
+			pred_word_2 = translator.decode([pred_tid_2])
+
+		print(f"\nResultado de la Inferencia 2 (Paso 4):")
+		print(f"  • Token ID Predicho: {pred_tid_2}")
+		print(f"  • Decodificado:      '{pred_word_2}'")
+		print("-" * 80)
+		
+		success_1 = pred_word_1 == 'verdad'
+		success_2 = pred_word_2 == 'falsedad'
+		print(f"Resultado del Test de Juicio lógico:")
+		print(f"  • Comparación Correcta:   {'✓ ÉXITO' if success_1 else '✗ ERROR'}")
+		print(f"  • Asimetría Posicional:   {'✓ ÉXITO' if success_2 else '✗ ERROR'}")
+		if success_1 and success_2:
+			print("  ✓ Integridad Lógica Relacional: 100% VERIFICADO")
+		else:
+			print("  ✗ Integridad Lógica Relacional: DESALINEADO O SIMÉTRICO")
+
+	elif specimen_type == "vocab_3d":
+		# Test de vocabulario 3D: fuego, miedo, urgencia
+		concept_test, emotion_test, homeo_test = "fuego", "miedo", "urgencia"
+		
+		concept_ids = translator.encode(concept_test)
+		emotion_ids = translator.encode(emotion_test)
+		homeo_ids = translator.encode(homeo_test)
+
+		c_id = concept_ids[0] if concept_ids else 0
+		e_id = emotion_ids[0] if emotion_ids else 0
+		h_id = homeo_ids[0] if homeo_ids else 0
+
+		print("Entrada del Hablante (3D):")
+		print(f"  • Concepto Objetivo: '{concept_test}' (ID {c_id})")
+		print(f"  • Estado Afectivo:   '{emotion_test}' (ID {e_id})")
+		print(f"  • Homeostasis:       '{homeo_test}' (ID {h_id})")
+
+		speaker_input = torch.tensor([[c_id, e_id, h_id, 0]], dtype=torch.long, device=device)
+
+		with torch.no_grad():
+			message = model.generate_message(speaker_input, tau=0.1, hard=True)
+			msg_tokens = torch.argmax(message[0], dim=-1).tolist()
+			msg_words = translator.decode(msg_tokens)
+
+			print("\nMensaje emitido por el Hablante (Capa 1):")
+			print(f"  • Token IDs: {msg_tokens}")
+			print(f"  • Conceptos: '{msg_words}'")
+
+			logits = model(message)
+			pred_c_id = torch.argmax(logits[0, 1, :]).item()
+			pred_e_id = torch.argmax(logits[0, 2, :]).item()
+			pred_h_id = torch.argmax(logits[0, 3, :]).item()
+
+		print("\nDescodificación del Oyente:")
+		print(f"  • Concepto predicho: '{translator.decode([pred_c_id])}' (ID {pred_c_id})")
+		print(f"  • Emoción predicha:  '{translator.decode([pred_e_id])}' (ID {pred_e_id})")
+		print(f"  • Homeo predicha:     '{translator.decode([pred_h_id])}' (ID {pred_h_id})")
+
+		match_c = pred_c_id == c_id
+		match_e = pred_e_id == e_id
+		match_h = pred_h_id == h_id
+
+		print("-" * 80)
+		print("Resultado del Juego Referencial 3D:")
+		print(f"  • Entendimiento Conceptual: {'✓ ÉXITO' if match_c else '✗ ERROR'}")
+		print(f"  • Alineación Afectiva:       {'✓ ÉXITO' if match_e else '✗ ERROR'}")
+		print(f"  • Alineación Homeostática:  {'✓ ÉXITO' if match_h else '✗ ERROR'}")
+		if match_c and match_e and match_h:
+			print("  ✓ Recompensa conjunta: R = 1.0 (Entendimiento Mutuo Pleno)")
+		else:
+			print("  ✗ Recompensa: R = 0.0 (Fallo en la comunicación)")
+
+	else:
+		# Legacy Vocab (longitud 3)
+		concept_test = "fuego"
+		emotion_test = "miedo"
+
+		concept_ids = translator.encode(concept_test)
+		emotion_ids = translator.encode(emotion_test)
+
+		c_id = concept_ids[0] if concept_ids else 0
+		e_id = emotion_ids[0] if emotion_ids else 0
+
+		print("Entrada del Hablante (2D Legacy):")
+		print(f"  • Concepto Objetivo: '{concept_test}' (ID {c_id})")
+		print(f"  • Estado Afectivo:   '{emotion_test}' (ID {e_id})")
+
+		speaker_input = torch.tensor([[c_id, e_id, 0]], dtype=torch.long, device=device)
+
+		with torch.no_grad():
+			message = model.generate_message(speaker_input, tau=0.1, hard=True)
+			msg_tokens = torch.argmax(message[0], dim=-1).tolist()
+			msg_words = translator.decode(msg_tokens)
+
+			print("\nMensaje emitido por el Hablante (Capa 1):")
+			print(f"  • Token IDs: {msg_tokens}")
+			print(f"  • Conceptos: '{msg_words}'")
+
+			logits = model(message)
+			pred_c_id = torch.argmax(logits[0, 1, :]).item()
+			pred_e_id = torch.argmax(logits[0, 2, :]).item()
 
 		print("\nDescodificación del Oyente (Empatía):")
 		print(f"  • Concepto predicho: '{translator.decode([pred_c_id])}' (ID {pred_c_id})")
@@ -156,13 +332,7 @@ def inspect_linguistics(model: torch.nn.Module, translator: SovereignTranslator)
 		print("-" * 80)
 		print("Resultado del Juego Referencial Afectivo:")
 		print(f"  • Entendimiento Conceptual: {'✓ ÉXITO' if match_c else '✗ ERROR'}")
-		print(f"  • Alineación Afectiva (Empatía): {'✓ ÉXITO' if match_e else '✗ ERROR'}")
-		if match_c and match_e:
-			print("  ✓ Recompensa conjunta: R = 1.0 (Entendimiento Mutuo Pleno)")
-		elif match_c:
-			print("  ⚠ Recompensa penalizada: R = 0.3 (Falta de empatía o reward hacking)")
-		else:
-			print("  ✗ Recompensa: R = 0.0 (Fallo en la comunicación)")
+		print(f"  • Alineación Afectiva:       {'✓ ÉXITO' if match_e else '✗ ERROR'}")
 
 
 def inspect_svd(model: torch.nn.Module):
