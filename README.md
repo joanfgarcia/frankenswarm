@@ -8,6 +8,11 @@
 <a name="english"></a>
 # English
 
+> [!WARNING]
+> **Active Research Phase**: This project is currently in the **experimental training and research phase** (Phase B: The Arena). We are training 1.58-bit ternary models in emergent signaling games to solve logical generalization bottlenecks. The full physically-distributed cascading hardware MoE is a planned target, not yet production-ready.
+>
+> **Fase de Investigación Activa**: Este proyecto se encuentra en **fase experimental de entrenamiento e investigación** (Fase B: La Arena). Estamos entrenando modelos ternarios de 1.58 bits en juegos de señalización emergente para resolver cuellos de botella de generalización lógica. La cascada MoE distribuida físicamente en hardware real es un objetivo planificado, no listo para producción.
+
 > *"Don't wait for the perfect hardware. Conquer the hardware you have."*
 
 ## What Is This?
@@ -111,6 +116,11 @@ Frankenswarm integrates with [Red-Pill](../sharing) via the `ProviderRegistry`. 
 
 <a name="español"></a>
 # Español
+
+> [!WARNING]
+> **Fase de Investigación Activa**: Este proyecto se encuentra en **fase experimental de entrenamiento e investigación** (Fase B: La Arena). Estamos entrenando modelos ternarios de 1.58 bits en juegos de señalización emergente para resolver cuellos de botella de generalización lógica. La cascada MoE distribuida físicamente en hardware real es un objetivo planificado, no listo para producción.
+>
+> **Active Research Phase**: This project is currently in the **experimental training and research phase** (Phase B: The Arena). We are training 1.58-bit ternary models in emergent signaling games to solve logical generalization bottlenecks. The full physically-distributed cascading hardware MoE is a planned target, not yet production-ready.
 
 > *"No esperes a tener el hardware perfecto. Conquista el hardware que tienes."*
 

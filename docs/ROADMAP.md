@@ -23,13 +23,13 @@ Benchmark all available silicon and confirm inference capabilities.
 - [x] FastFlowLMInferenceProvider integrated in Red-Pill ProviderRegistry
 - [x] InferenceRouter with `npu` tier and cascade fallback
 
-## Phase 2: The Prolog Gate (Hardware-Aware Routing)
+## Phase 2: The Prolog Gate (Hardware-Aware Routing) ✅ (Completed 2026-05-24)
 Replace mock routing with real intent classification → silicon binding.
-- [ ] Define Prolog ontology: query taxonomy (code, reasoning, recall, triage, background)
-- [ ] Implement hardware affinity predicates: `route(Query, Silicon)`
-- [ ] Add confidence scoring: Orchestrator (NPU) self-evaluates and escalates
-- [ ] Energy-aware routing: prefer 2W (NPU) over 80W (CUDA) when quality is equal
-- [ ] Integrate with Red-Pill `InferenceRouter` — replace static tier list with Prolog decisions
+- [x] Define Prolog ontology: query taxonomy (code, reasoning, recall, triage, background)
+- [x] Implement hardware affinity predicates: `route(Query, Silicon)`
+- [x] Add confidence scoring: Orchestrator (NPU) self-evaluates and escalates
+- [x] Energy-aware routing: prefer 2W (NPU) over 80W (CUDA) when quality is equal
+- [x] Integrate with Red-Pill `InferenceRouter` — replace static tier list with Prolog decisions
 
 ## Phase 2.5: The Cage (Sandboxing)
 Mandatory before granting autonomous mutation capabilities.
@@ -118,11 +118,11 @@ Scale the orchestration to multi-agent, collaborative routing architectures.
 | 0 — Translator | ✅ Done | PoC | — |
 | 1 — Ghost Swarm | ✅ Done | PoC | — |
 | 1.5 — Hardware Discovery | ✅ Done | PoC | All 4 confirmed |
-| 2 — Prolog Gate | 🔲 Next | PoC | NPU + CUDA |
+| 2 — Prolog Gate | ✅ Done | PoC | NPU + CUDA |
 | 2.5 — Cage | 🔲 Planned | PoC | systemd |
 | 3 — Aggregator | 🔲 Planned | PoC | All 4 |
 | **── PoC validated ──** | | | |
-| 4 — Ternary BitNet (Grado 0) | 🔲 In Progress | Arena | NPU / GPU / CPU |
+| 4 — Ternary BitNet (Grado 1) | 🔲 In Progress | Arena (Training) | NPU / GPU / CPU |
 | 5 — Mixture of Adapters | 🔲 Planned | Arena | GPU / CPU / iGPU |
 | 6 — Distillation & Quantization | 🔲 Planned | Arena | NPU + CPU |
 | 7 — NAS & Python Orchestration | 🔲 Planned | Arena | Orchestrator |
