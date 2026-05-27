@@ -107,15 +107,22 @@ Para que cualquiera entienda este léxico táctico, podemos traducirlo a cómo u
 
 Para entender cómo aprenden los agentes y cómo corregimos sus sesgos (como el fallo en las restas), traducimos la optimización matemática a la dinámica de supervivencia dentro del búnker:
 
-*   **La Pérdida (Loss / El Lamento del Búnker)**:
-    *   *Matemáticas*: La función de Entropía Cruzada $\mathcal{L} = -\sum y_i \log(\hat{y}_i)$.
-    *   *En el Lore*: **El Lamento**. Cada vez que un agente comete un error al calcular o decodificar, suena una sirena de alarma en el búnker. Cuanto mayor es el fallo, más alto es el volumen del Lamento. El objetivo de los agentes es ajustar sus mentes hasta que el búnker esté en absoluto silencio (Loss cercano a 0).
-*   **El Gradiente (Gradient / El Eco del Error)**:
-    *   *Matemáticas*: La derivada de la pérdida respecto a los pesos $\nabla_w \mathcal{L}$.
-    *   *En el Lore*: **El Eco del Error**. Cuando suena la alarma, el sonido viaja hacia atrás por los cables de la radio (Retropropagación / *Backpropagation*). Este eco golpea las neuronas de los agentes y les indica exactamente qué conexiones sinápticas causaron el fallo y en qué dirección deben girar sus diales internos (pesos de 1.58 bits) para que la próxima vez la alarma suene más floja.
-*   **El Castigo Amplificado (Loss Weighting / La Alarma Roja)**:
-    *   *Matemáticas*: Multiplicador de gradiente $\mathcal{L}_{\text{weighted}} = \mathcal{L} \times (1.0 + 1.0 \cdot \mathbb{I}(\text{op} = \text{resta}))$.
-    *   *En el Lore*: **La Alarma Roja**. En el búnker, equivocarse en una suma es un problema, pero equivocarse en una resta es una brecha de seguridad letal (un error al restar puede hacer que sobreestimemos los recursos de defensa). Para solucionarlo, configuramos la radio para que, si el fallo ocurre en una resta, el volumen del Lamento se duplique. El Eco del Error golpea las neuronas con el doble de fuerza, forzando a los agentes a recalibrar la lógica de la resta con máxima prioridad.
+*   **El Castigo (La Pérdida / Loss / El Lamento del Búnker)**:
+    *   *Matemáticas*: La función de Entropía Cruzada $\mathcal{L} = -\sum y_i \log(\hat{y}_i)$ (o el error cuadrático en otros contextos).
+    *   *En el Lore*: **El Lamento**. Equivocarse tiene un coste físico inmediato en el búnker: una sirena ensordecedora. Cuanto mayor es el error en la predicción del Oyente, mayor es la entropía cruzada, y más alto suena el Lamento. No hay un "tutor" dándoles una colleja; es el propio sistema el que sufre inestabilidad térmica y ruido. La pérdida es el indicador de dolor absoluto del búnker.
+*   **La Recompensa (El Silencio / La Calma)**:
+    *   *Matemáticas*: La minimización de la pérdida $\mathcal{L} \to 0$, lo que maximiza la probabilidad del target correcto $p(y) \to 1$.
+    *   *En el Lore*: **La Calma**. La única recompensa que conocen los agentes es el silencio absoluto. En el búnker, la paz se define como la ausencia de dolor (Loss = 0). Cuando el Oyente descodifica correctamente y el consenso es total, la sirena se apaga y el calor se disipa. Ese estado de equilibrio térmico es el fin de su existencia.
+*   **El Gradiente (El Eco del Error y los Diales)**:
+    *   *Matemáticas*: El vector de derivadas parciales $\nabla_\theta \mathcal{L}$.
+    *   *En el Lore*: **El Eco Directivo**. El Lamento no es solo ruido destructivo; viaja de vuelta por el canal (Retropropagación o *Backpropagation*) convertido en una onda de choque vibratoria. Los agentes tienen en sus consolas miles de pequeños diales analógicos y potenciómetros (los pesos $\theta$). El gradiente es la fuerza y dirección física de esa vibración: sacude exactamente los diales que causaron la brecha y les indica hacia dónde girar para acallar el Lamento. El gradiente apunta hacia donde el dolor *aumenta*, así que los agentes giran los diales en la dirección contraria.
+*   **La Tasa de Aprendizaje (Learning Rate / La Fricción de los Diales)**:
+    *   *Matemáticas*: El factor de escala $\eta$ en la ecuación de actualización:
+        $$\theta_{t+1} = \theta_t - \eta \nabla_\theta \mathcal{L}$$
+    *   *En el Lore*: **La Fricción de los Diales**. Los diales del búnker no giran locos; tienen una fricción física controlada ($\eta$). Si la fricción es muy baja ($\eta$ grande), la onda de choque del Lamento los hace girar violentamente, pasándose de largo y causando inestabilidad. Si la fricción es muy alta ($\eta$ muy pequeña), los diales apenas se mueven y los agentes tardan una eternidad en aprender a callar la alarma.
+*   **La Alarma Roja (Loss Weighting / Sobretensión Focalizada)**:
+    *   *Matemáticas*: Multiplicador de gradiente $\mathcal{L}_{\text{weighted}} = \mathcal{L} \times (1.0 + (\gamma - 1.0) \cdot \mathbb{I}(\text{op} = \text{resta}))$.
+    *   *En el Lore*: **La Alarma Roja (Sobretensión)**. Equivocarse en una resta es mucho más peligroso para la supervivencia que equivocarse en una suma. Para evitar que los agentes ignoren las restas, el búnker duplica la tensión en los cables cuando el fallo ocurre en esa operación ($\gamma = 2.0$). El Lamento suena el doble de fuerte, y la vibración en los diales asociados a la resta es el doble de violenta, obligándolos a reaccionar antes de que la brecha sea letal. Sin embargo, si la sobretensión es excesiva, los diales se desgastan intentando memorizar cada resta a la fuerza, perdiendo la capacidad de entender la lógica general (sobreajuste).
 
 ---
 
