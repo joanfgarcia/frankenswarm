@@ -15,14 +15,14 @@ graph TD
     subgraph PopuLoRA Framework
         BaseModel["Frozen Base LLM"]
         
-        subgraph Teachers (T)
+        subgraph Teachers ["Teachers (T)"]
             T1["T_1 (LoRA)"]
             T2["T_2 (LoRA)"]
             T3["T_3 (LoRA)"]
             T4["T_4 (LoRA)"]
         end
         
-        subgraph Students (S)
+        subgraph Students ["Students (S)"]
             S1["S_1 (LoRA)"]
             S2["S_2 (LoRA)"]
             S3["S_3 (LoRA)"]

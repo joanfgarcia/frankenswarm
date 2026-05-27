@@ -118,6 +118,8 @@ def run_training():
 	print(f"[Device]: {device}")
 
 	seed = config.get("seed", 42)
+	if seed is None:
+		seed = 42
 	print(f"🌱 [SEED] Fijando semilla aleatoria: {seed}")
 	np.random.seed(seed)
 	torch.manual_seed(seed)
@@ -160,6 +162,22 @@ def run_training():
 		num_layers=num_layers,
 		use_pos_embedding=use_pos_embedding
 	).to(device) for _ in range(pop_size)]
+
+	resume_checkpoint = config.get("resume_checkpoint")
+	if resume_checkpoint:
+		if not os.path.isabs(resume_checkpoint):
+			resume_checkpoint = os.path.join(base_dir, resume_checkpoint)
+		if os.path.exists(resume_checkpoint):
+			print(f"💾 [HOTSTART] Cargando pesos desde checkpoint {resume_checkpoint}...")
+			try:
+				state_dict = torch.load(resume_checkpoint, map_location=device)
+				for model in population:
+					model.load_state_dict(state_dict)
+				print("✅ Inicialización de población completada con éxito.")
+			except Exception as e:
+				print(f"⚠️ Error cargando checkpoint: {e}. Inicializando pesos aleatorios.")
+		else:
+			print(f"ℹ️ Checkpoint {resume_checkpoint} no encontrado. Inicializando con pesos aleatorios.")
 
 	lr = config["lr"]
 	wd = config.get("weight_decay", 0.01)

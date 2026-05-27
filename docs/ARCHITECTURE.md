@@ -195,27 +195,27 @@ Evolving model weights for parameters scaling towards 7M is mathematically impra
 
 ```mermaid
 graph TD
-    Q[Incoming Query] --> PG[Prolog Gate]
-    PG --> |"simple + fast"| NPU[NPU Scout<br/>Qwen3-8B @ 96 tok/s]
-    PG --> |"complex reasoning"| CUDA[CUDA Heavyweight<br/>Falcon3-10B @ 23 tok/s]
-    PG --> |"long document"| CPU[CPU Scholar<br/>128K context @ 12.8 tok/s]
-    PG --> |"background"| VK[Vulkan Sentinel<br/>Always-on @ 4.8 tok/s]
-    PG --> |"critical"| ALL[All Experts in Parallel]
+    Q["Incoming Query"] --> PG["Prolog Gate"]
+    PG --> |"simple + fast"| NPU["NPU Scout<br/>Qwen3-8B @ 96 tok/s"]
+    PG --> |"complex reasoning"| CUDA["CUDA Heavyweight<br/>Falcon3-10B @ 23 tok/s"]
+    PG --> |"long document"| CPU["CPU Scholar<br/>128K context @ 12.8 tok/s"]
+    PG --> |"background"| VK["Vulkan Sentinel<br/>Always-on @ 4.8 tok/s"]
+    PG --> |"critical"| ALL["All Experts in Parallel"]
 
     NPU --> |"confidence < θ"| CUDA
-    NPU --> AGG[Aggregator]
+    NPU --> AGG["Aggregator"]
     CUDA --> AGG
     CPU --> AGG
     VK --> AGG
-    ALL --> VOTE[Semantic Vote]
+    ALL --> VOTE["Semantic Vote"]
     VOTE --> AGG
 
-    AGG --> R[Response]
+    AGG --> R["Response"]
 
-    NAS[NAS / Genetic Search] -.-> |"tunes thresholds"| PG
-    ORCH[Python Orchestrator] -.-> |"updates routing schema"| PG
+    NAS["NAS / Genetic Search"] -.-> |"tunes thresholds"| PG
+    ORCH["Python Orchestrator"] -.-> |"updates routing schema"| PG
     ORCH -.-> |"hot-swaps adapters"| NPU
-    METAB[Metabolic QLoRA (3 AM)] -.-> |"trains micro-experts"| NPU
+    METAB["Metabolic QLoRA (3 AM)"] -.-> |"trains micro-experts"| NPU
 
     style NPU fill:#1a3a2a,color:#86EFAC
     style CUDA fill:#4a1942,color:#F9A8D4
