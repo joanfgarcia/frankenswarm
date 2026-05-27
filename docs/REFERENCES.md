@@ -37,7 +37,7 @@ The substrate for our micro-experts. Proven, published, and actively developed.
   [HuggingFace: tiiuae/Falcon3-10B-Instruct-1.58bit](https://huggingface.co/tiiuae/Falcon3-10B-Instruct-1.58bit)
   → Our primary CUDA expert in benchmarks. 23 tok/s on RTX 5070.
 
-### Gap: No published work combines BitNet ternary weights with evolutionary optimization (NEAT). All training uses gradient-based methods with Straight-Through Estimators.
+### Gap: No published work combines BitNet ternary weights with evolutionary optimization (NEAT) for micro-networks. Additionally, training custom BitNet architectures from scratch on local consumer silicon is computationally expensive and is preserved as a future research frontier; our primary strategy focuses on distillation of pre-trained models (e.g. Falcon3-10B-1.58b) and hybrid evolution.
 
 ---
 
@@ -160,25 +160,21 @@ Using logic programming for deterministic, explainable routing decisions.
 
 ---
 
-## 6. Lisp & Self-Modifying Neural Systems
+## 6. Python Orchestration & Dynamic PEFT Management
 
-Homoiconicity applied to neural topology mutation.
+Using standard Python systems to hot-swap weights and manage active runtime topologies.
 
-### Historical Foundation
+### Key References
 
-- **Lisp: The Language of AI** (McCarthy, 1958)
-  → The original self-modifying programming language. Code is data, data is code.
+- **PEFT: Parameter-Efficient Fine-Tuning of Billion-Scale Models**
+  [GitHub: huggingface/peft](https://github.com/huggingface/peft)
+  → Standardized industry framework for loading and unloading adapter weights (LoRA, IA3, Prompt Tuning) over frozen base architectures.
 
-### Modern Intersection
+- **Dynamic Tensor Execution Runtimes**
+  llama.cpp & ONNX Runtime backends (2024-2026)
+  → Showcases how C++ execution engines with Python bindings can dynamically route tensors to different accelerators (CUDA, NPU, Vulkan) with minimal overhead.
 
-- **Metaprogramming in AI** — using DSLs (Domain-Specific Languages) within Lisp to interface with PyTorch/CUDA backends
-  [BU.edu research](https://www.bu.edu/)
-  → Researchers build high-level structural metaprogramming in Lisp while executing tensor ops on optimized hardware. Validates our Lisp REPL → PyTorch/FastFlowLM bridge concept.
-
-- **Digital Brains: Biological Fidelity in Neural Architectures** (2025)
-  → Dynamic, non-static execution runtimes for evolving complex topologies. Requires custom runtimes — exactly what Lisp provides.
-
-### Gap: **No published work uses Lisp to modify neural MoE routing policies or network topologies in real-time for LLM inference.** This is Frankenswarm's most novel contribution. Labs don't need it because they have unlimited compute. We need it because we don't.
+### Gap: No published edge orchestration framework dynamically hot-swaps task-specific LoRA adapters at a sub-10ms latency based on intent-aware Prolog routing over physical heterogeneous hardware.
 
 ---
 
@@ -202,26 +198,27 @@ The Three-Layer Architecture (Common → Adapter → Specialist).
 
 ---
 
-## 8. Latent Space Communication (Babel Fish)
+## 8. Embedding-Guided Routing & Token Flow
 
-AI-native tokenization replacing human language for inter-expert communication.
+Semantic classification vectors guiding the routing path while standard text tokens ensure inter-expert coherence.
 
 ### Related Work
 
-- **Sentence Transformers / all-MiniLM-L6-v2**
+- **Sentence Transformers & Embedding Models**
   Reimers & Gurevych, 2019
   [SBERT.net](https://www.sbert.net/)
-  → Our Phase 0 Translator. Multilingual sentence embeddings in 384D.
+  → Essential for routing queries. Projects human inputs into a 384D semantic vector space for quick classification.
 
-- **Variational Autoencoders (VAEs)** — latent space communication is standard in generative models
-  → Diffusion models and VAEs communicate internally via latent vectors, not tokens. This validates the concept for neural-to-neural communication.
+- **RouteLLM: Learning to Route LLMs**
+  [arXiv:2406.18665](https://arxiv.org/abs/2406.18665)
+  → Focuses on routing decisions between different API endpoints based on embedding vectors.
 
 - **Matryoshka Representation Learning**
   Kusupati et al., 2022
   [arXiv:2205.13147](https://arxiv.org/abs/2205.13147)
-  → Variable-dimension embeddings where truncated vectors preserve meaning. Relevant for our "384D → 768D upgrade" path.
+  → Variable-dimension embeddings where truncated vectors preserve meaning. Ideal for upgrading routing precision over time.
 
-### Gap: Latent communication exists in generative models, but **no MoE system uses AI-native embeddings for routing and inter-expert communication** instead of token-level text. All existing MoE systems route discrete tokens, not continuous vectors.
+### Gap: Existing work on embedding-guided routing focus on cloud-based API routing, whereas Frankenswarm uses local embedding similarity to trigger physical hardware cascades (NPU to GPU) and consensus voting.
 
 ---
 
@@ -229,13 +226,13 @@ AI-native tokenization replacing human language for inter-expert communication.
 
 | Frankenswarm Pillar | Prior Art Exists? | Our Novel Contribution |
 |--------------------|--------------------|----------------------|
-| BitNet 1.58b | ✅ Microsoft, TII | Combining with NEAT evolution |
-| NEAT / NAS | ✅ 20+ years | Applying to ternary weight space |
+| BitNet 1.58b | ✅ Microsoft, TII | Hybrid NEAT-gradient micro-specialization |
+| NEAT / NAS | ✅ 20+ years | Evolving thresholds and dynamic topology parameters (NAS) |
 | Hardware MoE | 🟡 Partial (NPUMoE, Fiddler) | 4 accelerator types on 1 machine |
 | Prolog routing | 🟡 Neurosymbolic field | Energy-aware hardware routing predicates |
-| Lisp self-modification | ❌ No one in LLM context | Live topology + routing rewriting |
-| Three-Layer decoupled | 🟡 LoRA/Adapters | NEAT-evolved Specialist + frozen Common |
-| Babel Fish tokenization | 🟡 VAE latent spaces | AI-native embedding for MoE routing |
+| Python Orchestration | 🟡 Standard config systems | Dynamic adapter swapping & JSON-LD configuration |
+| Three-Layer decoupled | 🟡 LoRA/Adapters | Dynamic task-specific adapters loaded over frozen base models |
+| Embedding routing | 🟡 RouteLLM (Cloud) | Embedding-guided local physical hardware cascades (NPU to GPU) |
 | **The fusion of all 7** | ❌ **Unpublished** | **This is Frankenswarm** |
 
 ---
@@ -317,15 +314,15 @@ The concept is identical at every scale:
 
 ### What Changes at Scale
 
-At hyperscaler scale, NEAT doesn't mutate weights of 400B models — that's computationally absurd. Instead, evolution shifts to a higher abstraction level:
+At hyperscaler scale, NEAT/NAS doesn't mutate weights of 400B models — that's computationally absurd. Instead, adaptation shifts to a higher abstraction level:
 
-| Scale | What NEAT Evolves |
+| Scale | What NEAT/NAS Evolves |
 |-------|-------------------|
-| Consumer | Ternary weights (BitNet micro-experts) |
+| Consumer | Micro-topologies (NEAT) + routing thresholds (NAS) |
 | Startup | LoRA adapter weights + routing policies |
 | **Hyperscaler** | **Routing policies only** — which expert handles which query type, confidence thresholds, cascade rules, energy budgets |
 
-This is **meta-evolution**: the models themselves are fixed (too large to mutate), but the *system's decisions about how to use them* evolve continuously. The Lisp orchestrator doesn't rewrite neurons at this scale — it rewrites **strategy**.
+This is **meta-adaptation**: the models themselves are fixed (too large to mutate), but the *system's decisions about how to use them* adapt continuously. The Python orchestrator doesn't rewrite neurons at this scale — it rewrites **routing strategy**.
 
 ### Why Hyperscalers Haven't Done This Yet
 

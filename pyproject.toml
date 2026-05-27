@@ -1,0 +1,20 @@
+[project]
+name = "frankenswarm"
+version = "0.2.0"
+description = "Heterogeneous Hardware MoE"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "pyswip"
+]
+
+[tool.ruff]
+line-length = 150
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "UP", "B", "A", "C4", "SIM"]
+ignore = ["E501", "W191"]
+
+[tool.ruff.format]
+indent-style = "tab"

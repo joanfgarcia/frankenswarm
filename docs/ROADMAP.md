@@ -23,13 +23,13 @@ Benchmark all available silicon and confirm inference capabilities.
 - [x] FastFlowLMInferenceProvider integrated in Red-Pill ProviderRegistry
 - [x] InferenceRouter with `npu` tier and cascade fallback
 
-## Phase 2: The Prolog Gate (Hardware-Aware Routing)
+## Phase 2: The Prolog Gate (Hardware-Aware Routing) ✅ (Completed 2026-05-24)
 Replace mock routing with real intent classification → silicon binding.
-- [ ] Define Prolog ontology: query taxonomy (code, reasoning, recall, triage, background)
-- [ ] Implement hardware affinity predicates: `route(Query, Silicon)`
-- [ ] Add confidence scoring: Orchestrator (NPU) self-evaluates and escalates
-- [ ] Energy-aware routing: prefer 2W (NPU) over 80W (CUDA) when quality is equal
-- [ ] Integrate with Red-Pill `InferenceRouter` — replace static tier list with Prolog decisions
+- [x] Define Prolog ontology: query taxonomy (code, reasoning, recall, triage, background)
+- [x] Implement hardware affinity predicates: `route(Query, Silicon)`
+- [x] Add confidence scoring: Orchestrator (NPU) self-evaluates and escalates
+- [x] Energy-aware routing: prefer 2W (NPU) over 80W (CUDA) when quality is equal
+- [x] Integrate with Red-Pill `InferenceRouter` — replace static tier list with Prolog decisions
 
 ## Phase 2.5: The Cage (Sandboxing)
 Mandatory before granting autonomous mutation capabilities.
@@ -46,61 +46,68 @@ Multiple experts respond — the system decides who wins.
 - [ ] Latency budgets: if NPU doesn't respond in 500ms, fire CUDA in parallel
 - [ ] Telemetry: log per-query energy cost, latency, and expert selection
 ## ── END OF PHASE A: PoC (Existing Models) ──
-## ── BEGIN PHASE B: THE ARENA (Custom-Bred Experts) ──
+## ── BEGIN PHASE B: THE ARENA (Specialized Adapters & Distillation) ──
 
-## Phase 4: The Babel Fish (AI-Native Tokenization)
-Replace human-language tokenization with a sovereign latent language.
-- [ ] Train or adopt a multilingual Translator: `Human Text (any lang) → D-dim vector`
-- [ ] Implement `BabelFishTranslator` with bidirectional encode/decode
-- [ ] Validate: same query in Spanish and English produces near-identical routing decisions
-- [ ] Define the swarm's native embedding dimensionality (384D for PoC, target 768D for Arena)
-- [ ] Prolog Gate operates on vectors only — zero human text past the Translator boundary
+## Phase 4: Ternary BitNet & PopuLoRA Arena (Grado 0 — Preescolar)
+Establish a structured workflow to train custom 4-layer ternary BitNet (1.58b) models from scratch using emergent referential signaling games with homeostatic registers and active vocabulary subsetting.
+- [x] Implement the 4-layer BitNet architecture with frozen translators (Capa 2 and 4) and ternary weight quantization (STE / BitLinear)
+- [x] Implement dual Referential Dataset Breeder generating physical concept + emotional state targets
+- [x] Configure PopuLoRA training arena with joint multitask cross-entropy loss, SVD crossover, and CUDA execution
+- [ ] **Plan de Ataque de 4 Semanas para el MVP Afectivo**:
+	- **Semana 1: MVP Homeostático**
+		- [ ] Implementar la clase de Homeostasis Física (Energía, Temperatura, Integridad) acoplada a las señales afectivas del Hablante
+		- [ ] Implementar Active Vocabulary Subsetting (enmascaramiento dinámico a 256 tokens) en el Outbound Head
+		- [ ] Validar paso forward/backward homeostático unitario (1 vs 1)
+	- **Semana 2: Matchmaking y Arena PopuLoRA Afectiva**
+		- [ ] Integrar matchmaking por TrueSkill en la Arena con población de 4 agentes
+		- [ ] Validar supervivencia colectiva y evolución de dialectos en GPU (RTX 5070)
+	- **Semana 3: Dynamic Vocabulary & Empathy Annealing**
+		- [ ] Implementar escalador dinámico de vocabulario expandiendo de 256 a 8.192 tokens según el éxito del swarm
+		- [ ] Realizar recocido de temperatura de Gumbel-Softmax en paralelo con la expansión del léxico
+	- **Semana 4: Compilación ONNX y Router Frankenswarm**
+		- [ ] Exportar el micro-experto ternario entrenado a ONNX INT8 e integrarlo en el enrutador Prolog de Frankenswarm
+		- [ ] Validar inferencia local en NPU de bajísimo consumo (<2W)
 
-## Phase 5: The Three-Layer Architecture
-Build the expert anatomy: Common Substrate → Adapter → Specialist Core.
-- [ ] Implement `CommonSubstrate`: shared frozen weights across all experts
-- [ ] Implement `AdapterLayer`: lightweight LoRA-scale bridge (~1% of total params)
-- [ ] Implement `SpecialistCore`: domain-specific ternary weights, NEAT-evolvable
-- [ ] Validate decoupled evolution: mutating a Specialist doesn't break other experts
-- [ ] Adapter auto-retrain: detect distribution shift when Specialist mutates, retrain bridge in ~2 min
-- [ ] Common Substrate upgrade path: change embedding dim → ALL Adapters retrain → Specialists untouched
+## Phase 5: Mixture of Adapters (MoA) Orchestration
+Manage dynamic loading and hot-swapping of PEFT adapters over a shared base model.
+- [ ] Implement `AdapterOrchestrator` in Python to dynamically load/unload LoRA weights at runtime
+- [ ] Standardize the adapter registry schema (mapping task capabilities $\rightarrow$ adapter files)
+- [ ] Minimize latency overhead of dynamic loading (aim for $<10\text{ms}$ weight swapping times)
+- [ ] Enable parallel execution of multiple adapters via batching or sequential forward pass pooling
+- [ ] Support fallback to base model weights when classifier confidence (θ) is below routing thresholds
 
-## Phase 6: The First Spark (BitNet Real in Three Layers)
-Replace mock experts with real ternary micro-networks using the three-layer anatomy.
-- [ ] Implement `BitNet158Linear_Dynamic` with shape mutation support
-- [ ] Train initial micro-experts (1-7M params) on deterministic tasks
-- [ ] Each expert = Common (shared) + Adapter (learned) + Specialist (evolved)
-- [ ] Deploy on NPU via FastFlowLM custom model loading
-- [ ] Benchmark: micro-expert tok/s on NPU (target: 500+ tok/s for 1M params)
+## Phase 6: Knowledge Distillation & Quantization (Teacher-Student Self-Play)
+Compress heavyweight capabilities into hyper-fast, low-wattage local micro-experts.
+- [ ] Establish an online distillation pipeline using the **PopuLoRA RLVR loop**: parent model (RTX 5070 CUDA, 10B+, as Teacher) $\rightarrow$ student micro-expert (1.5B/0.6B, as Student)
+- [ ] Quantize distilled student models to GGUF / AWQ formats optimized for CPU and Vulkan iGPU execution
+- [ ] Benchmark token throughput on NPU (target: $150+\text{ tok/s}$ for quantized distilled micro-experts)
+- [ ] Integrate distilled models with FastFlowLM custom model loaders on XDNA2
+- [ ] Maintain a library of task-specific tiny models (Code, Reasoning, Triage) that run entirely at 2W
 
-## Phase 7: Natural Selection (NEAT + Net2Net + Lisp)
-The system evolves itself — Specialist Cores mutate independently.
-- [ ] Implement NEAT genetic loop: selection, crossover, ternary weight mutation on Layer 3 only
-- [ ] Implement Net2Net zero-padding for Specialist capacity expansion
-- [ ] Lisp REPL orchestrator: topology as S-expressions, live mutation
-- [ ] The Three Loops:
-  - **FAST** (per-query): Prolog adjusts routing weights
-  - **MEDIUM** (per-session): NEAT mutates Specialist Core weights
-  - **SLOW** (per-sleep): Lisp restructures topology, grows layers, migrates hardware affinity
-- [ ] NPU as evolution accelerator: NEAT fitness eval at 1000+ tok/s while GPU serves
-- [ ] Self-modifying routing: Lisp rewrites Prolog rules based on fitness observations
-- [ ] Adapter auto-retrain triggered after every NEAT generation that produces a new champion
+## Phase 7: Network Architecture Search (NAS) & Python Orchestration
+Optimize routing thresholds and model topologies using search algorithms while weights remain gradient-trained.
+- [ ] Implement genetic/heuristic loop (NAS style) to evolve routing thresholds and fallback parameters
+- [ ] Define the topology as a standard, version-controlled JSON-LD schema (removing Lisp dependencies)
+- [ ] Manage the adaptation loops:
+	- **FAST** (per-query): Prolog routing decisions
+	- **MEDIUM** (per-session): Orchestrator adapts routing thresholds based on actual feedback
+	- **SLOW** (per-sleep): Genetic search (NAS) tunes routing weights and swaps active adapters
+- [ ] Implement automatic routing self-healing: adjust confidence thresholds when high-latency fallbacks increase
 
-## Phase 8: Convergence with Red-Pill Sleep Cycle
-Frankenswarm becomes the metabolic engine of the Bünker.
-- [ ] Hook into `metabolism/sleep.py` — evolution runs during 3 AM window
-- [ ] Fitness function derived from daily interaction quality (Qdrant engram scores)
-- [ ] Expert deployment pipeline: NEAT winner → Adapter retrain → FastFlowLM → ProviderRegistry
-- [ ] Dream mode: Lisp generates hypothetical queries, evaluates micro-experts, prunes the weak
-- [ ] Common Substrate versioning: major upgrades trigger full Adapter re-train across swarm
+## Phase 8: Metabolic Sleep Cycle Integration
+Align adaptation and training loops with the Red-Pill sleep cycle.
+- [ ] Hook fine-tuning and NAS optimization runs into `metabolism/sleep.py`
+- [ ] Perform overnight QLoRA training of task-specific adapters using the previous day's interaction engrams
+- [ ] Execute NAS optimization to recalibrate routing thresholds based on daily latency/accuracy metrics
+- [ ] Implement atomic deployment: test new adapters overnight and register them with `ProviderRegistry` at 5 AM
+- [ ] Automated rollback: automatically restore the previous day's adapter if evaluation benchmarks fail
 
-## Phase 9: The Sovereign Translator (Custom Babel Fish)
-Graduate from pre-trained embeddings to a custom AI-native language.
-- [ ] Train a domain-specific encoder: optimized for the swarm's actual query distribution
-- [ ] Train a multilingual decoder: latent vector → any human language (es, en, zh, ja, ar)
-- [ ] The embedding space becomes *ours* — not constrained by English Wikipedia
-- [ ] Inter-expert communication bandwidth drops to O(D) instead of O(tokens)
-- [ ] Full language sovereignty: the swarm thinks in its own tongue, translates at the edges
+## Phase 9: Hierarchical Swarm Routing
+Scale the orchestration to multi-agent, collaborative routing architectures.
+- [ ] Transition from a single Prolog Gate to a hierarchical router-of-routers pipeline
+- [ ] Enable micro-experts to collaborate by executing sub-queries (calling other specialized experts) via clean API/token requests
+- [ ] Implement swarm telemetry: track E2E token latency and power consumption across collaborative execution paths
+- [ ] Establish consensus voting for multi-expert queries (race, consensus, and weighted averaging)
 
 ---
 
@@ -111,14 +118,14 @@ Graduate from pre-trained embeddings to a custom AI-native language.
 | 0 — Translator | ✅ Done | PoC | — |
 | 1 — Ghost Swarm | ✅ Done | PoC | — |
 | 1.5 — Hardware Discovery | ✅ Done | PoC | All 4 confirmed |
-| 2 — Prolog Gate | 🔲 Next | PoC | NPU + CUDA |
+| 2 — Prolog Gate | ✅ Done | PoC | NPU + CUDA |
 | 2.5 — Cage | 🔲 Planned | PoC | systemd |
 | 3 — Aggregator | 🔲 Planned | PoC | All 4 |
 | **── PoC validated ──** | | | |
-| 4 — Babel Fish | 🔲 Planned | Arena | Translator |
-| 5 — Three-Layer Architecture | 🔲 Planned | Arena | All 4 |
-| 6 — BitNet Real | 🔲 Planned | Arena | NPU + CPU |
-| 7 — Evolution | 🔲 Planned | Arena | NPU (breed) + GPU (serve) |
-| 8 — Red-Pill Convergence | 🔲 Future | Arena | Full stack |
-| 9 — Sovereign Translator | 🔲 Future | Arena | Custom training |
+| 4 — Ternary BitNet (Grado 1) | 🔲 In Progress | Arena (Training) | NPU / GPU / CPU |
+| 5 — Mixture of Adapters | 🔲 Planned | Arena | GPU / CPU / iGPU |
+| 6 — Distillation & Quantization | 🔲 Planned | Arena | NPU + CPU |
+| 7 — NAS & Python Orchestration | 🔲 Planned | Arena | Orchestrator |
+| 8 — Sleep Cycle Integration | 🔲 Future | Arena | Full stack |
+| 9 — Hierarchical Swarm | 🔲 Future | Arena | Full stack |
 

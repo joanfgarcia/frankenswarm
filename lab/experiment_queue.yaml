@@ -1,0 +1,70 @@
+current_experiment: null
+last_updated: '2026-05-27T18:57:09.414671+02:00'
+last_run_by: minion_scheduler
+completed:
+- id: '001'
+  result: FAIL
+  note: 8192 tokens too large. 0% accuracy.
+- id: '002'
+  result: FAIL
+  note: Single-head, no positional encoding. Position collapse.
+- id: '003'
+  result: FAIL
+  note: Dual-head but Gumbel-Softmax can't bootstrap. Random chance.
+- id: 004a
+  result: PASS
+  note: Teacher forcing diagnostic. 100% in 350 steps. Architecture works.
+- id: 004b
+  result: PASS
+  note: Scheduled TF. 95.08% joint in autonomy. GRADE 0 CLEARED.
+- id: '005'
+  result: PASS
+  note: 'Proto-syntax discovered: [C,C,E]. 84% consistency. 93.48% joint.'
+- id: 005b
+  result: INFORMATIVE
+  note: 'Unfrozen embeddings degrade everything. Decision: keep frozen.'
+- id: '006'
+  result: PASS
+  note: Expand vocabulary 21->50 completed.
+- id: '007'
+  result: PASS
+  note: Expand vocabulary 50->100 completed.
+- id: 008
+  result: PASS
+  note: Grade 1 - Arithmetic compositionality completed.
+- id: 009
+  result: PASS
+  note: EXP_009 completed.
+- id: '010'
+  result: PASS
+  note: EXP_010 completed.
+- id: '011'
+  result: PASS
+  note: EXP_011 completed.
+- id: '012'
+  result: PASS
+  note: EXP_012 completed.
+- id: '013'
+  result: PASS
+  note: EXP_013 completed.
+- id: '014'
+  result: PASS
+  note: EXP_014 completed.
+- id: '015'
+  result: PASS
+  note: EXP_015 completed.
+- id: '016'
+  result: FAIL
+  note: Catastrophic forgetting shock in epoch 26. Restas stuck at 40%.
+- id: '017'
+  result: PASS
+  note: 'Pérdida: 1.2573 | Test Acc: 72.22% | Duración: 2.9 min'
+- id: 018
+  result: PASS
+  note: 'Pérdida: 0.0570 | Test Acc: 78.70% | Duración: 3.0 min'
+queue:
+- id: 018
+  name: Embeddings Posicionales para Restas
+  description: Añade embeddings posicionales aprendibles para romper la equivariancia
+    de permutación y generalizar la resta.
+  script: src.bitnet.train_generic
