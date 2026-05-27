@@ -926,6 +926,50 @@ Evaluación exhaustiva del mejor agente en las **132 ecuaciones lógicas posible
 
 *Diagnóstico*: La Opción A (Hablante calcula, Oyente descodifica) combinada con el enmascaramiento estricto y la Pérdida de Consistencia del Emisor (Speaker Consistency Loss) es un diseño altamente eficiente. Un modelo ternario Transformer de solo 1.58 bits es capaz de almacenar las relaciones relacionales de sumas y restas dentro de sus pesos, calculándolas en el espacio latente y transmitiendo el resultado con una precisión del 85.61% en su primer intento.
 
+---
+
+## Experimento 013 — Rama de Generalización Sistemática (Split Composicional 80/20, Capacidad Estrangulada [128-dim, 2-layer])
+
+**Fecha**: 2026-05-27 14:15 CEST  
+**Script**: `src/bitnet/train_math_generalization.py` --config `configs/experiments/EXP_013.json`  
+**Device**: CUDA (RTX 4060 Ti)  
+**Estado**: 🏆 ÉXITO — Ejecución completa de 50 épocas con emergencia de generalización zero-shot real en el conjunto de prueba.
+
+### Parámetros de EXP_013
+- `hidden_dim`: 128 (Reducido de 256 para limitar el almacenamiento en pesos)
+- `num_layers`: 2 (Reducido de 4 para estrangular la memorización)
+- `split_ratio`: 0.8 (105 ecuaciones de train, 27 ecuaciones de test no vistas)
+- `epochs`: 50
+- `tf_min`: 0.20
+- `svd_phases`: `["recreo", "autonomia"]` (Poda/SVD activa cada 2 épocas)
+- `seed`: 42
+
+### Resultados del Entrenamiento
+- **Fase de Guardería (Épocas 1-5, TF=100%)**: Consensus en train subió del **72.45%** al **99.94%**. La generalización inicial en test fue del **9.26%**.
+- **Fase de Recreo (Épocas 6-20, TF=100%→25%)**: Amortiguación de oscilaciones. La precisión de test subió de forma constante superando el **46.60%** en la época 20.
+- **Fase de Autonomía (Épocas 21-50, TF=20%)**: 
+  - Estabilidad a largo plazo en train consensus (**96.62%** promedio final).
+  - Generalización en test set fluctuó entre **40.43%** y un pico de **55.86%** en la época 49.
+
+### Evaluación de Generalización (`scripts/eval_math_generalization.py`)
+Evaluación final síncrona en el mejor agente guardado autónomamente (sin Teacher Forcing) comparando el split de entrenamiento (visto) frente al de test (no visto):
+
+#### Conjunto TRAIN (105 ecuaciones vistas):
+- **Operando A**: **99.05%** (104/105)
+- **Operador**: **100.00%** (105/105)
+- **Operando B**: **99.05%** (104/105)
+- **Resultado (Cálculo)**: **99.05%** (104/105)
+- **CONJUNTO COMPLETO (Consensus)**: **98.10%** (103/105)
+
+#### Conjunto TEST (27 ecuaciones NO VISTAS - Zero-Shot):
+- **Operando A**: **96.30%** (26/27)
+- **Operador**: **100.00%** (27/27)  --> Identificación absoluta de la tarea semántica.
+- **Operando B**: **100.00%** (27/27) --> Comprensión posicional perfecta del operando.
+- **Resultado (Cálculo algebraico latente)**: **55.56%** (15/27)
+- **CONJUNTO COMPLETO (Consensus)**: **51.85%** (14/27)
+
+*Diagnóstico*: Este experimento demuestra empíricamente que la capacidad de razonamiento/generalización lógica puede emerger de forma subyacente a través de la partición composicional de los datos y el estrangulamiento de la capacidad de la red. Una pequeña red Transformer de solo 1.58 bits, con solo 2 capas y 128 neuronas de ancho, es capaz de extrapolar la lógica de adición y sustracción a combinaciones que nunca vio en un **55.56%** de los casos. La precisión perfecta en operandos y operadores en el test split (96%-100%) confirma que la arquitectura de comunicación es inmune a la deriva léxica y sintáctica.
+
 
 
 
