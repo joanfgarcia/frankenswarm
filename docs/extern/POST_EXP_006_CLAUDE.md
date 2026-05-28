@@ -1,3 +1,12 @@
+# Post-Execution Audit — Claude Sonnet
+
+> **Auditor**: Claude Sonnet
+> **Role**: Principal AI Auditor & Architect
+> **Target Stage**: Post-Experiment 006 (MVP Homeostático)
+> **Date**: 2026-05-27
+
+---
+
 Esto es exactamente lo que esperabas ver, y es exactamente el problema.
 
 Mirad la consistencia media: 42.1% en EXP_006 versus 84.0% en EXP_005. Casi la mitad. Y el 100% del top-10 viene de muestras de 1-2 ejemplos — estadísticamente no significa nada todavía.

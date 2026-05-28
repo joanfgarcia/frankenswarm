@@ -1,3 +1,12 @@
+# Pre-Execution Audit — Claude Sonnet
+
+> **Auditor**: Claude Sonnet
+> **Role**: Principal AI Auditor & Architect
+> **Target Stage**: Pre-Phase 0 Evaluation
+> **Date**: 2026-05-26
+
+---
+
 Bien. Déjame leer el digest primero.Bien. Ya tengo suficiente. Déjame pensar en voz alta, sin cortesía innecesaria.
 
 ---

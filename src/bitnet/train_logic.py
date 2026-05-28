@@ -1,6 +1,7 @@
 import argparse
 import json
 import os
+
 import numpy as np
 import torch
 import torch.nn as nn
@@ -8,8 +9,8 @@ import torch.nn.functional as F
 
 from src.bitnet.generalization_breeder import RelationalLogicDatasetBreeder
 from src.bitnet.modeling_bitnet import BitNet4LayerModel
-from src.bitnet.translator import SovereignTranslator
 from src.bitnet.telemetry import ExperimentLogger
+from src.bitnet.translator import SovereignTranslator
 
 
 def svd_crossover(parent_a: nn.Module, parent_b: nn.Module, child: nn.Module, alpha: float = 0.5, sigma: float = 0.01):
@@ -49,7 +50,7 @@ def load_config() -> dict:
 	default_path = os.path.join(base_dir, "configs", "experiments", "EXP_023.json")
 	if not os.path.exists(default_path):
 		default_path = os.path.join(base_dir, "configs", "experiments", "default.json")
-	
+
 	with open(default_path, encoding="utf-8") as f:
 		config = json.load(f)
 
@@ -64,7 +65,7 @@ def load_config() -> dict:
 			config.update(exp_config)
 		else:
 			print(f"⚠️ Archivo de configuración no encontrado: {config_path}. Usando valores predeterminados.")
-	
+
 	return config
 
 
@@ -78,8 +79,8 @@ def evaluate_test_set(population, breeder, logit_mask, device):
 	if batch_size == 0:
 		return 0.0
 
-	op_a_targets, op_a_token_ids, relation_targets, relation_token_ids, op_b_targets, op_b_token_ids, result_targets, result_token_ids = breeder.generate_batch(
-		batch_size, mode="test"
+	op_a_targets, op_a_token_ids, relation_targets, relation_token_ids, op_b_targets, op_b_token_ids, result_targets, result_token_ids = (
+		breeder.generate_batch(batch_size, mode="test")
 	)
 
 	op_a_token_ids_tensor = torch.from_numpy(op_a_token_ids).long().to(device)
@@ -112,10 +113,12 @@ def evaluate_test_set(population, breeder, logit_mask, device):
 				preds_b = torch.argmax(logits[:, 2, :], dim=-1)
 				preds_r = torch.argmax(logits[:, 3, :], dim=-1)
 
-				joint_ok = ((preds_a == op_a_token_ids_tensor) &
-							(preds_op == relation_token_ids_tensor) &
-							(preds_b == op_b_token_ids_tensor) &
-							(preds_r == result_token_ids_tensor))
+				joint_ok = (
+					(preds_a == op_a_token_ids_tensor)
+					& (preds_op == relation_token_ids_tensor)
+					& (preds_b == op_b_token_ids_tensor)
+					& (preds_r == result_token_ids_tensor)
+				)
 
 				correct_counts.append(joint_ok.sum().item())
 
@@ -159,7 +162,9 @@ def run_logic_arena():
 	hidden_dim = config["hidden_dim"]
 	num_layers = config["num_layers"]
 
-	population = [BitNet4LayerModel(vocab_embeddings=vocab_embeddings, hidden_dim=hidden_dim, num_layers=num_layers).to(device) for _ in range(pop_size)]
+	population = [
+		BitNet4LayerModel(vocab_embeddings=vocab_embeddings, hidden_dim=hidden_dim, num_layers=num_layers).to(device) for _ in range(pop_size)
+	]
 
 	lr = config["lr"]
 	wd = config.get("weight_decay", 0.01)
@@ -191,6 +196,8 @@ def run_logic_arena():
 	nursery_end = config["nursery_end"]
 	transition_end = config["transition_end"]
 	tf_min = config["tf_min"]
+	asymmetric_loss_weight = config.get("asymmetric_loss_weight", 1.0)
+	print(f"⚖️ [Asymmetric Loss] False positive penalty weight: {asymmetric_loss_weight}")
 
 	telemetry_log_path = os.path.join(exp_dir, "telemetry.jsonl")
 	params = dict(config)
@@ -227,10 +234,10 @@ def run_logic_arena():
 			tau = max(tau_min, tau_start * (1.0 - current_step / total_steps))
 
 			# Lote relacional
-			op_a_targets, op_a_token_ids, relation_targets, relation_token_ids, op_b_targets, op_b_token_ids, result_targets, result_token_ids = breeder.generate_batch(
-				batch_size, mode="train"
+			op_a_targets, op_a_token_ids, relation_targets, relation_token_ids, op_b_targets, op_b_token_ids, result_targets, result_token_ids = (
+				breeder.generate_batch(batch_size, mode="train")
 			)
-			
+
 			op_a_token_ids_tensor = torch.from_numpy(op_a_token_ids).long().to(device)
 			relation_token_ids_tensor = torch.from_numpy(relation_token_ids).long().to(device)
 			op_b_token_ids_tensor = torch.from_numpy(op_b_token_ids).long().to(device)
@@ -289,10 +296,28 @@ def run_logic_arena():
 			pred_r_logits = logits[:, 3, :]
 
 			# Pérdidas del Oyente
-			loss_listener = (F.cross_entropy(pred_a_logits, op_a_token_ids_tensor) +
-							 F.cross_entropy(pred_op_logits, relation_token_ids_tensor) +
-							 F.cross_entropy(pred_b_logits, op_b_token_ids_tensor) +
-							 F.cross_entropy(pred_r_logits, result_token_ids_tensor))
+			loss_a = F.cross_entropy(pred_a_logits, op_a_token_ids_tensor)
+			loss_op = F.cross_entropy(pred_op_logits, relation_token_ids_tensor)
+			loss_b = F.cross_entropy(pred_b_logits, op_b_token_ids_tensor)
+
+			loss_r_per_sample = F.cross_entropy(pred_r_logits, result_token_ids_tensor, reduction="none")
+			if asymmetric_loss_weight != 1.0:
+				token_id_verdad = breeder.result_token_ids[0]
+				token_id_falsedad = breeder.result_token_ids[1]
+
+				# Detect false positives: ground truth is falsedad (1) but prediction is verdad (0)
+				preds_r_temp = torch.argmax(pred_r_logits, dim=-1)
+				is_falsedad = result_token_ids_tensor == token_id_falsedad
+				predicted_verdad = preds_r_temp == token_id_verdad
+				false_positive_mask = is_falsedad & predicted_verdad
+
+				loss_r_weights = torch.ones_like(result_token_ids_tensor, dtype=torch.float)
+				loss_r_weights[false_positive_mask] = asymmetric_loss_weight
+				loss_r = (loss_r_per_sample * loss_r_weights).mean()
+			else:
+				loss_r = loss_r_per_sample.mean()
+
+			loss_listener = loss_a + loss_op + loss_b + loss_r
 
 			# 4. Pérdida de Consistencia del Emisor
 			loss_speaker_cons = F.cross_entropy(speaker_logits[:, 3, :], result_token_ids_tensor)
@@ -312,10 +337,16 @@ def run_logic_arena():
 			preds_b = torch.argmax(pred_b_logits, dim=-1)
 			preds_r = torch.argmax(pred_r_logits, dim=-1)
 
-			correct_joint = ((preds_a == op_a_token_ids_tensor) &
-							 (preds_op == relation_token_ids_tensor) &
-							 (preds_b == op_b_token_ids_tensor) &
-							 (preds_r == result_token_ids_tensor)).sum().item()
+			correct_joint = (
+				(
+					(preds_a == op_a_token_ids_tensor)
+					& (preds_op == relation_token_ids_tensor)
+					& (preds_b == op_b_token_ids_tensor)
+					& (preds_r == result_token_ids_tensor)
+				)
+				.sum()
+				.item()
+			)
 
 			epoch_correct += correct_joint
 			epoch_total += batch_size
@@ -334,8 +365,10 @@ def run_logic_arena():
 				pred_b_w = translator.decode([preds_b[0].item()])
 				pred_r_w = translator.decode([preds_r[0].item()])
 
-				print(f"  step {step:3d} | τ={tau:.3f} TF={tf_ratio:.0%} | loss={loss.item():.3f} | "
-					  f"({sample_a} {sample_op} {sample_b} = {sample_r}) → pred=({pred_a_w} {pred_op_w} {pred_b_w} = {pred_r_w})")
+				print(
+					f"  step {step:3d} | τ={tau:.3f} TF={tf_ratio:.0%} | loss={loss.item():.3f} | "
+					f"({sample_a} {sample_op} {sample_b} = {sample_r}) → pred=({pred_a_w} {pred_op_w} {pred_b_w} = {pred_r_w})"
+				)
 
 			current_step += 1
 
@@ -363,13 +396,14 @@ def run_logic_arena():
 			acc_joint=train_accuracy,
 			fitness=fitness.tolist(),
 			worst_agent=int(np.argmin(fitness)),
-			parent_a=-1, parent_b=-1
+			parent_a=-1,
+			parent_b=-1,
 		)
 
 		# Co-evolución dinámica
 		svd_interval = config.get("svd_interval", 2)
 		svd_phases = config.get("svd_phases", ["recreo", "autonomia"])
-		
+
 		if epoch < nursery_end:
 			current_phase = "guarderia"
 		elif epoch < transition_end:
