@@ -1107,3 +1107,115 @@ Evaluación final del mejor agente autónomo comparando sumas y restas:
 
 
 
+
+---
+
+## 🧬 Experimento 032 — Resonancia Continua: Bucle Latente 4→2
+
+**Fecha de diseño**: 2026-05-30
+**Estado**: 📐 DISEÑADO — Pendiente de ejecución
+**Diseño completo**: [`docs/EXP_032_DESIGN.md`](EXP_032_DESIGN.md)
+**Config template**: [`configs/experiments/EXP_032_TEMPLATE.json`](../configs/experiments/EXP_032_TEMPLATE.json)
+**Origen teórico**: [`tesis_resonancia_continua.md`](file:///home/joan/Documents/Obsidian%20Vault/tesis_resonancia_continua.md) (Joan Garcia + Titanium)
+
+> **El experimento más ambicioso de Frankenswarm.** No es una iteración sobre el curriculum. Es un cambio de topología: conectar la Capa 4 directamente con la Capa 2, eliminando la discretización obligatoria durante el pensamiento.
+
+### Motivación
+
+EXP_029 encadenaba 2 pasos de razonamiento pero pasaba por vocabulario completo (8192-dim) entre cada paso. Resultado: `acc_concept=100%` pero `acc_joint=70%`. Ese gap del 30% es el **coste del roundtrip por vocabulario**.
+
+La tesis propone eliminar ese roundtrip: el modelo itera N veces sus core_layers en el espacio latente (256-dim) sin colapsar a tokens. Solo al final se abre la Capa 5 para leer el resultado.
+
+### Diseño: Malla Factorial 3³ = 27 variantes
+
+Tres ejes de incertidumbre, tres opciones cada uno:
+
+| Eje | Opciones |
+|---|---|
+| **A — Pos. Embedding en el bucle** | `none` · `entry` · `clock` |
+| **B — Profundidad de resonancia** | `depth_2` · `depth_3` · `depth_ramp(1→5)` |
+| **C — Estrategia de loss** | `loss_final` · `loss_every` · `loss_weighted(0.2+1.0)` |
+
+### Ejecución en 3 fases
+
+1. **Fase 0 — GO/NO-GO** (~1 min): Validar estabilidad del hidden state sin entrenar. Si explota a N=2, se cancela.
+2. **Fase 1 — Grid Runner** (~3-4h): 27 variantes secuenciales con OOM Shield.
+3. **Fase 2 — Análisis**: Tabla + heatmap + watcher timelines + comparación vs EXP_029.
+
+### Criterios de éxito
+
+- **Mínimo**: H₀ validada + al menos 1 variante > 70% acc_joint (supera EXP_029)
+- **Esperado**: Top-3 > 80% acc_joint
+- **Excepcional**: Alguna variante > 90% + generalización a profundidades no vistas
+
+---
+
+## 🧠 Experimento 033 — Resonancia Emocional: La Emoción como Brújula
+
+**Fecha de diseño**: 2026-05-30
+**Estado**: 📐 DISEÑADO — Pendiente de EXP_032
+**Diseño completo**: [`docs/EXP_033_DESIGN.md`](EXP_033_DESIGN.md)
+**Dependencia**: EXP_032 (validación del bucle latente)
+**Origen**: Joan Garcia — "la emoción es la que toma las decisiones"
+
+> **El experimento que cierra la tesis.** No es una mejora incremental.
+> Es una afirmación: la emoción no evalúa el pensamiento. La emoción
+> ES parte del pensamiento.
+
+### Idea central
+
+EXP_032 demuestra que el modelo puede pensar en silencio (bucle latente
+cerrado). Pero piensa en el vacío — la señal emocional (fear) solo se
+aplica como multiplicador de la loss, después del pensamiento.
+
+EXP_033 inyecta la emoción DENTRO del bucle latente. El vector emocional
+se suma al hidden state en cada iteración, desviando la trayectoria del
+pensamiento. El mismo input lógico con emociones distintas produce
+caminos distintos por el espacio latente.
+
+### Diseño: 5 condiciones experimentales
+
+| Condición | Resonancia | Emoción interna | Fear loss |
+|-----------|:---------:|:---------------:|:---------:|
+| A (baseline) | ❌ | ❌ | ❌ |
+| B (resonancia) | ✅ | ❌ | ❌ |
+| C (resonancia + fear) | ✅ | ❌ | ✅ |
+| D (resonancia + emo) | ✅ | ✅ | ❌ |
+| E (todo) | ✅ | ✅ | ✅ |
+
+### Hipótesis nuclear
+
+H₁: La emoción interna produce atractores distintos para el mismo input.
+H₂: Emoción como brújula (D) > emoción como castigo (C).
+H₃: Emociones negativas → convergencia rápida. Positivas → exploración.
+
+### Resultados EXP_033 (2026-05-31)
+
+**Estado**: ✅ COMPLETADO (9/9 variantes, 192 epochs cada una)
+
+| Condición | Peak Bifurcación | Avg Bifurcación | Peak Joint |
+|---|---|---|---|
+| A (baseline) | 29.3% | 22.4% | 39.2% |
+| B (resonancia) | 28.3% | 22.7% | 38.8% |
+| C (res + fear) | 28.3% | 18.8% | 37.6% |
+| **D additive** | **84.8%** | 61.4% | 64.3% |
+| **D first_only** | **94.6%** 🔥 | 66.8% | 64.8% |
+| **D gated** | 63.0% | 49.9% | 59.5% |
+| **E additive** | 81.5% | 55.9% | 64.9% |
+| **E first_only** | 79.3% | 60.4% | 64.5% |
+| **E gated** | 65.2% | 51.2% | 61.5% |
+
+### Conclusiones EXP_033
+
+1. **H₁ CONFIRMADA**: Gap D-B = +52.5 puntos en bifurcación. La emoción produce atractores distintos.
+2. **H₂ CONFIRMADA**: C (castigo) no mejora vs B. D (brújula) mejora masivamente. La emoción como brújula > emoción como castigo.
+3. **`first_only` es el mejor modo**: Un impulso emocional al inicio del bucle (step 0) basta para desviar la trayectoria completa. Peak: 94.6%.
+4. **`gated` es el peor**: Más parámetros no implican mejor rendimiento. La simplicidad gana.
+5. **Fear loss (E vs D) no aporta**: E ≈ D o ligeramente peor. La señal interna es suficiente.
+6. **Early stopping fix**: El patience counter se acumulaba across fases, cortando el entrenamiento al entrar en autonomía. Fix: reset al entrar en autonomía + mínimo 10 epochs antes de aplicar.
+
+### Implicaciones arquitectónicas
+
+- **Modelos edge con emoción**: BitNet + resonancia + emoción first_only = modelo completo sin KV cache, con pensamiento interno y decisión emocional. Cabe en Jetson Thor (128GB → 500B params ternarios).
+- **El 4to bit**: El valor no usado en 2-bit encoding podría marcar sinapsis "emocionales" (bidireccionales) vs "lógicas" (fijas). Reservado para EXP_034.
+- **Glifos ternarios**: Idea de Joan para lenguaje composicional simbólico donde cada token porta semántica estructurada en trits. Reservado para EXP_035.
