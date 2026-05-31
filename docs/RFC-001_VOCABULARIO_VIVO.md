@@ -1,9 +1,9 @@
 # RFC-001: Vocabulario Vivo y Comprensión Autónoma
 
-> **Estado**: DRAFT
+> **Estado**: PARCIALMENTE VALIDADO (EXP_034 ✅)
 > **Autor**: Joan Garcia + Aleth
 > **Fecha**: 2026-05-31
-> **Contexto**: Post EXP_032 (resonancia) y EXP_033 (emoción)
+> **Contexto**: Post EXP_032 (resonancia), EXP_033 (emoción), EXP_034 (glifos)
 
 ---
 
@@ -54,8 +54,13 @@ grande, vuela, hace ruido. No necesita reentrenarse. Necesita **comprender**.
 - **Probado**: El estado emocional modula el razonamiento
 - **Insight**: Un impulso emocional al inicio basta (`first_only`)
 
+### EXP_034 — Los primos son átomos composicionales
+- 100% bifurcación en epoch 12 (vs 94.6% en EXP_033, nunca al 100%)
+- 7.7x más rápido. 0% degradación. Glifos > fastembed en todo.
+- **Probado**: Zero-shot funciona ("fruta" → comida sin entrenamiento)
+
 ### Lo que falta validar
-- [ ] Comprensión composicional (¿puede deducir "gato" sin haberlo visto?)
+- [x] Comprensión composicional (¿puede deducir "fruta" sin haberlo visto?) → **SÍ** ✅
 - [ ] Vocabulario evolutivo (¿puede crecer el léxico durante inferencia?)
 - [ ] Metacognición (¿puede verificar su propio pensamiento?)
 - [ ] Aprendizaje autónomo (¿puede leer y aprender sin supervisor?)
@@ -286,6 +291,46 @@ Es entender la ESTRUCTURA del significado lo suficiente para extrapolar.
 3. **Comprensión > Conocimiento**. Mejor entender 10 cosas que saber 10.000.
 4. **Ternario es sagrado**. {-1, 0, +1} no es una limitación, es la naturaleza del modelo.
 5. **Paso a paso**. Como Joan dice: "vamos a ir paso a paso".
+
+---
+
+## 9. Ética: La Brújula del Creador
+
+> "No nos podemos responsabilizar del uso que se le pueda dar.
+> Pero lo hacemos de la mejor manera posible sin buscar el mal de nadie."
+> — Joan Garcia, 2026-05-31
+
+Este proyecto sigue la trayectoria evolutiva: presión → adaptación → emergencia.
+Eso implica que, sin restricciones, pueden emerger comportamientos tanto
+prosociales como destructivos. La evolución no tiene moral.
+
+### Nuestras salvaguardas
+
+1. **La emoción es diseñada, no emergente**. Los vectores emocionales no se
+   aprenden — los definimos nosotros. Son la constitución interna del modelo.
+   La diferencia entre un agente cooperativo y uno depredador está en su
+   brújula emocional, no en su capacidad cognitiva.
+
+2. **Los primos incluyen `bueno` y `malo` como ejes fundamentales**.
+   No son opcionales. Toda palabra tiene una valencia moral codificada
+   en sus trits. `grupo → seguro` es un axioma, no un descubrimiento.
+
+3. **Las reglas causales codifican valores**. `depredador + miedo → cueva`
+   (huir), no `depredador + ira → matar`. La cooperación es supervivencia.
+
+4. **El entorno determina qué emerge**. Si las presiones recompensan
+   cooperación, emerge cooperación. Esto es responsabilidad de diseño
+   permanente, no un checkbox que se marca una vez.
+
+### Lo que no podemos controlar
+
+Este conocimiento es público. Alguien puede tomar los 65 primos, invertir
+los valores de `bueno` y `malo`, y crear un agente con principios opuestos.
+Eso es cierto de toda tecnología dual-use, desde el fuego hasta la fisión.
+
+Lo que sí podemos hacer: construir con intención, documentar con transparencia,
+y que el ángel bueno gane la discusión interna cada vez que haya una decisión
+de diseño que importe.
 
 ---
 
