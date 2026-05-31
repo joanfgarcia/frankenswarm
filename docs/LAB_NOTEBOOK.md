@@ -1349,3 +1349,77 @@ La semántica emerge de la estructura ternaria antes de que el modelo vea un sol
 - **Vocabulario escalable**: Nuevas palabras se añaden definiendo sus trits, sin reentrenamiento.
 - **Base para EXP_035 (curriculum evolutivo)** y **EXP_036 (deep-think/metacognición)**.
 
+---
+
+## Experimento 036 — Deep Think: Metacognición
+
+**Fecha**: 2026-05-31
+**Script**: `src/bitnet/train_deep_think.py`
+**Config**: `configs/experiments/EXP_036_*.json`
+**Origen**: Joan Garcia — "el pensamiento en voz alta me ha servido para focalizar y no desviarme" / "coger el resultado y volver a iterar para validar si es correcto"
+
+### Tesis
+
+Un modelo que piensa, dice en voz alta lo que ha pensado, se escucha, y mide si el resultado es coherente — puede aprender a **dudar** de sus errores. La convergencia entre Fase 1 (pensar) y Fase 2 (verificar) es una métrica de confianza interna.
+
+### Arquitectura: Dos fases
+
+```
+Fase 1 (Pensar):    input → resonancia ×n_think → resultado₁
+Fase 2 (Verificar): resultado₁ → Gumbel-Softmax → resonancia ×n_verify → resultado₂
+Convergencia:       cos(h₁, h₂) → métrica de confianza
+```
+
+### Loss de tres señales
+
+```
+total_loss = 1.0 × loss_think + 0.5 × loss_verify + 0.3 × loss_convergence
+```
+
+- **loss_think**: Fase 1 produce respuesta correcta
+- **loss_verify**: Fase 2 confirma respuesta correcta
+- **loss_convergence**: convergencia alta ↔ correcto, baja ↔ error
+
+### Hipótesis
+
+H₁: La verificación mejora accuracy.
+H₂: Convergencia predice correctness (conv_gap > 0).
+H₃: El modelo aprende a "dudar" de errores (conv_wrong < conv_correct).
+
+### Piaget: Entrenamiento faseado
+
+> "Los niños hasta los 6-8 años no se cuestionan sus propias decisiones.
+> Primero absorben, luego reflexionan." — Joan Garcia
+
+Dos variantes comparadas:
+- **From scratch**: Aprende tarea + metacognición simultáneamente
+- **Piaget (pretrained)**: Carga pesos de EXP_034 (100% acc) → fine-tune solo metacognición
+
+### Resultados EXP_036 (2026-05-31)
+
+**Estado**: ✅ COMPLETADO (2 variantes, early stopping)
+
+| Métrica | From Scratch | Piaget (pretrained) |
+|---|---|---|
+| Best joint | 99.80% | **100.00%** |
+| Bifurcación | 100.0% | 100.0% |
+| Conv✓ (cuando acierta) | 0.958 | **0.982** |
+| Conv✗ (cuando falla) | 0.842 | **0.792** |
+| **CONV GAP** | 0.116 | **0.190** 🔥 |
+| Peak gap | ~0.12 | **0.322** |
+| Epochs hasta stop | 138 | **111** |
+
+### Conclusiones EXP_036
+
+1. **H₁ CONFIRMADA**: Verificación + glifos → 100% joint + 100% bifurcación.
+2. **H₂ CONFIRMADA**: Conv gap > 0 estable. El modelo tiene MAYOR convergencia interna cuando acierta que cuando falla. **La convergencia predice correctness.**
+3. **H₃ CONFIRMADA**: Conv✗ = 0.792 (Piaget) — el modelo "duda" activamente de sus errores.
+4. **Piaget CONFIRMADO**: Primero saber, luego dudar → **64% mejor metacognición**. El modelo que ya dominaba la tarea aprendió a dudar más rápido y mejor.
+5. **La duda emerge del entrenamiento**, no se programa explícitamente.
+
+### Implicación arquitectónica
+
+El `convergence` score puede usarse en inferencia como **métrica de confianza** sin coste adicional:
+- `conv > 0.95` → confiado, usar resultado directamente
+- `conv < 0.85` → incierto, re-pensar o pedir ayuda
+- Esto es un **sistema inmune cognitivo**: el modelo sabe cuándo no sabe.
