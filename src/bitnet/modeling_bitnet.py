@@ -141,11 +141,13 @@ class BitNet4LayerModel(nn.Module):
 	Implementa la ruta diferenciable para Gumbel-Softmax en el juego referencial.
 	"""
 
-	def __init__(self, vocab_embeddings: np.ndarray, hidden_dim: int = 256, num_layers: int = 4, use_pos_embedding: bool = False):
+	def __init__(self, vocab_embeddings: np.ndarray, hidden_dim: int = 256, num_layers: int = 4, use_pos_embedding: bool = False, max_resonance_steps: int = 0, n_emotions: int = 0, emotion_dim: int = 0, emotion_mode: str = "additive"):
 		super().__init__()
 		self.vocab_size, self.vocab_dim = vocab_embeddings.shape
 		self.hidden_dim = hidden_dim
 		self.use_pos_embedding = use_pos_embedding
+		self.max_resonance_steps = max_resonance_steps
+		self.emotion_mode = emotion_mode  # 'additive', 'gated', 'first_only'
 
 		# Registrar los embeddings del vocabulario conceptual como un buffer no entrenable (Capa 1 fija)
 		self.register_buffer("vocab_embeddings", torch.from_numpy(vocab_embeddings).float())
@@ -165,6 +167,24 @@ class BitNet4LayerModel(nn.Module):
 
 		# Capa 4: Outbound Translator (Proyección del espacio oculto de 256-dim al espacio conceptual de 384-dim)
 		self.outbound_proj = nn.Linear(hidden_dim, self.vocab_dim, bias=False)
+
+		# Resonancia Continua: Reloj posicional para el bucle latente (EXP_032)
+		# Solo se inicializa si max_resonance_steps > 0
+		if max_resonance_steps > 0:
+			self.resonance_clock = nn.Parameter(torch.randn(1, max_resonance_steps, hidden_dim) * 0.02)
+		else:
+			self.register_parameter("resonance_clock", None)
+
+		# ── EXP_033: Resonancia Emocional ──
+		# Embedding de emociones → espacio oculto (la emoción como brújula)
+		if n_emotions > 0 and emotion_dim > 0:
+			self.emotion_embeddings = nn.Embedding(n_emotions, emotion_dim)
+			self.emotion_proj = nn.Linear(emotion_dim, hidden_dim, bias=False)
+			if emotion_mode == "gated":
+				self.emotion_gate = nn.Linear(hidden_dim, hidden_dim, bias=False)
+		else:
+			self.emotion_embeddings = None
+			self.emotion_proj = None
 
 	def forward(self, x: torch.Tensor, logit_mask: torch.Tensor = None) -> torch.Tensor:
 		"""
@@ -223,3 +243,214 @@ class BitNet4LayerModel(nn.Module):
 			self.pos_embedding = nn.Parameter(torch.zeros(param_shape, device=state_dict[key].device))
 			self.use_pos_embedding = True
 		super()._load_from_state_dict(state_dict, prefix, local_metadata, strict, missing_keys, unexpected_keys, error_msgs)
+
+	# ── Resonancia Continua (EXP_032) ─────────────────────────────────────────────
+
+	def _embed_input(self, x: torch.Tensor) -> torch.Tensor:
+		"""
+		Capas 1→2: Proyecta input (token IDs o Gumbel-Softmax) al espacio oculto.
+		Factorizado para reutilizar en forward() y forward_resonance().
+		"""
+		if x.ndim == 2:
+			embeds = F.embedding(x, self.vocab_embeddings)
+		else:
+			embeds = torch.matmul(x, self.vocab_embeddings)
+		h = self.inbound_proj(embeds)
+		if getattr(self, "pos_embedding", None) is not None:
+			seq_len = x.shape[1]
+			h = h + self.pos_embedding[:, :seq_len, :]
+		return h
+
+	def _decode_hidden(self, h: torch.Tensor, logit_mask: torch.Tensor = None) -> torch.Tensor:
+		"""
+		Capas 4→5: Proyecta hidden state a logits sobre vocabulario.
+		"""
+		concept_proj = self.outbound_proj(h)
+		logits = torch.matmul(concept_proj, self.vocab_embeddings.T)
+		if logit_mask is not None:
+			logits = logits.masked_fill(~logit_mask, -1e9)
+		return logits
+
+	def _sample_watcher(self, h: torch.Tensor) -> dict:
+		"""
+		Osciloscopio: espía qué 'piensa' el modelo sin afectar al bucle.
+		Proyecta el hidden state a tokens mediante Capas 4→5 dentro de no_grad.
+		No altera pesos ni hidden state. Pura lectura.
+		"""
+		concept_proj = self.outbound_proj(h)
+		logits = torch.matmul(concept_proj, self.vocab_embeddings.T)
+		tokens = logits.argmax(dim=-1)
+		probs = F.softmax(logits, dim=-1)
+		entropy = -(probs * probs.log().clamp(min=-100)).sum(dim=-1)
+		return {
+			"tokens": tokens,
+			"top_logit": logits.max(dim=-1).values,
+			"entropy": entropy,
+		}
+
+	def forward_resonance(
+		self,
+		x: torch.Tensor,
+		n_steps: int = 3,
+		pos_mode: str = "none",
+		collect_watcher: bool = False,
+		logit_mask: torch.Tensor = None,
+		emotion_ids: torch.Tensor = None,
+	) -> tuple[torch.Tensor, dict]:
+		"""
+		Bucle latente cerrado: el hidden state itera N veces por el core
+		SIN salir a vocabulario (8192-dim). Solo al final se proyecta a logits.
+
+		Topología:
+			input → [Capa1→2: una sola vez] → h(256)
+			                                     │
+			                   ┌─────────────────┤
+			                   │  core_layers    │
+			                   │  + norm         │ × n_steps
+			                   │  + clock (opt)  │
+			                   └─────────────────┘
+			                         │
+			                   [Capa4→5: solo al final] → logits(8192)
+
+		Args:
+			x: Input tensor (token IDs o Gumbel-Softmax).
+			n_steps: Número de iteraciones del bucle latente.
+			pos_mode: 'none' | 'entry' | 'clock'
+				- 'none':  Sin pos. embedding en el bucle.
+				- 'entry': Pos. embedding de secuencia sumados una sola vez (ya hecho en _embed_input).
+				- 'clock': Resonance clock re-sumado en cada iteración del bucle.
+			collect_watcher: Si True, muestrea tokens en cada paso (sin gradiente).
+			logit_mask: Máscara de logits para el paso final.
+
+		Returns:
+			(logits, metadata) donde metadata contiene métricas de estabilidad y watcher.
+		"""
+		# ── Entrada: Capas 1→2 (una sola vez) ──
+		h = self._embed_input(x)
+		h0_norm = h.norm(dim=-1).mean().item()
+
+		# ── EXP_033: Preparar vector emocional ──
+		emo_vec = None
+		if emotion_ids is not None and self.emotion_embeddings is not None:
+			# emotion_ids: (batch,) → emo_vec: (batch, 1, hidden_dim)
+			emo_emb = self.emotion_embeddings(emotion_ids)  # (batch, emotion_dim)
+			emo_vec = self.emotion_proj(emo_emb).unsqueeze(1)  # (batch, 1, hidden_dim)
+
+		# ── Bucle Latente: Core itera N veces ──
+		trajectory_norms = [h0_norm]
+		cosine_convergence = []
+		watcher_samples = []
+
+		for step in range(n_steps):
+			h_prev = h.detach()  # Para métricas (no afecta al gradiente del bucle)
+
+			# Clock: re-sumar embedding de resonancia en cada paso
+			if pos_mode == "clock" and getattr(self, "resonance_clock", None) is not None:
+				h = h + self.resonance_clock[:, step, :].unsqueeze(1)  # (1, 1, 256) broadcast
+
+			# ── EXP_033: Inyección emocional en el bucle ──
+			if emo_vec is not None:
+				if self.emotion_mode == "additive":
+					h = h + emo_vec  # La emoción desplaza cada paso
+				elif self.emotion_mode == "gated":
+					gate = torch.sigmoid(self.emotion_gate(emo_vec.squeeze(1))).unsqueeze(1)
+					h = h * gate + emo_vec  # La emoción filtra y desplaza
+				elif self.emotion_mode == "first_only":
+					if step == 0:
+						h = h + emo_vec  # Impulso emocional solo al inicio
+
+			# Paso por el core completo
+			for layer in self.core_layers:
+				h = layer(h)
+			h = self.norm(h)
+
+			# Métricas de estabilidad
+			step_norm = h.norm(dim=-1).mean().item()
+			trajectory_norms.append(step_norm)
+
+			# Convergencia: coseno entre estado actual y anterior
+			with torch.no_grad():
+				cos_sim = F.cosine_similarity(h, h_prev, dim=-1).mean().item()
+				cosine_convergence.append(cos_sim)
+
+			# Watcher: muestreo asíncrono sin romper el bucle
+			if collect_watcher:
+				with torch.no_grad():
+					watcher_samples.append(self._sample_watcher(h))
+
+		# ── Salida: Capas 4→5 (solo al final) ──
+		logits = self._decode_hidden(h, logit_mask=logit_mask)
+
+		metadata = {
+			"trajectory_norms": trajectory_norms,
+			"cosine_convergence": cosine_convergence,
+			"norm_ratio": trajectory_norms[-1] / (h0_norm + 1e-8),
+			"watcher_samples": watcher_samples,
+			"final_hidden": h.detach(),
+		}
+		return logits, metadata
+
+	def forward_resonance_training(
+		self,
+		x: torch.Tensor,
+		n_steps: int = 3,
+		pos_mode: str = "none",
+		intermediate_targets: dict[int, torch.Tensor] | None = None,
+		logit_mask: torch.Tensor = None,
+		emotion_ids: torch.Tensor = None,
+	) -> tuple[torch.Tensor, list[tuple[int, torch.Tensor]]]:
+		"""
+		Variante de forward_resonance para entrenamiento con BPTT.
+		Permite loss intermedio en pasos configurables.
+
+		Args:
+			x: Input tensor.
+			n_steps: Iteraciones del bucle latente.
+			pos_mode: 'none' | 'entry' | 'clock'.
+			intermediate_targets: Dict {step_index: target_tensor}.
+				Si se proporciona, se computan logits intermedios en esos pasos
+				para calcular loss parcial. None = solo loss al final.
+			logit_mask: Máscara de logits.
+
+		Returns:
+			(final_logits, intermediate_logits) donde intermediate_logits es
+			lista de (step, logits) para los pasos con supervisión.
+		"""
+		h = self._embed_input(x)
+
+		# ── EXP_033: Preparar vector emocional ──
+		emo_vec = None
+		if emotion_ids is not None and self.emotion_embeddings is not None:
+			emo_emb = self.emotion_embeddings(emotion_ids)
+			emo_vec = self.emotion_proj(emo_emb).unsqueeze(1)
+
+		intermediate_logits = []
+		target_steps = set(intermediate_targets.keys()) if intermediate_targets else set()
+
+		for step in range(n_steps):
+			if pos_mode == "clock" and getattr(self, "resonance_clock", None) is not None:
+				h = h + self.resonance_clock[:, step, :].unsqueeze(1)
+
+			# ── EXP_033: Inyección emocional ──
+			if emo_vec is not None:
+				if self.emotion_mode == "additive":
+					h = h + emo_vec
+				elif self.emotion_mode == "gated":
+					gate = torch.sigmoid(self.emotion_gate(emo_vec.squeeze(1))).unsqueeze(1)
+					h = h * gate + emo_vec
+				elif self.emotion_mode == "first_only":
+					if step == 0:
+						h = h + emo_vec
+
+			for layer in self.core_layers:
+				h = layer(h)
+			h = self.norm(h)
+
+			# Loss intermedio: computar logits en este paso si se requiere supervisión
+			if step in target_steps:
+				logits_mid = self._decode_hidden(h, logit_mask=logit_mask)
+				intermediate_logits.append((step, logits_mid))
+
+		# Logits finales
+		final_logits = self._decode_hidden(h, logit_mask=logit_mask)
+		return final_logits, intermediate_logits

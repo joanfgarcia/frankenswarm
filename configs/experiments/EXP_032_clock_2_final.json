@@ -1,0 +1,67 @@
+{
+    "seed": 42,
+    "pop_size": 4,
+    "max_chain_depth": 3,
+    "fear_amplifier": 3.0,
+    "svd_interval": 3,
+    "svd_phases": [
+        "recreo",
+        "autonomia"
+    ],
+    "use_logit_mask": true,
+    "micro_vocab_words": [
+        "gato",
+        "perro",
+        "casa",
+        "árbol",
+        "agua",
+        "fuego",
+        "tierra",
+        "aire",
+        "sol",
+        "luna",
+        "peligro",
+        "seguridad",
+        "implica"
+    ],
+    "model": {
+        "hidden_dim": 256,
+        "num_layers": 3,
+        "num_heads": 4,
+        "mlp_ratio": 4,
+        "use_pos_embedding": true
+    },
+    "training": {
+        "epochs": 200,
+        "steps_per_epoch": 200,
+        "batch_size": 32,
+        "lr": 0.0003,
+        "grad_clip": 1.0,
+        "weight_decay": 0.05
+    },
+    "curriculum": {
+        "nursery_end": 30,
+        "transition_end": 80,
+        "tf_min": 0.1,
+        "tau_start": 1.0,
+        "tau_min": 0.3
+    },
+    "depth_ramp": {
+        "nursery_steps": 1,
+        "transition_steps_start": 2,
+        "transition_steps_end": 3,
+        "autonomy_steps_start": 3,
+        "autonomy_steps_end": 5
+    },
+    "experiment_id": "EXP_032_clock_2_final",
+    "title": "Resonancia Continua — pos_clock, depth_2, loss_final",
+    "resonance": {
+        "pos_mode": "clock",
+        "n_steps": "2",
+        "loss_mode": "final",
+        "max_resonance_steps": 5,
+        "collect_watcher": true,
+        "watcher_interval_epochs": 10,
+        "intermediate_loss_weight": 0.2
+    }
+}
