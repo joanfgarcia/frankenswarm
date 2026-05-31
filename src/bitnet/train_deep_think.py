@@ -122,6 +122,19 @@ def run_deep_think_training():
 	n_params = sum(p.numel() for p in population[0].parameters() if p.requires_grad)
 	print(f"📊 Params: {n_params:,}")
 
+	# ═══ Pre-entrenamiento (Piaget: primero saber, luego dudar) ═══
+	pretrained_from = config.get("pretrained_from")
+	if pretrained_from:
+		pretrained_path = pretrained_from if os.path.isabs(pretrained_from) else os.path.join(base_dir, pretrained_from)
+		if os.path.exists(pretrained_path):
+			state_dict = torch.load(pretrained_path, map_location=device, weights_only=True)
+			for i, model in enumerate(population):
+				model.load_state_dict(state_dict)
+			print(f"🧒→🧑 Pre-trained: {pretrained_path}")
+			print(f"    Fase Piaget: el modelo ya sabe, ahora aprende a dudar")
+		else:
+			print(f"⚠️ pretrained_from no encontrado: {pretrained_path}")
+
 	train_cfg = config.get("training", {})
 	lr = train_cfg.get("lr", 3e-4)
 	wd = train_cfg.get("weight_decay", 0.05)
