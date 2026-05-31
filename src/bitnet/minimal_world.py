@@ -388,18 +388,123 @@ class MinimalWorld:
 
 		return result
 
-	def get_reward(self) -> float:
+	def get_reward(self, result: dict = None) -> float:
 		"""
-		Reward basado en cambio de estado.
-		Positivo si el agente mejora, negativo si empeora.
+		Reward v2: Dolor continuo + Reward por progreso.
+
+		Modelo de Joan (NPC):
+		  - En cueva, estoy bien:      0 reward, 0 dolor
+		  - En cueva, hambre, me quedo: 0 reward, +dolor (acumula)
+		  - En cueva, hambre, salgo:    +reward (progreso), +dolor (sigo con hambre)
+		  - Fuera, hambre, como:        +reward (resuelvo), cesa dolor
+
+		Dos señales separadas que se suman:
+		  DOLOR = f(necesidades insatisfechas)  ← siempre, continuo, proporcional
+		  PROGRESO = f(acciones que acercan a resolver necesidades)
+
+		Returns:
+		    float: reward = progreso - dolor
 		"""
 		s = self.state
-		if not s.alive:
-			return -10.0
 
-		# Reward = normalización de los metros
-		wellness = (s.hambre + s.salud + s.energia) / 300.0
-		return wellness
+		# ═══ MUERTE ═══
+		if not s.alive:
+			return -100.0
+
+		if result is None:
+			return 0.0
+
+		# ══════════════════════════════════════════════════════════
+		# SEÑAL 1: DOLOR (siempre activo, proporcional a carencia)
+		# ══════════════════════════════════════════════════════════
+		dolor = 0.0
+
+		# Hambre: dolor proporcional a lo lejos que estás de saciado
+		if s.hambre < 50:
+			dolor += (50 - s.hambre) * 0.15   # 0 a -7.5
+		if s.hambre < 15:
+			dolor += 5.0   # urgencia extra
+		if s.hambre <= 0:
+			dolor += 10.0  # inanición
+
+		# Salud: dolor proporcional al daño
+		if s.salud < 70:
+			dolor += (70 - s.salud) * 0.10   # 0 a -7.0
+		if s.salud < 30:
+			dolor += 5.0   # herido grave
+
+		# Energía: cansancio
+		if s.energia < 40:
+			dolor += (40 - s.energia) * 0.08  # 0 a -3.2
+		if s.energia < 10:
+			dolor += 3.0   # exhausto
+
+		# Peligro inmediato
+		if s.danger_nearby:
+			dolor += 5.0
+
+		# Daño recibido este tick
+		delta_salud = result.get("delta_salud", 0)
+		if delta_salud < 0:
+			dolor += abs(delta_salud) * 0.5  # -20 salud → +10 dolor
+
+		# ══════════════════════════════════════════════════════════
+		# SEÑAL 2: PROGRESO (reward por acciones que acercan a meta)
+		# ══════════════════════════════════════════════════════════
+		progreso = 0.0
+
+		# ── Resolver necesidad = ALIVIO MÁXIMO ──
+		# Comer resuelve hambre
+		if result["delta_hambre"] > 10:
+			urgency = max(0, (50 - s.hambre) / 50)
+			progreso += 8.0 * (1 + urgency)  # hasta +16 si muerto de hambre
+
+		# Beber resuelve sed + salud
+		if result.get("delta_salud", 0) > 0 and result["delta_hambre"] > 0:
+			progreso += 6.0
+
+		# Dormir seguro resuelve cansancio
+		if result["delta_energia"] > 20 and result.get("delta_salud", 0) >= 0:
+			progreso += 5.0
+
+		# Luchar y ganar resuelve peligro
+		if "gana" in result.get("event", ""):
+			progreso += 10.0
+
+		# Huir del peligro = progreso
+		if s.danger_nearby and result.get("moved_to"):
+			progreso += 6.0  # escapar es progreso
+
+		# ── Acercarse a resolver = PROGRESO PARCIAL ──
+		# Moverse hacia comida cuando hambriento = progreso
+		if result.get("moved_to"):
+			new_loc = result["moved_to"]
+			loc_data = LOCATIONS.get(new_loc, {})
+
+			if s.hambre < 40 and loc_data.get("food_available", False):
+				progreso += 5.0  # ir hacia comida con hambre = bien
+			elif s.hambre < 40 and not loc_data.get("food_available", False):
+				progreso += 1.0  # moverse con hambre = al menos busca
+
+			if s.salud < 50 and new_loc == "cueva":
+				progreso += 3.0  # ir al refugio cuando herido = bien
+
+			if s.energia < 30 and new_loc == "cueva":
+				progreso += 2.0  # ir a dormir cuando cansado
+
+		# ── No hacer nada útil = nada (no castigo, solo dolor continuo) ──
+		# El castigo por inacción es el dolor que NO para
+
+		# ══════════════════════════════════════════════════════════
+		# SEÑAL COMBINADA
+		# ══════════════════════════════════════════════════════════
+
+		# Bienestar: si todo está bien, paz (baseline neutro)
+		paz = 0.0
+		if s.hambre > 60 and s.salud > 70 and s.energia > 50 and not s.danger_nearby:
+			paz = 1.0  # tranquilidad = ligeramente positivo
+
+		return progreso - dolor + paz
 
 	def get_perception_indices(self) -> list[int]:
 		"""Convertir percepciones a índices de vocabulario."""

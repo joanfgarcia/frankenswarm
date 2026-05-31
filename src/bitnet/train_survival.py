@@ -119,7 +119,7 @@ def run_survival_training():
 		pretrained_path = pretrained_from if os.path.isabs(pretrained_from) else os.path.join(base_dir, pretrained_from)
 		if os.path.exists(pretrained_path):
 			state_dict = torch.load(pretrained_path, map_location=device, weights_only=True)
-			model.load_state_dict(state_dict)
+			model.load_state_dict(state_dict, strict=False)  # strict=False: action_head es nuevo
 			print(f"🧒→🧑 Pre-trained: {pretrained_path}")
 
 	n_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
@@ -132,10 +132,20 @@ def run_survival_training():
 		lr=lr, weight_decay=train_cfg.get("weight_decay", 0.01),
 	)
 
-	# Máscara de acciones (solo acciones válidas en output)
-	action_mask = torch.zeros(N_WORDS, device=device)
-	for idx in ACTION_INDICES:
-		action_mask[idx] = 1.0
+	# Máscara de acciones ya NO se necesita — action_head tiene output dim=6
+	action_names = ["comer", "beber", "dormir", "mover", "ver", "piedra"]
+
+	# ═══ Freeze base model, train only action head ═══
+	for name, param in model.named_parameters():
+		if "action_head" not in name:
+			param.requires_grad = False
+	# Re-crear optimizer solo con action_head
+	optimizer = torch.optim.AdamW(
+		model.action_head.parameters(),
+		lr=lr, weight_decay=train_cfg.get("weight_decay", 0.01),
+	)
+	n_trainable = sum(p.numel() for p in model.action_head.parameters())
+	print(f"🧠→🦶 Action head: {n_trainable:,} params (base CONGELADA)")
 
 	# ═══ Training ═══
 	n_episodes = config.get("training", {}).get("episodes", 500)
@@ -146,9 +156,11 @@ def run_survival_training():
 	convergence_threshold = config.get("metacognition", {}).get("threshold", 0.85)
 	grad_clip = train_cfg.get("grad_clip", 1.0)
 	gamma = config.get("training", {}).get("gamma", 0.99)  # discount factor
+	entropy_bonus = config.get("training", {}).get("entropy_bonus", 0.05)
 
 	print(f"🌍 Episodios: {n_episodes} | Max ticks: {max_ticks}")
 	print(f"🧠 Metacognición: {'ON' if use_metacognition else 'OFF'} | Threshold: {convergence_threshold}")
+	print(f"🎲 Entropy bonus: {entropy_bonus}")
 
 	logger = ExperimentLogger(
 		experiment_id,
@@ -165,6 +177,7 @@ def run_survival_training():
 
 		episode_rewards = []
 		episode_log_probs = []
+		episode_entropies = []
 		episode_convergences = []
 		episode_rethinks = 0
 
@@ -181,7 +194,7 @@ def run_survival_training():
 			# 2. SENTIR (emoción emergente)
 			emotion_id = torch.tensor([state.emotion_id], dtype=torch.long, device=device)
 
-			# 3. PENSAR
+			# 3. PENSAR — obtener hidden state del modelo
 			if use_metacognition:
 				logits, meta = model.forward_deep_think(
 					x, n_think=n_think, n_verify=n_verify,
@@ -189,6 +202,7 @@ def run_survival_training():
 					convergence_threshold=convergence_threshold,
 				)
 				convergence = meta["convergence"]
+				hidden = meta.get("hidden", None)
 				if meta["n_rethinks"] > 1:
 					episode_rethinks += 1
 			else:
@@ -196,48 +210,47 @@ def run_survival_training():
 					x, n_steps=n_think, pos_mode="clock",
 					emotion_ids=emotion_id,
 				)
-				convergence = 1.0  # sin metacognición
+				convergence = 1.0
+				hidden = meta.get("hidden", None)
 
-			# 4. DECIDIR (policy gradient)
-			action_logits = logits[0, 2, :]  # posición 2 del output
-			masked_logits = action_logits.clone()
-			masked_logits[~action_mask.bool()] = -float('inf')
-			probs = F.softmax(masked_logits, dim=-1)
-
-			# Sampling (exploración) vs argmax (explotación)
-			if episode < n_episodes * 0.3:
-				# Más exploración al inicio
-				dist = torch.distributions.Categorical(probs)
-				action_idx = dist.sample()
-				log_prob = dist.log_prob(action_idx)
+			# 4. DECIDIR — action head (6 salidas, no 26)
+			# Usar el hidden state de posición 2 (donde está la "respuesta")
+			if hidden is not None:
+				h_action = hidden[:, 2, :]  # (batch, hidden_dim)
 			else:
-				# Más explotación después
-				if torch.rand(1).item() < 0.1:  # 10% exploración
-					dist = torch.distributions.Categorical(probs)
-					action_idx = dist.sample()
-					log_prob = dist.log_prob(action_idx)
-				else:
-					action_idx = probs.argmax()
-					log_prob = torch.log(probs[action_idx] + 1e-8)
+				# Fallback: usar la representación interna
+				h_action = model._get_hidden(x, emotion_ids=emotion_id)[:, 2, :]
 
-			# Mapear a nombre de acción
-			action_name = None
-			for a, glyph_idx in ACTION_TO_IDX.items():
-				if glyph_idx == action_idx.item():
-					action_name = a
-					break
-			if action_name is None:
-				action_name = "ver"  # fallback seguro
+			action_logits = model.action_head(h_action)  # (batch, 6)
+			probs = F.softmax(action_logits, dim=-1)
+
+			# Exploración: uniforme al inicio, policy después
+			explore_rate = max(0.05, 1.0 - episode / (n_episodes * 0.4))
+			if torch.rand(1).item() < explore_rate:
+				# Exploración uniforme
+				action_idx = torch.randint(0, 6, (1,)).item()
+				log_prob = torch.log(probs[0, action_idx] + 1e-8).squeeze()
+			else:
+				dist = torch.distributions.Categorical(probs)
+				action_idx = dist.sample().item()
+				log_prob = dist.log_prob(torch.tensor(action_idx, device=device))
+
+			# Entropy para bonus
+			dist_full = torch.distributions.Categorical(probs)
+			entropy = dist_full.entropy()
+
+			action_name = action_names[action_idx]
 
 			# 5. ACTUAR
 			result = world.act(action_name)
-			reward = world.get_reward()
+			reward = world.get_reward(result)  # Reward DENSO e INMEDIATO
 
 			episode_rewards.append(reward)
 			episode_log_probs.append(log_prob)
+			episode_entropies.append(entropy)
 			episode_convergences.append(convergence if isinstance(convergence, float) else convergence)
 
-		# ═══ REINFORCE: actualizar policy ═══
+		# ═══ REINFORCE + entropy bonus ═══
 		if episode_log_probs:
 			# Calcular returns con descuento
 			returns = []
@@ -245,22 +258,25 @@ def run_survival_training():
 			for r in reversed(episode_rewards):
 				G = r + gamma * G
 				returns.insert(0, G)
-			returns = torch.tensor(returns, device=device)
+			returns = torch.tensor(returns, dtype=torch.float32, device=device)
 
 			# Normalizar returns
 			if len(returns) > 1:
 				returns = (returns - returns.mean()) / (returns.std() + 1e-8)
 
-			# Policy loss
-			policy_loss = 0
-			for log_prob, G in zip(episode_log_probs, returns):
-				policy_loss -= log_prob * G
+			# Policy loss + entropy bonus
+			policy_loss = torch.tensor(0.0, device=device)
+			for i in range(len(episode_log_probs)):
+				lp = episode_log_probs[i].squeeze()
+				G_i = returns[i]
+				ent = episode_entropies[i].mean()
+				policy_loss = policy_loss - lp * G_i - entropy_bonus * ent
 
 			policy_loss = policy_loss / len(episode_log_probs)
 
 			optimizer.zero_grad()
 			policy_loss.backward()
-			torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=grad_clip)
+			torch.nn.utils.clip_grad_norm_(model.action_head.parameters(), max_norm=grad_clip)
 			optimizer.step()
 
 		# ═══ Métricas ═══

@@ -207,6 +207,13 @@ class BitNet4LayerModel(nn.Module):
 			self.emotion_embeddings = None
 			self.emotion_proj = None
 
+		# ── EXP_039: Cabeza de Acción (puente saber→actuar) ──
+		self.action_head = nn.Sequential(
+			nn.Linear(hidden_dim, hidden_dim // 2),
+			nn.GELU(),
+			nn.Linear(hidden_dim // 2, 6),  # 6 acciones: comer, beber, dormir, mover, ver, piedra
+		)
+
 	def forward(self, x: torch.Tensor, logit_mask: torch.Tensor = None) -> torch.Tensor:
 		"""
 		Paso forward estándar (sin resonancia).
@@ -403,6 +410,7 @@ class BitNet4LayerModel(nn.Module):
 			"norm_ratio": trajectory_norms[-1] / (h0_norm + 1e-8),
 			"watcher_samples": watcher_samples,
 			"final_hidden": h.detach(),
+			"hidden": h,  # EXP_039: non-detached for action_head gradient
 		}
 		return logits, metadata
 
@@ -572,6 +580,7 @@ class BitNet4LayerModel(nn.Module):
 		metadata = {
 			"phase1_hidden": h_think,
 			"phase2_hidden": h_verify,
+			"hidden": h_verify,  # EXP_039: para action_head
 			"convergence": final_convergence,
 			"converged": final_convergence >= convergence_threshold,
 			"n_rethinks": len(rethink_trace),
