@@ -470,3 +470,199 @@ class BitNet4LayerModel(nn.Module):
 		# Logits finales
 		final_logits = self._decode_hidden(h, logit_mask=logit_mask)
 		return final_logits, intermediate_logits
+
+	# ── Metacognición (EXP_036) ───────────────────────────────────────────────
+
+	def forward_deep_think(
+		self,
+		x: torch.Tensor,
+		n_think: int = 3,
+		n_verify: int = 2,
+		pos_mode: str = "clock",
+		logit_mask: torch.Tensor = None,
+		emotion_ids: torch.Tensor = None,
+		max_rethink: int = 1,
+		convergence_threshold: float = 0.95,
+	) -> tuple[torch.Tensor, dict]:
+		"""
+		Pensamiento en dos fases: Pensar + Verificar.
+
+		Fase 1 (Pensar): Bucle latente normal (resonancia).
+		Fase 2 (Verificar): Decodificar resultado, re-inyectarlo como input,
+		                     y ejecutar un segundo bucle. Si el pensamiento
+		                     converge (cos(h1, h2) > threshold), el modelo
+		                     está "seguro". Si diverge, re-piensa.
+
+		Analogía humana:
+		  Fase 1: Piensas la respuesta mentalmente.
+		  Fase 2: La dices en voz alta y te escuchas.
+		  Si suena bien: la confirmas.
+		  Si suena raro: "espera, déjame repensarlo".
+
+		Origen: Joan Garcia — "el pensamiento en voz alta me ha servido
+		para focalizar y no desviarme"
+
+		Args:
+		    x: Input tensor (token IDs o Gumbel-Softmax).
+		    n_think: Steps del bucle de pensamiento (Fase 1).
+		    n_verify: Steps del bucle de verificación (Fase 2).
+		    pos_mode: Modo posicional ('none', 'entry', 'clock').
+		    logit_mask: Máscara de logits.
+		    emotion_ids: IDs de emoción para modular el pensamiento.
+		    max_rethink: Máximo de iteraciones adicionales si no converge.
+		    convergence_threshold: Umbral coseno para considerar convergente.
+
+		Returns:
+		    (logits, metadata) donde metadata incluye confianza y trazas.
+		"""
+		rethink_trace = []
+
+		# ═══ FASE 1: PENSAR (silencio) ═══
+		logits_think, meta_think = self.forward_resonance(
+			x, n_steps=n_think, pos_mode=pos_mode,
+			logit_mask=logit_mask, emotion_ids=emotion_ids,
+		)
+		h_think = meta_think["final_hidden"]  # (batch, seq, hidden_dim)
+
+		current_logits = logits_think
+		current_hidden = h_think
+
+		for rethink_step in range(1 + max_rethink):
+			# ═══ FASE 2: VERIFICAR (en voz alta) ═══
+			# Decodificar a tokens discretos
+			with torch.no_grad():
+				result_tokens = current_logits.argmax(dim=-1)  # (batch, seq)
+
+			# Re-inyectar como nuevo input
+			logits_verify, meta_verify = self.forward_resonance(
+				result_tokens, n_steps=n_verify, pos_mode=pos_mode,
+				logit_mask=logit_mask, emotion_ids=emotion_ids,
+			)
+			h_verify = meta_verify["final_hidden"]
+
+			# Medir convergencia: ¿piensa lo mismo?
+			with torch.no_grad():
+				# Coseno por posición de secuencia, promedio sobre batch
+				convergence = F.cosine_similarity(
+					current_hidden, h_verify, dim=-1
+				).mean(dim=-1)  # (batch,)
+				avg_convergence = convergence.mean().item()
+
+			rethink_trace.append({
+				"step": rethink_step,
+				"convergence": avg_convergence,
+				"converged": avg_convergence >= convergence_threshold,
+				"tokens_think": result_tokens[:1].tolist() if result_tokens.shape[0] > 0 else [],
+				"tokens_verify": logits_verify.argmax(dim=-1)[:1].tolist() if logits_verify.shape[0] > 0 else [],
+			})
+
+			if avg_convergence >= convergence_threshold:
+				# Convergente → confiado
+				break
+
+			# No convergente → el resultado de Fase 2 se convierte
+			# en el nuevo "pensamiento" a verificar
+			current_logits = logits_verify
+			current_hidden = h_verify
+
+		# Output final: el último resultado verificado
+		final_logits = logits_verify
+		final_convergence = avg_convergence
+
+		metadata = {
+			"phase1_hidden": h_think,
+			"phase2_hidden": h_verify,
+			"convergence": final_convergence,
+			"converged": final_convergence >= convergence_threshold,
+			"n_rethinks": len(rethink_trace),
+			"rethink_trace": rethink_trace,
+			"meta_think": meta_think,
+			"meta_verify": meta_verify,
+		}
+
+		return final_logits, metadata
+
+	def forward_deep_think_training(
+		self,
+		x: torch.Tensor,
+		n_think: int = 3,
+		n_verify: int = 2,
+		pos_mode: str = "clock",
+		logit_mask: torch.Tensor = None,
+		emotion_ids: torch.Tensor = None,
+	) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, dict]:
+		"""
+		Variante de forward_deep_think para entrenamiento con BPTT.
+
+		Mantiene el grafo computacional entre Fase 1 y Fase 2 para
+		que los gradientes fluyan de la verificación al pensamiento.
+
+		Returns:
+		    (logits_think, logits_verify, convergence, metadata)
+		    - logits_think: (batch, seq, vocab) — resultado de Fase 1
+		    - logits_verify: (batch, seq, vocab) — resultado de Fase 2
+		    - convergence: (batch,) — coseno entre hidden states
+		    - metadata: dict con trazas
+		"""
+		# ═══ FASE 1: PENSAR ═══
+		# Usamos forward_resonance_training para mantener gradientes
+		intermediate_targets_think = {i: None for i in range(n_think)}
+		logits_think, intermediates_think = self.forward_resonance_training(
+			x, n_steps=n_think, pos_mode=pos_mode,
+			intermediate_targets=intermediate_targets_think,
+			logit_mask=logit_mask, emotion_ids=emotion_ids,
+		)
+
+		# Capturar hidden state final de Fase 1 (con gradiente)
+		h_think = self._embed_input(x)
+		emo_vec = None
+		if emotion_ids is not None and self.emotion_embeddings is not None:
+			emo_emb = self.emotion_embeddings(emotion_ids)
+			emo_vec = self.emotion_proj(emo_emb).unsqueeze(1)
+		for step in range(n_think):
+			if pos_mode == "clock" and getattr(self, "resonance_clock", None) is not None:
+				h_think = h_think + self.resonance_clock[:, step, :].unsqueeze(1)
+			if emo_vec is not None:
+				if self.emotion_mode == "additive":
+					h_think = h_think + emo_vec
+				elif self.emotion_mode == "first_only" and step == 0:
+					h_think = h_think + emo_vec
+			for layer in self.core_layers:
+				h_think = layer(h_think)
+			h_think = self.norm(h_think)
+
+		# ═══ PUENTE: Decodificar a tokens (Gumbel-Softmax diferenciable) ═══
+		logits_bridge = self._decode_hidden(h_think, logit_mask=logit_mask)
+		soft_tokens = F.gumbel_softmax(logits_bridge, tau=0.5, hard=False, dim=-1)
+
+		# ═══ FASE 2: VERIFICAR (re-inyección diferenciable) ═══
+		h_verify = self._embed_input(soft_tokens)
+		if emo_vec is not None:
+			if self.emotion_mode == "additive":
+				h_verify = h_verify + emo_vec
+			elif self.emotion_mode == "first_only":
+				h_verify = h_verify + emo_vec
+		for step in range(n_verify):
+			if pos_mode == "clock" and getattr(self, "resonance_clock", None) is not None:
+				# Usar slots diferentes del clock para verificación
+				clock_idx = min(n_think + step, self.resonance_clock.shape[1] - 1)
+				h_verify = h_verify + self.resonance_clock[:, clock_idx, :].unsqueeze(1)
+			for layer in self.core_layers:
+				h_verify = layer(h_verify)
+			h_verify = self.norm(h_verify)
+
+		logits_verify = self._decode_hidden(h_verify, logit_mask=logit_mask)
+
+		# ═══ CONVERGENCIA (diferenciable) ═══
+		convergence = F.cosine_similarity(
+			h_think, h_verify, dim=-1
+		).mean(dim=-1)  # (batch,)
+
+		metadata = {
+			"intermediates_think": intermediates_think,
+			"h_think": h_think,
+			"h_verify": h_verify,
+		}
+
+		return logits_think, logits_verify, convergence, metadata
+
