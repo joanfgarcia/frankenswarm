@@ -38,6 +38,10 @@ from src.bitnet.minimal_world import (
 	MinimalWorld, ACTIONS, ACTION_INDICES, ACTION_TO_IDX,
 	ACTION_TO_GLYPH, LOCATION_GLYPHS,
 )
+from src.bitnet.complex_world import (
+	ComplexWorld, COMPLEX_ACTIONS, COMPLEX_ACTION_INDICES,
+	COMPLEX_LOCATIONS,
+)
 from src.bitnet.net2net import grow_action_head
 from src.bitnet.telemetry import ExperimentLogger
 from src.bitnet.train_survival import perception_to_input
@@ -86,6 +90,17 @@ def run_neurogenesis_training():
 			model.load_state_dict(torch.load(p, map_location=device, weights_only=True), strict=False)
 			print(f"🧒→🧑 Pre-trained: {p}")
 
+	# Resize action head if config specifies a different width
+	init_width = config.get("growth", {}).get("init_width", None)
+	if init_width and init_width != model.action_head[0].out_features:
+		import torch.nn as tnn
+		model.action_head = tnn.Sequential(
+			tnn.Linear(model_cfg.get("hidden_dim", 256), init_width),
+			tnn.GELU(),
+			tnn.Linear(init_width, 6),
+		).to(device)
+		print(f"🔧 Action head resized to width={init_width}")
+
 	# Freeze base, train action head
 	for name, param in model.named_parameters():
 		if "action_head" not in name:
@@ -95,7 +110,28 @@ def run_neurogenesis_training():
 	lr = train_cfg.get("lr", 5e-4)
 	optimizer = torch.optim.AdamW(model.action_head.parameters(), lr=lr, weight_decay=0.01)
 
-	action_names = ["comer", "beber", "dormir", "mover", "ver", "piedra"]
+	# ═══ World selection ═══
+	world_type = config.get("world", {}).get("type", "simple")
+	if world_type == "complex":
+		action_names = COMPLEX_ACTIONS
+		n_actions = len(COMPLEX_ACTIONS)
+		print(f"🌍 Mundo COMPLEJO: 15 loc, {n_actions} acciones")
+	else:
+		action_names = ["comer", "beber", "dormir", "mover", "ver", "piedra"]
+		n_actions = 6
+		print(f"🌍 Mundo simple: 5 loc, {n_actions} acciones")
+
+	# Resize action head output if needed
+	if model.action_head[2].out_features != n_actions:
+		import torch.nn as tnn
+		old_width = model.action_head[0].out_features
+		model.action_head = tnn.Sequential(
+			tnn.Linear(model_cfg.get("hidden_dim", 256), old_width),
+			tnn.GELU(),
+			tnn.Linear(old_width, n_actions),
+		).to(device)
+		print(f"🔧 Action head output resized to {n_actions}")
+
 	n_think = config.get("resonance", {}).get("n_think", 2)
 	n_verify = config.get("resonance", {}).get("n_verify", 2)
 
@@ -134,7 +170,10 @@ def run_neurogenesis_training():
 	survival_history = []
 
 	for episode in range(n_episodes):
-		world = MinimalWorld(seed=seed + episode)
+		if world_type == "complex":
+			world = ComplexWorld(seed=seed + episode)
+		else:
+			world = MinimalWorld(seed=seed + episode)
 		state = world.reset()
 
 		# Buffers para online update
@@ -181,7 +220,7 @@ def run_neurogenesis_training():
 
 			explore_rate = max(0.05, 1.0 - episode / (n_episodes * 0.4))
 			if torch.rand(1).item() < explore_rate:
-				action_idx = torch.randint(0, 6, (1,)).item()
+				action_idx = torch.randint(0, n_actions, (1,)).item()
 				log_prob = torch.log(probs[0, action_idx] + 1e-8).squeeze()
 			else:
 				dist = torch.distributions.Categorical(probs)
@@ -306,6 +345,34 @@ def run_neurogenesis_training():
 		if ticks_survived > best_survival:
 			best_survival = ticks_survived
 			torch.save(model.state_dict(), os.path.join(exp_dir, "best_agent.pt"))
+
+		# ═══ POST-EPISODE GROWTH CHECK ═══
+		# Si el agente muere demasiado rápido consistentemente → necesita más capacidad
+		current_width = model.action_head[0].out_features
+		if len(survival_history) >= 10 and current_width < max_width:
+			avg_recent_survival = np.mean(survival_history[-10:])
+			survival_threshold = max_ticks * 0.15  # muere antes del 15% del tiempo
+			if avg_recent_survival < survival_threshold:
+				growth_info = grow_action_head(model, growth_factor=growth_factor)
+				total_growths += 1
+				optimizer = torch.optim.AdamW(
+					model.action_head.parameters(), lr=lr, weight_decay=0.01
+				)
+				growth_events.append({
+					"episode": episode + 1,
+					"tick": -1,  # post-episode
+					"avg_convergence": avg_conv,
+					"avg_survival": avg_recent_survival,
+					"trigger": "early_death",
+					**growth_info,
+				})
+				print(
+					f"  🧬 NEUROGENÉSIS #{total_growths} (early_death) | "
+					f"width: {growth_info['old_width']}→{growth_info['new_width']} | "
+					f"avg_survival={avg_recent_survival:.1f}/{max_ticks}"
+				)
+				convergence_history.clear()
+				reward_history.clear()
 
 		current_width = model.action_head[0].out_features
 		current_params = sum(p.numel() for p in model.action_head.parameters())
