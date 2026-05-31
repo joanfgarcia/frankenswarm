@@ -1,5 +1,12 @@
 import numpy as np
 import torch
+
+# EXP_034: Glifos ternarios composicionales
+# Importación lazy para backward-compatibility
+try:
+	from src.bitnet.glyph_vocabulary import GlyphEmbedding, GLYPH_TABLE, N_PRIMES
+except ImportError:
+	GlyphEmbedding = None
 import torch.nn as nn
 import torch.nn.functional as F
 
@@ -141,19 +148,38 @@ class BitNet4LayerModel(nn.Module):
 	Implementa la ruta diferenciable para Gumbel-Softmax en el juego referencial.
 	"""
 
-	def __init__(self, vocab_embeddings: np.ndarray, hidden_dim: int = 256, num_layers: int = 4, use_pos_embedding: bool = False, max_resonance_steps: int = 0, n_emotions: int = 0, emotion_dim: int = 0, emotion_mode: str = "additive"):
+	def __init__(self, vocab_embeddings: np.ndarray = None, hidden_dim: int = 256, num_layers: int = 4, use_pos_embedding: bool = False, max_resonance_steps: int = 0, n_emotions: int = 0, emotion_dim: int = 0, emotion_mode: str = "additive", use_glyphs: bool = False, glyph_table: np.ndarray = None):
 		super().__init__()
-		self.vocab_size, self.vocab_dim = vocab_embeddings.shape
 		self.hidden_dim = hidden_dim
 		self.use_pos_embedding = use_pos_embedding
 		self.max_resonance_steps = max_resonance_steps
 		self.emotion_mode = emotion_mode  # 'additive', 'gated', 'first_only'
+		self.use_glyphs = use_glyphs
 
-		# Registrar los embeddings del vocabulario conceptual como un buffer no entrenable (Capa 1 fija)
-		self.register_buffer("vocab_embeddings", torch.from_numpy(vocab_embeddings).float())
-
-		# Capa 2: Inbound Translator (Proyección del embedding de 384-dim al espacio oculto del Core de 256-dim)
-		self.inbound_proj = nn.Linear(self.vocab_dim, hidden_dim, bias=False)
+		# ── EXP_034: Modo Glifos Ternarios ──
+		if use_glyphs:
+			assert GlyphEmbedding is not None, "glyph_vocabulary.py not found"
+			self.glyph_embedding = GlyphEmbedding(
+				hidden_dim=hidden_dim,
+				glyph_table=glyph_table,
+			)
+			self.vocab_size = self.glyph_embedding.vocab_size
+			self.vocab_dim = hidden_dim  # Los glifos producen hidden_dim directamente
+			# No necesitamos inbound_proj ni outbound_proj ni vocab_embeddings
+			self.register_buffer("vocab_embeddings", None)
+			self.inbound_proj = None
+			self.outbound_proj = None
+		else:
+			# ── Modo clasico: fastembed lookup ──
+			assert vocab_embeddings is not None, "vocab_embeddings required when use_glyphs=False"
+			self.vocab_size, self.vocab_dim = vocab_embeddings.shape
+			self.glyph_embedding = None
+			# Registrar los embeddings del vocabulario conceptual como un buffer no entrenable (Capa 1 fija)
+			self.register_buffer("vocab_embeddings", torch.from_numpy(vocab_embeddings).float())
+			# Capa 2: Inbound Translator (Proyección del embedding de 384-dim al espacio oculto del Core de 256-dim)
+			self.inbound_proj = nn.Linear(self.vocab_dim, hidden_dim, bias=False)
+			# Capa 4: Outbound Translator (Proyección del espacio oculto de 256-dim al espacio conceptual de 384-dim)
+			self.outbound_proj = nn.Linear(hidden_dim, self.vocab_dim, bias=False)
 
 		# Capa de Posición: Embeddings Posicionales Aprendibles (Longitud máxima 4)
 		if self.use_pos_embedding:
@@ -165,18 +191,13 @@ class BitNet4LayerModel(nn.Module):
 		self.core_layers = nn.ModuleList([BitNetTransformerBlock(dim=hidden_dim, num_heads=4, mlp_ratio=4) for _ in range(num_layers)])
 		self.norm = RMSNorm(hidden_dim)
 
-		# Capa 4: Outbound Translator (Proyección del espacio oculto de 256-dim al espacio conceptual de 384-dim)
-		self.outbound_proj = nn.Linear(hidden_dim, self.vocab_dim, bias=False)
-
 		# Resonancia Continua: Reloj posicional para el bucle latente (EXP_032)
-		# Solo se inicializa si max_resonance_steps > 0
 		if max_resonance_steps > 0:
 			self.resonance_clock = nn.Parameter(torch.randn(1, max_resonance_steps, hidden_dim) * 0.02)
 		else:
 			self.register_parameter("resonance_clock", None)
 
 		# ── EXP_033: Resonancia Emocional ──
-		# Embedding de emociones → espacio oculto (la emoción como brújula)
 		if n_emotions > 0 and emotion_dim > 0:
 			self.emotion_embeddings = nn.Embedding(n_emotions, emotion_dim)
 			self.emotion_proj = nn.Linear(emotion_dim, hidden_dim, bias=False)
@@ -188,42 +209,21 @@ class BitNet4LayerModel(nn.Module):
 
 	def forward(self, x: torch.Tensor, logit_mask: torch.Tensor = None) -> torch.Tensor:
 		"""
-		Paso forward.
+		Paso forward estándar (sin resonancia).
 		x puede ser:
-		- Un tensor de enteros de tamaño (batch_size, seq_len) conteniendo Token IDs discretos.
-		- Un tensor float de tamaño (batch_size, seq_len, vocab_size) conteniendo vectores one-hot relajados (Gumbel-Softmax).
+		- Tensor de enteros (batch_size, seq_len): Token IDs discretos
+		- Tensor float (batch_size, seq_len, vocab_size): Gumbel-Softmax
+		Soporta modo clásico (fastembed) y modo glifo (EXP_034).
 		"""
-		seq_len = x.shape[1]
-		# Capa 1 a Capa 2: Proyección al espacio oculto
-		if x.ndim == 2:
-			# Ruta discreta convencional (Token IDs)
-			# Indexación directa sobre los embeddings fijos
-			embeds = F.embedding(x, self.vocab_embeddings)  # (batch_size, seq_len, 384)
-		else:
-			# Ruta continua diferenciable (Gumbel-Softmax)
-			# x es (batch_size, seq_len, 8192)
-			embeds = torch.matmul(x, self.vocab_embeddings)  # (batch_size, seq_len, 384)
-
-		h = self.inbound_proj(embeds)  # (batch_size, seq_len, 256)
-
-		# Sumar embeddings posicionales si están habilitados o presentes
-		if getattr(self, "pos_embedding", None) is not None:
-			h = h + self.pos_embedding[:, :seq_len, :]
+		h = self._embed_input(x)
 
 		# Capa 3: Specialist Core
 		for layer in self.core_layers:
 			h = layer(h)
 		h = self.norm(h)
 
-		# Capa 4: Outbound Translator
-		# Proyectar el espacio oculto al espacio conceptual de Capa 1
-		concept_proj = self.outbound_proj(h)  # (batch_size, seq_len, 384)
-
-		# Mapear a logits multiplicando por la transpuesta de los embeddings del vocabulario fijos
-		# (batch_size, seq_len, 384) x (384, 8192) -> (batch_size, seq_len, 8192)
-		logits = torch.matmul(concept_proj, self.vocab_embeddings.T)
-		if logit_mask is not None:
-			logits = logits.masked_fill(~logit_mask, -1e9)
+		# Capa 4→5: Decode a logits
+		logits = self._decode_hidden(h, logit_mask=logit_mask)
 		return logits
 
 	def generate_message(self, x: torch.Tensor, tau: float = 1.0, hard: bool = True, logit_mask: torch.Tensor = None) -> torch.Tensor:
@@ -249,13 +249,24 @@ class BitNet4LayerModel(nn.Module):
 	def _embed_input(self, x: torch.Tensor) -> torch.Tensor:
 		"""
 		Capas 1→2: Proyecta input (token IDs o Gumbel-Softmax) al espacio oculto.
-		Factorizado para reutilizar en forward() y forward_resonance().
+		Soporta modo clásico (fastembed) y modo glifo (EXP_034).
 		"""
-		if x.ndim == 2:
-			embeds = F.embedding(x, self.vocab_embeddings)
+		if self.use_glyphs:
+			# EXP_034: Glifos → composición de primos → hidden_dim directamente
+			if x.ndim == 2:
+				h = self.glyph_embedding(x)  # (batch, seq, hidden_dim)
+			else:
+				# Gumbel path: soft_tokens @ word_embeddings
+				word_embeds = self.glyph_embedding.get_word_embeddings()
+				h = torch.matmul(x, word_embeds)  # (batch, seq, hidden_dim)
 		else:
-			embeds = torch.matmul(x, self.vocab_embeddings)
-		h = self.inbound_proj(embeds)
+			# Modo clásico: fastembed lookup + inbound projection
+			if x.ndim == 2:
+				embeds = F.embedding(x, self.vocab_embeddings)
+			else:
+				embeds = torch.matmul(x, self.vocab_embeddings)
+			h = self.inbound_proj(embeds)
+
 		if getattr(self, "pos_embedding", None) is not None:
 			seq_len = x.shape[1]
 			h = h + self.pos_embedding[:, :seq_len, :]
@@ -264,9 +275,16 @@ class BitNet4LayerModel(nn.Module):
 	def _decode_hidden(self, h: torch.Tensor, logit_mask: torch.Tensor = None) -> torch.Tensor:
 		"""
 		Capas 4→5: Proyecta hidden state a logits sobre vocabulario.
+		Soporta modo clásico (fastembed) y modo glifo (EXP_034).
 		"""
-		concept_proj = self.outbound_proj(h)
-		logits = torch.matmul(concept_proj, self.vocab_embeddings.T)
+		if self.use_glyphs:
+			# EXP_034: Cosine similarity con word embeddings composicionales
+			logits = self.glyph_embedding.decode_logits(h)
+		else:
+			# Modo clásico: outbound projection + similarity
+			concept_proj = self.outbound_proj(h)
+			logits = torch.matmul(concept_proj, self.vocab_embeddings.T)
+
 		if logit_mask is not None:
 			logits = logits.masked_fill(~logit_mask, -1e9)
 		return logits
@@ -274,11 +292,9 @@ class BitNet4LayerModel(nn.Module):
 	def _sample_watcher(self, h: torch.Tensor) -> dict:
 		"""
 		Osciloscopio: espía qué 'piensa' el modelo sin afectar al bucle.
-		Proyecta el hidden state a tokens mediante Capas 4→5 dentro de no_grad.
-		No altera pesos ni hidden state. Pura lectura.
+		Proyecta el hidden state a tokens. Pura lectura, sin gradiente.
 		"""
-		concept_proj = self.outbound_proj(h)
-		logits = torch.matmul(concept_proj, self.vocab_embeddings.T)
+		logits = self._decode_hidden(h)  # Reutiliza el path correcto (glyph o classic)
 		tokens = logits.argmax(dim=-1)
 		probs = F.softmax(logits, dim=-1)
 		entropy = -(probs * probs.log().clamp(min=-100)).sum(dim=-1)
