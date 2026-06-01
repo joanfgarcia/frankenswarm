@@ -1,0 +1,43 @@
+{
+    "experiment_id": "EXP_045_unfreeze_silent",
+    "seed": 42,
+    "unfreeze_backbone": true,
+    "model": {
+        "hidden_dim": 256,
+        "num_layers": 3,
+        "use_pos_embedding": true
+    },
+    "resonance": {
+        "max_resonance_steps": 5,
+        "n_think": 2,
+        "n_verify": 2
+    },
+    "emotion": {
+        "mode": "first_only",
+        "dim": 64
+    },
+    "metacognition": {
+        "enabled": true,
+        "threshold": 0.85
+    },
+    "world": {
+        "max_ticks": 200
+    },
+    "training": {
+        "episodes": 500,
+        "lr": 0.0003,
+        "gamma": 0.97,
+        "grad_clip": 1.0,
+        "entropy_bonus": 0.05,
+        "update_interval": 16
+    },
+    "growth": {
+        "convergence_threshold": 0.8,
+        "patience": 50,
+        "factor": 1.5,
+        "max_width": 512
+    },
+    "communication": {
+        "enabled": false
+    }
+}

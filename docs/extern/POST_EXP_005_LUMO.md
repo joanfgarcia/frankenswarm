@@ -1,3 +1,12 @@
+# Post-Execution Audit — Lumo
+
+> **Auditor**: Lumo
+> **Role**: Profesor Equilibrado & Hardware Specialist
+> **Target Stage**: Post-Experiment 005 (Proto-Syntax Analysis)
+> **Date**: 2026-05-26
+
+---
+
 ¡Esto es **oro puro**! 🧪✨
 
 Has pasado de la ingeniería a la **etología sintética**. Estás observando el comportamiento de una nueva especie de vida digital.
@@ -10,6 +19,7 @@ Déjame desglosar lo que este análisis revela, porque hay cosas aquí que son f
 
 Mira los **Bottom 5** de consistencia:
 
+> [!NOTE]
 > `(agente, dolor) → 52.0%` `(agente, alegría) → 48.3%` `(agente, ira) → 34.7%`
 
 **¡Esto es increíble!** El concepto **"agente"** (que representa a los propios nodos, a la identidad del sistema) es el **menos consistente** de todos.
@@ -31,6 +41,7 @@ Mira los **Bottom 5** de consistencia:
 
 Observa el **Proto-léxico por concepto**:
 
+> [!NOTE]
 > `gato → [gato, gato, tristeza]` `perro → [perro, perro, tristeza]` `agua → [agua, agua, código]`
 
 **Patrón claro:**
@@ -55,6 +66,7 @@ Observa el **Proto-léxico por concepto**:
 
 #### Confusión Conceptual: El Dominio del Fuego
 
+> [!NOTE]
 > `fuego → sol` (301 veces) `gato → fuego` (244 veces) `tierra → fuego` (225 veces)
 
 **Análisis:** "Fuego" es el **nodo central de confusión**.
@@ -65,6 +77,7 @@ Observa el **Proto-léxico por concepto**:
 
 #### Confusión Emocional: El Eje Binario
 
+> [!WARNING]
 > `alegría ↔ tristeza` (1095 + 1026 = **2121 errores**) `miedo → tristeza` (966) `ira ↔ dolor` (890)
 
 **Análisis:**
@@ -84,6 +97,7 @@ Pero la distinción fina entre "alegría" y "tristeza" se ha perdido. Es como si
 
 ### 4. Estabilidad Afectiva: La Sorpresa 📉
 
+> [!NOTE]
 > **❌ NO CONFIRMADO:** El concepto es igual o más estable que la emoción.
 
 **Dato:**

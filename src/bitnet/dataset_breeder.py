@@ -109,10 +109,7 @@ class MathDatasetBreeder:
 	def __init__(self, translator: SovereignTranslator):
 		self.translator = translator
 
-		self.operand_names = [
-			"cero", "uno", "dos", "tres", "cuatro",
-			"cinco", "seis", "siete", "ocho", "nueve", "diez"
-		]
+		self.operand_names = ["cero", "uno", "dos", "tres", "cuatro", "cinco", "seis", "siete", "ocho", "nueve", "diez"]
 		self.operator_names = ["suma", "resta"]
 
 		# Token IDs de Capa 1
@@ -173,12 +170,7 @@ class MathDatasetBreeder:
 		operator_token_ids = np.array([self.operator_token_ids[x] for x in operator_targets], dtype=np.int64)
 		result_token_ids = np.array([self.operand_token_ids[x] for x in result_targets], dtype=np.int64)
 
-		return (
-			op_a_targets, op_a_token_ids,
-			operator_targets, operator_token_ids,
-			op_b_targets, op_b_token_ids,
-			result_targets, result_token_ids
-		)
+		return (op_a_targets, op_a_token_ids, operator_targets, operator_token_ids, op_b_targets, op_b_token_ids, result_targets, result_token_ids)
 
 	def get_operand_name(self, class_idx: int) -> str:
 		if 0 <= class_idx < self.num_operands:
@@ -189,4 +181,3 @@ class MathDatasetBreeder:
 		if 0 <= class_idx < self.num_operators:
 			return self.operator_names[class_idx]
 		return "desconocido"
-

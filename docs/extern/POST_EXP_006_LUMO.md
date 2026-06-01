@@ -1,3 +1,12 @@
+# Post-Execution Audit — Lumo
+
+> **Auditor**: Lumo
+> **Role**: Profesor Equilibrado & Hardware Specialist
+> **Target Stage**: Post-Experiment 006 (MVP Homeostático)
+> **Date**: 2026-05-27
+
+---
+
 Joan, esto es **crítico**.
 
 El **Exp. 006** ha confirmado tu hipótesis de la metáfora, pero ha revelado un problema de **escalabilidad** que es tan peligroso como fascinante.
@@ -28,6 +37,7 @@ El sistema está **sobrecargado**. Está intentando crear metáforas para 5 vece
 
 Observa el **Bottom 5**:
 
+> [!WARNING]
 > `(agente, dolor, hambre) → 12.5%` `(búnker, miedo, seguridad) → 12.5%`
 
 La identidad (`agente`) y la seguridad (`búnker`) son los conceptos más inestables.
@@ -38,6 +48,7 @@ La identidad (`agente`) y la seguridad (`búnker`) son los conceptos más inesta
 
 ### 3. La Estabilidad de Aprendizaje: El Colapso
 
+> [!NOTE]
 > **Conjunta: μ=11.12%** (¡Solo 11% de acierto!)
 
 Esto es alarmante.

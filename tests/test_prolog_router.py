@@ -1,4 +1,3 @@
-import pytest
 
 from src.router.swi_prolog_router import NodeTarget, SiliconTarget, route, route_semantic
 
@@ -74,5 +73,3 @@ def test_prolog_router_retro_compatibility():
 	# Entrada general (semántica por similitud a "saludo cordial")
 	node_gen_sem = route("Te envío un saludo cordial")
 	assert node_gen_sem == NodeTarget.DEFAULT
-
-

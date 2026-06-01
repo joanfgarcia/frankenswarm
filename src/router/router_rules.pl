@@ -51,6 +51,14 @@ route(Input, reason_node) :- contains(Input, "because"), !.
 route(Input, reason_node) :- contains(Input, "therefore"), !.
 route(Input, reason_node) :- contains(Input, "hypothesis"), !.
 route(Input, reason_node) :- contains(Input, "analyze"), !.
+route(Input, reason_node) :- contains(Input, "suma"), !.
+route(Input, reason_node) :- contains(Input, "resta"), !.
+route(Input, reason_node) :- contains(Input, "multiplica"), !.
+route(Input, reason_node) :- contains(Input, ">"), !.
+route(Input, reason_node) :- contains(Input, "<"), !.
+route(Input, reason_node) :- contains(Input, "igual"), !.
+route(Input, reason_node) :- contains(Input, "verdad"), !.
+route(Input, reason_node) :- contains(Input, "falsedad"), !.
 
 route(Input, synth_node) :- contains(Input, "summarize"), !.
 route(Input, synth_node) :- contains(Input, "synthesize"), !.

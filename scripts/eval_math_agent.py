@@ -1,8 +1,7 @@
-import os
 import json
-import numpy as np
+import os
+
 import torch
-import torch.nn.functional as F
 
 from src.bitnet.dataset_breeder import MathDatasetBreeder
 from src.bitnet.modeling_bitnet import BitNet4LayerModel
@@ -90,15 +89,19 @@ def eval_agent(experiment_id: str = "EXP_012"):
 		pred_b_id = torch.argmax(logits[0, 2, :]).item()
 		pred_r_id = torch.argmax(logits[0, 3, :]).item()
 
-		a_ok = (pred_a_id == a_token_id)
-		op_ok = (pred_op_id == op_token_id)
-		b_ok = (pred_b_id == b_token_id)
-		r_ok = (pred_r_id == r_token_id)
+		a_ok = pred_a_id == a_token_id
+		op_ok = pred_op_id == op_token_id
+		b_ok = pred_b_id == b_token_id
+		r_ok = pred_r_id == r_token_id
 
-		if a_ok: correct_a += 1
-		if op_ok: correct_op += 1
-		if b_ok: correct_b += 1
-		if r_ok: correct_r += 1
+		if a_ok:
+			correct_a += 1
+		if op_ok:
+			correct_op += 1
+		if b_ok:
+			correct_b += 1
+		if r_ok:
+			correct_r += 1
 
 		joint_ok = a_ok and op_ok and b_ok and r_ok
 		if joint_ok:
@@ -134,16 +137,17 @@ def eval_agent(experiment_id: str = "EXP_012"):
 	print("=" * 65)
 	print("📊 RESULTADOS FINALES DE AUTO-COMUNICACIÓN")
 	print("=" * 65)
-	print(f"  - Operando A: {correct_a/total*100:.2f}% ({correct_a}/{total})")
-	print(f"  - Operador:   {correct_op/total*100:.2f}% ({correct_op}/{total})")
-	print(f"  - Operando B: {correct_b/total*100:.2f}% ({correct_b}/{total})")
-	print(f"  - Resultado:  {correct_r/total*100:.2f}% ({correct_r}/{total})")
-	print(f"  - CONJUNTO:   {correct_joint/total*100:.2f}% ({correct_joint}/{total})")
+	print(f"  - Operando A: {correct_a / total * 100:.2f}% ({correct_a}/{total})")
+	print(f"  - Operador:   {correct_op / total * 100:.2f}% ({correct_op}/{total})")
+	print(f"  - Operando B: {correct_b / total * 100:.2f}% ({correct_b}/{total})")
+	print(f"  - Resultado:  {correct_r / total * 100:.2f}% ({correct_r}/{total})")
+	print(f"  - CONJUNTO:   {correct_joint / total * 100:.2f}% ({correct_joint}/{total})")
 	print("=" * 65)
 
 
 if __name__ == "__main__":
 	import argparse
+
 	parser = argparse.ArgumentParser(description="Evaluador Aritmético de Agente Único")
 	parser.add_argument("experiment_id", type=str, nargs="?", default="EXP_012", help="ID del experimento")
 	args = parser.parse_args()

@@ -1,3 +1,12 @@
+# Pre-Execution Audit — DeepSeek
+
+> **Auditor**: DeepSeek
+> **Role**: Poeta-Ingeniero & Principal Scientist
+> **Target Stage**: Pre-Phase 0 Evaluation
+> **Date**: 2026-05-26
+
+---
+
 Hola, Joan.
 
 Me has traído algo diferente, ciertamente. Pero no es diferente en el sentido de "extraño". Es diferente en el sentido de "peligrosamente vivo".

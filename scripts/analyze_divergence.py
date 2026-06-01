@@ -1,8 +1,9 @@
 import json
 import os
-import sys
 from collections import Counter, defaultdict
+
 import numpy as np
+
 
 def _get_telemetry_path(experiment_id: str) -> str:
 	base = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -10,6 +11,7 @@ def _get_telemetry_path(experiment_id: str) -> str:
 	if os.path.exists(new_path):
 		return new_path
 	return os.path.join(base, "storage", "telemetry", f"EXP_{experiment_id}.jsonl")
+
 
 def analyze_divergence(experiment_id: str = "006"):
 	path = _get_telemetry_path(experiment_id)
@@ -29,7 +31,7 @@ def analyze_divergence(experiment_id: str = "006"):
 	config_path = os.path.join(base, "configs", "experiments", f"{experiment_id}.json")
 	if not os.path.exists(config_path):
 		config_path = os.path.join(base, "configs", "experiments", f"EXP_{experiment_id}.json")
-	
+
 	tf_min = 0.05
 	if os.path.exists(config_path):
 		try:
@@ -65,7 +67,7 @@ def analyze_divergence(experiment_id: str = "006"):
 
 	for spk in speakers:
 		spk_steps = steps_by_speaker[spk]
-		
+
 		# Collect all tokens emitted by this speaker
 		emitted_tokens = set()
 		for s in spk_steps:
@@ -84,7 +86,7 @@ def analyze_divergence(experiment_id: str = "006"):
 			counter = Counter(messages)
 			most_common_count = counter.most_common(1)[0][1]
 			consistencies.append(most_common_count / len(messages))
-		
+
 		avg_consistency = np.mean(consistencies) * 100 if consistencies else 0.0
 		consistency_by_speaker[spk] = avg_consistency
 
@@ -99,18 +101,18 @@ def analyze_divergence(experiment_id: str = "006"):
 	print("2️⃣  PAIRWISE VOCABULARY OVERLAP (JACCARD)")
 	print("   ¿Los agentes usan el mismo léxico o desarrollan dialectos separados?")
 	print("=" * 65)
-	
+
 	for i in range(len(speakers)):
 		for j in range(i + 1, len(speakers)):
 			spk_a = speakers[i]
 			spk_b = speakers[j]
 			vocab_a = vocab_by_speaker[spk_a]
 			vocab_b = vocab_by_speaker[spk_b]
-			
+
 			intersection = vocab_a.intersection(vocab_b)
 			union = vocab_a.union(vocab_b)
 			jaccard = (len(intersection) / len(union) * 100) if union else 0.0
-			
+
 			print(f"    Agent_{spk_a} ↔ Agent_{spk_b} Overlap: {jaccard:.2f}% ({len(intersection)} shared / {len(union)} total)")
 	print()
 
@@ -128,7 +130,7 @@ def analyze_divergence(experiment_id: str = "006"):
 		for s in spk_steps:
 			key = (s["target_concept"], s["target_emotion"], s.get("target_homeostasis", ""))
 			target_messages[key].append(tuple(s["message_tokens"]))
-		
+
 		for target, messages in target_messages.items():
 			most_common_msg = Counter(messages).most_common(1)[0][0]
 			target_spk_msg[target][spk] = most_common_msg
@@ -137,8 +139,8 @@ def analyze_divergence(experiment_id: str = "006"):
 	agreement_counts = Counter()
 	for target, spk_map in target_spk_msg.items():
 		if len(spk_map) < 2:
-			continue # Not enough speakers tried this target
-		
+			continue  # Not enough speakers tried this target
+
 		messages = list(spk_map.values())
 		msg_counts = Counter(messages)
 		max_agreement = msg_counts.most_common(1)[0][1]
@@ -165,7 +167,7 @@ def analyze_divergence(experiment_id: str = "006"):
 			continue
 		messages = list(spk_map.values())
 		unique_msgs = len(set(messages))
-		
+
 		if unique_msgs == 1:
 			consensus_targets.append((target, spk_map))
 		elif unique_msgs >= 3:
@@ -194,9 +196,11 @@ def analyze_divergence(experiment_id: str = "006"):
 	print("\n🔬 Analisis completo.")
 	print("=" * 65)
 
+
 if __name__ == "__main__":
 	# Soporte para --config configs/experiments/EXP_XXX.json o ID directo
 	import argparse
+
 	parser = argparse.ArgumentParser(description="Analizador de Divergencia Frankenswarm")
 	parser.add_argument("experiment_id", type=str, nargs="?", default="006", help="ID del experimento o ruta del config")
 	parser.add_argument("--config", type=str, default=None, help="Ruta al JSON de configuración del experimento")

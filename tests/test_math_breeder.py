@@ -1,7 +1,6 @@
-import pytest
-import numpy as np
-from src.bitnet.translator import SovereignTranslator
 from src.bitnet.dataset_breeder import MathDatasetBreeder
+from src.bitnet.translator import SovereignTranslator
+
 
 def test_math_breeder_equations():
 	translator = SovereignTranslator()
@@ -9,7 +8,9 @@ def test_math_breeder_equations():
 
 	# Generar un lote de prueba
 	batch_size = 100
-	op_a_targets, op_a_token_ids, operator_targets, operator_token_ids, op_b_targets, op_b_token_ids, result_targets, result_token_ids = breeder.generate_batch(batch_size)
+	op_a_targets, op_a_token_ids, operator_targets, operator_token_ids, op_b_targets, op_b_token_ids, result_targets, result_token_ids = (
+		breeder.generate_batch(batch_size)
+	)
 
 	assert len(op_a_targets) == batch_size
 	assert len(op_b_targets) == batch_size

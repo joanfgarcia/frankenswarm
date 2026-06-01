@@ -1,6 +1,7 @@
 import argparse
 import json
 import os
+
 import numpy as np
 import torch
 import torch.nn as nn
@@ -8,8 +9,8 @@ import torch.nn.functional as F
 
 from src.bitnet.dataset_breeder import MathDatasetBreeder
 from src.bitnet.modeling_bitnet import BitNet4LayerModel
-from src.bitnet.translator import SovereignTranslator
 from src.bitnet.telemetry import ExperimentLogger
+from src.bitnet.translator import SovereignTranslator
 
 
 def svd_crossover(parent_a: nn.Module, parent_b: nn.Module, child: nn.Module, alpha: float = 0.5, sigma: float = 0.01):
@@ -47,7 +48,7 @@ def load_config() -> dict:
 
 	base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 	default_path = os.path.join(base_dir, "configs", "experiments", "default.json")
-	
+
 	with open(default_path, encoding="utf-8") as f:
 		config = json.load(f)
 
@@ -62,7 +63,7 @@ def load_config() -> dict:
 			config.update(exp_config)
 		else:
 			print(f"⚠️ Archivo de configuración no encontrado: {config_path}. Usando valores predeterminados.")
-	
+
 	return config
 
 
@@ -101,7 +102,9 @@ def run_math_arena():
 	pop_size = config["pop_size"]
 	hidden_dim = config["hidden_dim"]
 	num_layers = config["num_layers"]
-	population = [BitNet4LayerModel(vocab_embeddings=vocab_embeddings, hidden_dim=hidden_dim, num_layers=num_layers).to(device) for _ in range(pop_size)]
+	population = [
+		BitNet4LayerModel(vocab_embeddings=vocab_embeddings, hidden_dim=hidden_dim, num_layers=num_layers).to(device) for _ in range(pop_size)
+	]
 
 	resume_checkpoint = config.get("resume_checkpoint")
 	if resume_checkpoint:
@@ -128,10 +131,7 @@ def run_math_arena():
 	if use_logit_mask:
 		micro_vocab_words = config["micro_vocab_words"]
 		if not micro_vocab_words:
-			micro_vocab_words = [
-				"cero", "uno", "dos", "tres", "cuatro", "cinco",
-				"seis", "siete", "ocho", "nueve", "diez", "suma", "resta"
-			]
+			micro_vocab_words = ["cero", "uno", "dos", "tres", "cuatro", "cinco", "seis", "siete", "ocho", "nueve", "diez", "suma", "resta"]
 		micro_vocab_words = list(set(micro_vocab_words))
 		logit_mask = torch.zeros(8192, dtype=torch.bool, device=device)
 		for word in micro_vocab_words:
@@ -188,8 +188,10 @@ def run_math_arena():
 			tau = max(tau_min, tau_start * (1.0 - current_step / total_steps))
 
 			# Lote aritmético: (A, op, B, R)
-			op_a_targets, op_a_token_ids, operator_targets, operator_token_ids, op_b_targets, op_b_token_ids, result_targets, result_token_ids = breeder.generate_batch(batch_size)
-			
+			op_a_targets, op_a_token_ids, operator_targets, operator_token_ids, op_b_targets, op_b_token_ids, result_targets, result_token_ids = (
+				breeder.generate_batch(batch_size)
+			)
+
 			op_a_token_ids_tensor = torch.from_numpy(op_a_token_ids).long().to(device)
 			operator_token_ids_tensor = torch.from_numpy(operator_token_ids).long().to(device)
 			op_b_token_ids_tensor = torch.from_numpy(op_b_token_ids).long().to(device)
@@ -283,10 +285,16 @@ def run_math_arena():
 			r_ok = (preds_r == result_token_ids_tensor).sum().item()
 
 			# Consenso absoluto: los 4 elementos decodificados perfectamente
-			correct_joint = ((preds_a == op_a_token_ids_tensor) & 
-							 (preds_op == operator_token_ids_tensor) & 
-							 (preds_b == op_b_token_ids_tensor) & 
-							 (preds_r == result_token_ids_tensor)).sum().item()
+			correct_joint = (
+				(
+					(preds_a == op_a_token_ids_tensor)
+					& (preds_op == operator_token_ids_tensor)
+					& (preds_b == op_b_token_ids_tensor)
+					& (preds_r == result_token_ids_tensor)
+				)
+				.sum()
+				.item()
+			)
 
 			epoch_correct += correct_joint
 			epoch_a_correct += a_ok
@@ -310,8 +318,10 @@ def run_math_arena():
 				pred_b_name = translator.decode([preds_b[0].item()])
 				pred_r_name = translator.decode([preds_r[0].item()])
 
-				print(f"  step {step:3d} | τ={tau:.3f} TF={tf_ratio:.0%} | loss={loss.item():.3f} | "
-					  f"target=({sample_a_name} {sample_op_name} {sample_b_name} = {sample_r_name}) → pred=({pred_a_name} {pred_op_name} {pred_b_name} = {pred_r_name})")
+				print(
+					f"  step {step:3d} | τ={tau:.3f} TF={tf_ratio:.0%} | loss={loss.item():.3f} | "
+					f"target=({sample_a_name} {sample_op_name} {sample_b_name} = {sample_r_name}) → pred=({pred_a_name} {pred_op_name} {pred_b_name} = {pred_r_name})"
+				)
 
 			current_step += 1
 
@@ -327,7 +337,9 @@ def run_math_arena():
 		acc_b = (epoch_b_correct / epoch_total) * 100
 		acc_j = (epoch_correct / epoch_total) * 100
 
-		print(f"Pérdida promedio: {avg_loss:.4f} | Operando A: {acc_a:.2f}% | Operador: {acc_op:.2f}% | Operando B: {acc_b:.2f}% | Consenso Aritmético: {acc_j:.2f}%")
+		print(
+			f"Pérdida promedio: {avg_loss:.4f} | Operando A: {acc_a:.2f}% | Operador: {acc_op:.2f}% | Operando B: {acc_b:.2f}% | Consenso Aritmético: {acc_j:.2f}%"
+		)
 		print(f"Fitness de la Población: {[f'Agent_{i}: {f * 100:.2f}%' for i, f in enumerate(fitness)]}")
 
 		if epoch < nursery_end:

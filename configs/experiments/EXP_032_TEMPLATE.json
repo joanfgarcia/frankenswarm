@@ -1,0 +1,66 @@
+{
+	"experiment_id": "EXP_032_TEMPLATE",
+	"title": "Resonancia Continua — Bucle Latente 4→2",
+	"description": "Latent recurrence: core_layers iterate N times in 256-dim hidden space without exiting to vocabulary (8192-dim). Watcher samples thought at each step without breaking gradient flow.",
+	"hypothesis": "BitNet ternary weights stabilize latent recurrence without gradient collapse. Training with closed loop produces better chain accuracy than EXP_029 (vocab-space loop).",
+	"baseline": "EXP_029 (acc_joint ~70% with vocab-space loop)",
+
+	"model": {
+		"hidden_dim": 256,
+		"num_layers": 3,
+		"num_heads": 4,
+		"mlp_ratio": 4,
+		"vocab_size": 8192,
+		"embed_dim": 384,
+		"use_pos_embedding": true
+	},
+
+	"resonance": {
+		"pos_mode": "__GRID_VAR__",
+		"n_steps": "__GRID_VAR__",
+		"loss_mode": "__GRID_VAR__",
+		"max_resonance_steps": 5,
+		"collect_watcher": true,
+		"watcher_interval_epochs": 10,
+		"intermediate_loss_weight": 0.2
+	},
+
+	"training": {
+		"epochs": 200,
+		"steps_per_epoch": 200,
+		"batch_size": 32,
+		"lr": 3e-4,
+		"grad_clip": 1.0,
+		"optimizer": "AdamW",
+		"scheduler": "none"
+	},
+
+	"curriculum": {
+		"nursery_end": 30,
+		"transition_end": 80,
+		"tf_min": 0.1,
+		"tau_start": 1.0,
+		"tau_min": 0.3
+	},
+
+	"depth_ramp": {
+		"nursery_steps": 1,
+		"transition_steps_start": 2,
+		"transition_steps_end": 3,
+		"autonomy_steps_start": 3,
+		"autonomy_steps_end": 5
+	},
+
+	"stability_metrics": {
+		"track_norms": true,
+		"track_cosine_convergence": true,
+		"track_watcher_tokens": true,
+		"track_watcher_entropy": true
+	},
+
+	"grid_axes": {
+		"pos_mode": ["none", "entry", "clock"],
+		"n_steps": ["2", "3", "ramp"],
+		"loss_mode": ["final", "every", "weighted"]
+	}
+}

@@ -64,6 +64,17 @@ expert = ExpertNode(
 
 ---
 
+## 🚨 RULE 6: Documentation Standards
+
+Every document in the repository must follow strict formatting and naming rules:
+
+- **Repo Root & Main Docs**: Use `UPPER_SNAKE_CASE.md` (e.g., [ARCHITECTURE.md](file:///home/joan/Documents/IA/frankenswarm/docs/ARCHITECTURE.md), [CONVENTIONS.md](file:///home/joan/Documents/IA/frankenswarm/CONVENTIONS.md), [EXPERTS_ROSTER.md](file:///home/joan/Documents/IA/frankenswarm/docs/EXPERTS_ROSTER.md)).
+- **External Audits (`docs/extern/`)**: Named `STAGE_AUDITOR.md` where `AUDITOR` is one of: `CLAUDE`, `DEEPSEEK`, `GROK`, `LUMO` (e.g. [POST_EXP_006_DEEPSEEK.md](file:///home/joan/Documents/IA/frankenswarm/docs/extern/POST_EXP_006_DEEPSEEK.md)).
+- **Standard Metadata Header**: Every audit report must start with a YAML-style blockquote specifying Auditor, Role, Target Stage, and Date, separated by a horizontal line.
+- **Raw Outputs**: Relocated to the `docs/extern/raw/` subdirectory (e.g. `EXP_005_PROTO_SYNTAX.md`) to keep the main audits list clean.
+
+---
+
 ## 📁 Project Structure
 
 ```

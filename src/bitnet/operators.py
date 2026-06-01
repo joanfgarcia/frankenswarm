@@ -4,12 +4,11 @@ class OperatorRegistry:
 	@classmethod
 	def register(cls, name: str, op_idx: int):
 		"""Decorador para registrar un generador de ecuaciones aritméticas."""
+
 		def decorator(func):
-			cls._registry[name] = {
-				"generator": func,
-				"idx": op_idx
-			}
+			cls._registry[name] = {"generator": func, "idx": op_idx}
 			return func
+
 		return decorator
 
 	@classmethod

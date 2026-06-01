@@ -1,7 +1,6 @@
-import pytest
-import numpy as np
-from src.bitnet.translator import SovereignTranslator
 from src.bitnet.generalization_breeder import CompositionalMathDatasetBreeder
+from src.bitnet.translator import SovereignTranslator
+
 
 def test_compositional_breeder_splits():
 	translator = SovereignTranslator()
@@ -26,13 +25,15 @@ def test_compositional_breeder_splits():
 		seen_operators.add(op)
 
 	assert len(seen_operands) == 11  # [0..10]
-	assert len(seen_operators) == 2   # [suma, resta]
+	assert len(seen_operators) == 2  # [suma, resta]
 
 	# 4. Validar generación de lotes en ambos conjuntos
 	batch_size = 50
-	
+
 	# Test conjunto de train
-	op_a_targets, op_a_token_ids, operator_targets, operator_token_ids, op_b_targets, op_b_token_ids, result_targets, result_token_ids = breeder.generate_batch(batch_size, mode="train")
+	op_a_targets, op_a_token_ids, operator_targets, operator_token_ids, op_b_targets, op_b_token_ids, result_targets, result_token_ids = (
+		breeder.generate_batch(batch_size, mode="train")
+	)
 	assert len(op_a_targets) == batch_size
 	for i in range(batch_size):
 		a, op, b, r = op_a_targets[i], operator_targets[i], op_b_targets[i], result_targets[i]
@@ -43,7 +44,9 @@ def test_compositional_breeder_splits():
 			assert a - b == r
 
 	# Test conjunto de test
-	op_a_targets, op_a_token_ids, operator_targets, operator_token_ids, op_b_targets, op_b_token_ids, result_targets, result_token_ids = breeder.generate_batch(batch_size, mode="test")
+	op_a_targets, op_a_token_ids, operator_targets, operator_token_ids, op_b_targets, op_b_token_ids, result_targets, result_token_ids = (
+		breeder.generate_batch(batch_size, mode="test")
+	)
 	assert len(op_a_targets) == batch_size
 	for i in range(batch_size):
 		a, op, b, r = op_a_targets[i], operator_targets[i], op_b_targets[i], result_targets[i]

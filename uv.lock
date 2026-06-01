@@ -1,0 +1,23 @@
+version = 1
+revision = 3
+requires-python = ">=3.12"
+
+[[package]]
+name = "frankenswarm"
+version = "0.2.0"
+source = { virtual = "." }
+dependencies = [
+    { name = "pyswip" },
+]
+
+[package.metadata]
+requires-dist = [{ name = "pyswip" }]
+
+[[package]]
+name = "pyswip"
+version = "0.3.3"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/ff/75/96b326387af00edd34c7cca121ce98c10062d7b8dc5ec73324727997f678/pyswip-0.3.3.tar.gz", hash = "sha256:745cc6d86046a4cf9ba775a76f00d97f7d9129f7517515228391d7399bc4fe3d", size = 35963, upload-time = "2025-06-23T00:07:11.433Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/b5/2b/c3bfc5a53714f7fb1b092aadb95277f133ce8c605f411f8888ca7ba340dd/pyswip-0.3.3-py3-none-any.whl", hash = "sha256:abddc4729917e3631e4a516e16211cbee93d4b701700eb116d6c3e8228ec3052", size = 36095, upload-time = "2025-06-23T00:07:09.282Z" },
+]

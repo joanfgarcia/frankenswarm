@@ -1,0 +1,38 @@
+{
+    "experiment_id": "EXP_039_actionhead",
+    "seed": 42,
+    "pretrained_from": "storage/experiments/EXP_036_pretrained/best_agent.pt",
+    "model": {
+        "hidden_dim": 256,
+        "num_layers": 3,
+        "use_pos_embedding": true
+    },
+    "resonance": {
+        "max_resonance_steps": 5,
+        "n_think": 2,
+        "n_verify": 2
+    },
+    "emotion": {
+        "mode": "first_only",
+        "dim": 64
+    },
+    "metacognition": {
+        "enabled": true,
+        "threshold": 0.85
+    },
+    "world": {
+        "max_ticks": 200
+    },
+    "training": {
+        "episodes": 1000,
+        "lr": 0.0005,
+        "weight_decay": 0.01,
+        "grad_clip": 1.0,
+        "gamma": 0.97,
+        "entropy_bonus": 0.05
+    },
+    "meta": {
+        "description": "EXP_039 v2 \u2014 Action head + frozen brain + NPC reward (dolor continuo + progreso)",
+        "hypothesis": "H1: Emoci\u00f3n mejora supervivencia. H2: Metacognici\u00f3n mejora supervivencia. H3: Emergen patrones de comportamiento."
+    }
+}

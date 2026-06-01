@@ -1,0 +1,42 @@
+{
+	"experiment_id": "EXP_025",
+	"vocab_size": 8192,
+	"hidden_dim": 256,
+	"num_layers": 3,
+	"use_pos_embedding": true,
+	"pop_size": 4,
+	"epochs": 60,
+	"steps_per_epoch": 200,
+	"batch_size": 32,
+	"lr": 0.001,
+	"weight_decay": 0.1,
+	"tau_start": 1.0,
+	"tau_min": 0.3,
+	"nursery_end": 8,
+	"transition_end": 30,
+	"tf_min": 0.15,
+	"use_logit_mask": true,
+	"resume_checkpoint": null,
+	"freeze_core": false,
+	"svd_interval": 2,
+	"svd_phases": ["recreo", "autonomia"],
+	"seed": 42,
+	"split_ratio": 0.90,
+	"fear_amplifier": 2.0,
+	"operators": {
+		"implica": {
+			"enabled": true,
+			"loss_weight": 1.0
+		},
+		"contradice": {
+			"enabled": true,
+			"loss_weight": 1.0
+		}
+	},
+	"micro_vocab_words": [
+		"gato", "perro", "casa", "árbol", "agua", "fuego",
+		"tierra", "aire", "sol", "luna", "peligro", "seguridad",
+		"implica", "contradice", "verdad", "falsedad",
+		"miedo", "alegría", "ira", "tristeza", "dolor", "hambre"
+	]
+}

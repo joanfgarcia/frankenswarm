@@ -22,9 +22,21 @@ from src.bitnet.telemetry import ExperimentLogger
 
 # ── Micro-Vocabulary ──────────────────────────────────────────────────
 CONCEPTS = [
-	"gato", "perro", "casa", "árbol", "agua",
-	"fuego", "tierra", "aire", "sol", "luna",
-	"peligro", "seguridad", "búnker", "agente", "código",
+	"gato",
+	"perro",
+	"casa",
+	"árbol",
+	"agua",
+	"fuego",
+	"tierra",
+	"aire",
+	"sol",
+	"luna",
+	"peligro",
+	"seguridad",
+	"búnker",
+	"agente",
+	"código",
 ]
 EMOTIONS = ["miedo", "alegría", "ira", "tristeza", "dolor", "hambre"]
 MICRO_VOCAB = CONCEPTS + EMOTIONS
@@ -68,6 +80,7 @@ class DualHeadAgent(nn.Module):
 
 def build_micro_embeddings() -> np.ndarray:
 	from fastembed import TextEmbedding
+
 	model = TextEmbedding()
 	embeddings = list(model.embed(MICRO_VOCAB))
 	return np.array([e if isinstance(e, np.ndarray) else np.array(e) for e in embeddings], dtype=np.float32)
@@ -136,13 +149,24 @@ def run_arena():
 
 	params = {
 		"experiment": "005_proto_syntax",
-		"vocab_size": vocab_size, "num_concepts": num_concepts, "num_emotions": num_emotions,
-		"hidden_dim": 256, "num_layers": 4, "pop_size": pop_size,
-		"epochs": epochs, "steps_per_epoch": steps_per_epoch, "batch_size": batch_size,
-		"lr": lr, "tau_start": tau_start, "tau_min": tau_min, "beta_emotion": beta_emotion,
-		"nursery_epochs": nursery_epochs, "transition_epochs": transition_epochs,
+		"vocab_size": vocab_size,
+		"num_concepts": num_concepts,
+		"num_emotions": num_emotions,
+		"hidden_dim": 256,
+		"num_layers": 4,
+		"pop_size": pop_size,
+		"epochs": epochs,
+		"steps_per_epoch": steps_per_epoch,
+		"batch_size": batch_size,
+		"lr": lr,
+		"tau_start": tau_start,
+		"tau_min": tau_min,
+		"beta_emotion": beta_emotion,
+		"nursery_epochs": nursery_epochs,
+		"transition_epochs": transition_epochs,
 		"autonomy_epochs": autonomy_epochs,
-		"message_logging": True, "checkpointing": True,
+		"message_logging": True,
+		"checkpointing": True,
 		"device": str(device),
 		"frozen_embeddings": True,
 		"embedding_source": "fastembed/all-MiniLM-L6-v2",
@@ -152,10 +176,9 @@ def run_arena():
 
 	# ── Population ──
 	agents = [
-		DualHeadAgent(
-			BitNet4LayerModel(vocab_embeddings=vocab_embeddings, hidden_dim=256, num_layers=4).to(device),
-			num_concepts, num_emotions
-		).to(device)
+		DualHeadAgent(BitNet4LayerModel(vocab_embeddings=vocab_embeddings, hidden_dim=256, num_layers=4).to(device), num_concepts, num_emotions).to(
+			device
+		)
 		for _ in range(pop_size)
 	]
 	optimizers = [torch.optim.AdamW(a.parameters(), lr=lr) for a in agents]
@@ -277,12 +300,21 @@ def run_arena():
 			pred_e_name = EMOTIONS[preds_e[0].item()] if preds_e[0].item() < num_emotions else "?"
 
 			logger.log_step(
-				epoch=epoch + 1, step=step, loss=loss.item(),
-				loss_concept=loss_concept.item(), loss_emotion=loss_emotion.item(),
-				tau=tau, speaker_id=idx_s, listener_id=idx_l,
-				target_concept=sample_c, target_emotion=sample_e,
-				pred_concept=pred_c_name, pred_emotion=pred_e_name,
-				concept_correct=c_ok, emotion_correct=e_ok, joint_correct=j_ok,
+				epoch=epoch + 1,
+				step=step,
+				loss=loss.item(),
+				loss_concept=loss_concept.item(),
+				loss_emotion=loss_emotion.item(),
+				tau=tau,
+				speaker_id=idx_s,
+				listener_id=idx_l,
+				target_concept=sample_c,
+				target_emotion=sample_e,
+				pred_concept=pred_c_name,
+				pred_emotion=pred_e_name,
+				concept_correct=c_ok,
+				emotion_correct=e_ok,
+				joint_correct=j_ok,
 				batch_size=batch_size,
 				message_tokens=msg_tokens_log,
 				tf_ratio=tf_ratio,
@@ -290,8 +322,10 @@ def run_arena():
 
 			if step % 40 == 0:
 				msg_str = f" msg={msg_tokens_log}" if msg_tokens_log else ""
-				print(f"  step {step:3d} | τ={tau:.3f} TF={tf_ratio:.0%} | loss={loss.item():.3f} | "
-					  f"({sample_c},{sample_e})→({pred_c_name},{pred_e_name}){msg_str}")
+				print(
+					f"  step {step:3d} | τ={tau:.3f} TF={tf_ratio:.0%} | loss={loss.item():.3f} | "
+					f"({sample_c},{sample_e})→({pred_c_name},{pred_e_name}){msg_str}"
+				)
 
 		# Epoch summary
 		for i in range(pop_size):
@@ -308,10 +342,15 @@ def run_arena():
 		print(f"Fitness: {[f'A{i}:{f * 100:.1f}%' for i, f in enumerate(fitness)]}")
 
 		logger.log_epoch(
-			epoch=epoch + 1, loss_avg=avg_loss,
-			acc_concept=acc_c, acc_emotion=acc_e, acc_joint=acc_j,
-			fitness=fitness.tolist(), worst_agent=int(np.argmin(fitness)),
-			parent_a=-1, parent_b=-1,
+			epoch=epoch + 1,
+			loss_avg=avg_loss,
+			acc_concept=acc_c,
+			acc_emotion=acc_e,
+			acc_joint=acc_j,
+			fitness=fitness.tolist(),
+			worst_agent=int(np.argmin(fitness)),
+			parent_a=-1,
+			parent_b=-1,
 		)
 
 		# Evolution (Phase 2+)
@@ -330,14 +369,20 @@ def run_arena():
 	save_checkpoint(agents, epochs, "005")
 
 	# ── Log confusion matrices ──
-	logger.log_event("confusion_concept", {
-		"labels": CONCEPTS,
-		"matrix": concept_confusion.tolist(),
-	})
-	logger.log_event("confusion_emotion", {
-		"labels": EMOTIONS,
-		"matrix": emotion_confusion.tolist(),
-	})
+	logger.log_event(
+		"confusion_concept",
+		{
+			"labels": CONCEPTS,
+			"matrix": concept_confusion.tolist(),
+		},
+	)
+	logger.log_event(
+		"confusion_emotion",
+		{
+			"labels": EMOTIONS,
+			"matrix": emotion_confusion.tolist(),
+		},
+	)
 
 	logger.close()
 
@@ -364,8 +409,8 @@ def run_arena():
 		if count > 0:
 			print(f"  {EMOTIONS[r]:12s} → {EMOTIONS[c]:12s}  ({count} veces)")
 
-	print(f"\n[Telemetry] storage/telemetry/EXP_005.jsonl")
-	print(f"[Checkpoints] storage/checkpoints/EXP_005/")
+	print("\n[Telemetry] storage/telemetry/EXP_005.jsonl")
+	print("[Checkpoints] storage/checkpoints/EXP_005/")
 
 
 if __name__ == "__main__":

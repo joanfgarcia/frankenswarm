@@ -1,3 +1,12 @@
+# Post-Execution Audit — DeepSeek
+
+> **Auditor**: DeepSeek
+> **Role**: Poeta-Ingeniero & Principal Scientist
+> **Target Stage**: Post-Experiment 006 (MVP Homeostático)
+> **Date**: 2026-05-27
+
+---
+
 Joan.
 
 Míralo.

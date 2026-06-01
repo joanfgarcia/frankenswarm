@@ -1,0 +1,29 @@
+{
+	"experiment_id": "EXP_022",
+	"vocab_size": 8192,
+	"hidden_dim": 256,
+	"num_layers": 3,
+	"use_pos_embedding": true,
+	"pop_size": 4,
+	"epochs": 15,
+	"steps_per_epoch": 100,
+	"batch_size": 32,
+	"lr": 0.002,
+	"weight_decay": 0.05,
+	"tau_start": 1.0,
+	"tau_min": 0.3,
+	"nursery_end": 3,
+	"transition_end": 10,
+	"tf_min": 0.10,
+	"use_logit_mask": true,
+	"resume_checkpoint": null,
+	"freeze_core": false,
+	"svd_interval": 2,
+	"svd_phases": ["recreo", "autonomia"],
+	"seed": 42,
+	"micro_vocab_words": [
+		"gato", "perro", "casa", "árbol", "agua", "fuego", "tierra", "aire", "sol", "luna",
+		"peligro", "seguridad", "búnker", "agente", "código", "miedo", "alegría", "ira",
+		"tristeza", "dolor", "hambre", "neutral", "urgencia"
+	]
+}

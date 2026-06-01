@@ -23,7 +23,7 @@ Analysis:
 import json
 import os
 import time
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 import numpy as np
@@ -60,12 +60,14 @@ class ExperimentLogger:
 		self._start_time = time.monotonic()
 
 		# Write header record
-		self._write({
-			"type": "header",
-			"experiment_id": experiment_id,
-			"timestamp": datetime.now(timezone.utc).isoformat(),
-			"params": params,
-		})
+		self._write(
+			{
+				"type": "header",
+				"experiment_id": experiment_id,
+				"timestamp": datetime.now(UTC).isoformat(),
+				"params": params,
+			}
+		)
 
 	def _write(self, record: dict) -> None:
 		self._file.write(json.dumps(record, ensure_ascii=False, default=_json_default) + "\n")
@@ -164,12 +166,14 @@ class ExperimentLogger:
 
 	def log_event(self, event: str, data: dict[str, Any] | None = None) -> None:
 		"""Log a freeform event (promotion, early stop, error, etc.)."""
-		self._write({
-			"type": "event",
-			"event": event,
-			"elapsed_s": round(time.monotonic() - self._start_time, 3),
-			"data": data or {},
-		})
+		self._write(
+			{
+				"type": "event",
+				"event": event,
+				"elapsed_s": round(time.monotonic() - self._start_time, 3),
+				"data": data or {},
+			}
+		)
 
 	def close(self) -> None:
 		"""Flush and close the log file."""
@@ -197,7 +201,6 @@ class ExperimentLogger:
 	@staticmethod
 	def load_epochs(experiment_id: str):
 		"""Load only epoch-level records for quick analysis."""
-		import pandas as pd
 
 		df = ExperimentLogger.load(experiment_id)
 		return df[df["type"] == "epoch"].reset_index(drop=True)
@@ -205,7 +208,6 @@ class ExperimentLogger:
 	@staticmethod
 	def load_steps(experiment_id: str):
 		"""Load only step-level records for granular analysis."""
-		import pandas as pd
 
 		df = ExperimentLogger.load(experiment_id)
 		return df[df["type"] == "step"].reset_index(drop=True)

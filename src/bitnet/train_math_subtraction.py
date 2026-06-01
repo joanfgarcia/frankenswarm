@@ -1,6 +1,7 @@
 import argparse
 import json
 import os
+
 import numpy as np
 import torch
 import torch.nn as nn
@@ -8,8 +9,8 @@ import torch.nn.functional as F
 
 from src.bitnet.generalization_breeder import CompositionalMathDatasetBreeder
 from src.bitnet.modeling_bitnet import BitNet4LayerModel
-from src.bitnet.translator import SovereignTranslator
 from src.bitnet.telemetry import ExperimentLogger
+from src.bitnet.translator import SovereignTranslator
 
 
 def svd_crossover(parent_a: nn.Module, parent_b: nn.Module, child: nn.Module, alpha: float = 0.5, sigma: float = 0.01):
@@ -49,7 +50,7 @@ def load_config() -> dict:
 	default_path = os.path.join(base_dir, "configs", "experiments", "EXP_014.json")
 	if not os.path.exists(default_path):
 		default_path = os.path.join(base_dir, "configs", "experiments", "default.json")
-	
+
 	with open(default_path, encoding="utf-8") as f:
 		config = json.load(f)
 
@@ -64,7 +65,7 @@ def load_config() -> dict:
 			config.update(exp_config)
 		else:
 			print(f"⚠️ Archivo de configuración no encontrado: {config_path}. Usando valores predeterminados.")
-	
+
 	return config
 
 
@@ -103,7 +104,9 @@ def run_math_subtraction_arena():
 	train_eqs_stage1 = None
 	if curriculum_mode == "stage_restas":
 		train_eqs_stage1 = [eq for eq in breeder.train_equations if eq[1] == 1 and eq[3] > 0]
-		print(f"🎓 Curriculum Mode: stage_restas | Etapa 1 (Restas R>0): {len(train_eqs_stage1)} | Etapa 2 (Completo): {len(breeder.train_equations)}")
+		print(
+			f"🎓 Curriculum Mode: stage_restas | Etapa 1 (Restas R>0): {len(train_eqs_stage1)} | Etapa 2 (Completo): {len(breeder.train_equations)}"
+		)
 
 	# 3. Inicializar Población
 	pop_size = config["pop_size"]
@@ -113,7 +116,9 @@ def run_math_subtraction_arena():
 	mul_loss_weight = config.get("multiplication_loss_weight", 1.0)
 	print(f"⚖️ [Pérdida] Multiplicador para restas: {sub_loss_weight:.2f}x | Multiplicador para multiplicaciones: {mul_loss_weight:.2f}x")
 
-	population = [BitNet4LayerModel(vocab_embeddings=vocab_embeddings, hidden_dim=hidden_dim, num_layers=num_layers).to(device) for _ in range(pop_size)]
+	population = [
+		BitNet4LayerModel(vocab_embeddings=vocab_embeddings, hidden_dim=hidden_dim, num_layers=num_layers).to(device) for _ in range(pop_size)
+	]
 
 	lr = config["lr"]
 	wd = config.get("weight_decay", 0.01)
@@ -190,10 +195,10 @@ def run_math_subtraction_arena():
 			else:
 				current_eqs = breeder.train_equations
 
-			op_a_targets, op_a_token_ids, operator_targets, operator_token_ids, op_b_targets, op_b_token_ids, result_targets, result_token_ids = breeder.generate_batch(
-				batch_size, mode="train", custom_eqs=current_eqs
+			op_a_targets, op_a_token_ids, operator_targets, operator_token_ids, op_b_targets, op_b_token_ids, result_targets, result_token_ids = (
+				breeder.generate_batch(batch_size, mode="train", custom_eqs=current_eqs)
 			)
-			
+
 			op_a_token_ids_tensor = torch.from_numpy(op_a_token_ids).long().to(device)
 			operator_token_ids_tensor = torch.from_numpy(operator_token_ids).long().to(device)
 			op_b_token_ids_tensor = torch.from_numpy(op_b_token_ids).long().to(device)
@@ -258,16 +263,16 @@ def run_math_subtraction_arena():
 			sample_weights = 1.0 + (sub_loss_weight - 1.0) * sub_mask + (mul_loss_weight - 1.0) * mul_mask
 
 			# Pérdidas por muestra del Oyente
-			loss_a_s = F.cross_entropy(pred_a_logits, op_a_token_ids_tensor, reduction='none')
-			loss_op_s = F.cross_entropy(pred_op_logits, operator_token_ids_tensor, reduction='none')
-			loss_b_s = F.cross_entropy(pred_b_logits, op_b_token_ids_tensor, reduction='none')
-			loss_r_s = F.cross_entropy(pred_r_logits, result_token_ids_tensor, reduction='none')
-			
+			loss_a_s = F.cross_entropy(pred_a_logits, op_a_token_ids_tensor, reduction="none")
+			loss_op_s = F.cross_entropy(pred_op_logits, operator_token_ids_tensor, reduction="none")
+			loss_b_s = F.cross_entropy(pred_b_logits, op_b_token_ids_tensor, reduction="none")
+			loss_r_s = F.cross_entropy(pred_r_logits, result_token_ids_tensor, reduction="none")
+
 			loss_listener_s = loss_a_s + loss_op_s + loss_b_s + loss_r_s
 			loss_listener = (loss_listener_s * sample_weights).mean()
 
 			# 4. Pérdida de Consistencia del Emisor por muestra
-			loss_speaker_cons_s = F.cross_entropy(speaker_logits[:, 3, :], result_token_ids_tensor, reduction='none')
+			loss_speaker_cons_s = F.cross_entropy(speaker_logits[:, 3, :], result_token_ids_tensor, reduction="none")
 			loss_speaker_cons = (loss_speaker_cons_s * sample_weights).mean()
 
 			# Pérdida Conjunta Total
@@ -290,10 +295,16 @@ def run_math_subtraction_arena():
 			b_ok = (preds_b == op_b_token_ids_tensor).sum().item()
 			r_ok = (preds_r == result_token_ids_tensor).sum().item()
 
-			correct_joint = ((preds_a == op_a_token_ids_tensor) & 
-							 (preds_op == operator_token_ids_tensor) & 
-							 (preds_b == op_b_token_ids_tensor) & 
-							 (preds_r == result_token_ids_tensor)).sum().item()
+			correct_joint = (
+				(
+					(preds_a == op_a_token_ids_tensor)
+					& (preds_op == operator_token_ids_tensor)
+					& (preds_b == op_b_token_ids_tensor)
+					& (preds_r == result_token_ids_tensor)
+				)
+				.sum()
+				.item()
+			)
 
 			epoch_correct += correct_joint
 			epoch_a_correct += a_ok
@@ -319,12 +330,14 @@ def run_math_subtraction_arena():
 		acc_b = (epoch_b_correct / epoch_total) * 100
 		acc_j = (epoch_correct / epoch_total) * 100
 
-		print(f"[Train] Pérdida: {avg_loss:.4f} | Operando A: {acc_a:.2f}% | Operador: {acc_op:.2f}% | Operando B: {acc_b:.2f}% | Consenso: {acc_j:.2f}%")
+		print(
+			f"[Train] Pérdida: {avg_loss:.4f} | Operando A: {acc_a:.2f}% | Operador: {acc_op:.2f}% | Operando B: {acc_b:.2f}% | Consenso: {acc_j:.2f}%"
+		)
 
 		# --- FASE DE VALIDACIÓN (SISTEMÁTICA / TEST SPLIT) ---
 		model_eval_correct = 0
 		model_eval_total = 0
-		
+
 		sum_eval_correct = 0
 		sum_eval_total = 0
 		sub_eval_correct = 0
@@ -363,11 +376,8 @@ def run_math_subtraction_arena():
 						pred_b = torch.argmax(logits_lis[0, 2, :]).item()
 						pred_r = torch.argmax(logits_lis[0, 3, :]).item()
 
-						joint_ok = (pred_a == a_token_id and 
-									pred_op == op_token_id and 
-									pred_b == b_token_id and 
-									pred_r == r_token_id)
-						
+						joint_ok = pred_a == a_token_id and pred_op == op_token_id and pred_b == b_token_id and pred_r == r_token_id
+
 						if op == 0:
 							sum_eval_total += 1
 							if joint_ok:
@@ -389,8 +399,10 @@ def run_math_subtraction_arena():
 		acc_joint_test_sum = (sum_eval_correct / sum_eval_total) * 100 if sum_eval_total > 0 else 0.0
 		acc_joint_test_sub = (sub_eval_correct / sub_eval_total) * 100 if sub_eval_total > 0 else 0.0
 		acc_joint_test_mul = (mul_eval_correct / mul_eval_total) * 100 if mul_eval_total > 0 else 0.0
-		
-		print(f"🧪 [Test Generalización] Global: {acc_joint_test:.2f}% | ➕ Sumas: {acc_joint_test_sum:.2f}% | ➖ Restas: {acc_joint_test_sub:.2f}% | ✖️ Multiplicaciones: {acc_joint_test_mul:.2f}%")
+
+		print(
+			f"🧪 [Test Generalización] Global: {acc_joint_test:.2f}% | ➕ Sumas: {acc_joint_test_sum:.2f}% | ➖ Restas: {acc_joint_test_sub:.2f}% | ✖️ Multiplicaciones: {acc_joint_test_mul:.2f}%"
+		)
 
 		# Evolución
 		current_phase = "guarderia" if epoch < nursery_end else ("recreo" if epoch < transition_end else "autonomia")

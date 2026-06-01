@@ -1,0 +1,44 @@
+{
+    "experiment_id": "EXP_040_neurogenesis",
+    "seed": 42,
+    "pretrained_from": "storage/experiments/EXP_036_pretrained/best_agent.pt",
+    "model": {
+        "hidden_dim": 256,
+        "num_layers": 3,
+        "use_pos_embedding": true
+    },
+    "resonance": {
+        "max_resonance_steps": 5,
+        "n_think": 2,
+        "n_verify": 2
+    },
+    "emotion": {
+        "mode": "first_only",
+        "dim": 64
+    },
+    "metacognition": {
+        "enabled": true,
+        "threshold": 0.85
+    },
+    "world": {
+        "max_ticks": 200
+    },
+    "training": {
+        "episodes": 500,
+        "lr": 0.0005,
+        "gamma": 0.97,
+        "grad_clip": 1.0,
+        "entropy_bonus": 0.05,
+        "update_interval": 16
+    },
+    "growth": {
+        "convergence_threshold": 0.8,
+        "patience": 50,
+        "factor": 1.5,
+        "max_width": 512
+    },
+    "meta": {
+        "description": "EXP_040 — Neurogenésis: aprendizaje online + Net2Net growth",
+        "hypothesis": "H1: Crece cuando necesita. H2: No olvida. H3: Tamaño ∝ complejidad."
+    }
+}

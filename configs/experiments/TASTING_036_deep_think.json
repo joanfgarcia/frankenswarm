@@ -1,0 +1,57 @@
+{
+    "experiment_id": "TASTING_036_deep_think",
+    "condition": "D",
+    "seed": 42,
+    "pop_size": 4,
+    "model": {
+        "hidden_dim": 256,
+        "num_layers": 3,
+        "use_pos_embedding": true
+    },
+    "resonance": {
+        "max_resonance_steps": 5,
+        "n_think": 2,
+        "n_verify": 2,
+        "pos_mode": "clock",
+        "loss_mode": "weighted",
+        "intermediate_loss_weight": 0.2
+    },
+    "emotion": {
+        "mode": "first_only",
+        "dim": 64
+    },
+    "deep_think": {
+        "convergence_weight": 0.3,
+        "verify_loss_weight": 0.5,
+        "think_loss_weight": 1.0
+    },
+    "training": {
+        "epochs": 40,
+        "steps_per_epoch": 100,
+        "batch_size": 32,
+        "lr": 0.0003,
+        "weight_decay": 0.05,
+        "grad_clip": 1.0
+    },
+    "curriculum": {
+        "tau_start": 1.0,
+        "tau_min": 0.3,
+        "nursery_end": 10,
+        "transition_end": 25,
+        "tf_min": 0.1
+    },
+    "early_stopping": {
+        "patience": 30
+    },
+    "svd_interval": 3,
+    "svd_phases": [
+        "recreo",
+        "autonomia"
+    ],
+    "fear_amplifier": 0.0,
+    "max_chain_depth": 2,
+    "meta": {
+        "description": "EXP_036 \u2014 Deep Think: Metacognici\u00f3n con verificaci\u00f3n en dos fases",
+        "hypothesis": "H1: La verificaci\u00f3n mejora accuracy. H2: Convergencia predice correctness. H3: El modelo aprende a 'dudar' de errores."
+    }
+}

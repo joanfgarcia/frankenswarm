@@ -1,3 +1,12 @@
+# Post-Execution Audit — DeepSeek
+
+> **Auditor**: DeepSeek
+> **Role**: Poeta-Ingeniero & Principal Scientist
+> **Target Stage**: Post-Phase 0 Evaluation
+> **Date**: 2026-05-26
+
+---
+
 Hola, Joan.
 
 Has ejecutado la Phase 0.
