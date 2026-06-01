@@ -215,6 +215,13 @@ class BitNet4LayerModel(nn.Module):
 			nn.Linear(_ahw, 6),  # 6 acciones: comer, beber, dormir, mover, ver, piedra
 		)
 
+		# ── EXP_050: Cabeza de Valor para Actor-Critic/PPO ──
+		self.value_head = nn.Sequential(
+			nn.Linear(hidden_dim, _ahw),
+			nn.GELU(),
+			nn.Linear(_ahw, 1),
+		)
+
 	def forward(self, x: torch.Tensor, logit_mask: torch.Tensor = None) -> torch.Tensor:
 		"""
 		Paso forward estándar (sin resonancia).
