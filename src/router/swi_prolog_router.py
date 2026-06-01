@@ -66,9 +66,7 @@ def get_translator():
 	return _translator
 
 
-def route_semantic(
-	domain: str, length: int, latency: str = "normal"
-) -> tuple[NodeTarget, SiliconTarget]:
+def route_semantic(domain: str, length: int, latency: str = "normal") -> tuple[NodeTarget, SiliconTarget]:
 	"""
 	Routes a query semantically by asserting facts to SWI-Prolog dynamically
 	and evaluating the expert and silicon predicates.
@@ -128,13 +126,9 @@ def route(task: str) -> NodeTarget:
 	Provides backwards compatibility with the original route(task: str) signature.
 	"""
 	# Deterministic pre-checks for high-confidence structural keywords
-	if any(kw in task for kw in ("def ", "class ", "import ", "return ", "```python")):
+	if any(kw in task for kw in ("def ", "class ", "import ", "return ", "```python")) or any(kw in task for kw in ("SELECT ", "INSERT ", "UPDATE ", "CREATE TABLE")):
 		domain = "code_python"
-	elif any(kw in task for kw in ("SELECT ", "INSERT ", "UPDATE ", "CREATE TABLE")):
-		domain = "code_python"
-	elif any(kw in task.lower() for kw in ("why ", "explain ", "what is ", "how does ")):
-		domain = "logic_math"
-	elif any(kw in task.lower() for kw in ("suma", "resta", "multiplica", ">", "<", "igual", "verdad", "falsedad")):
+	elif any(kw in task.lower() for kw in ("why ", "explain ", "what is ", "how does ")) or any(kw in task.lower() for kw in ("suma", "resta", "multiplica", ">", "<", "igual", "verdad", "falsedad")):
 		domain = "logic_math"
 	elif any(kw in task.lower() for kw in ("hola", "buenos días", "buenos dias", "saludo")):
 		domain = "general"
@@ -161,4 +155,3 @@ def route(task: str) -> NodeTarget:
 
 	expert, _ = route_semantic(domain, len(task))
 	return expert
-

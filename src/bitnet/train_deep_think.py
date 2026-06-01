@@ -28,12 +28,16 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 
-from src.bitnet.modeling_bitnet import BitNet4LayerModel
 from src.bitnet.glyph_vocabulary import (
-	WORD_NAMES, WORD_INDEX, N_WORDS, N_EMOTIONS, EMOTION_NAMES,
-	EMOTION_INDEX, CURRICULUM_PHASES,
-	build_emotional_chains, get_bifurcation_pairs,
+	EMOTION_INDEX,
+	N_EMOTIONS,
+	N_WORDS,
+	WORD_INDEX,
+	WORD_NAMES,
+	build_emotional_chains,
+	get_bifurcation_pairs,
 )
+from src.bitnet.modeling_bitnet import BitNet4LayerModel
 from src.bitnet.telemetry import ExperimentLogger
 
 
@@ -71,7 +75,7 @@ def run_deep_think_training():
 	emotion_mode = config.get("emotion", {}).get("mode", "first_only")
 
 	print(f"═══ 🧠 Deep Think — {experiment_id} ═══")
-	print(f"    Metacognición: Pensar + Verificar + Convergencia")
+	print("    Metacognición: Pensar + Verificar + Convergencia")
 	print(f"    Vocabulario: {N_WORDS} palabras × 65 primos ternarios")
 
 	device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -131,7 +135,7 @@ def run_deep_think_training():
 			for i, model in enumerate(population):
 				model.load_state_dict(state_dict)
 			print(f"🧒→🧑 Pre-trained: {pretrained_path}")
-			print(f"    Fase Piaget: el modelo ya sabe, ahora aprende a dudar")
+			print("    Fase Piaget: el modelo ya sabe, ahora aprende a dudar")
 		else:
 			print(f"⚠️ pretrained_from no encontrado: {pretrained_path}")
 
@@ -382,7 +386,7 @@ def run_deep_think_training():
 
 		if epoch == transition_end:
 			epochs_without_improvement = 0
-			print(f"🦅 Entrando en autonomía — reset early stopping")
+			print("🦅 Entrando en autonomía — reset early stopping")
 
 		if epoch >= transition_end + 10 and epochs_without_improvement >= patience:
 			print(f"⏹️ Early stopping: {patience} epochs sin mejora (best={best_acc_joint:.2f}%)")

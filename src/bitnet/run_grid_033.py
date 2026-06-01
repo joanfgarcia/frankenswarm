@@ -30,7 +30,7 @@ def main():
 
 	# Encontrar todas las configs EXP_033
 	configs = sorted(glob.glob(os.path.join(config_dir, "EXP_033_*.json")))
-	print(f"🧠 EXP_033 — Resonancia Emocional")
+	print("🧠 EXP_033 — Resonancia Emocional")
 	print(f"📦 {len(configs)} variantes encontradas")
 
 	if args.tasting:
@@ -61,7 +61,7 @@ def main():
 		print(f"\n{'=' * 60}")
 		print(f"  [{i + 1}/{len(configs)}] {config_name}")
 		print(f"  Config: {config_path}")
-		print(f"  OOM Shield: 10G")
+		print("  OOM Shield: 10G")
 		print(f"{'=' * 60}\n")
 
 		start_variant = time.time()
@@ -93,7 +93,7 @@ def main():
 	# Resumen final
 	total_time = time.time() - start_total
 	print(f"\n{'=' * 60}")
-	print(f"  📊 RESUMEN EXP_033")
+	print("  📊 RESUMEN EXP_033")
 	print(f"  ⏱️ Tiempo total: {total_time / 60:.1f} min ({total_time / 3600:.1f}h)")
 	print(f"{'=' * 60}\n")
 

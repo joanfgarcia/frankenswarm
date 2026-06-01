@@ -1,14 +1,15 @@
 import os
 import sys
+
 import torch
-import numpy as np
 
 # Ensure root dir is in sys.path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from src.router.swi_prolog_router import NodeTarget, SiliconTarget, route, route_semantic
 from src.bitnet.modeling_bitnet import BitNet4LayerModel
 from src.bitnet.translator import SovereignTranslator
+from src.router.swi_prolog_router import NodeTarget, route, route_semantic
+
 
 def run_math_inference(model, translator, op_a_word, operator_word, op_b_word):
 	# Encode operands and operator
@@ -32,6 +33,7 @@ def run_math_inference(model, translator, op_a_word, operator_word, op_b_word):
 	result_word = translator.decode([pred_tid])
 	return result_word, pred_tid
 
+
 def run_vocab_inference(model, translator, concept_word, emotion_word, homeo_word):
 	# Encode concept, emotion, and homeostasis
 	tids_c = translator.encode(concept_word)
@@ -50,7 +52,7 @@ def run_vocab_inference(model, translator, concept_word, emotion_word, homeo_wor
 		message = model.generate_message(input_tensor, tau=0.3, hard=True)
 		# Listen: Decode message
 		logits = model(message)
-		
+
 		# Speaker message decode for logging
 		msg_token_ids = torch.argmax(message[0], dim=-1).tolist()
 		msg_decoded = translator.decode(msg_token_ids)
@@ -65,6 +67,7 @@ def run_vocab_inference(model, translator, concept_word, emotion_word, homeo_wor
 	pred_homeo = translator.decode([pred_h_tid])
 
 	return msg_decoded, pred_concept, pred_emotion, pred_homeo
+
 
 def main():
 	print("==================================================")
@@ -89,21 +92,13 @@ def main():
 		return
 
 	# Load Math Model (EXP_020)
-	model_math = BitNet4LayerModel(
-		vocab_embeddings=vocab_embeddings,
-		hidden_dim=256,
-		num_layers=3
-	)
+	model_math = BitNet4LayerModel(vocab_embeddings=vocab_embeddings, hidden_dim=256, num_layers=3)
 	model_math.load_state_dict(torch.load(math_ckpt, map_location="cpu"))
 	model_math.eval()
 	print("✅ Loaded EXP_020 (Math Core Specialist)")
 
 	# Load Vocab Model (EXP_022)
-	model_vocab = BitNet4LayerModel(
-		vocab_embeddings=vocab_embeddings,
-		hidden_dim=256,
-		num_layers=3
-	)
+	model_vocab = BitNet4LayerModel(vocab_embeddings=vocab_embeddings, hidden_dim=256, num_layers=3)
 	model_vocab.load_state_dict(torch.load(vocab_ckpt, map_location="cpu"))
 	model_vocab.eval()
 	print("✅ Loaded EXP_022 (Vocabulary Specialist)")
@@ -114,7 +109,23 @@ def main():
 		"hola búnker gato fuego peligro",
 	]
 
-	concepts_list = ["gato", "perro", "casa", "árbol", "agua", "fuego", "tierra", "aire", "sol", "luna", "peligro", "seguridad", "búnker", "agente", "código"]
+	concepts_list = [
+		"gato",
+		"perro",
+		"casa",
+		"árbol",
+		"agua",
+		"fuego",
+		"tierra",
+		"aire",
+		"sol",
+		"luna",
+		"peligro",
+		"seguridad",
+		"búnker",
+		"agente",
+		"código",
+	]
 	emotions_list = ["miedo", "alegría", "ira", "tristeza", "dolor", "hambre"]
 	homeostasis_list = ["neutral", "dolor", "hambre", "urgencia", "seguridad"]
 
@@ -139,8 +150,13 @@ def main():
 
 		if expert == NodeTarget.REASON:
 			# Arithmetic specialization execution
-			op_a_word = next((w for w in words if w in ["cero", "uno", "dos", "tres", "cuatro", "cinco", "seis", "siete", "ocho", "nueve", "diez"]), "cinco")
-			op_b_word = next((w for w in reversed(words) if w in ["cero", "uno", "dos", "tres", "cuatro", "cinco", "seis", "siete", "ocho", "nueve", "diez"]), "dos")
+			op_a_word = next(
+				(w for w in words if w in ["cero", "uno", "dos", "tres", "cuatro", "cinco", "seis", "siete", "ocho", "nueve", "diez"]), "cinco"
+			)
+			op_b_word = next(
+				(w for w in reversed(words) if w in ["cero", "uno", "dos", "tres", "cuatro", "cinco", "seis", "siete", "ocho", "nueve", "diez"]),
+				"dos",
+			)
 			operator_word = next((w for w in words if w in ["suma", "resta", "multiplica"]), "resta")
 
 			print(f"🧠 [MoE Exec] Routing to EXP_020 | Task: {op_a_word} {operator_word} {op_b_word}...")
@@ -157,6 +173,7 @@ def main():
 			msg_dec, pred_c, pred_e, pred_h = run_vocab_inference(model_vocab, translator, concept_word, emotion_word, homeo_word)
 			print(f"✨ [Result] Emergent Message: '{msg_dec}'")
 			print(f"✨ [Decoded] Concept: '{pred_c}' | Emotion: '{pred_e}' | Homeostasis: '{pred_h}'")
+
 
 if __name__ == "__main__":
 	main()

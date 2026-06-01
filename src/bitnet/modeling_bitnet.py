@@ -4,7 +4,7 @@ import torch
 # EXP_034: Glifos ternarios composicionales
 # Importación lazy para backward-compatibility
 try:
-	from src.bitnet.glyph_vocabulary import GlyphEmbedding, GLYPH_TABLE, N_PRIMES
+	from src.bitnet.glyph_vocabulary import GLYPH_TABLE, N_PRIMES, GlyphEmbedding
 except ImportError:
 	GlyphEmbedding = None
 import torch.nn as nn
@@ -621,7 +621,7 @@ class BitNet4LayerModel(nn.Module):
 		"""
 		# ═══ FASE 1: PENSAR ═══
 		# Usamos forward_resonance_training para mantener gradientes
-		intermediate_targets_think = {i: None for i in range(n_think)}
+		intermediate_targets_think = dict.fromkeys(range(n_think))
 		logits_think, intermediates_think = self.forward_resonance_training(
 			x, n_steps=n_think, pos_mode=pos_mode,
 			intermediate_targets=intermediate_targets_think,
@@ -638,9 +638,7 @@ class BitNet4LayerModel(nn.Module):
 			if pos_mode == "clock" and getattr(self, "resonance_clock", None) is not None:
 				h_think = h_think + self.resonance_clock[:, step, :].unsqueeze(1)
 			if emo_vec is not None:
-				if self.emotion_mode == "additive":
-					h_think = h_think + emo_vec
-				elif self.emotion_mode == "first_only" and step == 0:
+				if self.emotion_mode == "additive" or self.emotion_mode == "first_only" and step == 0:
 					h_think = h_think + emo_vec
 			for layer in self.core_layers:
 				h_think = layer(h_think)
@@ -653,9 +651,7 @@ class BitNet4LayerModel(nn.Module):
 		# ═══ FASE 2: VERIFICAR (re-inyección diferenciable) ═══
 		h_verify = self._embed_input(soft_tokens)
 		if emo_vec is not None:
-			if self.emotion_mode == "additive":
-				h_verify = h_verify + emo_vec
-			elif self.emotion_mode == "first_only":
+			if self.emotion_mode == "additive" or self.emotion_mode == "first_only":
 				h_verify = h_verify + emo_vec
 		for step in range(n_verify):
 			if pos_mode == "clock" and getattr(self, "resonance_clock", None) is not None:

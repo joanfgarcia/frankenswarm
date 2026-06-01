@@ -10,9 +10,9 @@ Aplicación: Neurogenésis artificial guiada por convergencia.
 Origen: Joan Garcia — "Net2Net en caliente?" — 2026-05-31
 """
 
+
 import torch
 import torch.nn as nn
-import copy
 
 
 def net2wider_linear(layer_in: nn.Linear, layer_out: nn.Linear, new_width: int, noise_std: float = 0.01):

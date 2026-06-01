@@ -1,0 +1,40 @@
+{
+	"experiment_id": "EXP_028A",
+	"emotion_mode": "input",
+	"vocab_size": 8192,
+	"hidden_dim": 256,
+	"num_layers": 3,
+	"use_pos_embedding": true,
+	"pop_size": 4,
+	"epochs": 60,
+	"steps_per_epoch": 250,
+	"batch_size": 32,
+	"lr": 0.0006,
+	"weight_decay": 0.05,
+	"tau_start": 1.0,
+	"tau_min": 0.25,
+	"nursery_end": 10,
+	"transition_end": 35,
+	"tf_min": 0.10,
+	"use_logit_mask": true,
+	"resume_checkpoint": "storage/experiments/EXP_027/best_agent.pt",
+	"freeze_core": false,
+	"svd_interval": 3,
+	"svd_phases": ["recreo", "autonomia"],
+	"seed": 42,
+	"split_ratio": 0.88,
+	"fear_amplifier": 3.0,
+	"operators": {
+		"implica": { "enabled": true, "loss_weight": 1.0 },
+		"contradice": { "enabled": true, "loss_weight": 0.5 },
+		"cadena": { "enabled": true, "loss_weight": 1.2 },
+		"niega": { "enabled": true, "loss_weight": 1.5 }
+	},
+	"micro_vocab_words": [
+		"gato", "perro", "casa", "árbol", "agua", "fuego",
+		"tierra", "aire", "sol", "luna", "peligro", "seguridad",
+		"implica", "contradice", "cadena", "niega",
+		"verdad", "falsedad",
+		"miedo", "alegría", "ira", "tristeza", "dolor", "hambre"
+	]
+}

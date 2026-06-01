@@ -19,7 +19,6 @@ import os
 import subprocess
 import sys
 import time
-from pathlib import Path
 
 # ═══════════════════════════════════════════
 # MALLA FACTORIAL 3³
@@ -242,7 +241,7 @@ def print_summary(results: list[dict]):
 	ok_results = [r for r in results if r["status"] == "OK"]
 	if ok_results:
 		top3 = sorted(ok_results, key=lambda x: -x.get("acc_joint_last", 0))[:3]
-		print(f"\n🏆 Top 3:")
+		print("\n🏆 Top 3:")
 		for i, r in enumerate(top3):
 			print(f"   {i+1}. {r['variant_id']} — {r.get('acc_joint_last', 0):.2f}%")
 

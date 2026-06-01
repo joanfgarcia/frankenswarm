@@ -12,10 +12,8 @@ Origen: Joan Garcia — "escala" — 2026-05-31
 
 import random
 from dataclasses import dataclass, field
-from typing import Optional
 
-from src.bitnet.glyph_vocabulary import WORD_INDEX, EMOTION_INDEX
-
+from src.bitnet.glyph_vocabulary import EMOTION_INDEX, WORD_INDEX
 
 # ── Localizaciones (15) ─────────────────────────────────────────────────────
 # Cada localización se identifica por un par de glifos existentes
@@ -263,7 +261,7 @@ class ComplexAgentState:
 	location: str = "cueva"
 	tick: int = 0
 	alive: bool = True
-	last_action: Optional[str] = None
+	last_action: str | None = None
 	danger_nearby: bool = False
 	storm_active: bool = False
 	visited: set = field(default_factory=set)  # tracking de exploración
@@ -562,10 +560,10 @@ class ComplexWorld:
 # ── Test ────────────────────────────────────────────────────────────────────
 
 if __name__ == "__main__":
-	print(f"═══ Mundo Complejo ═══")
+	print("═══ Mundo Complejo ═══")
 	print(f"Localizaciones: {len(COMPLEX_LOCATIONS)}")
 	print(f"Acciones: {len(COMPLEX_ACTIONS)}")
-	print(f"Metros: 4 (hambre, sed, salud, energía)")
+	print("Metros: 4 (hambre, sed, salud, energía)")
 	print()
 
 	world = ComplexWorld(seed=42)

@@ -74,6 +74,19 @@ We leverage a diverse group of four external architectures, each bringing a uniq
 
 ---
 
+### Phase B Preview: Technical Brief & Expert Panel (2026-05-29)
+*Evaluates the structural viability of the reasoning limits, Gumbel-Softmax bottleneck, and structural transfer tests prior to the survival arena.*
+
+| Stage | Document | Auditor | Key Insight |
+| :--- | :--- | :--- | :--- |
+| **Pre-Arena Audit** | [FRANKENSWARM_TECHNICAL_BRIEF.md](file:///home/joan/Documents/IA/frankenswarm/docs/extern/FRANKENSWARM_TECHNICAL_BRIEF.md) | Aleth (Internal) | Consolidates baseline results for transitividad (94.75%) and Modus Tollens (92.54%). |
+| **Expert Review** | [POST_EXP_031_CLAUDE.md](file:///home/joan/Documents/IA/frankenswarm/docs/extern/POST_EXP_031_CLAUDE.md) | Claude Sonnet | Recommends structural causality transfer test as the ultimate validation. |
+| **Expert Review** | [POST_EXP_031_DEEPSEEK.md](file:///home/joan/Documents/IA/frankenswarm/docs/extern/POST_EXP_031_DEEPSEEK.md) | DeepSeek | Proposes SCAN-style test to check if models learn composition over statistics. |
+| **Expert Review** | [POST_EXP_031_GROK.md](file:///home/joan/Documents/IA/frankenswarm/docs/extern/POST_EXP_031_GROK.md) | Grok | Outlines risk of small vocabularies and suggests scaling to 80+ tokens. |
+| **Expert Review** | [POST_EXP_031_LUMO.md](file:///home/joan/Documents/IA/frankenswarm/docs/extern/POST_EXP_031_LUMO.md) | Lumo | Proposes VQ-VAE codebooks and residual loops as signal degradation fixes. |
+
+---
+
 ### Thesis & Transcripts
 *   **The Metaphorical Emergence**: [TESIS_SESSION_1.md](file:///home/joan/Documents/IA/frankenswarm/docs/extern/TESIS_SESSION_1.md) — Transcript of the discussion between Joan, Aleth, Grok, Claude, DeepSeek, and Lumo on how agents create symbolic mappings (e.g., `sol → miedo`) representing the birth of metaphor and culture in silicio.
 

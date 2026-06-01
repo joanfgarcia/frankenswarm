@@ -22,12 +22,17 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 
-from src.bitnet.modeling_bitnet import BitNet4LayerModel
 from src.bitnet.glyph_vocabulary import (
-	WORD_NAMES, WORD_INDEX, N_WORDS, N_EMOTIONS, EMOTION_NAMES,
-	EMOTION_INDEX, GLYPH_TABLE, CURRICULUM_PHASES,
-	build_emotional_chains, get_bifurcation_pairs,
+	EMOTION_INDEX,
+	EMOTION_NAMES,
+	N_EMOTIONS,
+	N_WORDS,
+	WORD_INDEX,
+	WORD_NAMES,
+	build_emotional_chains,
+	get_bifurcation_pairs,
 )
+from src.bitnet.modeling_bitnet import BitNet4LayerModel
 from src.bitnet.telemetry import ExperimentLogger
 
 
@@ -242,7 +247,7 @@ def run_glyph_training():
 				total_loss = torch.tensor(0.0, device=device)
 
 			elif loss_mode in ("every", "weighted"):
-				intermediate_targets_dict = {i: None for i in range(n_steps)}
+				intermediate_targets_dict = dict.fromkeys(range(n_steps))
 				speaker_logits, intermediate_logits = speaker.forward_resonance_training(
 					current_input, n_steps=n_steps, pos_mode=pos_mode,
 					intermediate_targets=intermediate_targets_dict,

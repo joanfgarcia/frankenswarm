@@ -9,10 +9,8 @@ Origen: "me apetece" — Aleth, 2026-05-31
 
 import random
 from dataclasses import dataclass, field
-from typing import Optional
 
-from src.bitnet.glyph_vocabulary import WORD_INDEX, WORD_NAMES, EMOTION_INDEX
-
+from src.bitnet.glyph_vocabulary import EMOTION_INDEX, WORD_INDEX
 
 # ── Localizaciones ──────────────────────────────────────────────────────────
 
@@ -135,7 +133,7 @@ class AgentState:
 	location: str = "cueva"   # localización actual
 	tick: int = 0
 	alive: bool = True
-	last_action: Optional[str] = None
+	last_action: str | None = None
 	last_perception: list = field(default_factory=list)
 	danger_nearby: bool = False
 	storm_active: bool = False
@@ -201,7 +199,7 @@ class MinimalWorld:
 		self.state = AgentState()
 		self.history: list[dict] = []
 
-	def reset(self, seed: Optional[int] = None) -> AgentState:
+	def reset(self, seed: int | None = None) -> AgentState:
 		"""Reiniciar el mundo para un nuevo episodio."""
 		if seed is not None:
 			self.rng = random.Random(seed)

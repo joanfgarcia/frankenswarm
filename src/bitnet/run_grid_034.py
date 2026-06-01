@@ -88,13 +88,13 @@ def run_grid(config_paths: list[str]):
 			elapsed = time.time() - t0
 			results.append((name, "✅", elapsed))
 			print(f"  ✅ {name} — {elapsed:.1f}s")
-		except subprocess.CalledProcessError as e:
+		except subprocess.CalledProcessError:
 			elapsed = time.time() - t0
 			results.append((name, "❌", elapsed))
 			print(f"  ❌ {name} — falló después de {elapsed:.1f}s")
 
 	print(f"\n{'═'*60}")
-	print(f"  RESUMEN")
+	print("  RESUMEN")
 	print(f"{'═'*60}")
 	for name, status, elapsed in results:
 		print(f"  {status} {name} — {elapsed:.1f}s")

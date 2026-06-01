@@ -14,9 +14,9 @@ Referencias:
 Origen: Joan Garcia — "cada token debe contener semántica adicional"
 """
 
+import numpy as np
 import torch
 import torch.nn as nn
-import numpy as np
 
 # ═══════════════════════════════════════════════════════════════════
 # 1. LOS 65 PRIMOS SEMÁNTICOS (Wierzbicka, adaptados)
@@ -411,7 +411,7 @@ def build_emotional_chains(max_depth: int = 2):
 		src_idx = WORD_INDEX[src]
 		dst_idx = WORD_INDEX[dst]
 		# Solo añadir si no hay bifurcación emocional para esta fuente
-		has_bifurcation = any(s == src for (s, _) in EMOTIONAL_RULES.keys())
+		has_bifurcation = any(s == src for (s, _) in EMOTIONAL_RULES)
 		if not has_bifurcation:
 			for emo_idx in range(N_EMOTIONS):
 				chains.append({
@@ -435,7 +435,7 @@ def get_bifurcation_pairs():
 	Un par: misma fuente, dos emociones distintas → dos destinos distintos.
 	"""
 	pairs = []
-	sources = set(src for (src, _) in EMOTIONAL_RULES.keys())
+	sources = set(src for (src, _) in EMOTIONAL_RULES)
 
 	for src in sources:
 		emo_dest = {emo: dst for (s, emo), dst in EMOTIONAL_RULES.items() if s == src}
@@ -540,7 +540,7 @@ class GlyphEmbedding(nn.Module):
 
 def print_vocabulary_stats():
 	"""Imprime estadísticas del vocabulario para debug."""
-	print(f"═══ Vocabulario Vivo ═══")
+	print("═══ Vocabulario Vivo ═══")
 	print(f"Primos semánticos: {N_PRIMES}")
 	print(f"Palabras: {N_WORDS}")
 	print(f"Emociones: {N_EMOTIONS}")
@@ -555,7 +555,7 @@ def print_vocabulary_stats():
 	print()
 
 	# Densidad de trits por palabra
-	print(f"Densidad de trits por palabra:")
+	print("Densidad de trits por palabra:")
 	for name in WORD_NAMES:
 		glyph = VOCABULARY[name]
 		active = np.count_nonzero(glyph)
@@ -564,7 +564,7 @@ def print_vocabulary_stats():
 		print(f"  {name:<15} {active:>2} trits activos ({pos:>2}+, {neg:>2}-)")
 
 	# Similitud coseno entre glifos
-	print(f"\nPares más similares (coseno de trits):")
+	print("\nPares más similares (coseno de trits):")
 	from itertools import combinations
 	sims = []
 	for i, j in combinations(range(N_WORDS), 2):

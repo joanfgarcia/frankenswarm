@@ -1,0 +1,47 @@
+{
+    "seed": 42,
+    "pop_size": 4,
+    "model": {
+        "hidden_dim": 256,
+        "num_layers": 3,
+        "use_pos_embedding": true
+    },
+    "resonance": {
+        "max_resonance_steps": 5,
+        "n_steps": 2,
+        "pos_mode": "clock",
+        "loss_mode": "weighted",
+        "intermediate_loss_weight": 0.2
+    },
+    "emotion": {
+        "mode": "first_only",
+        "dim": 64
+    },
+    "training": {
+        "epochs": 40,
+        "steps_per_epoch": 100,
+        "batch_size": 32,
+        "lr": 0.0003,
+        "weight_decay": 0.05,
+        "grad_clip": 1.0
+    },
+    "curriculum": {
+        "tau_start": 1.0,
+        "tau_min": 0.3,
+        "nursery_end": 10,
+        "transition_end": 25,
+        "tf_min": 0.1
+    },
+    "early_stopping": {
+        "patience": 30
+    },
+    "svd_interval": 3,
+    "svd_phases": [
+        "recreo",
+        "autonomia"
+    ],
+    "fear_amplifier": 3.0,
+    "max_chain_depth": 2,
+    "experiment_id": "TASTING_034_D_first_only",
+    "condition": "D"
+}

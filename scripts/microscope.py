@@ -126,12 +126,18 @@ def inspect_linguistics(model: torch.nn.Module, translator: SovereignTranslator)
 		config_file = os.path.join(parent_dir, "config.json")
 		if os.path.exists(config_file):
 			try:
-				with open(config_file, "r", encoding="utf-8") as f:
+				with open(config_file, encoding="utf-8") as f:
 					config_data = json.load(f)
 					exp_id = config_data.get("experiment_id", "")
 					if "EXP_023" in exp_id or "logic" in exp_id or ("operators" in config_data and "mayor_que" in config_data["operators"]):
 						specimen_type = "relational_logic"
-					elif "EXP_020" in exp_id or "EXP_018" in exp_id or "EXP_017" in exp_id or "math" in exp_id or ("operators" in config_data and "resta" in config_data["operators"]):
+					elif (
+						"EXP_020" in exp_id
+						or "EXP_018" in exp_id
+						or "EXP_017" in exp_id
+						or "math" in exp_id
+						or ("operators" in config_data and "resta" in config_data["operators"])
+					):
 						specimen_type = "arithmetic"
 					elif "EXP_021" in exp_id or "EXP_022" in exp_id or "populora" in exp_id or "micro_vocab_words" in config_data:
 						specimen_type = "vocab_3d"
@@ -179,7 +185,7 @@ def inspect_linguistics(model: torch.nn.Module, translator: SovereignTranslator)
 			pred_tid = torch.argmax(logits[0, 3, :]).item()
 			pred_word = translator.decode([pred_tid])
 
-		print(f"\nResultado de la Inferencia (Paso 4):")
+		print("\nResultado de la Inferencia (Paso 4):")
 		print(f"  • Token ID Predicho: {pred_tid}")
 		print(f"  • Decodificado:      '{pred_word}'")
 		print("-" * 80)
@@ -208,7 +214,7 @@ def inspect_linguistics(model: torch.nn.Module, translator: SovereignTranslator)
 			pred_tid_1 = torch.argmax(logits_1[0, 3, :]).item()
 			pred_word_1 = translator.decode([pred_tid_1])
 
-		print(f"\nResultado de la Inferencia 1 (Paso 4):")
+		print("\nResultado de la Inferencia 1 (Paso 4):")
 		print(f"  • Token ID Predicho: {pred_tid_1}")
 		print(f"  • Decodificado:      '{pred_word_1}'")
 
@@ -225,14 +231,14 @@ def inspect_linguistics(model: torch.nn.Module, translator: SovereignTranslator)
 			pred_tid_2 = torch.argmax(logits_2[0, 3, :]).item()
 			pred_word_2 = translator.decode([pred_tid_2])
 
-		print(f"\nResultado de la Inferencia 2 (Paso 4):")
+		print("\nResultado de la Inferencia 2 (Paso 4):")
 		print(f"  • Token ID Predicho: {pred_tid_2}")
 		print(f"  • Decodificado:      '{pred_word_2}'")
 		print("-" * 80)
-		
-		success_1 = pred_word_1 == 'verdad'
-		success_2 = pred_word_2 == 'falsedad'
-		print(f"Resultado del Test de Juicio lógico:")
+
+		success_1 = pred_word_1 == "verdad"
+		success_2 = pred_word_2 == "falsedad"
+		print("Resultado del Test de Juicio lógico:")
 		print(f"  • Comparación Correcta:   {'✓ ÉXITO' if success_1 else '✗ ERROR'}")
 		print(f"  • Asimetría Posicional:   {'✓ ÉXITO' if success_2 else '✗ ERROR'}")
 		if success_1 and success_2:
@@ -243,7 +249,7 @@ def inspect_linguistics(model: torch.nn.Module, translator: SovereignTranslator)
 	elif specimen_type == "vocab_3d":
 		# Test de vocabulario 3D: fuego, miedo, urgencia
 		concept_test, emotion_test, homeo_test = "fuego", "miedo", "urgencia"
-		
+
 		concept_ids = translator.encode(concept_test)
 		emotion_ids = translator.encode(emotion_test)
 		homeo_ids = translator.encode(homeo_test)

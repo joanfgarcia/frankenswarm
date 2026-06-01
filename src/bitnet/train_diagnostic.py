@@ -21,9 +21,21 @@ from src.bitnet.telemetry import ExperimentLogger
 
 # ── Micro-Vocabulary ──────────────────────────────────────────────────
 CONCEPTS = [
-	"gato", "perro", "casa", "árbol", "agua",
-	"fuego", "tierra", "aire", "sol", "luna",
-	"peligro", "seguridad", "búnker", "agente", "código",
+	"gato",
+	"perro",
+	"casa",
+	"árbol",
+	"agua",
+	"fuego",
+	"tierra",
+	"aire",
+	"sol",
+	"luna",
+	"peligro",
+	"seguridad",
+	"búnker",
+	"agente",
+	"código",
 ]
 EMOTIONS = ["miedo", "alegría", "ira", "tristeza", "dolor", "hambre"]
 MICRO_VOCAB = CONCEPTS + EMOTIONS
@@ -61,6 +73,7 @@ class DiagnosticListener(nn.Module):
 
 def build_micro_embeddings() -> np.ndarray:
 	from fastembed import TextEmbedding
+
 	model = TextEmbedding()
 	embeddings = list(model.embed(MICRO_VOCAB))
 	return np.array([e if isinstance(e, np.ndarray) else np.array(e) for e in embeddings], dtype=np.float32)
@@ -123,7 +136,7 @@ def run_diagnostic():
 			# ── TEACHER FORCING: build input directly from ground truth ──
 			# Position 0: concept token ID, Position 1: emotion token ID, Position 2: padding (0)
 			teacher_input = torch.zeros((batch_size, 3), dtype=torch.long, device=device)
-			teacher_input[:, 0] = concept_targets           # concept in [0..14]
+			teacher_input[:, 0] = concept_targets  # concept in [0..14]
 			teacher_input[:, 1] = emotion_targets + num_concepts  # emotion in [15..20]
 			# Position 2 stays 0 (padding)
 
@@ -156,19 +169,30 @@ def run_diagnostic():
 			pred_e_name = EMOTIONS[preds_e[0].item()] if preds_e[0].item() < num_emotions else "?"
 
 			logger.log_step(
-				epoch=epoch + 1, step=step, loss=loss.item(),
-				loss_concept=loss_concept.item(), loss_emotion=loss_emotion.item(),
-				tau=0.0, speaker_id=-1, listener_id=0,
-				target_concept=sample_c, target_emotion=sample_e,
-				pred_concept=pred_c_name, pred_emotion=pred_e_name,
-				concept_correct=c_ok, emotion_correct=e_ok, joint_correct=j_ok,
+				epoch=epoch + 1,
+				step=step,
+				loss=loss.item(),
+				loss_concept=loss_concept.item(),
+				loss_emotion=loss_emotion.item(),
+				tau=0.0,
+				speaker_id=-1,
+				listener_id=0,
+				target_concept=sample_c,
+				target_emotion=sample_e,
+				pred_concept=pred_c_name,
+				pred_emotion=pred_e_name,
+				concept_correct=c_ok,
+				emotion_correct=e_ok,
+				joint_correct=j_ok,
 				batch_size=batch_size,
 			)
 
 			if step % 40 == 0:
-				print(f"  step {step:3d} | loss={loss.item():.3f} "
-					  f"(C:{loss_concept.item():.3f} E:{loss_emotion.item():.3f}) | "
-					  f"target=({sample_c},{sample_e}) → pred=({pred_c_name},{pred_e_name})")
+				print(
+					f"  step {step:3d} | loss={loss.item():.3f} "
+					f"(C:{loss_concept.item():.3f} E:{loss_emotion.item():.3f}) | "
+					f"target=({sample_c},{sample_e}) → pred=({pred_c_name},{pred_e_name})"
+				)
 
 		avg_loss = np.mean(epoch_losses)
 		acc_c = concept_correct / epoch_total * 100
@@ -178,9 +202,15 @@ def run_diagnostic():
 		print(f"Loss: {avg_loss:.4f} | Concepto: {acc_c:.2f}% | Emoción: {acc_e:.2f}% | Conjunta: {acc_j:.2f}%")
 
 		logger.log_epoch(
-			epoch=epoch + 1, loss_avg=avg_loss,
-			acc_concept=acc_c, acc_emotion=acc_e, acc_joint=acc_j,
-			fitness=[0.0], worst_agent=-1, parent_a=-1, parent_b=-1,
+			epoch=epoch + 1,
+			loss_avg=avg_loss,
+			acc_concept=acc_c,
+			acc_emotion=acc_e,
+			acc_joint=acc_j,
+			fitness=[0.0],
+			worst_agent=-1,
+			parent_a=-1,
+			parent_b=-1,
 		)
 
 		if acc_j >= 95.0:
@@ -199,7 +229,7 @@ def run_diagnostic():
 		print("❌ VEREDICTO: El listener NO aprende ni con teacher forcing.")
 		print("   → El problema es la arquitectura del listener / BitNet.")
 	print("=" * 60)
-	print(f"\n[Telemetry] storage/telemetry/EXP_004a.jsonl")
+	print("\n[Telemetry] storage/telemetry/EXP_004a.jsonl")
 
 
 if __name__ == "__main__":

@@ -1,6 +1,7 @@
 import argparse
 import json
 import os
+
 import numpy as np
 import torch
 import torch.nn as nn
@@ -8,8 +9,8 @@ import torch.nn.functional as F
 
 from src.bitnet.dataset_breeder import ReferentialDatasetBreeder
 from src.bitnet.modeling_bitnet import BitNet4LayerModel
-from src.bitnet.translator import SovereignTranslator
 from src.bitnet.telemetry import ExperimentLogger
+from src.bitnet.translator import SovereignTranslator
 
 
 def svd_crossover(parent_a: nn.Module, parent_b: nn.Module, child: nn.Module, alpha: float = 0.5, sigma: float = 0.01):
@@ -54,7 +55,7 @@ def load_config() -> dict:
 
 	base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 	default_path = os.path.join(base_dir, "configs", "experiments", "default.json")
-	
+
 	with open(default_path, encoding="utf-8") as f:
 		config = json.load(f)
 
@@ -69,7 +70,7 @@ def load_config() -> dict:
 			config.update(exp_config)
 		else:
 			print(f"⚠️ Archivo de configuración no encontrado: {config_path}. Usando valores predeterminados.")
-	
+
 	return config
 
 
@@ -111,7 +112,9 @@ def run_arena():
 	pop_size = config["pop_size"]
 	hidden_dim = config["hidden_dim"]
 	num_layers = config["num_layers"]
-	population = [BitNet4LayerModel(vocab_embeddings=vocab_embeddings, hidden_dim=hidden_dim, num_layers=num_layers).to(device) for _ in range(pop_size)]
+	population = [
+		BitNet4LayerModel(vocab_embeddings=vocab_embeddings, hidden_dim=hidden_dim, num_layers=num_layers).to(device) for _ in range(pop_size)
+	]
 
 	# Cargar checkpoint anterior para heredar la proto-sintaxis si se configura
 	resume_checkpoint = config.get("resume_checkpoint")
@@ -150,9 +153,29 @@ def run_arena():
 		micro_vocab_words = config["micro_vocab_words"]
 		if not micro_vocab_words:
 			micro_vocab_words = [
-				"gato", "perro", "casa", "árbol", "agua", "fuego", "tierra", "aire", "sol", "luna",
-				"peligro", "seguridad", "búnker", "agente", "código", "miedo", "alegría", "ira",
-				"tristeza", "dolor", "hambre", "neutral", "urgencia"
+				"gato",
+				"perro",
+				"casa",
+				"árbol",
+				"agua",
+				"fuego",
+				"tierra",
+				"aire",
+				"sol",
+				"luna",
+				"peligro",
+				"seguridad",
+				"búnker",
+				"agente",
+				"código",
+				"miedo",
+				"alegría",
+				"ira",
+				"tristeza",
+				"dolor",
+				"hambre",
+				"neutral",
+				"urgencia",
 			]
 		micro_vocab_words = list(set(micro_vocab_words))
 		logit_mask = torch.zeros(8192, dtype=torch.bool, device=device)
@@ -215,7 +238,9 @@ def run_arena():
 			tau = max(tau_min, tau_start * (1.0 - current_step / total_steps))
 
 			# Generar lote de conceptos objetivos, estados emocionales y homeostasis
-			concept_targets, concept_token_ids, emotion_targets, emotion_token_ids, homeostasis_targets, homeostasis_token_ids = breeder.generate_batch(batch_size)
+			concept_targets, concept_token_ids, emotion_targets, emotion_token_ids, homeostasis_targets, homeostasis_token_ids = (
+				breeder.generate_batch(batch_size)
+			)
 			concept_token_ids_tensor = torch.from_numpy(concept_token_ids).long().to(device)
 			emotion_token_ids_tensor = torch.from_numpy(emotion_token_ids).long().to(device)
 			homeostasis_token_ids_tensor = torch.from_numpy(homeostasis_token_ids).long().to(device)
@@ -287,7 +312,15 @@ def run_arena():
 			h_ok = (preds_homeostasis == homeostasis_token_ids_tensor).sum().item()
 
 			# Entendimiento mutuo exitoso si se descodifican correctamente los TRES componentes
-			correct_joint = ((preds_concept == concept_token_ids_tensor) & (preds_emotion == emotion_token_ids_tensor) & (preds_homeostasis == homeostasis_token_ids_tensor)).sum().item()
+			correct_joint = (
+				(
+					(preds_concept == concept_token_ids_tensor)
+					& (preds_emotion == emotion_token_ids_tensor)
+					& (preds_homeostasis == homeostasis_token_ids_tensor)
+				)
+				.sum()
+				.item()
+			)
 
 			epoch_correct += correct_joint
 			epoch_concept_correct += c_ok
@@ -338,8 +371,10 @@ def run_arena():
 			)
 
 			if step % 40 == 0:
-				print(f"  step {step:3d} | τ={tau:.3f} TF={tf_ratio:.0%} | loss={loss.item():.3f} | "
-					  f"target=({sample_c},{sample_e},{sample_h}) → pred=({pred_c_name},{pred_e_name},{pred_h_name})")
+				print(
+					f"  step {step:3d} | τ={tau:.3f} TF={tf_ratio:.0%} | loss={loss.item():.3f} | "
+					f"target=({sample_c},{sample_e},{sample_h}) → pred=({pred_c_name},{pred_e_name},{pred_h_name})"
+				)
 
 			current_step += 1
 
@@ -355,7 +390,9 @@ def run_arena():
 		acc_h = (epoch_homeostasis_correct / epoch_total) * 100
 		acc_j = (epoch_correct / epoch_total) * 100
 
-		print(f"Pérdida promedio: {avg_loss:.4f} | Concepto: {acc_c:.2f}% | Emoción: {acc_e:.2f}% | Homeostasis: {acc_h:.2f}% | Entendimiento Mutuo (Accuracy): {acc_j:.2f}%")
+		print(
+			f"Pérdida promedio: {avg_loss:.4f} | Concepto: {acc_c:.2f}% | Emoción: {acc_e:.2f}% | Homeostasis: {acc_h:.2f}% | Entendimiento Mutuo (Accuracy): {acc_j:.2f}%"
+		)
 		print(f"Fitness de la Población: {[f'Agent_{i}: {f * 100:.2f}%' for i, f in enumerate(fitness)]}")
 
 		# Determinar la fase actual del schedule para co-evolución
@@ -379,11 +416,14 @@ def run_arena():
 			svd_crossover(parent_a=population[parent_a_idx], parent_b=population[parent_b_idx], child=population[worst_idx], alpha=0.5, sigma=0.01)
 			# Reiniciar el optimizador del peor agente tras la mutación de pesos
 			optimizers[worst_idx] = torch.optim.AdamW(filter(lambda p: p.requires_grad, population[worst_idx].parameters()), lr=lr)
-			logger.log_event("evolution", {
-				"worst": worst_idx,
-				"parent_a": parent_a_idx,
-				"parent_b": parent_b_idx,
-			})
+			logger.log_event(
+				"evolution",
+				{
+					"worst": worst_idx,
+					"parent_a": parent_a_idx,
+					"parent_b": parent_b_idx,
+				},
+			)
 		else:
 			worst_idx = -1
 			parent_a_idx = -1

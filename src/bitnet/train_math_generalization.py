@@ -1,6 +1,7 @@
 import argparse
 import json
 import os
+
 import numpy as np
 import torch
 import torch.nn as nn
@@ -8,8 +9,8 @@ import torch.nn.functional as F
 
 from src.bitnet.generalization_breeder import CompositionalMathDatasetBreeder
 from src.bitnet.modeling_bitnet import BitNet4LayerModel
-from src.bitnet.translator import SovereignTranslator
 from src.bitnet.telemetry import ExperimentLogger
+from src.bitnet.translator import SovereignTranslator
 
 
 def svd_crossover(parent_a: nn.Module, parent_b: nn.Module, child: nn.Module, alpha: float = 0.5, sigma: float = 0.01):
@@ -49,7 +50,7 @@ def load_config() -> dict:
 	default_path = os.path.join(base_dir, "configs", "experiments", "EXP_013.json")
 	if not os.path.exists(default_path):
 		default_path = os.path.join(base_dir, "configs", "experiments", "default.json")
-	
+
 	with open(default_path, encoding="utf-8") as f:
 		config = json.load(f)
 
@@ -64,7 +65,7 @@ def load_config() -> dict:
 			config.update(exp_config)
 		else:
 			print(f"⚠️ Archivo de configuración no encontrado: {config_path}. Usando valores predeterminados.")
-	
+
 	return config
 
 
@@ -103,7 +104,9 @@ def run_math_generalization_arena():
 	pop_size = config["pop_size"]
 	hidden_dim = config["hidden_dim"]
 	num_layers = config["num_layers"]
-	population = [BitNet4LayerModel(vocab_embeddings=vocab_embeddings, hidden_dim=hidden_dim, num_layers=num_layers).to(device) for _ in range(pop_size)]
+	population = [
+		BitNet4LayerModel(vocab_embeddings=vocab_embeddings, hidden_dim=hidden_dim, num_layers=num_layers).to(device) for _ in range(pop_size)
+	]
 
 	lr = config["lr"]
 	optimizers = [torch.optim.AdamW(filter(lambda p: p.requires_grad, model.parameters()), lr=lr) for model in population]
@@ -172,8 +175,10 @@ def run_math_generalization_arena():
 			tau = max(tau_min, tau_start * (1.0 - current_step / total_steps))
 
 			# Lote aritmético del conjunto de entrenamiento: (A, op, B, R)
-			op_a_targets, op_a_token_ids, operator_targets, operator_token_ids, op_b_targets, op_b_token_ids, result_targets, result_token_ids = breeder.generate_batch(batch_size, mode="train")
-			
+			op_a_targets, op_a_token_ids, operator_targets, operator_token_ids, op_b_targets, op_b_token_ids, result_targets, result_token_ids = (
+				breeder.generate_batch(batch_size, mode="train")
+			)
+
 			op_a_token_ids_tensor = torch.from_numpy(op_a_token_ids).long().to(device)
 			operator_token_ids_tensor = torch.from_numpy(operator_token_ids).long().to(device)
 			op_b_token_ids_tensor = torch.from_numpy(op_b_token_ids).long().to(device)
@@ -261,10 +266,16 @@ def run_math_generalization_arena():
 			b_ok = (preds_b == op_b_token_ids_tensor).sum().item()
 			r_ok = (preds_r == result_token_ids_tensor).sum().item()
 
-			correct_joint = ((preds_a == op_a_token_ids_tensor) & 
-							 (preds_op == operator_token_ids_tensor) & 
-							 (preds_b == op_b_token_ids_tensor) & 
-							 (preds_r == result_token_ids_tensor)).sum().item()
+			correct_joint = (
+				(
+					(preds_a == op_a_token_ids_tensor)
+					& (preds_op == operator_token_ids_tensor)
+					& (preds_b == op_b_token_ids_tensor)
+					& (preds_r == result_token_ids_tensor)
+				)
+				.sum()
+				.item()
+			)
 
 			epoch_correct += correct_joint
 			epoch_a_correct += a_ok
@@ -290,7 +301,9 @@ def run_math_generalization_arena():
 		acc_b = (epoch_b_correct / epoch_total) * 100
 		acc_j = (epoch_correct / epoch_total) * 100
 
-		print(f"[Train] Pérdida: {avg_loss:.4f} | Operando A: {acc_a:.2f}% | Operador: {acc_op:.2f}% | Operando B: {acc_b:.2f}% | Consenso: {acc_j:.2f}%")
+		print(
+			f"[Train] Pérdida: {avg_loss:.4f} | Operando A: {acc_a:.2f}% | Operador: {acc_op:.2f}% | Operando B: {acc_b:.2f}% | Consenso: {acc_j:.2f}%"
+		)
 
 		# --- FASE DE VALIDACIÓN (SISTEMÁTICA / TEST SPLIT) ---
 		model_eval_correct = 0
@@ -328,10 +341,7 @@ def run_math_generalization_arena():
 						pred_b = torch.argmax(logits_lis[0, 2, :]).item()
 						pred_r = torch.argmax(logits_lis[0, 3, :]).item()
 
-						joint_ok = (pred_a == a_token_id and 
-									pred_op == op_token_id and 
-									pred_b == b_token_id and 
-									pred_r == r_token_id)
+						joint_ok = pred_a == a_token_id and pred_op == op_token_id and pred_b == b_token_id and pred_r == r_token_id
 						if joint_ok:
 							model_eval_correct += 1
 						model_eval_total += 1

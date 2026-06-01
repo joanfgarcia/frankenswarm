@@ -29,19 +29,17 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 
-from src.bitnet.modeling_bitnet import BitNet4LayerModel
+from src.bitnet.complex_world import (
+	COMPLEX_ACTIONS,
+	ComplexWorld,
+)
 from src.bitnet.glyph_vocabulary import (
-	WORD_NAMES, WORD_INDEX, N_WORDS, N_EMOTIONS,
-	EMOTION_INDEX, EMOTION_NAMES,
+	N_EMOTIONS,
 )
 from src.bitnet.minimal_world import (
-	MinimalWorld, ACTIONS, ACTION_INDICES, ACTION_TO_IDX,
-	ACTION_TO_GLYPH, LOCATION_GLYPHS,
+	MinimalWorld,
 )
-from src.bitnet.complex_world import (
-	ComplexWorld, COMPLEX_ACTIONS, COMPLEX_ACTION_INDICES,
-	COMPLEX_LOCATIONS,
-)
+from src.bitnet.modeling_bitnet import BitNet4LayerModel
 from src.bitnet.net2net import grow_action_head
 from src.bitnet.telemetry import ExperimentLogger
 from src.bitnet.train_survival import perception_to_input
@@ -444,7 +442,7 @@ def run_neurogenesis_training():
 
 	# ═══ Final ═══
 	print(f"\n{'═'*60}")
-	print(f"📊 Resultados finales — Neurogenésis")
+	print("📊 Resultados finales — Neurogenésis")
 	print(f"   Best: {best_survival:.0f} ticks")
 	print(f"   Avg (últimos 100): {np.mean(survival_history[-100:]):.1f}")
 	print(f"   Growth events: {total_growths}")
@@ -452,7 +450,7 @@ def run_neurogenesis_training():
 	print(f"   Final params: {sum(p.numel() for p in model.action_head.parameters()):,}")
 	print(f"   Inicio → Final: {head_params:,} → {sum(p.numel() for p in model.action_head.parameters()):,}")
 	if growth_events:
-		print(f"\n   📈 Growth timeline:")
+		print("\n   📈 Growth timeline:")
 		for g in growth_events:
 			print(f"      Ep {g['episode']:4d} | {g['old_width']}→{g['new_width']} | conv={g['avg_convergence']:.3f}")
 	print(f"{'═'*60}")

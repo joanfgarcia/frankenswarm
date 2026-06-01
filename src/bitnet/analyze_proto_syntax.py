@@ -22,9 +22,21 @@ def _get_telemetry_dir() -> str:
 
 
 CONCEPTS = [
-	"gato", "perro", "casa", "árbol", "agua",
-	"fuego", "tierra", "aire", "sol", "luna",
-	"peligro", "seguridad", "búnker", "agente", "código",
+	"gato",
+	"perro",
+	"casa",
+	"árbol",
+	"agua",
+	"fuego",
+	"tierra",
+	"aire",
+	"sol",
+	"luna",
+	"peligro",
+	"seguridad",
+	"búnker",
+	"agente",
+	"código",
 ]
 EMOTIONS = ["miedo", "alegría", "ira", "tristeza", "dolor", "hambre"]
 
@@ -92,7 +104,7 @@ def analyze(experiment_id: str = "005"):
 	# Group messages by target
 	target_messages = defaultdict(list)
 	is_3d = "target_homeostasis" in autonomy_steps[0]
-	
+
 	for s in autonomy_steps:
 		if is_3d:
 			key = (s["target_concept"], s["target_emotion"], s["target_homeostasis"])
@@ -138,7 +150,7 @@ def analyze(experiment_id: str = "005"):
 	print("=" * 60)
 
 	msg_len = len(autonomy_steps[0]["message_tokens"])
-	
+
 	pos_by_concept = [defaultdict(Counter) for _ in range(msg_len)]
 	pos_by_emotion = [defaultdict(Counter) for _ in range(msg_len)]
 	pos_by_homeostasis = [defaultdict(Counter) for _ in range(msg_len)] if is_3d else None
@@ -148,7 +160,7 @@ def analyze(experiment_id: str = "005"):
 		concept = s["target_concept"]
 		emotion = s["target_emotion"]
 		homeo = s.get("target_homeostasis", "") if is_3d else None
-		
+
 		for pos in range(min(len(msg), msg_len)):
 			token = msg[pos]
 			pos_by_concept[pos][concept][token] += 1
@@ -235,11 +247,19 @@ def analyze(experiment_id: str = "005"):
 			homeo_accs = [e["acc_homeostasis"] for e in autonomy_epochs]
 
 		print(f"\n  Épocas de autonomía ({len(autonomy_epochs)} epochs):")
-		print(f"    Concepto:     μ={np.mean(concept_accs):.2f}%  σ={np.std(concept_accs):.2f}%  min={np.min(concept_accs):.2f}%  max={np.max(concept_accs):.2f}%")
-		print(f"    Emoción:      μ={np.mean(emotion_accs):.2f}%  σ={np.std(emotion_accs):.2f}%  min={np.min(emotion_accs):.2f}%  max={np.max(emotion_accs):.2f}%")
+		print(
+			f"    Concepto:     μ={np.mean(concept_accs):.2f}%  σ={np.std(concept_accs):.2f}%  min={np.min(concept_accs):.2f}%  max={np.max(concept_accs):.2f}%"
+		)
+		print(
+			f"    Emoción:      μ={np.mean(emotion_accs):.2f}%  σ={np.std(emotion_accs):.2f}%  min={np.min(emotion_accs):.2f}%  max={np.max(emotion_accs):.2f}%"
+		)
 		if has_h:
-			print(f"    Homeostasis:  μ={np.mean(homeo_accs):.2f}%  σ={np.std(homeo_accs):.2f}%  min={np.min(homeo_accs):.2f}%  max={np.max(homeo_accs):.2f}%")
-		print(f"    Conjunta:     μ={np.mean(joint_accs):.2f}%  σ={np.std(joint_accs):.2f}%  min={np.min(joint_accs):.2f}%  max={np.max(joint_accs):.2f}%")
+			print(
+				f"    Homeostasis:  μ={np.mean(homeo_accs):.2f}%  σ={np.std(homeo_accs):.2f}%  min={np.min(homeo_accs):.2f}%  max={np.max(homeo_accs):.2f}%"
+			)
+		print(
+			f"    Conjunta:     μ={np.mean(joint_accs):.2f}%  σ={np.std(joint_accs):.2f}%  min={np.min(joint_accs):.2f}%  max={np.max(joint_accs):.2f}%"
+		)
 
 	# ── 5. Confusion geometry ──
 	print("\n" + "=" * 60)
@@ -277,6 +297,8 @@ def analyze(experiment_id: str = "005"):
 	print("\n" + "=" * 60)
 	print("🔬 Análisis completo.")
 	print("=" * 60)
+
+
 if __name__ == "__main__":
 	exp_id = sys.argv[1] if len(sys.argv) > 1 else "005"
 	analyze(exp_id)

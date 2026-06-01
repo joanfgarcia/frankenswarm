@@ -23,9 +23,21 @@ from src.bitnet.modeling_bitnet import BitNet4LayerModel
 from src.bitnet.telemetry import ExperimentLogger
 
 CONCEPTS = [
-	"gato", "perro", "casa", "árbol", "agua",
-	"fuego", "tierra", "aire", "sol", "luna",
-	"peligro", "seguridad", "búnker", "agente", "código",
+	"gato",
+	"perro",
+	"casa",
+	"árbol",
+	"agua",
+	"fuego",
+	"tierra",
+	"aire",
+	"sol",
+	"luna",
+	"peligro",
+	"seguridad",
+	"búnker",
+	"agente",
+	"código",
 ]
 EMOTIONS = ["miedo", "alegría", "ira", "tristeza", "dolor", "hambre"]
 MICRO_VOCAB = CONCEPTS + EMOTIONS
@@ -72,6 +84,7 @@ class DualHeadAgent(nn.Module):
 
 def build_micro_embeddings():
 	from fastembed import TextEmbedding
+
 	model = TextEmbedding()
 	embeddings = list(model.embed(MICRO_VOCAB))
 	return np.array([e if isinstance(e, np.ndarray) else np.array(e) for e in embeddings], dtype=np.float32)
@@ -107,8 +120,7 @@ def save_checkpoint(agents, epoch, experiment_id):
 	for i, agent in enumerate(agents):
 		torch.save(agent.state_dict(), os.path.join(ckpt_dir, f"agent_{i}_epoch_{epoch:03d}.pt"))
 	# Also save the embeddings separately for comparison
-	torch.save(agents[0].base.vocab_embeddings.data.cpu(),
-			   os.path.join(ckpt_dir, f"embeddings_epoch_{epoch:03d}.pt"))
+	torch.save(agents[0].base.vocab_embeddings.data.cpu(), os.path.join(ckpt_dir, f"embeddings_epoch_{epoch:03d}.pt"))
 	print(f"  [Checkpoint] Guardado (época {epoch})")
 
 
@@ -133,10 +145,18 @@ def run_arena():
 	params = {
 		"experiment": "005b_unfrozen_embeddings",
 		"frozen_embeddings": False,
-		"vocab_size": vocab_size, "hidden_dim": 256, "num_layers": 4,
-		"pop_size": pop_size, "epochs": epochs, "steps_per_epoch": steps_per_epoch,
-		"batch_size": batch_size, "lr": lr, "tau_min": tau_min, "beta_emotion": beta_emotion,
-		"nursery_epochs": nursery_epochs, "transition_epochs": transition_epochs,
+		"vocab_size": vocab_size,
+		"hidden_dim": 256,
+		"num_layers": 4,
+		"pop_size": pop_size,
+		"epochs": epochs,
+		"steps_per_epoch": steps_per_epoch,
+		"batch_size": batch_size,
+		"lr": lr,
+		"tau_min": tau_min,
+		"beta_emotion": beta_emotion,
+		"nursery_epochs": nursery_epochs,
+		"transition_epochs": transition_epochs,
 	}
 	logger = ExperimentLogger("005b", params)
 
@@ -215,9 +235,13 @@ def run_arena():
 			c_ok = (preds_c == concept_targets).sum().item()
 			e_ok = (preds_e == emotion_targets).sum().item()
 			j_ok = ((preds_c == concept_targets) & (preds_e == emotion_targets)).sum().item()
-			concept_correct += c_ok; emotion_correct += e_ok; joint_correct += j_ok
-			epoch_total += batch_size; epoch_losses.append(loss.item())
-			interactions[idx_s, idx_l] += batch_size; successes[idx_s, idx_l] += j_ok
+			concept_correct += c_ok
+			emotion_correct += e_ok
+			joint_correct += j_ok
+			epoch_total += batch_size
+			epoch_losses.append(loss.item())
+			interactions[idx_s, idx_l] += batch_size
+			successes[idx_s, idx_l] += j_ok
 			current_step += 1
 
 			if tf_ratio == 0.0:
@@ -235,19 +259,32 @@ def run_arena():
 			pred_e_name = EMOTIONS[preds_e[0].item()] if preds_e[0].item() < num_emotions else "?"
 
 			logger.log_step(
-				epoch=epoch + 1, step=step, loss=loss.item(),
-				loss_concept=loss_c, loss_emotion=loss_e,
-				tau=tau, speaker_id=idx_s, listener_id=idx_l,
-				target_concept=sample_c, target_emotion=sample_e,
-				pred_concept=pred_c_name, pred_emotion=pred_e_name,
-				concept_correct=c_ok, emotion_correct=e_ok, joint_correct=j_ok,
-				batch_size=batch_size, message_tokens=msg_tokens_log, tf_ratio=tf_ratio,
+				epoch=epoch + 1,
+				step=step,
+				loss=loss.item(),
+				loss_concept=loss_c,
+				loss_emotion=loss_e,
+				tau=tau,
+				speaker_id=idx_s,
+				listener_id=idx_l,
+				target_concept=sample_c,
+				target_emotion=sample_e,
+				pred_concept=pred_c_name,
+				pred_emotion=pred_e_name,
+				concept_correct=c_ok,
+				emotion_correct=e_ok,
+				joint_correct=j_ok,
+				batch_size=batch_size,
+				message_tokens=msg_tokens_log,
+				tf_ratio=tf_ratio,
 			)
 
 			if step % 40 == 0:
 				msg_str = f" msg={msg_tokens_log}" if msg_tokens_log else ""
-				print(f"  step {step:3d} | τ={tau:.3f} TF={tf_ratio:.0%} | loss={loss.item():.3f} | "
-					  f"({sample_c},{sample_e})→({pred_c_name},{pred_e_name}){msg_str}")
+				print(
+					f"  step {step:3d} | τ={tau:.3f} TF={tf_ratio:.0%} | loss={loss.item():.3f} | "
+					f"({sample_c},{sample_e})→({pred_c_name},{pred_e_name}){msg_str}"
+				)
 
 		for i in range(pop_size):
 			sent = interactions[i, :].sum() + interactions[:, i].sum()
@@ -259,9 +296,17 @@ def run_arena():
 		acc_j = joint_correct / epoch_total * 100
 		print(f"Loss: {avg_loss:.4f} | Concepto: {acc_c:.2f}% | Emoción: {acc_e:.2f}% | Conjunta: {acc_j:.2f}%")
 
-		logger.log_epoch(epoch=epoch + 1, loss_avg=avg_loss,
-			acc_concept=acc_c, acc_emotion=acc_e, acc_joint=acc_j,
-			fitness=fitness.tolist(), worst_agent=int(np.argmin(fitness)), parent_a=-1, parent_b=-1)
+		logger.log_epoch(
+			epoch=epoch + 1,
+			loss_avg=avg_loss,
+			acc_concept=acc_c,
+			acc_emotion=acc_e,
+			acc_joint=acc_j,
+			fitness=fitness.tolist(),
+			worst_agent=int(np.argmin(fitness)),
+			parent_a=-1,
+			parent_b=-1,
+		)
 
 		if epoch >= nursery_epochs:
 			worst = int(np.argmin(fitness))
@@ -309,16 +354,19 @@ def run_arena():
 		if emotion_confusion[r, c] > 0:
 			print(f"  {EMOTIONS[r]:12s} → {EMOTIONS[c]:12s}  ({emotion_confusion[r, c]} veces)")
 
-	logger.log_event("embedding_drift", {
-		"tokens": MICRO_VOCAB,
-		"drift": drift.tolist(),
-		"fuego_sol_before": cos_sim(original_embeddings[5], original_embeddings[8]),
-		"fuego_sol_after": cos_sim(final_embeddings[5], final_embeddings[8]),
-	})
+	logger.log_event(
+		"embedding_drift",
+		{
+			"tokens": MICRO_VOCAB,
+			"drift": drift.tolist(),
+			"fuego_sol_before": cos_sim(original_embeddings[5], original_embeddings[8]),
+			"fuego_sol_after": cos_sim(final_embeddings[5], final_embeddings[8]),
+		},
+	)
 	logger.log_event("confusion_concept", {"labels": CONCEPTS, "matrix": concept_confusion.tolist()})
 	logger.log_event("confusion_emotion", {"labels": EMOTIONS, "matrix": emotion_confusion.tolist()})
 	logger.close()
-	print(f"\n[Telemetry] storage/telemetry/EXP_005b.jsonl")
+	print("\n[Telemetry] storage/telemetry/EXP_005b.jsonl")
 
 
 if __name__ == "__main__":

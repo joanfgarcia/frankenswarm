@@ -91,10 +91,7 @@ def eval_subtraction_mastery(experiment_id: str = "EXP_014"):
 			pred_b_id = torch.argmax(logits[0, 2, :]).item()
 			pred_r_id = torch.argmax(logits[0, 3, :]).item()
 
-			joint_ok = (pred_a_id == a_token_id and 
-						pred_op_id == op_token_id and 
-						pred_b_id == b_token_id and 
-						pred_r_id == r_token_id)
+			joint_ok = pred_a_id == a_token_id and pred_op_id == op_token_id and pred_b_id == b_token_id and pred_r_id == r_token_id
 
 			if op == 0:
 				sum_total += 1
@@ -137,13 +134,13 @@ def eval_subtraction_mastery(experiment_id: str = "EXP_014"):
 		print("-" * 65)
 		print(f"📊 RESULTADOS DE AUTO-COMUNICACIÓN - {set_name.upper()}")
 		print("-" * 65)
-		print(f"  - CONJUNTO GLOBAL:            {correct_joint/total*100:.2f}% ({correct_joint}/{total})")
+		print(f"  - CONJUNTO GLOBAL:            {correct_joint / total * 100:.2f}% ({correct_joint}/{total})")
 		if sum_total > 0:
-			print(f"  - ➕ SUMAS:                   {sum_joint_ok/sum_total*100:.2f}% ({sum_joint_ok}/{sum_total})")
+			print(f"  - ➕ SUMAS:                   {sum_joint_ok / sum_total * 100:.2f}% ({sum_joint_ok}/{sum_total})")
 		if sub_total > 0:
-			print(f"  - ➖ RESTAS (Sub):            {sub_joint_ok/sub_total*100:.2f}% ({sub_joint_ok}/{sub_total})")
+			print(f"  - ➖ RESTAS (Sub):            {sub_joint_ok / sub_total * 100:.2f}% ({sub_joint_ok}/{sub_total})")
 		if mul_total > 0:
-			print(f"  - ✖️ MULTIPLICACIONES (Mul):  {mul_joint_ok/mul_total*100:.2f}% ({mul_joint_ok}/{mul_total})")
+			print(f"  - ✖️ MULTIPLICACIONES (Mul):  {mul_joint_ok / mul_total * 100:.2f}% ({mul_joint_ok}/{mul_total})")
 		print("-" * 65)
 
 	run_eval_set(breeder.train_equations, "TRAIN (Visto)")
@@ -152,6 +149,7 @@ def eval_subtraction_mastery(experiment_id: str = "EXP_014"):
 
 if __name__ == "__main__":
 	import argparse
+
 	parser = argparse.ArgumentParser(description="Evaluador de Dominio de Restas")
 	parser.add_argument("experiment_id", type=str, nargs="?", default="EXP_014", help="ID del experimento")
 	args = parser.parse_args()

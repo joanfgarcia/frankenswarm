@@ -344,7 +344,7 @@ def run_resonance_training():
 
 			elif loss_mode == "every":
 				# Supervisión en cada paso: cada paso debe producir tokens correctos
-				intermediate_targets_dict = {i: None for i in range(n_steps)}
+				intermediate_targets_dict = dict.fromkeys(range(n_steps))
 				speaker_logits, intermediate_logits = speaker.forward_resonance_training(
 					current_input, n_steps=n_steps, pos_mode=pos_mode,
 					intermediate_targets=intermediate_targets_dict, logit_mask=logit_mask,
@@ -360,7 +360,7 @@ def run_resonance_training():
 
 			elif loss_mode == "weighted":
 				# Supervisión ligera intermedia + peso fuerte final
-				intermediate_targets_dict = {i: None for i in range(n_steps)}
+				intermediate_targets_dict = dict.fromkeys(range(n_steps))
 				speaker_logits, intermediate_logits = speaker.forward_resonance_training(
 					current_input, n_steps=n_steps, pos_mode=pos_mode,
 					intermediate_targets=intermediate_targets_dict, logit_mask=logit_mask,

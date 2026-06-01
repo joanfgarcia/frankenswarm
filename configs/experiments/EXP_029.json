@@ -1,0 +1,33 @@
+{
+	"experiment_id": "EXP_029",
+	"vocab_size": 8192,
+	"hidden_dim": 256,
+	"num_layers": 3,
+	"use_pos_embedding": true,
+	"pop_size": 4,
+	"epochs": 60,
+	"steps_per_epoch": 200,
+	"batch_size": 16,
+	"lr": 0.0004,
+	"weight_decay": 0.05,
+	"tau_start": 1.0,
+	"tau_min": 0.30,
+	"nursery_end": 15,
+	"transition_end": 40,
+	"tf_min": 0.10,
+	"use_logit_mask": true,
+	"resume_checkpoint": "storage/experiments/EXP_028A/best_agent.pt",
+	"freeze_core": false,
+	"svd_interval": 4,
+	"svd_phases": ["recreo", "autonomia"],
+	"seed": 42,
+	"fear_amplifier": 2.5,
+	"max_chain_depth": 3,
+	"micro_vocab_words": [
+		"gato", "perro", "casa", "árbol", "agua", "fuego",
+		"tierra", "aire", "sol", "luna", "peligro", "seguridad",
+		"implica", "contradice", "cadena", "niega",
+		"verdad", "falsedad",
+		"miedo", "alegría", "ira", "tristeza", "dolor", "hambre"
+	]
+}

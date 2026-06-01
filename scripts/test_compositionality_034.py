@@ -23,12 +23,13 @@ import torch.nn.functional as F
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
 from src.bitnet.glyph_vocabulary import (
-	VOCABULARY, WORD_NAMES, WORD_INDEX, N_WORDS, N_PRIMES,
-	GLYPH_TABLE, PRIME_INDEX, EMOTION_NAMES, EMOTION_INDEX,
-	N_EMOTIONS, _make_glyph, GlyphEmbedding,
+	EMOTION_INDEX,
+	GLYPH_TABLE,
+	N_EMOTIONS,
+	WORD_NAMES,
+	_make_glyph,
 )
 from src.bitnet.modeling_bitnet import BitNet4LayerModel
-
 
 # ═══════════════════════════════════════════════════════════════════
 # PALABRAS NUEVAS (nunca vistas en entrenamiento)
@@ -98,7 +99,7 @@ def test_zero_shot_inference(model, device, new_words, n_steps=2):
 	"""
 	model.eval()
 	print(f"\n{'═'*70}")
-	print(f"  TEST DE COMPOSICIONALIDAD ZERO-SHOT")
+	print("  TEST DE COMPOSICIONALIDAD ZERO-SHOT")
 	print(f"{'═'*70}")
 
 	for new_name, new_glyph in new_words.items():
@@ -106,7 +107,7 @@ def test_zero_shot_inference(model, device, new_words, n_steps=2):
 
 		# Similitud con vocabulario existente
 		sims = cosine_similarity_to_vocabulary(new_glyph, GLYPH_TABLE, WORD_NAMES)
-		print(f"  Vecinos (coseno de trits):")
+		print("  Vecinos (coseno de trits):")
 		for cos, name in sims:
 			print(f"    {name:<15} cos={cos:.3f}")
 
@@ -135,13 +136,13 @@ def test_zero_shot_inference(model, device, new_words, n_steps=2):
 			probs = F.softmax(logits[0, 0, :], dim=-1)
 
 			top5 = torch.topk(probs, 5)
-			print(f"  Predicción sin emoción (top 5):")
+			print("  Predicción sin emoción (top 5):")
 			for prob, idx in zip(top5.values, top5.indices):
 				print(f"    {WORD_NAMES[idx.item()]:<15} p={prob.item():.3f}")
 
 			# Con emociones
 			if model.emotion_embeddings is not None:
-				print(f"  Con emociones:")
+				print("  Con emociones:")
 				for emo_name in ["miedo", "alegría", "hambre"]:
 					emo_id = EMOTION_INDEX[emo_name]
 					emo_vec = model.emotion_embeddings(
@@ -189,7 +190,7 @@ def main():
 	test_zero_shot_inference(model, device, NEW_WORDS, n_steps=2)
 
 	print(f"\n{'═'*70}")
-	print(f"  FIN DEL TEST DE COMPOSICIONALIDAD")
+	print("  FIN DEL TEST DE COMPOSICIONALIDAD")
 	print(f"{'═'*70}")
 
 

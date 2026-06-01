@@ -24,15 +24,18 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 
-from src.bitnet.modeling_bitnet import BitNet4LayerModel
 from src.bitnet.glyph_vocabulary import (
-	WORD_NAMES, WORD_INDEX, N_WORDS, N_EMOTIONS,
-	EMOTION_INDEX, EMOTION_NAMES,
+	N_EMOTIONS,
+	WORD_INDEX,
 )
 from src.bitnet.minimal_world import (
-	MinimalWorld, ACTIONS, ACTION_INDICES, ACTION_TO_IDX,
-	ACTION_TO_GLYPH, LOCATION_GLYPHS, AgentState,
+	ACTION_INDICES,
+	ACTION_TO_IDX,
+	ACTIONS,
+	LOCATION_GLYPHS,
+	MinimalWorld,
 )
+from src.bitnet.modeling_bitnet import BitNet4LayerModel
 from src.bitnet.telemetry import ExperimentLogger
 
 
@@ -322,7 +325,7 @@ def run_survival_training():
 	# Final
 	avg_survival = np.mean(survival_history[-100:])
 	print(f"\n{'═'*60}")
-	print(f"📊 Resultados finales")
+	print("📊 Resultados finales")
 	print(f"   Best: {best_survival:.0f} ticks")
 	print(f"   Avg (últimos 100): {avg_survival:.1f} ticks")
 	print(f"   Max posible: {max_ticks} ticks")

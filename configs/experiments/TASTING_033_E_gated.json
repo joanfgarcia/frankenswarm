@@ -1,0 +1,49 @@
+{
+    "seed": 42,
+    "pop_size": 4,
+    "max_chain_depth": 2,
+    "fear_amplifier": 3.0,
+    "use_logit_mask": true,
+    "svd_interval": 3,
+    "svd_phases": [
+        "recreo",
+        "autonomia"
+    ],
+    "model": {
+        "hidden_dim": 256,
+        "num_layers": 3,
+        "use_pos_embedding": true
+    },
+    "resonance": {
+        "pos_mode": "clock",
+        "n_steps": 2,
+        "loss_mode": "weighted",
+        "max_resonance_steps": 5,
+        "intermediate_loss_weight": 0.2,
+        "watcher_interval_epochs": 10
+    },
+    "training": {
+        "epochs": 40,
+        "steps_per_epoch": 50,
+        "batch_size": 32,
+        "lr": 0.0003,
+        "weight_decay": 0.05,
+        "grad_clip": 1.0
+    },
+    "curriculum": {
+        "tau_start": 1.0,
+        "tau_min": 0.3,
+        "nursery_end": 8,
+        "transition_end": 20,
+        "tf_min": 0.1
+    },
+    "early_stopping": {
+        "patience": 30
+    },
+    "experiment_id": "TASTING_033_E_gated",
+    "condition": "E",
+    "emotion": {
+        "mode": "gated",
+        "dim": 64
+    }
+}

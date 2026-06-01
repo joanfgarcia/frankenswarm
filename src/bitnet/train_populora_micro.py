@@ -20,12 +20,23 @@ import torch.nn.functional as F
 from src.bitnet.modeling_bitnet import BitNet4LayerModel
 from src.bitnet.telemetry import ExperimentLogger
 
-
 # ── Micro-Vocabulary ──────────────────────────────────────────────────
 CONCEPTS = [
-	"gato", "perro", "casa", "árbol", "agua",
-	"fuego", "tierra", "aire", "sol", "luna",
-	"peligro", "seguridad", "búnker", "agente", "código",
+	"gato",
+	"perro",
+	"casa",
+	"árbol",
+	"agua",
+	"fuego",
+	"tierra",
+	"aire",
+	"sol",
+	"luna",
+	"peligro",
+	"seguridad",
+	"búnker",
+	"agente",
+	"código",
 ]
 EMOTIONS = ["miedo", "alegría", "ira", "tristeza", "dolor", "hambre"]
 MICRO_VOCAB = CONCEPTS + EMOTIONS
@@ -86,6 +97,7 @@ class DualHeadAgent(nn.Module):
 
 def build_micro_embeddings() -> np.ndarray:
 	from fastembed import TextEmbedding
+
 	model = TextEmbedding()
 	embeddings = list(model.embed(MICRO_VOCAB))
 	return np.array([e if isinstance(e, np.ndarray) else np.array(e) for e in embeddings], dtype=np.float32)
@@ -146,21 +158,31 @@ def run_arena():
 
 	params = {
 		"experiment": "004b_scheduled_teacher_forcing",
-		"vocab_size": vocab_size, "num_concepts": num_concepts, "num_emotions": num_emotions,
-		"hidden_dim": 256, "num_layers": 4, "pop_size": pop_size,
-		"epochs": epochs, "steps_per_epoch": steps_per_epoch, "batch_size": batch_size,
-		"lr": lr, "tau_start": tau_start, "tau_min": tau_min, "beta_emotion": beta_emotion,
-		"nursery_end": nursery_end, "transition_end": transition_end,
-		"architecture": "dual_head_unified", "device": str(device),
+		"vocab_size": vocab_size,
+		"num_concepts": num_concepts,
+		"num_emotions": num_emotions,
+		"hidden_dim": 256,
+		"num_layers": 4,
+		"pop_size": pop_size,
+		"epochs": epochs,
+		"steps_per_epoch": steps_per_epoch,
+		"batch_size": batch_size,
+		"lr": lr,
+		"tau_start": tau_start,
+		"tau_min": tau_min,
+		"beta_emotion": beta_emotion,
+		"nursery_end": nursery_end,
+		"transition_end": transition_end,
+		"architecture": "dual_head_unified",
+		"device": str(device),
 	}
 	logger = ExperimentLogger("004b", params)
 
 	# ── Population ──
 	agents = [
-		DualHeadAgent(
-			BitNet4LayerModel(vocab_embeddings=vocab_embeddings, hidden_dim=256, num_layers=4).to(device),
-			num_concepts, num_emotions
-		).to(device)
+		DualHeadAgent(BitNet4LayerModel(vocab_embeddings=vocab_embeddings, hidden_dim=256, num_layers=4).to(device), num_concepts, num_emotions).to(
+			device
+		)
 		for _ in range(pop_size)
 	]
 	optimizers = [torch.optim.AdamW(a.parameters(), lr=lr) for a in agents]
@@ -277,19 +299,30 @@ def run_arena():
 			pred_e_name = EMOTIONS[preds_e[0].item()] if preds_e[0].item() < num_emotions else "?"
 
 			logger.log_step(
-				epoch=epoch + 1, step=step, loss=loss.item(),
-				loss_concept=loss_concept.item(), loss_emotion=loss_emotion.item(),
-				tau=tau, speaker_id=idx_s, listener_id=idx_l,
-				target_concept=sample_c, target_emotion=sample_e,
-				pred_concept=pred_c_name, pred_emotion=pred_e_name,
-				concept_correct=c_ok, emotion_correct=e_ok, joint_correct=j_ok,
+				epoch=epoch + 1,
+				step=step,
+				loss=loss.item(),
+				loss_concept=loss_concept.item(),
+				loss_emotion=loss_emotion.item(),
+				tau=tau,
+				speaker_id=idx_s,
+				listener_id=idx_l,
+				target_concept=sample_c,
+				target_emotion=sample_e,
+				pred_concept=pred_c_name,
+				pred_emotion=pred_e_name,
+				concept_correct=c_ok,
+				emotion_correct=e_ok,
+				joint_correct=j_ok,
 				batch_size=batch_size,
 			)
 
 			if step % 40 == 0:
-				print(f"  step {step:3d} | τ={tau:.3f} TF={tf_ratio:.0%} | loss={loss.item():.3f} "
-					  f"(C:{loss_concept.item():.3f} E:{loss_emotion.item():.3f}) | "
-					  f"target=({sample_c},{sample_e}) → pred=({pred_c_name},{pred_e_name})")
+				print(
+					f"  step {step:3d} | τ={tau:.3f} TF={tf_ratio:.0%} | loss={loss.item():.3f} "
+					f"(C:{loss_concept.item():.3f} E:{loss_emotion.item():.3f}) | "
+					f"target=({sample_c},{sample_e}) → pred=({pred_c_name},{pred_e_name})"
+				)
 
 		# Epoch summary
 		for i in range(pop_size):
@@ -306,10 +339,15 @@ def run_arena():
 		print(f"Fitness: {[f'A{i}:{f * 100:.1f}%' for i, f in enumerate(fitness)]}")
 
 		logger.log_epoch(
-			epoch=epoch + 1, loss_avg=avg_loss,
-			acc_concept=acc_c, acc_emotion=acc_e, acc_joint=acc_j,
-			fitness=fitness.tolist(), worst_agent=int(np.argmin(fitness)),
-			parent_a=-1, parent_b=-1,
+			epoch=epoch + 1,
+			loss_avg=avg_loss,
+			acc_concept=acc_c,
+			acc_emotion=acc_e,
+			acc_joint=acc_j,
+			fitness=fitness.tolist(),
+			worst_agent=int(np.argmin(fitness)),
+			parent_a=-1,
+			parent_b=-1,
 		)
 
 		# Evolution (only in Phase 2+)
@@ -320,9 +358,14 @@ def run_arena():
 			svd_crossover(agents[best_indices[1]], agents[best_indices[0]], agents[worst_idx])
 			optimizers[worst_idx] = torch.optim.AdamW(agents[worst_idx].parameters(), lr=lr)
 
-			logger.log_event("evolution", {
-				"worst": worst_idx, "parent_a": int(best_indices[1]), "parent_b": int(best_indices[0]),
-			})
+			logger.log_event(
+				"evolution",
+				{
+					"worst": worst_idx,
+					"parent_a": int(best_indices[1]),
+					"parent_b": int(best_indices[0]),
+				},
+			)
 
 		# Promotion check (only meaningful in Phase 3)
 		if epoch >= transition_end and acc_j >= 80.0:
@@ -332,7 +375,7 @@ def run_arena():
 			break
 
 	logger.close()
-	print(f"\n[Telemetry] storage/telemetry/EXP_004b.jsonl")
+	print("\n[Telemetry] storage/telemetry/EXP_004b.jsonl")
 
 
 if __name__ == "__main__":

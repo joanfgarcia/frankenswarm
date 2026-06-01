@@ -16,10 +16,7 @@ class CompositionalMathDatasetBreeder:
 		self.split_ratio = split_ratio
 		self.seed = seed
 
-		self.operand_names = [
-			"cero", "uno", "dos", "tres", "cuatro",
-			"cinco", "seis", "siete", "ocho", "nueve", "diez"
-		]
+		self.operand_names = ["cero", "uno", "dos", "tres", "cuatro", "cinco", "seis", "siete", "ocho", "nueve", "diez"]
 		self.operator_names = enabled_operators if enabled_operators is not None else ["suma", "resta"]
 
 		# Obtener Token IDs del translator
@@ -48,11 +45,11 @@ class CompositionalMathDatasetBreeder:
 
 		# Generador pseudoaleatorio con semilla fija
 		rng = np.random.default_rng(self.seed)
-		
+
 		# Para garantizar que todos los tokens aparezcan en el conjunto de train,
 		# podemos forzar un subconjunto mínimo inicial de ecuaciones y luego barajar el resto.
 		# Cada número del 0 al 10 y cada operador debe verse en el train set.
-		
+
 		# Intentar particionar aleatoriamente y verificar cobertura de tokens
 		# Si falla la cobertura, barajar nuevamente (con diferentes semillas de control)
 		temp_seed = self.seed
@@ -119,18 +116,13 @@ class CompositionalMathDatasetBreeder:
 
 		op_a_token_ids = np.array([self.operand_token_ids[x] for x in op_a_targets], dtype=np.int64)
 		op_b_token_ids = np.array([self.operand_token_ids[x] for x in op_b_targets], dtype=np.int64)
-		
+
 		# Obtener Token IDs de operadores de forma instantánea a partir del mapa precalculado
 		operator_token_ids = np.array([self.operator_token_ids_map[op] for op in operator_targets], dtype=np.int64)
-		
+
 		result_token_ids = np.array([self.operand_token_ids[x] for x in result_targets], dtype=np.int64)
 
-		return (
-			op_a_targets, op_a_token_ids,
-			operator_targets, operator_token_ids,
-			op_b_targets, op_b_token_ids,
-			result_targets, result_token_ids
-		)
+		return (op_a_targets, op_a_token_ids, operator_targets, operator_token_ids, op_b_targets, op_b_token_ids, result_targets, result_token_ids)
 
 	def get_operand_name(self, class_idx: int) -> str:
 		if 0 <= class_idx < self.num_operands:
@@ -157,10 +149,7 @@ class RelationalLogicDatasetBreeder:
 		self.split_ratio = split_ratio
 		self.seed = seed
 
-		self.operand_names = [
-			"cero", "uno", "dos", "tres", "cuatro",
-			"cinco", "seis", "siete", "ocho", "nueve", "diez"
-		]
+		self.operand_names = ["cero", "uno", "dos", "tres", "cuatro", "cinco", "seis", "siete", "ocho", "nueve", "diez"]
 		self.relation_names = [">", "<", "igual"]
 		self.result_names = ["verdad", "falsedad"]
 
@@ -257,12 +246,7 @@ class RelationalLogicDatasetBreeder:
 		relation_token_ids = np.array([self.relation_token_ids[x] for x in relation_targets], dtype=np.int64)
 		result_token_ids = np.array([self.result_token_ids[x] for x in result_targets], dtype=np.int64)
 
-		return (
-			op_a_targets, op_a_token_ids,
-			relation_targets, relation_token_ids,
-			op_b_targets, op_b_token_ids,
-			result_targets, result_token_ids
-		)
+		return (op_a_targets, op_a_token_ids, relation_targets, relation_token_ids, op_b_targets, op_b_token_ids, result_targets, result_token_ids)
 
 	def get_operand_name(self, class_idx: int) -> str:
 		return self.operand_names[class_idx]
@@ -272,5 +256,3 @@ class RelationalLogicDatasetBreeder:
 
 	def get_result_name(self, class_idx: int) -> str:
 		return self.result_names[class_idx]
-
-

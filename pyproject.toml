@@ -18,3 +18,7 @@ ignore = ["E501", "W191"]
 
 [tool.ruff.format]
 indent-style = "tab"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+

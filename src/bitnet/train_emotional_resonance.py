@@ -287,7 +287,7 @@ def run_emotional_resonance_training():
 				total_loss = torch.tensor(0.0, device=device)
 
 			elif loss_mode in ("every", "weighted"):
-				intermediate_targets_dict = {i: None for i in range(n_steps)}
+				intermediate_targets_dict = dict.fromkeys(range(n_steps))
 				speaker_logits, intermediate_logits = speaker.forward_resonance_training(
 					current_input, n_steps=n_steps, pos_mode=pos_mode,
 					intermediate_targets=intermediate_targets_dict,

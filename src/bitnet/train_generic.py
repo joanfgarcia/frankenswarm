@@ -47,7 +47,7 @@ def load_config() -> dict:
 
 	base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 	default_path = os.path.join(base_dir, "configs", "experiments", "default.json")
-	
+
 	if not os.path.exists(default_path):
 		# Generar default básico si no existe
 		default_config = {
@@ -69,11 +69,8 @@ def load_config() -> dict:
 			"use_logit_mask": True,
 			"seed": 42,
 			"split_ratio": 0.90,
-			"operators": {
-				"suma": {"enabled": True, "loss_weight": 1.0},
-				"resta": {"enabled": True, "loss_weight": 1.0}
-			},
-			"micro_vocab_words": ["cero", "uno", "dos", "tres", "cuatro", "cinco", "seis", "siete", "ocho", "nueve", "diez", "suma", "resta"]
+			"operators": {"suma": {"enabled": True, "loss_weight": 1.0}, "resta": {"enabled": True, "loss_weight": 1.0}},
+			"micro_vocab_words": ["cero", "uno", "dos", "tres", "cuatro", "cinco", "seis", "siete", "ocho", "nueve", "diez", "suma", "resta"],
 		}
 		return default_config
 
@@ -91,7 +88,7 @@ def load_config() -> dict:
 			config.update(exp_config)
 		else:
 			print(f"⚠️ Archivo de configuración no encontrado: {config_path}. Usando valores predeterminados.")
-	
+
 	return config
 
 
@@ -140,13 +137,10 @@ def run_training():
 	hooks = load_experiment_hooks(experiment_id, base_dir)
 
 	# 2. Inicializar Breeder Composicional basado en operadores de Config
-	operators_config = config.get("operators", {
-		"suma": {"loss_weight": 1.0},
-		"resta": {"loss_weight": 1.2}
-	})
+	operators_config = config.get("operators", {"suma": {"loss_weight": 1.0}, "resta": {"loss_weight": 1.2}})
 	enabled_operators = list(operators_config.keys())
 	split_ratio = config.get("split_ratio", 0.9)
-	
+
 	breeder = CompositionalMathDatasetBreeder(translator, split_ratio=split_ratio, seed=seed, enabled_operators=enabled_operators)
 	print(f"📊 Partición Aritmética Dinámica: Train={len(breeder.train_equations)} | Test={len(breeder.test_equations)}")
 
@@ -155,13 +149,13 @@ def run_training():
 	hidden_dim = config["hidden_dim"]
 	num_layers = config["num_layers"]
 	use_pos_embedding = config.get("use_pos_embedding", False)
-	
-	population = [BitNet4LayerModel(
-		vocab_embeddings=vocab_embeddings,
-		hidden_dim=hidden_dim,
-		num_layers=num_layers,
-		use_pos_embedding=use_pos_embedding
-	).to(device) for _ in range(pop_size)]
+
+	population = [
+		BitNet4LayerModel(vocab_embeddings=vocab_embeddings, hidden_dim=hidden_dim, num_layers=num_layers, use_pos_embedding=use_pos_embedding).to(
+			device
+		)
+		for _ in range(pop_size)
+	]
 
 	resume_checkpoint = config.get("resume_checkpoint")
 	if resume_checkpoint:
@@ -213,7 +207,7 @@ def run_training():
 	for idx, w in op_weights.items():
 		weights_list[idx] = w
 	weights_tensor = torch.tensor(weights_list, dtype=torch.float32, device=device)
-	
+
 	print(f"⚖️ [Pérdidas] Multiplicadores por ID de operador: {weights_list}")
 
 	# 6. Preparar bucle
@@ -254,7 +248,7 @@ def run_training():
 			phase_name = "🦅 Autonomía"
 
 		print(f"\n--- Época {epoch + 1}/{epochs} [{phase_name}] TF={tf_ratio:.0%} ---")
-		
+
 		# Gancho de ciclo de vida: on_epoch_begin
 		if hooks and hasattr(hooks, "on_epoch_begin"):
 			hooks.on_epoch_begin(epoch, population, optimizers, breeder, config)
@@ -291,10 +285,10 @@ def run_training():
 			tau = max(tau_min, tau_start * (1.0 - current_step / total_steps))
 
 			# Lote aritmético
-			op_a_targets, op_a_token_ids, operator_targets, operator_token_ids, op_b_targets, op_b_token_ids, result_targets, result_token_ids = breeder.generate_batch(
-				batch_size, mode="train", custom_eqs=current_eqs
+			op_a_targets, op_a_token_ids, operator_targets, operator_token_ids, op_b_targets, op_b_token_ids, result_targets, result_token_ids = (
+				breeder.generate_batch(batch_size, mode="train", custom_eqs=current_eqs)
 			)
-			
+
 			op_a_token_ids_tensor = torch.from_numpy(op_a_token_ids).long().to(device)
 			operator_token_ids_tensor = torch.from_numpy(operator_token_ids).long().to(device)
 			op_b_token_ids_tensor = torch.from_numpy(op_b_token_ids).long().to(device)
@@ -322,7 +316,16 @@ def run_training():
 
 			# Gancho de ciclo de vida: on_batch_start
 			if hooks and hasattr(hooks, "on_batch_start"):
-				speaker_input, teacher_input = hooks.on_batch_start(speaker_input, op_a_token_ids_tensor, operator_token_ids_tensor, op_b_token_ids_tensor, result_token_ids_tensor, epoch, step, config)
+				speaker_input, teacher_input = hooks.on_batch_start(
+					speaker_input,
+					op_a_token_ids_tensor,
+					operator_token_ids_tensor,
+					op_b_token_ids_tensor,
+					result_token_ids_tensor,
+					epoch,
+					step,
+					config,
+				)
 
 			# Ejecución del Speaker
 			speaker_logits = speaker(speaker_input, logit_mask=logit_mask)
@@ -361,16 +364,16 @@ def run_training():
 			sample_weights = weights_tensor[operator_targets_tensor]
 
 			# Pérdidas por muestra del Oyente
-			loss_a_s = F.cross_entropy(pred_a_logits, op_a_token_ids_tensor, reduction='none')
-			loss_op_s = F.cross_entropy(pred_op_logits, operator_token_ids_tensor, reduction='none')
-			loss_b_s = F.cross_entropy(pred_b_logits, op_b_token_ids_tensor, reduction='none')
-			loss_r_s = F.cross_entropy(pred_r_logits, result_token_ids_tensor, reduction='none')
-			
+			loss_a_s = F.cross_entropy(pred_a_logits, op_a_token_ids_tensor, reduction="none")
+			loss_op_s = F.cross_entropy(pred_op_logits, operator_token_ids_tensor, reduction="none")
+			loss_b_s = F.cross_entropy(pred_b_logits, op_b_token_ids_tensor, reduction="none")
+			loss_r_s = F.cross_entropy(pred_r_logits, result_token_ids_tensor, reduction="none")
+
 			loss_listener_s = loss_a_s + loss_op_s + loss_b_s + loss_r_s
 			loss_listener = (loss_listener_s * sample_weights).mean()
 
 			# 4. Pérdida de Consistencia del Emisor por muestra
-			loss_speaker_cons_s = F.cross_entropy(speaker_logits[:, 3, :], result_token_ids_tensor, reduction='none')
+			loss_speaker_cons_s = F.cross_entropy(speaker_logits[:, 3, :], result_token_ids_tensor, reduction="none")
 			loss_speaker_cons = (loss_speaker_cons_s * sample_weights).mean()
 
 			# Pérdida Conjunta Total
@@ -399,11 +402,15 @@ def run_training():
 			r_ok = (preds_r == result_token_ids_tensor).sum().item()
 
 			correct_joint = (
-				(preds_a == op_a_token_ids_tensor) &
-				(preds_op == operator_token_ids_tensor) &
-				(preds_b == op_b_token_ids_tensor) &
-				(preds_r == result_token_ids_tensor)
-			).sum().item()
+				(
+					(preds_a == op_a_token_ids_tensor)
+					& (preds_op == operator_token_ids_tensor)
+					& (preds_b == op_b_token_ids_tensor)
+					& (preds_r == result_token_ids_tensor)
+				)
+				.sum()
+				.item()
+			)
 
 			epoch_correct += correct_joint
 			epoch_a_correct += a_ok
@@ -429,12 +436,14 @@ def run_training():
 		acc_b = (epoch_b_correct / epoch_total) * 100
 		acc_j = (epoch_correct / epoch_total) * 100
 
-		print(f"[Train] Pérdida: {avg_loss:.4f} | Operando A: {acc_a:.2f}% | Operador: {acc_op:.2f}% | Operando B: {acc_b:.2f}% | Consenso: {acc_j:.2f}%")
+		print(
+			f"[Train] Pérdida: {avg_loss:.4f} | Operando A: {acc_a:.2f}% | Operador: {acc_op:.2f}% | Operando B: {acc_b:.2f}% | Consenso: {acc_j:.2f}%"
+		)
 
 		# --- FASE DE VALIDACIÓN GENÉRICA (SISTEMÁTICA / TEST SPLIT) ---
 		model_eval_correct = 0
 		model_eval_total = 0
-		
+
 		# Diccionario dinámico para almacenar estadísticas por índice global de operador
 		op_eval_stats = {}
 		test_eqs = breeder.test_equations
@@ -468,11 +477,8 @@ def run_training():
 						pred_b = torch.argmax(logits_lis[0, 2, :]).item()
 						pred_r = torch.argmax(logits_lis[0, 3, :]).item()
 
-						joint_ok = (pred_a == a_token_id and 
-									pred_op == op_token_id and 
-									pred_b == b_token_id and 
-									pred_r == r_token_id)
-						
+						joint_ok = pred_a == a_token_id and pred_op == op_token_id and pred_b == b_token_id and pred_r == r_token_id
+
 						# Acumular estadísticas dinámicamente
 						if op not in op_eval_stats:
 							op_eval_stats[op] = {"total": 0, "correct": 0}
@@ -486,7 +492,7 @@ def run_training():
 
 		# Calcular porcentajes
 		acc_joint_test = (model_eval_correct / model_eval_total) * 100 if model_eval_total > 0 else 0.0
-		
+
 		# Construir traza desglosada dinámicamente
 		print_parts = [f"Global: {acc_joint_test:.2f}%"]
 		logged_accs = {}
@@ -496,7 +502,7 @@ def run_training():
 				op_idx = info["idx"]
 				stats = op_eval_stats.get(op_idx, {"total": 0, "correct": 0})
 				acc = (stats["correct"] / stats["total"]) * 100 if stats["total"] > 0 else 0.0
-				
+
 				# Mapear nombres a emojis
 				emoji = "➕" if op_name == "suma" else ("➖" if op_name == "resta" else "✖️")
 				print_parts.append(f"{emoji} {op_name.capitalize()}: {acc:.2f}%")

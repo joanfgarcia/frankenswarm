@@ -17,8 +17,6 @@ import argparse
 import csv
 import json
 import os
-from pathlib import Path
-
 
 BASELINE_EXP029_ACC_JOINT = 70.0  # EXP_029 autonomía: ~70% acc_joint
 
@@ -395,13 +393,13 @@ def main():
 
 	# Imprimir top 5 en consola
 	ok_sorted = sorted([m for m in all_metrics if m["status"] == "OK"], key=lambda m: -m["acc_joint_final"])
-	print(f"\n🏆 Top 5:")
+	print("\n🏆 Top 5:")
 	for i, m in enumerate(ok_sorted[:5]):
 		delta = f"+{m['delta_vs_029']:.1f}" if m["delta_vs_029"] >= 0 else f"{m['delta_vs_029']:.1f}"
 		print(f"   {i+1}. {m['variant_id'].replace('EXP_032_', ''):<25} {m['acc_joint_final']:.1f}% (Δ{delta}% vs EXP_029)")
 
 	# Efecto marginal rápido
-	print(f"\n📐 Efecto marginal (media acc_joint):")
+	print("\n📐 Efecto marginal (media acc_joint):")
 	for axis_name, axis_values in GRID_AXES.items():
 		print(f"   {axis_name}:")
 		for val in axis_values:
