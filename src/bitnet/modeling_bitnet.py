@@ -148,7 +148,7 @@ class BitNet4LayerModel(nn.Module):
 	Implementa la ruta diferenciable para Gumbel-Softmax en el juego referencial.
 	"""
 
-	def __init__(self, vocab_embeddings: np.ndarray = None, hidden_dim: int = 256, num_layers: int = 4, use_pos_embedding: bool = False, max_resonance_steps: int = 0, n_emotions: int = 0, emotion_dim: int = 0, emotion_mode: str = "additive", use_glyphs: bool = False, glyph_table: np.ndarray = None):
+	def __init__(self, vocab_embeddings: np.ndarray = None, hidden_dim: int = 256, num_layers: int = 4, use_pos_embedding: bool = False, max_resonance_steps: int = 0, n_emotions: int = 0, emotion_dim: int = 0, emotion_mode: str = "additive", use_glyphs: bool = False, glyph_table: np.ndarray = None, action_head_width: int = None):
 		super().__init__()
 		self.hidden_dim = hidden_dim
 		self.use_pos_embedding = use_pos_embedding
@@ -208,10 +208,11 @@ class BitNet4LayerModel(nn.Module):
 			self.emotion_proj = None
 
 		# ── EXP_039: Cabeza de Acción (puente saber→actuar) ──
+		_ahw = action_head_width if action_head_width is not None else hidden_dim // 2
 		self.action_head = nn.Sequential(
-			nn.Linear(hidden_dim, hidden_dim // 2),
+			nn.Linear(hidden_dim, _ahw),
 			nn.GELU(),
-			nn.Linear(hidden_dim // 2, 6),  # 6 acciones: comer, beber, dormir, mover, ver, piedra
+			nn.Linear(_ahw, 6),  # 6 acciones: comer, beber, dormir, mover, ver, piedra
 		)
 
 	def forward(self, x: torch.Tensor, logit_mask: torch.Tensor = None) -> torch.Tensor:
@@ -276,7 +277,12 @@ class BitNet4LayerModel(nn.Module):
 
 		if getattr(self, "pos_embedding", None) is not None:
 			seq_len = x.shape[1]
-			h = h + self.pos_embedding[:, :seq_len, :]
+			pos = self.pos_embedding[:, :seq_len, :]
+			if pos.shape[1] < seq_len:
+				# Extra tokens (e.g., communication channel) get no positional encoding
+				pad = torch.zeros(1, seq_len - pos.shape[1], self.hidden_dim, device=pos.device)
+				pos = torch.cat([pos, pad], dim=1)
+			h = h + pos
 		return h
 
 	def _decode_hidden(self, h: torch.Tensor, logit_mask: torch.Tensor = None) -> torch.Tensor:

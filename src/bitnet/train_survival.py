@@ -101,6 +101,7 @@ def run_survival_training():
 	model_cfg = config.get("model", {})
 	emotion_cfg = config.get("emotion", {})
 	emotion_mode = emotion_cfg.get("mode", "first_only")
+	growth_cfg = config.get("growth", {})
 
 	model = BitNet4LayerModel(
 		use_glyphs=True,
@@ -111,6 +112,7 @@ def run_survival_training():
 		n_emotions=N_EMOTIONS,
 		emotion_dim=emotion_cfg.get("dim", 64),
 		emotion_mode=emotion_mode,
+		action_head_width=growth_cfg.get("init_width", None),
 	).to(device)
 
 	# Pre-entrenar
