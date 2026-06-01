@@ -91,11 +91,12 @@ class RMSNorm(nn.Module):
 class BitNetAttention(nn.Module):
 	"""Mecanismo de atención multi-cabezal utilizando BitLinear."""
 
-	def __init__(self, dim: int, num_heads: int = 4):
+	def __init__(self, dim: int, num_heads: int = 4, is_causal: bool = False):
 		super().__init__()
 		self.dim = dim
 		self.num_heads = num_heads
 		self.head_dim = dim // num_heads
+		self.is_causal = is_causal
 
 		self.q_proj = BitLinear(dim, dim, bias=False)
 		self.k_proj = BitLinear(dim, dim, bias=False)
@@ -109,6 +110,9 @@ class BitNetAttention(nn.Module):
 		v = self.v_proj(x).view(batch_size, seq_len, self.num_heads, self.head_dim).transpose(1, 2)
 
 		scores = torch.matmul(q, k.transpose(-2, -1)) / np.sqrt(self.head_dim)
+		if self.is_causal and seq_len > 1:
+			mask = torch.triu(torch.ones(seq_len, seq_len, device=x.device), diagonal=1).bool()
+			scores = scores.masked_fill(mask, -1e9)
 		attn = F.softmax(scores, dim=-1)
 		context = torch.matmul(attn, v).transpose(1, 2).contiguous().view(batch_size, seq_len, self.dim)
 		return self.out_proj(context)
@@ -129,10 +133,10 @@ class BitNetMLP(nn.Module):
 class BitNetTransformerBlock(nn.Module):
 	"""Bloque transformer de BitNet con RMSNorm."""
 
-	def __init__(self, dim: int, num_heads: int = 4, mlp_ratio: int = 4):
+	def __init__(self, dim: int, num_heads: int = 4, mlp_ratio: int = 4, is_causal: bool = False):
 		super().__init__()
 		self.attn_norm = RMSNorm(dim)
-		self.attn = BitNetAttention(dim, num_heads)
+		self.attn = BitNetAttention(dim, num_heads, is_causal=is_causal)
 		self.mlp_norm = RMSNorm(dim)
 		self.mlp = BitNetMLP(dim, dim * mlp_ratio)
 
@@ -148,13 +152,14 @@ class BitNet4LayerModel(nn.Module):
 	Implementa la ruta diferenciable para Gumbel-Softmax en el juego referencial.
 	"""
 
-	def __init__(self, vocab_embeddings: np.ndarray = None, hidden_dim: int = 256, num_layers: int = 4, use_pos_embedding: bool = False, max_resonance_steps: int = 0, n_emotions: int = 0, emotion_dim: int = 0, emotion_mode: str = "additive", use_glyphs: bool = False, glyph_table: np.ndarray = None, action_head_width: int = None):
+	def __init__(self, vocab_embeddings: np.ndarray = None, hidden_dim: int = 256, num_layers: int = 4, use_pos_embedding: bool = False, max_resonance_steps: int = 0, n_emotions: int = 0, emotion_dim: int = 0, emotion_mode: str = "additive", use_glyphs: bool = False, glyph_table: np.ndarray = None, action_head_width: int = None, is_causal: bool = False, max_seq_len: int = 64):
 		super().__init__()
 		self.hidden_dim = hidden_dim
 		self.use_pos_embedding = use_pos_embedding
 		self.max_resonance_steps = max_resonance_steps
 		self.emotion_mode = emotion_mode  # 'additive', 'gated', 'first_only'
 		self.use_glyphs = use_glyphs
+		self.is_causal = is_causal
 
 		# ── EXP_034: Modo Glifos Ternarios ──
 		if use_glyphs:
@@ -181,14 +186,14 @@ class BitNet4LayerModel(nn.Module):
 			# Capa 4: Outbound Translator (Proyección del espacio oculto de 256-dim al espacio conceptual de 384-dim)
 			self.outbound_proj = nn.Linear(hidden_dim, self.vocab_dim, bias=False)
 
-		# Capa de Posición: Embeddings Posicionales Aprendibles (Longitud máxima 4)
+		# Capa de Posición: Embeddings Posicionales Aprendibles
 		if self.use_pos_embedding:
-			self.pos_embedding = nn.Parameter(torch.randn(1, 4, hidden_dim) * 0.02)
+			self.pos_embedding = nn.Parameter(torch.randn(1, max_seq_len, hidden_dim) * 0.02)
 		else:
 			self.register_parameter("pos_embedding", None)
 
 		# Capa 3: Specialist Core (Ternary Transformer)
-		self.core_layers = nn.ModuleList([BitNetTransformerBlock(dim=hidden_dim, num_heads=4, mlp_ratio=4) for _ in range(num_layers)])
+		self.core_layers = nn.ModuleList([BitNetTransformerBlock(dim=hidden_dim, num_heads=4, mlp_ratio=4, is_causal=is_causal) for _ in range(num_layers)])
 		self.norm = RMSNorm(hidden_dim)
 
 		# Resonancia Continua: Reloj posicional para el bucle latente (EXP_032)
@@ -222,6 +227,27 @@ class BitNet4LayerModel(nn.Module):
 			nn.Linear(_ahw, 1),
 		)
 
+		# ── EXP_071: Cabeza de Proyección de Glifos (Definición -> 65 Primos) ──
+		self.glyph_projection_head = nn.Sequential(
+			nn.Linear(hidden_dim, 128),
+			nn.GELU(),
+			nn.Linear(128, 65),
+			nn.Tanh()
+		)
+
+	def register_new_word(self, word_name: str, glyph_vector: torch.Tensor):
+		"""
+		Registra dinámicamente una nueva palabra en el modelo.
+		Añade el vector de trits (65,) a self.glyph_embedding.glyph_table.
+		"""
+		assert self.use_glyphs, "La expansión de vocabulario dinámico solo es compatible con el modo Glifos (use_glyphs=True)"
+		device = self.glyph_embedding.glyph_table.device
+		glyph_vector = glyph_vector.to(device).float()
+		new_table = torch.cat([self.glyph_embedding.glyph_table, glyph_vector.unsqueeze(0)], dim=0)
+		del self.glyph_embedding.glyph_table
+		self.glyph_embedding.register_buffer("glyph_table", new_table)
+		self.vocab_size = self.glyph_embedding.vocab_size
+
 	def forward(self, x: torch.Tensor, logit_mask: torch.Tensor = None) -> torch.Tensor:
 		"""
 		Paso forward estándar (sin resonancia).
@@ -253,10 +279,11 @@ class BitNet4LayerModel(nn.Module):
 
 	def _load_from_state_dict(self, state_dict, prefix, local_metadata, strict, missing_keys, unexpected_keys, error_msgs):
 		key = prefix + "pos_embedding"
-		if key in state_dict and state_dict[key] is not None and getattr(self, "pos_embedding", None) is None:
+		if key in state_dict and state_dict[key] is not None:
 			param_shape = state_dict[key].shape
-			self.pos_embedding = nn.Parameter(torch.zeros(param_shape, device=state_dict[key].device))
-			self.use_pos_embedding = True
+			if getattr(self, "pos_embedding", None) is None or self.pos_embedding.shape != param_shape:
+				self.pos_embedding = nn.Parameter(torch.zeros(param_shape, device=state_dict[key].device))
+				self.use_pos_embedding = True
 		super()._load_from_state_dict(state_dict, prefix, local_metadata, strict, missing_keys, unexpected_keys, error_msgs)
 
 	# ── Resonancia Continua (EXP_032) ─────────────────────────────────────────────
