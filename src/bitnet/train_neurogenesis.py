@@ -87,8 +87,20 @@ def run_neurogenesis_training():
 	if pretrained_from:
 		p = pretrained_from if os.path.isabs(pretrained_from) else os.path.join(base_dir, pretrained_from)
 		if os.path.exists(p):
-			model.load_state_dict(torch.load(p, map_location=device, weights_only=True), strict=False)
-			print(f"🧒→🧑 Pre-trained: {p}")
+			sd = torch.load(p, map_location=device, weights_only=True)
+			# Reconstruct action head if checkpoint has different shape (grown model)
+			if "action_head.0.weight" in sd:
+				ckpt_width = sd["action_head.0.weight"].shape[0]
+				ckpt_out = sd["action_head.2.weight"].shape[0]
+				if ckpt_width != model.action_head[0].out_features:
+					import torch.nn as tnn
+					model.action_head = tnn.Sequential(
+						tnn.Linear(model_cfg.get("hidden_dim", 256), ckpt_width),
+						tnn.GELU(),
+						tnn.Linear(ckpt_width, ckpt_out),
+					).to(device)
+			model.load_state_dict(sd, strict=False)
+			print(f"🧒→🧑 Pre-trained: {p} (head width={model.action_head[0].out_features})")
 
 	# Resize action head if config specifies a different width
 	init_width = config.get("growth", {}).get("init_width", None)
@@ -121,16 +133,18 @@ def run_neurogenesis_training():
 		n_actions = 6
 		print(f"🌍 Mundo simple: 5 loc, {n_actions} acciones")
 
-	# Resize action head output if needed
+	# Resize action head output if needed (preserve learned first layer for curriculum)
 	if model.action_head[2].out_features != n_actions:
 		import torch.nn as tnn
 		old_width = model.action_head[0].out_features
+		old_first_layer = model.action_head[0]  # preserve learned weights
+		old_gelu = model.action_head[1]
 		model.action_head = tnn.Sequential(
-			tnn.Linear(model_cfg.get("hidden_dim", 256), old_width),
-			tnn.GELU(),
-			tnn.Linear(old_width, n_actions),
+			old_first_layer,          # KEEP: carries learned representations
+			old_gelu,
+			tnn.Linear(old_width, n_actions),  # NEW: output for new action space
 		).to(device)
-		print(f"🔧 Action head output resized to {n_actions}")
+		print(f"🔧 Action head output resized: {model.action_head[2].out_features} actions (width={old_width} preserved)")
 
 	n_think = config.get("resonance", {}).get("n_think", 2)
 	n_verify = config.get("resonance", {}).get("n_verify", 2)
@@ -147,13 +161,18 @@ def run_neurogenesis_training():
 	grad_clip = train_cfg.get("grad_clip", 1.0)
 
 	n_episodes = train_cfg.get("episodes", 500)
-	max_ticks = config.get("world", {}).get("max_ticks", 200)
+	base_max_ticks = config.get("world", {}).get("max_ticks", 200)
+	base_width = 128  # reference width for lifespan scaling
+	lifespan_scaling = growth_cfg.get("lifespan_scaling", True)
+	plateau_window = growth_cfg.get("plateau_window", 200)  # episodes without improvement
 
 	head_width = model.action_head[0].out_features
 	head_params = sum(p.numel() for p in model.action_head.parameters())
 	print(f"🧠 Action head: width={head_width}, params={head_params:,}")
 	print(f"🧬 Growth: threshold={growth_threshold}, patience={growth_patience}, factor={growth_factor}x, max={max_width}")
 	print(f"📡 Online update: every {update_interval} ticks")
+	if lifespan_scaling:
+		print(f"🕐 Lifespan scaling: ON (base={base_max_ticks} ticks at width={base_width})")
 
 	logger = ExperimentLogger(
 		experiment_id,
@@ -167,6 +186,7 @@ def run_neurogenesis_training():
 	reward_history = deque(maxlen=growth_patience)
 	total_growths = 0
 	best_survival = 0.0
+	best_survival_episode = 0  # for plateau detection
 	survival_history = []
 
 	for episode in range(n_episodes):
@@ -186,6 +206,13 @@ def run_neurogenesis_training():
 		episode_convergences = []
 
 		model.train()
+
+		# ═══ Dynamic lifespan: more brain = longer life ═══
+		current_width = model.action_head[0].out_features
+		if lifespan_scaling:
+			max_ticks = int(base_max_ticks * (current_width / base_width) ** 0.5)
+		else:
+			max_ticks = base_max_ticks
 
 		for tick in range(max_ticks):
 			if not state.alive:
@@ -344,35 +371,48 @@ def run_neurogenesis_training():
 
 		if ticks_survived > best_survival:
 			best_survival = ticks_survived
+			best_survival_episode = episode
 			torch.save(model.state_dict(), os.path.join(exp_dir, "best_agent.pt"))
 
 		# ═══ POST-EPISODE GROWTH CHECK ═══
-		# Si el agente muere demasiado rápido consistentemente → necesita más capacidad
+		# Plateau-based: if no improvement for N episodes → brain has hit its ceiling
 		current_width = model.action_head[0].out_features
-		if len(survival_history) >= 10 and current_width < max_width:
-			avg_recent_survival = np.mean(survival_history[-10:])
-			survival_threshold = max_ticks * 0.15  # muere antes del 15% del tiempo
-			if avg_recent_survival < survival_threshold:
-				growth_info = grow_action_head(model, growth_factor=growth_factor)
-				total_growths += 1
-				optimizer = torch.optim.AdamW(
-					model.action_head.parameters(), lr=lr, weight_decay=0.01
-				)
-				growth_events.append({
-					"episode": episode + 1,
-					"tick": -1,  # post-episode
-					"avg_convergence": avg_conv,
-					"avg_survival": avg_recent_survival,
-					"trigger": "early_death",
-					**growth_info,
-				})
-				print(
-					f"  🧬 NEUROGENÉSIS #{total_growths} (early_death) | "
-					f"width: {growth_info['old_width']}→{growth_info['new_width']} | "
-					f"avg_survival={avg_recent_survival:.1f}/{max_ticks}"
-				)
-				convergence_history.clear()
-				reward_history.clear()
+		episodes_since_improvement = episode - best_survival_episode
+		if episode >= 20 and current_width < max_width and episodes_since_improvement >= plateau_window:
+			# Has the agent plateaued? Check if avg is stable (not still learning)
+			if len(survival_history) >= plateau_window:
+				avg_first_half = np.mean(survival_history[-plateau_window:-plateau_window//2])
+				avg_second_half = np.mean(survival_history[-plateau_window//2:])
+				improvement = (avg_second_half - avg_first_half) / max(avg_first_half, 1)
+				# If less than 5% improvement in the window → plateau confirmed
+				if improvement < 0.05:
+					growth_info = grow_action_head(model, growth_factor=growth_factor)
+					total_growths += 1
+					optimizer = torch.optim.AdamW(
+						model.action_head.parameters(), lr=lr, weight_decay=0.01
+					)
+					# Update lifespan after growth
+					new_width = model.action_head[0].out_features
+					new_max_ticks = int(base_max_ticks * (new_width / base_width) ** 0.5) if lifespan_scaling else base_max_ticks
+					growth_events.append({
+						"episode": episode + 1,
+						"tick": -1,
+						"avg_convergence": avg_conv,
+						"avg_survival": np.mean(survival_history[-10:]),
+						"trigger": "plateau",
+						"episodes_since_improvement": episodes_since_improvement,
+						"new_max_ticks": new_max_ticks,
+						**growth_info,
+					})
+					print(
+						f"  🧬 NEUROGENÉSIS #{total_growths} (plateau) | "
+						f"width: {growth_info['old_width']}→{growth_info['new_width']} | "
+						f"stalled {episodes_since_improvement} ep | "
+						f"lifespan: {max_ticks}→{new_max_ticks} ticks"
+					)
+					best_survival_episode = episode  # reset plateau counter
+					convergence_history.clear()
+					reward_history.clear()
 
 		current_width = model.action_head[0].out_features
 		current_params = sum(p.numel() for p in model.action_head.parameters())
