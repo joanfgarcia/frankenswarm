@@ -1,0 +1,44 @@
+{
+	"experiment_id": "EXP_060_prolog_active",
+	"seed": 42,
+	"pretrained_from": "storage/experiments/EXP_036_pretrained/best_agent.pt",
+	"model": {
+		"hidden_dim": 256,
+		"num_layers": 3,
+		"use_pos_embedding": true
+	},
+	"resonance": {
+		"max_resonance_steps": 5,
+		"n_think": 2,
+		"n_verify": 2
+	},
+	"emotion": {
+		"mode": "first_only",
+		"dim": 64
+	},
+	"metacognition": {
+		"enabled": true,
+		"threshold": 0.85
+	},
+	"world": {
+		"max_ticks": 200
+	},
+	"training": {
+		"episodes": 500,
+		"lr": 0.0005,
+		"gamma": 0.99,
+		"lmbda": 0.95,
+		"ppo_epochs": 4,
+		"clip_eps": 0.2,
+		"entropy_bonus": 0.02,
+		"value_loss_coeff": 0.5,
+		"grad_clip": 1.0
+	},
+	"growth": {
+		"init_width": 128
+	},
+	"meta": {
+		"description": "EXP_060 — Prolog Active Survival: PPO agent with Prolog active inference tool",
+		"hypothesis": "PPO trains the agent to use the 'ver' (Prolog query) action before 'comer' when faced with an unknown object, decreasing mortality from poisoning."
+	}
+}
