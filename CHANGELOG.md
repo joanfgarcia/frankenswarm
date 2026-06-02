@@ -2,6 +2,15 @@
 
 ## [Unreleased]
 
+### 🏹 Tribu de 3 Agentes y Caza Cooperativa (EXP_073_v5)
+- **[FEAT] Tribu Ampliada (N=3)**: Expansión de la arena `CooperativeWorld` para gestionar tres agentes (`Nico`, `Sofy`, `Hugo`) con posiciones de spawn distribuidas y modelos ToM multilaterales cruzados.
+- **[FEAT] Broadcast de Gritos Half-Duplex**: Difusión en un solo tick de la señal del emisor a todos los receptores silenciosos de la tribu, actualizando sus ToM y targets de navegación.
+- **[FEAT] Worst-State ToM Routing**: Proyección dinámica del compañero en el estado más crítico de salud/hambre sobre los tokens ToM en `perceive()`, manteniendo la compatibilidad absoluta con el espacio de percepción de 6 tokens.
+- **[FEAT] Caza Cooperativa**: Spawn de presas (glifo `"grupo"`) que requieren la acción simultánea `"luchar"` de $\ge 2$ agentes para abatirla (+50.0 hambre, comida en mochila, +15.0 bonus). El intento solitario falla, causa daño (-2.0 salud) y ahuyenta a la presa (50% de probabilidad).
+- **[FEAT] Redimensionamiento Action Head Net2Net (PRESERVING WEIGHTS)**: Modificación de la carga de checkpoints en `train_arena_ppo.py` y `run_arena_simulation.py` para copiar los pesos del action head de las 7 acciones originales y sólo inicializar aleatoriamente la 8ª acción (`"dar"`). Previene el olvido catastrófico instantáneo al cargar pesos pre-entrenados.
+- **[NEW] `scratch/test_coop_hunting.py`**: Suite de tests unitarios que valida la caza cooperativa, el broadcast de gritos y la Teoría de la Mente de 3 agentes.
+- **[NEW] Presets de Dificultad Parametrizados**: Adición del parámetro `"prey_spawn_interval": 15` en los archivos JSON de presets ecológicos (`easy`, `medium`, `hard`, `hell`) en `configs/experiments/`.
+
 ### 🌱 Aprendizaje Ontogenético y Neurogénesis (EXP_034 - EXP_045)
 - **[FEAT] Deterministic Semantic Primes (EXP_034)**: Implementación de 65 embeddings de glifos ternarios representando los primos semánticos del NSM de Wierzbicka. Consigue 100% de precisión composicional y un entrenamiento 7.7 veces más rápido.
 - **[FEAT] Bucle Metacognitivo de Verificación (EXP_036)**: Bucle de inferencia en dos fases (pensar y verificar) para generar una señal de confianza no supervisada mediante la similitud de coseno del estado latente.
