@@ -107,5 +107,60 @@ class TestCooperativeHunting(unittest.TestCase):
 		self.assertTrue("caza fallida" in res_a["event"])
 		self.assertLess(world.agent_a.salud, 100.0)
 
+	def test_biological_metabolism(self):
+		world = CooperativeWorld(seed=42, hunger_rate=4.0)
+		state_a, state_b, state_c = world.reset()
+
+		# Inicializar estados controlados
+		world.agent_a.hambre = 50.0
+		world.agent_a.sed = 50.0
+		world.agent_a.energia = 50.0
+
+		# 1. Test de decaimiento metabólico en acción 'ver'
+		# Hambre decae por hunger_rate (4.0)
+		# Sed decae por hunger_rate * 2.0 (8.0)
+		res_a, _, _, _ = world.step("ver", "ver", "ver")
+		self.assertEqual(world.agent_a.hambre, 46.0)
+		self.assertEqual(world.agent_a.sed, 42.0)
+
+		# 2. Test de dormir (decaimiento a la mitad)
+		# Hambre decae por hunger_rate * 0.5 (2.0)
+		# Sed decae por hunger_rate * 2.0 * 0.5 (4.0)
+		# Y recupera energía y salud
+		world.agent_a.hambre = 50.0
+		world.agent_a.sed = 50.0
+		world.agent_a.energia = 50.0
+		world.agent_a.danger_nearby = False
+		
+		# Agente A duerme
+		res_a, _, _, _ = world.step("dormir", "ver", "ver")
+		self.assertEqual(world.agent_a.hambre, 48.0)
+		self.assertEqual(world.agent_a.sed, 46.0)
+		self.assertGreater(world.agent_a.energia, 50.0)
+
+		# 3. Test de comer y penalización de digestión (-3.0 a sed)
+		world.agent_a.hambre = 50.0
+		world.agent_a.sed = 50.0
+		world.agent_a.mochila_comida = 1
+		# Come: hambre +40, sed -thirst_rate (8) -3 = -11
+		res_a, _, _, _ = world.step("comer", "ver", "ver")
+		self.assertEqual(world.agent_a.hambre, 86.0)  # 50 - 4 + 40
+		self.assertEqual(world.agent_a.sed, 39.0)     # 50 - 8 - 3
+
+		# 4. Test de beber (+50.0 a sed)
+		world.agent_a.sed = 40.0
+		world.agent_a.mochila_agua = 1
+		# Bebe: sed +50, decaimiento -8 = 82
+		res_a, _, _, _ = world.step("beber", "ver", "ver")
+		self.assertEqual(world.agent_a.sed, 82.0)
+
+		# 5. Test de deshidratación grave (sed <= 0 provoca -25.0 salud)
+		world.agent_a.sed = 0.0
+		world.agent_a.salud = 100.0
+		# Al resolver el step, el chequeo pasivo detecta sed <= 0 y resta 25 a salud
+		# Y clamp() final matará al agente porque sed <= 0, por lo que muere en el tick
+		res_a, _, _, _ = world.step("ver", "ver", "ver")
+		self.assertFalse(world.agent_a.alive)
+
 if __name__ == "__main__":
 	unittest.main()

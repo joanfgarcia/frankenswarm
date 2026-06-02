@@ -111,21 +111,23 @@ def run_arena_ppo_training():
 
 		if p and os.path.exists(p):
 			sd = torch.load(p, map_location=device, weights_only=True)
-			if "action_head.0.weight" in sd:
+			if "action_head.0.weight" in sd and "action_head.2.weight" in sd:
 				ckpt_width = sd["action_head.0.weight"].shape[0]
-				if ckpt_width != m.action_head[0].out_features:
+				ckpt_out = sd["action_head.2.weight"].shape[0]
+				if ckpt_width != m.action_head[0].out_features or ckpt_out != m.action_head[2].out_features:
 					m.action_head = nn.Sequential(
 						nn.Linear(model_cfg.get("hidden_dim", 256), ckpt_width),
 						nn.GELU(),
-						nn.Linear(ckpt_width, 6),
+						nn.Linear(ckpt_width, ckpt_out),
 					).to(device)
-			if "value_head.0.weight" in sd:
+			if "value_head.0.weight" in sd and "value_head.2.weight" in sd:
 				ckpt_val_width = sd["value_head.0.weight"].shape[0]
-				if ckpt_val_width != m.value_head[0].out_features:
+				ckpt_val_out = sd["value_head.2.weight"].shape[0]
+				if ckpt_val_width != m.value_head[0].out_features or ckpt_val_out != m.value_head[2].out_features:
 					m.value_head = nn.Sequential(
 						nn.Linear(model_cfg.get("hidden_dim", 256), ckpt_val_width),
 						nn.GELU(),
-						nn.Linear(ckpt_val_width, 1),
+						nn.Linear(ckpt_val_width, ckpt_val_out),
 					).to(device)
 			m.load_state_dict(sd, strict=False)
 			print(f"Loaded {agent_label.upper()} weights from: {p}")

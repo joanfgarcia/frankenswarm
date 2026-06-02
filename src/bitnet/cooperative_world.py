@@ -205,6 +205,7 @@ SILENCE_GLYPH = WORD_INDEX.get("noche", 0)  # "silence" proxy
 class CoopAgentState:
 	"""Estado interno de un agente en la arena."""
 	hambre: float = 60.0       # 0 = muerto de hambre, 100 = saciado
+	sed: float = 80.0          # 0 = deshidratado, 100 = hidratado
 	salud: float = 100.0       # 0 = muerto
 	energia: float = 80.0      # 0 = exhausto
 	location: str = "cueva"    # localización actual
@@ -255,13 +256,13 @@ class CoopAgentState:
 	def emotion_name(self) -> str:
 		if self.hambre < 20:
 			return "hambre"
-		elif self.salud < 30:
+		elif self.salud < 30 or self.sed < 20:
 			return "dolor"
 		elif self.energia < 20:
 			return "tristeza"
 		elif self.danger_nearby:
 			return "miedo"
-		elif self.hambre > 70 and self.salud > 70 and self.energia > 50:
+		elif self.hambre > 70 and self.salud > 70 and self.sed > 60 and self.energia > 50:
 			return "alegría"
 		else:
 			return "ira"
@@ -272,9 +273,10 @@ class CoopAgentState:
 
 	def clamp(self):
 		self.hambre = max(0.0, min(100.0, self.hambre))
+		self.sed = max(0.0, min(100.0, self.sed))
 		self.salud = max(0.0, min(100.0, self.salud))
 		self.energia = max(0.0, min(100.0, self.energia))
-		if self.salud <= 0 or self.hambre <= 0:
+		if self.salud <= 0 or self.hambre <= 0 or self.sed <= 0:
 			self.alive = False
 
 
@@ -337,6 +339,7 @@ class CooperativeWorld:
 					agent.companion_model[other.agent_id] = {
 						"location": "cueva",
 						"hambre": 60.0,
+						"sed": 80.0,
 						"salud": 100.0,
 						"energia": 80.0,
 						"emotion_name": "alegría",
@@ -372,6 +375,7 @@ class CooperativeWorld:
 					agent.companion_model[other.agent_id] = {
 						"location": "cueva",
 						"hambre": 60.0,
+						"sed": 80.0,
 						"salud": 100.0,
 						"energia": 80.0,
 						"emotion_name": "alegría",
@@ -490,8 +494,9 @@ class CooperativeWorld:
 			min_val = 999.0
 			for other_id, model in agent.companion_model.items():
 				h_est = model.get("hambre", 60.0)
+				sed_est = model.get("sed", 80.0)
 				s_est = model.get("salud", 100.0)
-				metric = min(h_est, s_est)
+				metric = min(h_est, sed_est, s_est)
 				if metric < min_val:
 					min_val = metric
 					critical_id = other_id
@@ -516,6 +521,7 @@ class CooperativeWorld:
 		result = {
 			"success": False,
 			"delta_hambre": -self.hunger_rate,  # metabolismo rápido
+			"delta_sed": -self.hunger_rate * 2.0,  # sed decae el doble de rápido
 			"delta_salud": 0,
 			"delta_energia": -2.0,
 			"event": "",
@@ -538,12 +544,14 @@ class CooperativeWorld:
 			if caps["food"] >= 1.0:
 				result["success"] = True
 				result["delta_hambre"] += 40.0
+				result["delta_sed"] -= 3.0  # penalización por digestión
 				result["event"] = "come y se sacia (suelo)"
 				caps["food"] -= 1.0
 			elif agent.mochila_comida > 0:
 				agent.mochila_comida = 0
 				result["success"] = True
 				result["delta_hambre"] += 40.0
+				result["delta_sed"] -= 3.0  # penalización por digestión
 				result["event"] = "come de su mochila"
 			else:
 				result["event"] = "no hay comida aquí ni en mochila"
@@ -551,20 +559,23 @@ class CooperativeWorld:
 		elif action == "beber":
 			if caps["water"] >= 1.0:
 				result["success"] = True
-				result["delta_hambre"] += 8.0
+				result["delta_sed"] += 50.0
 				result["delta_salud"] += 3.0
 				result["event"] = "bebe agua (suelo)"
 				caps["water"] -= 1.0
 			elif agent.mochila_agua > 0:
 				agent.mochila_agua = 0
 				result["success"] = True
-				result["delta_hambre"] += 8.0
+				result["delta_sed"] += 50.0
 				result["delta_salud"] += 3.0
 				result["event"] = "bebe agua de su mochila"
 			else:
 				result["event"] = "no hay agua aquí ni en mochila"
 
 		elif action == "dormir":
+			# Tasa metabólica basal: desgaste a la mitad durante el sueño
+			result["delta_hambre"] = -self.hunger_rate * 0.5
+			result["delta_sed"] = -self.hunger_rate * 2.0 * 0.5
 			if agent.danger_nearby:
 				result["delta_salud"] -= 35.0 * self.predator_damage_multiplier
 				result["delta_energia"] += 15.0
@@ -651,24 +662,24 @@ class CooperativeWorld:
 			transferred = False
 			for other_agent in others:
 				if other_agent.location == agent.location:
-					# 1. Dar comida si el otro la necesita
-					if other_agent.hambre < 70 and agent.mochila_comida > 0:
+					# 1. Dar agua si el otro la necesita (sed < 60)
+					if other_agent.sed < 60 and agent.mochila_agua > 0:
+						agent.mochila_agua = 0
+						other_agent.sed = min(100.0, other_agent.sed + 50.0)
+						other_agent.salud = min(100.0, other_agent.salud + 10.0)
+						result["success"] = True
+						result["event"] = f"comparte agua de su mochila con {other_agent.agent_id.upper()}"
+						result["shared_resource"] = "agua"
+						result["shared_with"] = other_agent.agent_id
+						transferred = True
+						break
+					# 2. Dar comida si el otro la necesita
+					elif other_agent.hambre < 70 and agent.mochila_comida > 0:
 						agent.mochila_comida = 0
 						other_agent.hambre = min(100.0, other_agent.hambre + 40.0)
 						result["success"] = True
 						result["event"] = f"comparte comida de su mochila con {other_agent.agent_id.upper()}"
 						result["shared_resource"] = "comida"
-						result["shared_with"] = other_agent.agent_id
-						transferred = True
-						break
-					# 2. Dar agua si el otro la necesita
-					elif (other_agent.salud < 80 or other_agent.hambre < 70) and agent.mochila_agua > 0:
-						agent.mochila_agua = 0
-						other_agent.hambre = min(100.0, other_agent.hambre + 8.0)
-						other_agent.salud = min(100.0, other_agent.salud + 10.0)
-						result["success"] = True
-						result["event"] = f"comparte agua de su mochila con {other_agent.agent_id.upper()}"
-						result["shared_resource"] = "agua"
 						result["shared_with"] = other_agent.agent_id
 						transferred = True
 						break
@@ -691,8 +702,13 @@ class CooperativeWorld:
 			result["delta_salud"] -= 15.0
 			result["event"] += " | inanición"
 
+		if agent.sed <= 0:
+			result["delta_salud"] -= 25.0
+			result["event"] += " | deshidratación"
+
 		# ── Aplicar deltas ──
 		agent.hambre += result["delta_hambre"]
+		agent.sed += result.get("delta_sed", 0.0)
 		agent.salud += result["delta_salud"]
 		agent.energia += result["delta_energia"]
 
@@ -830,15 +846,19 @@ class CooperativeWorld:
 		for agent in self.agents:
 			for other_id, model in agent.companion_model.items():
 				model["hambre"] = max(0.0, model.get("hambre", 60.0) - self.hunger_rate)
+				model["sed"] = max(0.0, model.get("sed", 80.0) - self.hunger_rate * 2.0)
 				model["energia"] = max(0.0, model.get("energia", 80.0) - 2.0)
+				
+				delta_s = 0.0
 				if model["hambre"] <= 0.0:
-					model["salud"] = max(0.0, model.get("salud", 100.0) - 15.0 * self.predator_damage_multiplier)
-				else:
-					model["salud"] = model.get("salud", 100.0)
+					delta_s -= 15.0
+				if model["sed"] <= 0.0:
+					delta_s -= 25.0
+				model["salud"] = max(0.0, model.get("salud", 100.0) + delta_s * self.predator_damage_multiplier)
 				
 				if model["hambre"] < 20:
 					model["emotion_name"] = "hambre"
-				elif model["salud"] < 30:
+				elif model["salud"] < 30 or model["sed"] < 20:
 					model["emotion_name"] = "dolor"
 				elif model["energia"] < 20:
 					model["emotion_name"] = "tristeza"
@@ -861,6 +881,7 @@ class CooperativeWorld:
 						agent_x.companion_model[agent_y.agent_id].update({
 							"location": agent_y.location,
 							"hambre": agent_y.hambre,
+							"sed": agent_y.sed,
 							"salud": agent_y.salud,
 							"energia": agent_y.energia,
 							"emotion_name": agent_y.emotion_name,
@@ -869,6 +890,7 @@ class CooperativeWorld:
 						agent_y.companion_model[agent_x.agent_id].update({
 							"location": agent_x.location,
 							"hambre": agent_x.hambre,
+							"sed": agent_x.sed,
 							"salud": agent_x.salud,
 							"energia": agent_x.energia,
 							"emotion_name": agent_x.emotion_name,
@@ -883,8 +905,9 @@ class CooperativeWorld:
 				min_val = 999.0
 				for other_id, model in agent.companion_model.items():
 					h_est = model.get("hambre", 60.0)
+					sed_est = model.get("sed", 80.0)
 					s_est = model.get("salud", 100.0)
-					danger_metric = min(h_est, s_est)
+					danger_metric = min(h_est, sed_est, s_est)
 					if danger_metric < 40.0 and danger_metric < min_val:
 						min_val = danger_metric
 						critical_companion = model
@@ -951,6 +974,8 @@ class CooperativeWorld:
 		# Pain: necesidades no cubiertas
 		if agent.hambre < 30:
 			reward -= 0.4 * (30 - agent.hambre) / 30
+		if agent.sed < 30:
+			reward -= 0.4 * (30 - agent.sed) / 30
 		if agent.salud < 40:
 			reward -= 0.6 * (40 - agent.salud) / 40
 		if agent.energia < 15:
@@ -960,6 +985,8 @@ class CooperativeWorld:
 		if result["success"]:
 			if result.get("delta_hambre", 0) > 0:
 				reward += 1.5   # comer = muy valioso (comida escasa)
+			if result.get("delta_sed", 0) > 0:
+				reward += 1.5   # beber = muy valioso (agua escasa)
 			if result.get("delta_salud", 0) > 0:
 				reward += 0.3
 			if result.get("delta_energia", 0) > 5:
@@ -990,13 +1017,13 @@ class CooperativeWorld:
 						d_prev = min(_bfs_distance(agent.previous_location, loc) for loc in known_food_locs)
 						shaping_reward += (d_prev - d_curr) * 0.2
 						
-				# Guiar hacia agua si tiene sed/daño
-				if agent.salud < 80 or agent.hambre < 70:
+				# Guiar hacia agua si tiene sed
+				if agent.sed < 70:
 					known_water_locs = [loc for loc, info in agent.map_knowledge.items() if info.get("water", 0.0) >= 1.0]
 					if known_water_locs:
 						d_curr = min(_bfs_distance(agent.location, loc) for loc in known_water_locs)
 						d_prev = min(_bfs_distance(agent.previous_location, loc) for loc in known_water_locs)
-						shaping_reward += (d_prev - d_curr) * 0.1
+						shaping_reward += (d_prev - d_curr) * 0.2
 
 			reward += shaping_reward
 

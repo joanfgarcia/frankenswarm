@@ -87,24 +87,26 @@ def load_agent(checkpoint_path: str, model_cfg: dict, emotion_cfg: dict, max_res
 	if os.path.exists(checkpoint_path):
 		sd = torch.load(checkpoint_path, map_location=device, weights_only=True)
 
-		# Redimensionar action_head si el checkpoint tiene un ancho diferente debido a neurogénesis
-		if "action_head.0.weight" in sd:
+		# Redimensionar action_head si el checkpoint tiene dimensiones diferentes (ancho oculto o número de acciones)
+		if "action_head.0.weight" in sd and "action_head.2.weight" in sd:
 			ckpt_action_width = sd["action_head.0.weight"].shape[0]
-			if ckpt_action_width != m.action_head[0].out_features:
+			ckpt_out_features = sd["action_head.2.weight"].shape[0]
+			if ckpt_action_width != m.action_head[0].out_features or ckpt_out_features != m.action_head[2].out_features:
 				m.action_head = nn.Sequential(
 					nn.Linear(model_cfg.get("hidden_dim", 256), ckpt_action_width),
 					nn.GELU(),
-					nn.Linear(ckpt_action_width, COOP_N_ACTIONS),
+					nn.Linear(ckpt_action_width, ckpt_out_features),
 				).to(device)
 
-		# Redimensionar value_head si el checkpoint tiene un ancho diferente
-		if "value_head.0.weight" in sd:
+		# Redimensionar value_head si el checkpoint tiene dimensiones diferentes
+		if "value_head.0.weight" in sd and "value_head.2.weight" in sd:
 			ckpt_value_width = sd["value_head.0.weight"].shape[0]
-			if ckpt_value_width != m.value_head[0].out_features:
+			ckpt_val_out = sd["value_head.2.weight"].shape[0]
+			if ckpt_value_width != m.value_head[0].out_features or ckpt_val_out != m.value_head[2].out_features:
 				m.value_head = nn.Sequential(
 					nn.Linear(model_cfg.get("hidden_dim", 256), ckpt_value_width),
 					nn.GELU(),
-					nn.Linear(ckpt_value_width, 1),
+					nn.Linear(ckpt_value_width, ckpt_val_out),
 				).to(device)
 
 		m.load_state_dict(sd, strict=False)
@@ -233,19 +235,19 @@ def run_simulation():
 		print(f"  Mundo: Bosque: [🍖: {world.resource_capacities['bosque']['food']:.1f}/{world.resource_capacity:.1f}] | Río: [🍖: {world.resource_capacities['río']['food']:.1f}/{world.resource_capacity:.1f}, 💧: {world.resource_capacities['río']['water']:.1f}/{world.resource_capacity:.1f}] | Lago: [💧: {world.resource_capacities['lago']['water']:.1f}/{world.resource_capacity:.1f}] | {prey_str}")
 
 		# Mostrar estado de Nico (A) y su ToM
-		print(f"  Nico (A): Loc: {state_a.location:8s} | Hambre: {state_a.hambre:5.1f} | Salud: {state_a.salud:5.1f} | Energía: {state_a.energia:5.1f} | Emo: {state_a.emotion_name} | Mochila: [🍖: {state_a.mochila_comida}/1, 💧: {state_a.mochila_agua}/1]")
-		print(f"            Estima a Sofi (B): [Loc: {state_a.companion_model.get('b', {}).get('location', 'cueva'):8s} | Hambre: {state_a.companion_model.get('b', {}).get('hambre', 60.0):5.1f} | Salud: {state_a.companion_model.get('b', {}).get('salud', 100.0):5.1f} | Emo: {state_a.companion_model.get('b', {}).get('emotion_name', 'alegría')}]")
-		print(f"            Estima a Hugo (c): [Loc: {state_a.companion_model.get('c', {}).get('location', 'cueva'):8s} | Hambre: {state_a.companion_model.get('c', {}).get('hambre', 60.0):5.1f} | Salud: {state_a.companion_model.get('c', {}).get('salud', 100.0):5.1f} | Emo: {state_a.companion_model.get('c', {}).get('emotion_name', 'alegría')}]")
+		print(f"  Nico (A): Loc: {state_a.location:8s} | Hambre: {state_a.hambre:5.1f} | Sed: {state_a.sed:5.1f} | Salud: {state_a.salud:5.1f} | Energía: {state_a.energia:5.1f} | Emo: {state_a.emotion_name} | Mochila: [🍖: {state_a.mochila_comida}/1, 💧: {state_a.mochila_agua}/1]")
+		print(f"            Estima a Sofi (B): [Loc: {state_a.companion_model.get('b', {}).get('location', 'cueva'):8s} | Hambre: {state_a.companion_model.get('b', {}).get('hambre', 60.0):5.1f} | Sed: {state_a.companion_model.get('b', {}).get('sed', 80.0):5.1f} | Salud: {state_a.companion_model.get('b', {}).get('salud', 100.0):5.1f} | Emo: {state_a.companion_model.get('b', {}).get('emotion_name', 'alegría')}]")
+		print(f"            Estima a Hugo (c): [Loc: {state_a.companion_model.get('c', {}).get('location', 'cueva'):8s} | Hambre: {state_a.companion_model.get('c', {}).get('hambre', 60.0):5.1f} | Sed: {state_a.companion_model.get('c', {}).get('sed', 80.0):5.1f} | Salud: {state_a.companion_model.get('c', {}).get('salud', 100.0):5.1f} | Emo: {state_a.companion_model.get('c', {}).get('emotion_name', 'alegría')}]")
 
 		# Mostrar estado de Sofi (B) y su ToM
-		print(f"  Sofi (B): Loc: {state_b.location:8s} | Hambre: {state_b.hambre:5.1f} | Salud: {state_b.salud:5.1f} | Energía: {state_b.energia:5.1f} | Emo: {state_b.emotion_name} | Mochila: [🍖: {state_b.mochila_comida}/1, 💧: {state_b.mochila_agua}/1]")
-		print(f"            Estima a Nico (A): [Loc: {state_b.companion_model.get('a', {}).get('location', 'cueva'):8s} | Hambre: {state_b.companion_model.get('a', {}).get('hambre', 60.0):5.1f} | Salud: {state_b.companion_model.get('a', {}).get('salud', 100.0):5.1f} | Emo: {state_b.companion_model.get('a', {}).get('emotion_name', 'alegría')}]")
-		print(f"            Estima a Hugo (C): [Loc: {state_b.companion_model.get('c', {}).get('location', 'cueva'):8s} | Hambre: {state_b.companion_model.get('c', {}).get('hambre', 60.0):5.1f} | Salud: {state_b.companion_model.get('c', {}).get('salud', 100.0):5.1f} | Emo: {state_b.companion_model.get('c', {}).get('emotion_name', 'alegría')}]")
+		print(f"  Sofi (B): Loc: {state_b.location:8s} | Hambre: {state_b.hambre:5.1f} | Sed: {state_b.sed:5.1f} | Salud: {state_b.salud:5.1f} | Energía: {state_b.energia:5.1f} | Emo: {state_b.emotion_name} | Mochila: [🍖: {state_b.mochila_comida}/1, 💧: {state_b.mochila_agua}/1]")
+		print(f"            Estima a Nico (A): [Loc: {state_b.companion_model.get('a', {}).get('location', 'cueva'):8s} | Hambre: {state_b.companion_model.get('a', {}).get('hambre', 60.0):5.1f} | Sed: {state_b.companion_model.get('a', {}).get('sed', 80.0):5.1f} | Salud: {state_b.companion_model.get('a', {}).get('salud', 100.0):5.1f} | Emo: {state_b.companion_model.get('a', {}).get('emotion_name', 'alegría')}]")
+		print(f"            Estima a Hugo (C): [Loc: {state_b.companion_model.get('c', {}).get('location', 'cueva'):8s} | Hambre: {state_b.companion_model.get('c', {}).get('hambre', 60.0):5.1f} | Sed: {state_b.companion_model.get('c', {}).get('sed', 80.0):5.1f} | Salud: {state_b.companion_model.get('c', {}).get('salud', 100.0):5.1f} | Emo: {state_b.companion_model.get('c', {}).get('emotion_name', 'alegría')}]")
 
 		# Mostrar estado de Hugo (C) y su ToM
-		print(f"  Hugo (C): Loc: {state_c.location:8s} | Hambre: {state_c.hambre:5.1f} | Salud: {state_c.salud:5.1f} | Energía: {state_c.energia:5.1f} | Emo: {state_c.emotion_name} | Mochila: [🍖: {state_c.mochila_comida}/1, 💧: {state_c.mochila_agua}/1]")
-		print(f"            Estima a Nico (A): [Loc: {state_c.companion_model.get('a', {}).get('location', 'cueva'):8s} | Hambre: {state_c.companion_model.get('a', {}).get('hambre', 60.0):5.1f} | Salud: {state_c.companion_model.get('a', {}).get('salud', 100.0):5.1f} | Emo: {state_c.companion_model.get('a', {}).get('emotion_name', 'alegría')}]")
-		print(f"            Estima a Sofi (B): [Loc: {state_c.companion_model.get('b', {}).get('location', 'cueva'):8s} | Hambre: {state_c.companion_model.get('b', {}).get('hambre', 60.0):5.1f} | Salud: {state_c.companion_model.get('b', {}).get('salud', 100.0):5.1f} | Emo: {state_c.companion_model.get('b', {}).get('emotion_name', 'alegría')}]")
+		print(f"  Hugo (C): Loc: {state_c.location:8s} | Hambre: {state_c.hambre:5.1f} | Sed: {state_c.sed:5.1f} | Salud: {state_c.salud:5.1f} | Energía: {state_c.energia:5.1f} | Emo: {state_c.emotion_name} | Mochila: [🍖: {state_c.mochila_comida}/1, 💧: {state_c.mochila_agua}/1]")
+		print(f"            Estima a Nico (A): [Loc: {state_c.companion_model.get('a', {}).get('location', 'cueva'):8s} | Hambre: {state_c.companion_model.get('a', {}).get('hambre', 60.0):5.1f} | Sed: {state_c.companion_model.get('a', {}).get('sed', 80.0):5.1f} | Salud: {state_c.companion_model.get('a', {}).get('salud', 100.0):5.1f} | Emo: {state_c.companion_model.get('a', {}).get('emotion_name', 'alegría')}]")
+		print(f"            Estima a Sofi (B): [Loc: {state_c.companion_model.get('b', {}).get('location', 'cueva'):8s} | Hambre: {state_c.companion_model.get('b', {}).get('hambre', 60.0):5.1f} | Sed: {state_c.companion_model.get('b', {}).get('sed', 80.0):5.1f} | Salud: {state_c.companion_model.get('b', {}).get('salud', 100.0):5.1f} | Emo: {state_c.companion_model.get('b', {}).get('emotion_name', 'alegría')}]")
 
 		# Perceive
 		perc_a = world.perceive(state_a)
