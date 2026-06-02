@@ -196,6 +196,12 @@ VOCABULARY = {
 	"dar": _make_glyph(
 		hacer=1, tú=1, bueno=1, tocar=1, mío=-1,
 	),
+	"enseñar": _make_glyph(
+		hacer=1, saber=1, tú=1, decir=1, bueno=1,
+	),
+	"aprender": _make_glyph(
+		hacer=1, saber=1, yo=1, ver=1, bueno=1,
+	),
 
 	# --- Fase 2: Entorno (6 palabras, epoch 100-150) ---
 	"bosque": _make_glyph(

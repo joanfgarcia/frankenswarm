@@ -81,6 +81,8 @@ def run_prolog_training():
 		pretrained_path = pretrained_from if os.path.isabs(pretrained_from) else os.path.join(base_dir, pretrained_from)
 		if os.path.exists(pretrained_path):
 			state_dict = torch.load(pretrained_path, map_location=device, weights_only=True)
+			if "glyph_embedding.glyph_table" in state_dict:
+				del state_dict["glyph_embedding.glyph_table"]
 			model.load_state_dict(state_dict, strict=False)
 			print(f"🧒→🧑 Pre-trained: {pretrained_path}")
 

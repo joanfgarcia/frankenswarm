@@ -4,7 +4,7 @@ from src.bitnet.cooperative_world import CooperativeWorld, COOP_LOCATION_GLYPHS,
 class TestCooperativeHunting(unittest.TestCase):
 	def test_tribal_expansion(self):
 		world = CooperativeWorld(seed=42)
-		self.assertEqual(len(world.agents), 3)
+		self.assertEqual(len(world.agents), 4)
 		self.assertEqual(world.agents[0].agent_id, "a")
 		self.assertEqual(world.agents[1].agent_id, "b")
 		self.assertEqual(world.agents[2].agent_id, "c")
@@ -72,6 +72,12 @@ class TestCooperativeHunting(unittest.TestCase):
 		world.agent_b.location = "río"
 		world.agent_c.location = "cueva"
 
+		# Asegurar habilidad caza para la prueba cooperativa
+		if "caza" not in world.agent_a.learned_skills:
+			world.agent_a.learned_skills.append("caza")
+		if "caza" not in world.agent_b.learned_skills:
+			world.agent_b.learned_skills.append("caza")
+
 		# Inicializar hambre baja para probar saciado
 		world.agent_a.hambre = 30.0
 		world.agent_b.hambre = 30.0
@@ -99,6 +105,10 @@ class TestCooperativeHunting(unittest.TestCase):
 		world.agent_b.location = "cueva"
 		world.agent_c.location = "cueva"
 
+		# Asegurar habilidad caza
+		if "caza" not in world.agent_a.learned_skills:
+			world.agent_a.learned_skills.append("caza")
+
 		world.agent_a.salud = 100.0
 
 		res_a, res_b, res_c, world_info = world.step("luchar", "ver", "ver")
@@ -112,6 +122,7 @@ class TestCooperativeHunting(unittest.TestCase):
 		state_a, state_b, state_c = world.reset()
 
 		# Inicializar estados controlados
+		world.agent_a.location = "cueva"
 		world.agent_a.hambre = 50.0
 		world.agent_a.sed = 50.0
 		world.agent_a.energia = 50.0
@@ -127,6 +138,7 @@ class TestCooperativeHunting(unittest.TestCase):
 		# Hambre decae por hunger_rate * 0.5 (2.0)
 		# Sed decae por hunger_rate * 2.0 * 0.5 (4.0)
 		# Y recupera energía y salud
+		world.agent_a.location = "cueva"
 		world.agent_a.hambre = 50.0
 		world.agent_a.sed = 50.0
 		world.agent_a.energia = 50.0
@@ -142,17 +154,17 @@ class TestCooperativeHunting(unittest.TestCase):
 		world.agent_a.hambre = 50.0
 		world.agent_a.sed = 50.0
 		world.agent_a.mochila_comida = 1
-		# Come: hambre +40, sed -thirst_rate (8) -3 = -11
+		# Come: hambre +40, sed -thirst_rate (8 * 1.1) -3 = -11.8 (peso_multiplicador = 1.1)
 		res_a, _, _, _ = world.step("comer", "ver", "ver")
-		self.assertEqual(world.agent_a.hambre, 86.0)  # 50 - 4 + 40
-		self.assertEqual(world.agent_a.sed, 39.0)     # 50 - 8 - 3
+		self.assertEqual(world.agent_a.hambre, 85.6)  # 50 - 4.4 + 40
+		self.assertEqual(world.agent_a.sed, 38.2)     # 50 - 8.8 - 3
 
 		# 4. Test de beber (+50.0 a sed)
 		world.agent_a.sed = 40.0
 		world.agent_a.mochila_agua = 1
-		# Bebe: sed +50, decaimiento -8 = 82
+		# Bebe: sed +50, decaimiento -8.8 = 81.2 (peso_multiplicador = 1.1)
 		res_a, _, _, _ = world.step("beber", "ver", "ver")
-		self.assertEqual(world.agent_a.sed, 82.0)
+		self.assertEqual(world.agent_a.sed, 81.2)
 
 		# 5. Test de deshidratación grave (sed <= 0 provoca -25.0 salud)
 		world.agent_a.sed = 0.0

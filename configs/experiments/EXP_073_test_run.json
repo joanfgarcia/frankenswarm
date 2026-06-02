@@ -1,0 +1,45 @@
+{
+    "experiment_id": "EXP_073_test_run",
+    "seed": 42,
+    "model": {
+        "hidden_dim": 256,
+        "num_layers": 3,
+        "use_pos_embedding": true
+    },
+    "resonance": {
+        "max_resonance_steps": 5,
+        "n_think": 2,
+        "n_verify": 2
+    },
+    "emotion": {
+        "mode": "first_only",
+        "dim": 64
+    },
+    "world": {
+        "max_ticks": 200,
+        "food_interval": 8,
+        "food_duration": 6,
+        "hunger_rate": 3.5
+    },
+    "training": {
+        "episodes": 10,
+        "lr": 0.0005,
+        "gamma": 0.97,
+        "grad_clip": 1.0,
+        "entropy_bonus": 0.05,
+        "update_interval": 16
+    },
+    "growth": {
+        "factor": 1.5,
+        "max_width": 648,
+        "patience": 50
+    },
+    "unfreeze_backbone": true,
+    "communication": {
+        "enabled": true
+    },
+    "meta": {
+        "description": "Short test run for sovereign reproduction",
+        "hypothesis": "Verify gradient flow and birth events without crash"
+    }
+}

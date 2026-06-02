@@ -111,6 +111,8 @@ def run_arena_ppo_training():
 
 		if p and os.path.exists(p):
 			sd = torch.load(p, map_location=device, weights_only=True)
+			if "glyph_embedding.glyph_table" in sd:
+				del sd["glyph_embedding.glyph_table"]
 			if "action_head.0.weight" in sd and "action_head.2.weight" in sd:
 				ckpt_width = sd["action_head.0.weight"].shape[0]
 				ckpt_out = sd["action_head.2.weight"].shape[0]
@@ -222,9 +224,48 @@ def run_arena_ppo_training():
 			lr=lr, weight_decay=0.01
 		)
 
+	def make_child_model(width: int):
+		m = BitNet4LayerModel(
+			use_glyphs=True,
+			hidden_dim=model_cfg.get("hidden_dim", 256),
+			num_layers=model_cfg.get("num_layers", 3),
+			use_pos_embedding=model_cfg.get("use_pos_embedding", True),
+			max_resonance_steps=config.get("resonance", {}).get("max_resonance_steps", 5),
+			n_emotions=N_EMOTIONS,
+			emotion_dim=emotion_cfg.get("dim", 64),
+			emotion_mode=emotion_cfg.get("mode", "first_only"),
+			max_seq_len=6,
+		).to(device)
+
+		unfreeze = config.get("unfreeze_backbone", True)
+		for name, param in m.named_parameters():
+			if "glyph_table" in name:
+				param.requires_grad = False
+			elif not unfreeze and "action_head" not in name and "value_head" not in name:
+				param.requires_grad = False
+			else:
+				param.requires_grad = True
+
+		m.action_head = nn.Sequential(
+			nn.Linear(model_cfg.get("hidden_dim", 256), width),
+			nn.GELU(),
+			nn.Linear(width, COOP_N_ACTIONS),
+		).to(device)
+
+		m.value_head = nn.Sequential(
+			nn.Linear(model_cfg.get("hidden_dim", 256), width),
+			nn.GELU(),
+			nn.Linear(width, 1),
+		).to(device)
+
+		return m
+
 	opt_a = make_optimizer(agent_a)
 	opt_b = make_optimizer(agent_b)
 	opt_c = make_optimizer(agent_c)
+
+	agent_d = None
+	opt_d = None
 
 	logger = ExperimentLogger(
 		experiment_id,
@@ -237,38 +278,48 @@ def run_arena_ppo_training():
 	total_growths_a = 0
 	total_growths_b = 0
 	total_growths_c = 0
+	total_growths_d = 0
 	total_shouts_a = 0
 	total_shouts_b = 0
 	total_shouts_c = 0
+	total_shouts_d = 0
+
+	world = CooperativeWorld(
+		seed=seed,
+		food_interval=food_interval,
+		food_duration=food_duration,
+		hunger_rate=hunger_rate,
+		resource_capacity=resource_capacity,
+		resource_recovery=resource_recovery,
+		predator_chance_multiplier=predator_chance_multiplier,
+		predator_damage_multiplier=predator_damage_multiplier,
+		storm_chance_multiplier=storm_chance_multiplier,
+		storm_damage_multiplier=storm_damage_multiplier,
+		prey_spawn_interval=prey_spawn_interval,
+	)
 
 	for episode in range(n_episodes):
-		world = CooperativeWorld(
-			seed=seed + episode,
-			food_interval=food_interval,
-			food_duration=food_duration,
-			hunger_rate=hunger_rate,
-			resource_capacity=resource_capacity,
-			resource_recovery=resource_recovery,
-			predator_chance_multiplier=predator_chance_multiplier,
-			predator_damage_multiplier=predator_damage_multiplier,
-			storm_chance_multiplier=storm_chance_multiplier,
-			storm_damage_multiplier=storm_damage_multiplier,
-			prey_spawn_interval=prey_spawn_interval,
-		)
-		state_a, state_b, state_c = world.reset()
+		state_a, state_b, state_c = world.reset(seed=seed + episode)
+		state_d = world.agent_d
 
 		# Trajectory buffers
 		buf_a = {"inputs": [], "emotions": [], "actions": [], "shout_concepts": [], "log_probs": [], "values": [], "rewards": []}
 		buf_b = {"inputs": [], "emotions": [], "actions": [], "shout_concepts": [], "log_probs": [], "values": [], "rewards": []}
 		buf_c = {"inputs": [], "emotions": [], "actions": [], "shout_concepts": [], "log_probs": [], "values": [], "rewards": []}
+		buf_d = {"inputs": [], "emotions": [], "actions": [], "shout_concepts": [], "log_probs": [], "values": [], "rewards": []}
 
 		agent_a.eval()
 		agent_b.eval()
 		agent_c.eval()
+		if agent_d is not None:
+			agent_d.eval()
 
 		ep_shouts_a = 0
 		ep_shouts_b = 0
 		ep_shouts_c = 0
+		ep_shouts_d = 0
+
+		agent_d_episode = agent_d
 
 		for tick in range(max_ticks):
 			if not state_a.alive or not state_b.alive or not state_c.alive:
@@ -278,6 +329,9 @@ def run_arena_ppo_training():
 			perc_a = world.perceive(state_a)
 			perc_b = world.perceive(state_b)
 			perc_c = world.perceive(state_c)
+			perc_d = None
+			if state_d.alive:
+				perc_d = world.perceive(state_d)
 
 			if not communicate:
 				perc_a[4] = SILENCE_GLYPH
@@ -286,14 +340,23 @@ def run_arena_ppo_training():
 				perc_b[5] = SILENCE_GLYPH
 				perc_c[4] = SILENCE_GLYPH
 				perc_c[5] = SILENCE_GLYPH
+				if perc_d is not None:
+					perc_d[4] = SILENCE_GLYPH
+					perc_d[5] = SILENCE_GLYPH
 
 			input_a = perception_to_input_coop(perc_a, device)
 			input_b = perception_to_input_coop(perc_b, device)
 			input_c = perception_to_input_coop(perc_c, device)
+			input_d = None
+			if perc_d is not None:
+				input_d = perception_to_input_coop(perc_d, device)
 
 			emo_a = torch.tensor([state_a.emotion_id], device=device)
 			emo_b = torch.tensor([state_b.emotion_id], device=device)
 			emo_c = torch.tensor([state_c.emotion_id], device=device)
+			emo_d = None
+			if state_d.alive:
+				emo_d = torch.tensor([state_d.emotion_id], device=device)
 
 			# ── 2. PENSAR (forward resonance) ──
 			with torch.no_grad():
@@ -306,23 +369,40 @@ def run_arena_ppo_training():
 				_, meta_c = agent_c.forward_resonance(
 					input_c, n_steps=n_think, pos_mode="clock", emotion_ids=emo_c
 				)
+				meta_d = None
+				if state_d.alive and agent_d_episode is not None:
+					_, meta_d = agent_d_episode.forward_resonance(
+						input_d, n_steps=n_think, pos_mode="clock", emotion_ids=emo_d
+					)
 
 				hidden_a = meta_a["hidden"][:, 2, :].clone()
 				hidden_b = meta_b["hidden"][:, 2, :].clone()
 				hidden_c = meta_c["hidden"][:, 2, :].clone()
+				hidden_d = None
+				if meta_d is not None:
+					hidden_d = meta_d["hidden"][:, 2, :].clone()
 
 				# Predicciones de política y valor
 				action_logits_a = agent_a.action_head(hidden_a)
 				action_logits_b = agent_b.action_head(hidden_b)
 				action_logits_c = agent_c.action_head(hidden_c)
+				action_logits_d = None
+				if hidden_d is not None:
+					action_logits_d = agent_d_episode.action_head(hidden_d)
 
 				shout_logits_a = agent_a._decode_hidden(hidden_a)
 				shout_logits_b = agent_b._decode_hidden(hidden_b)
 				shout_logits_c = agent_c._decode_hidden(hidden_c)
+				shout_logits_d = None
+				if hidden_d is not None:
+					shout_logits_d = agent_d_episode._decode_hidden(hidden_d)
 
 				val_a = agent_a.value_head(hidden_a).item()
 				val_b = agent_b.value_head(hidden_b).item()
 				val_c = agent_c.value_head(hidden_c).item()
+				val_d = None
+				if hidden_d is not None:
+					val_d = agent_d_episode.value_head(hidden_d).item()
 
 			probs_a = F.softmax(action_logits_a, dim=-1)
 			probs_b = F.softmax(action_logits_b, dim=-1)
@@ -416,19 +496,115 @@ def run_arena_ppo_training():
 			if idx_c == 6:
 				lp_c = lp_c + lp_shout_c
 
+			# Decidir acciones y conceptos (D)
+			idx_d = 4 # ver por defecto
+			shout_concept_d_val = SILENCE_GLYPH
+			lp_d = 0.0
+			if state_d.alive and agent_d_episode is not None:
+				probs_d = F.softmax(action_logits_d, dim=-1)
+				shout_probs_d = F.softmax(shout_logits_d, dim=-1)
+				if not communicate:
+					probs_d = probs_d.clone()
+					probs_d[0, 6] = 0.0
+					probs_d = probs_d / probs_d.sum()
+
+				dist_shout_d = torch.distributions.Categorical(shout_probs_d)
+				if np.random.rand() < explore_rate:
+					shout_concept_d_val = np.random.randint(0, shout_probs_d.shape[-1])
+					lp_shout_d = torch.log(shout_probs_d[0, shout_concept_d_val] + 1e-8).item()
+				else:
+					shout_concept_d_val = dist_shout_d.sample().item()
+					lp_shout_d = dist_shout_d.log_prob(torch.tensor(shout_concept_d_val, device=device)).item()
+
+				if np.random.rand() < explore_rate:
+					if communicate:
+						idx_d = np.random.randint(0, COOP_N_ACTIONS)
+					else:
+						idx_d = np.random.choice([0, 1, 2, 3, 4, 5, 7])
+					lp_d = torch.log(probs_d[0, idx_d] + 1e-8).item()
+				else:
+					dist_d = torch.distributions.Categorical(probs_d)
+					idx_d = dist_d.sample().item()
+					lp_d = dist_d.log_prob(torch.tensor(idx_d, device=device)).item()
+
+				if idx_d == 6:
+					lp_d = lp_d + lp_shout_d
+
 			# ── 3. ACTUAR ──
 			action_a = COOP_ACTIONS[idx_a]
 			action_b = COOP_ACTIONS[idx_b]
 			action_c = COOP_ACTIONS[idx_c]
+			action_d = COOP_ACTIONS[idx_d]
 
 			shout_concept_a = shout_concept_a_val if idx_a == 6 else None
 			shout_concept_b = shout_concept_b_val if idx_b == 6 else None
 			shout_concept_c = shout_concept_c_val if idx_c == 6 else None
+			shout_concept_d = shout_concept_d_val if idx_d == 6 else None
 
 			result_a, result_b, result_c, world_info = world.step(
-				action_a, action_b, action_c,
-				shout_concept_a=shout_concept_a, shout_concept_b=shout_concept_b, shout_concept_c=shout_concept_c
+				action_a, action_b, action_c, action_d,
+				shout_concept_a=shout_concept_a, shout_concept_b=shout_concept_b, shout_concept_c=shout_concept_c, shout_concept_d=shout_concept_d
 			)
+			result_d = world_info.get("result_d")
+
+			# Si nace Domi, instanciar dinámicamente su modelo, optimizador y buffer
+			if "born_child" in result_a and agent_d_episode is None:
+				child_info = result_a["born_child"]
+				parent_a_id = child_info["parent_a"]
+				parent_b_id = child_info["parent_b"]
+				child_width = child_info["width"]
+
+				p_models = {
+					"a": agent_a,
+					"b": agent_b,
+					"c": agent_c
+				}
+				parent_model_a = p_models[parent_a_id]
+				parent_model_b = p_models[parent_b_id]
+
+				# Instanciar modelo de Domi
+				agent_d = make_child_model(child_width)
+
+				# Cruzar pesos SVD
+				from src.bitnet.genetic import recombine_parents
+				recombine_parents(parent_model_a, parent_model_b, agent_d, child_width, device)
+
+				opt_d = make_optimizer(agent_d)
+				buf_d = {"inputs": [], "emotions": [], "actions": [], "shout_concepts": [], "log_probs": [], "values": [], "rewards": []}
+				agent_d.eval()
+				agent_d_episode = agent_d
+
+			# Registrar en el teaching_buffer para destilación latente (Fase 6)
+			agents_to_check = [
+				("a", result_a, state_a, input_a),
+				("b", result_b, state_b, input_b),
+				("c", result_c, state_c, input_c)
+			]
+			if world.agent_d_was_alive and result_d is not None:
+				agents_to_check.append(("d", result_d, state_d, input_d))
+
+			for label, result_x, state_x, input_x in agents_to_check:
+				if result_x.get("success") and result_x.get("learning_skill") and result_x.get("learned_from"):
+					skill = result_x["learning_skill"]
+					teacher_id = result_x["learned_from"]
+					teacher_hidden = None
+					if teacher_id == "a":
+						teacher_hidden = hidden_a
+					elif teacher_id == "b":
+						teacher_hidden = hidden_b
+					elif teacher_id == "c":
+						teacher_hidden = hidden_c
+					elif teacher_id == "d" and hidden_d is not None:
+						teacher_hidden = hidden_d
+
+					if teacher_hidden is not None:
+						state_x.teaching_buffer.append({
+							"input": input_x.clone().cpu(),
+							"emotion": state_x.emotion_id,
+							"teacher_hidden": teacher_hidden.clone().cpu(),
+							"skill": skill,
+							"teacher_id": teacher_id
+						})
 
 			if result_a.get("shouted"):
 				ep_shouts_a += 1
@@ -436,6 +612,8 @@ def run_arena_ppo_training():
 				ep_shouts_b += 1
 			if result_c.get("shouted"):
 				ep_shouts_c += 1
+			if result_d is not None and result_d.get("shouted"):
+				ep_shouts_d += 1
 
 			reward_a = world.get_reward(state_a, result_a)
 			reward_b = world.get_reward(state_b, result_b)
@@ -472,14 +650,72 @@ def run_arena_ppo_training():
 			buf_c["values"].append(val_c)
 			buf_c["rewards"].append(reward_c)
 
-		# ── 4. ACTUALIZACIÓN PPO ──
-		loss_a_val, loss_b_val, loss_c_val = 0.0, 0.0, 0.0
+			if world.agent_d_was_alive and result_d is not None and agent_d_episode is not None:
+				reward_d = world.get_reward(state_d, result_d)
+				if communicate:
+					reward_d += world_info.get("coop_bonus_d", 0.0)
 
-		for agent, opt, buf, state, ep_rewards, ep_values in [
-			(agent_a, opt_a, buf_a, state_a, buf_a["rewards"], buf_a["values"]),
-			(agent_b, opt_b, buf_b, state_b, buf_b["rewards"], buf_b["values"]),
-			(agent_c, opt_c, buf_c, state_c, buf_c["rewards"], buf_c["values"])
-		]:
+				buf_d["inputs"].append(input_d.squeeze(0).cpu())
+				buf_d["emotions"].append(state_d.emotion_id)
+				buf_d["actions"].append(idx_d)
+				buf_d["shout_concepts"].append(shout_concept_d_val)
+				buf_d["log_probs"].append(lp_d)
+				buf_d["values"].append(val_d)
+				buf_d["rewards"].append(reward_d)
+
+		# ── Sueño y Destilación de Resonancia Latente (Fase 6) ──
+		from src.bitnet.consolidate_sleep import consolidate_latent_resonance
+
+		sleep_list = [("a", agent_a, state_a), ("b", agent_b, state_b), ("c", agent_c, state_c)]
+		if agent_d_episode is not None:
+			sleep_list.append(("d", agent_d_episode, state_d))
+
+		for label, model, state in sleep_list:
+			if state.teaching_buffer:
+				graduated = consolidate_latent_resonance(model, state.teaching_buffer, device, n_think=n_think)
+
+				# Aplicar las habilidades aprendidas permanentemente en el estado y recompensar maestros
+				for skill in graduated:
+					if skill not in state.learned_skills:
+						state.learned_skills.append(skill)
+
+						# Buscar el maestro
+						teacher_id = None
+						for sample in state.teaching_buffer:
+							if sample["skill"] == skill:
+								teacher_id = sample.get("teacher_id")
+								break
+
+						if teacher_id:
+							# Recompensar al maestro con el Bono de Graduación Altruista (+15.0)
+							if teacher_id == "a" and buf_a["rewards"]:
+								buf_a["rewards"][-1] += 15.0
+								print(f"  🏆 Maestro A (NICO) recibe +15.0 de bono altruista por graduar a {label.upper()} en '{skill}'.")
+							elif teacher_id == "b" and buf_b["rewards"]:
+								buf_b["rewards"][-1] += 15.0
+								print(f"  🏆 Maestro B (SOFY) recibe +15.0 de bono altruista por graduar a {label.upper()} en '{skill}'.")
+							elif teacher_id == "c" and buf_c["rewards"]:
+								buf_c["rewards"][-1] += 15.0
+								print(f"  🏆 Maestro C (HUGO) recibe +15.0 de bono altruista por graduar a {label.upper()} en '{skill}'.")
+							elif teacher_id == "d" and buf_d["rewards"]:
+								buf_d["rewards"][-1] += 15.0
+								print(f"  🏆 Maestro D (DOMI) recibe +15.0 de bono altruista por graduar a {label.upper()} en '{skill}'.")
+
+				# Limpiar buffer de aprendizaje una vez procesado el sueño
+				state.teaching_buffer = []
+
+		# ── 4. ACTUALIZACIÓN PPO ──
+		loss_a_val, loss_b_val, loss_c_val, loss_d_val = 0.0, 0.0, 0.0, 0.0
+
+		agents_to_update = [
+			(agent_a, opt_a, buf_a, state_a, buf_a["rewards"], buf_a["values"], "a"),
+			(agent_b, opt_b, buf_b, state_b, buf_b["rewards"], buf_b["values"], "b"),
+			(agent_c, opt_c, buf_c, state_c, buf_c["rewards"], buf_c["values"], "c")
+		]
+		if agent_d_episode is not None and len(buf_d["rewards"]) > 0:
+			agents_to_update.append((agent_d_episode, opt_d, buf_d, state_d, buf_d["rewards"], buf_d["values"], "d"))
+
+		for agent, opt, buf, state, ep_rewards, ep_values, label in agents_to_update:
 			if not ep_rewards:
 				continue
 
@@ -581,12 +817,14 @@ def run_arena_ppo_training():
 				opt.step()
 				losses.append(loss.item())
 
-			if agent == agent_a:
+			if label == "a":
 				loss_a_val = np.mean(losses)
-			elif agent == agent_b:
+			elif label == "b":
 				loss_b_val = np.mean(losses)
-			else:
+			elif label == "c":
 				loss_c_val = np.mean(losses)
+			elif label == "d":
+				loss_d_val = np.mean(losses)
 
 		# ── 5. MÉTRICAS Y NEUROGENÉSIS ──
 		combined = min(state_a.tick, state_b.tick, state_c.tick)
@@ -594,30 +832,49 @@ def run_arena_ppo_training():
 		total_shouts_a += ep_shouts_a
 		total_shouts_b += ep_shouts_b
 		total_shouts_c += ep_shouts_c
+		total_shouts_d += ep_shouts_d
 
 		if combined > best_combined:
 			best_combined = combined
 			torch.save(agent_a.state_dict(), os.path.join(exp_dir, "best_agent_a.pt"))
 			torch.save(agent_b.state_dict(), os.path.join(exp_dir, "best_agent_b.pt"))
 			torch.save(agent_c.state_dict(), os.path.join(exp_dir, "best_agent_c.pt"))
+			if agent_d_episode is not None:
+				torch.save(agent_d_episode.state_dict(), os.path.join(exp_dir, "best_agent_d.pt"))
 
 		# Neurogénesis
-		for label, model, opt_ref in [("A", agent_a, "opt_a"), ("B", agent_b, "opt_b"), ("C", agent_c, "opt_c")]:
+		neuro_list = [
+			("A", agent_a, state_a, "opt_a"),
+			("B", agent_b, state_b, "opt_b"),
+			("C", agent_c, state_c, "opt_c")
+		]
+		if agent_d_episode is not None:
+			neuro_list.append(("D", agent_d_episode, state_d, "opt_d"))
+
+		for label, model, state, opt_ref in neuro_list:
 			curr_w = model.action_head[0].out_features
 			if len(survival_hist) >= 10 and curr_w < max_width:
 				avg_s = np.mean(survival_hist[-10:])
 				if avg_s < max_ticks * 0.10: # threshold adaptativo
 					grow_action_head(model, growth_factor=growth_factor)
 					grow_value_head(model, growth_factor=growth_factor)
+					
+					# Actualizar el ancho del modelo y aplicar penalización metabólica diferida
+					state.network_width = model.action_head[0].out_features
+					state.pending_growth_penalty = True
+					
 					if label == "A":
 						total_growths_a += 1
 						opt_a = make_optimizer(agent_a)
 					elif label == "B":
 						total_growths_b += 1
 						opt_b = make_optimizer(agent_b)
-					else:
+					elif label == "C":
 						total_growths_c += 1
 						opt_c = make_optimizer(agent_c)
+					elif label == "D":
+						total_growths_d += 1
+						opt_d = make_optimizer(agent_d_episode)
 					print(f"  🧬 {label} NEUROGENÉSIS | width: {curr_w} -> {model.action_head[0].out_features}")
 
 		# Logging periódico
@@ -628,32 +885,35 @@ def run_arena_ppo_training():
 			w_c = agent_c.action_head[0].out_features
 			food_str = f"🍖{world_info['food_location'] or 'none'}"
 			prey_str = f"🎯{world.prey_location or 'none'}"
+			d_ticks_str = f" D:{state_d.tick:3d}" if state_d.alive else " D: --"
 			print(
 				f"Ep {episode+1:4d}/{n_episodes} | "
-				f"A:{state_a.tick:3d} B:{state_b.tick:3d} C:{state_c.tick:3d} | "
+				f"A:{state_a.tick:3d} B:{state_b.tick:3d} C:{state_c.tick:3d}{d_ticks_str} | "
 				f"Best:{best_combined:.0f} Avg50:{avg:.1f} | "
-				f"Loss A:{loss_a_val:.3f} B:{loss_b_val:.3f} C:{loss_c_val:.3f} | "
-				f"{'📡' if communicate else '🔇'} shouts:{ep_shouts_a+ep_shouts_b+ep_shouts_c} | "
-				f"G_A:{total_growths_a} G_B:{total_growths_b} G_C:{total_growths_c} | {food_str} {prey_str}"
+				f"Loss A:{loss_a_val:.3f} B:{loss_b_val:.3f} C:{loss_c_val:.3f} D:{loss_d_val:.3f} | "
+				f"{'📡' if communicate else '🔇'} shouts:{ep_shouts_a+ep_shouts_b+ep_shouts_c+ep_shouts_d} | "
+				f"G_A:{total_growths_a} G_B:{total_growths_b} G_C:{total_growths_c} G_D:{total_growths_d} | {food_str} {prey_str}"
 			)
 
 			logger.log_epoch(
 				epoch=episode + 1,
-				loss_avg=(loss_a_val + loss_b_val + loss_c_val) / 3,
+				loss_avg=(loss_a_val + loss_b_val + loss_c_val + loss_d_val) / (4 if agent_d_episode is not None else 3),
 				acc_concept=combined,
 				acc_emotion=ticks_to_survival_ratio(combined, max_ticks),
 				acc_joint=combined / max_ticks * 100,
-				fitness=[state_a.tick, state_b.tick, state_c.tick],
+				fitness=[state_a.tick, state_b.tick, state_c.tick] + ([state_d.tick] if state_d.alive else []),
 				worst_agent=0,
 				parent_a=-1,
 				parent_b=-1,
-				acc_homeostasis=np.mean(buf_a["rewards"] + buf_b["rewards"] + buf_c["rewards"]) if buf_a["rewards"] else 0,
+				acc_homeostasis=np.mean(buf_a["rewards"] + buf_b["rewards"] + buf_c["rewards"] + (buf_d["rewards"] if state_d.alive else [])) if buf_a["rewards"] else 0,
 			)
 
 	# Guardar checkpoints finales
 	torch.save(agent_a.state_dict(), os.path.join(exp_dir, "final_agent_a.pt"))
 	torch.save(agent_b.state_dict(), os.path.join(exp_dir, "final_agent_b.pt"))
 	torch.save(agent_c.state_dict(), os.path.join(exp_dir, "final_agent_c.pt"))
+	if agent_d is not None:
+		torch.save(agent_d.state_dict(), os.path.join(exp_dir, "final_agent_d.pt"))
 
 	avg_final = np.mean(survival_hist[-100:])
 	print(f"\n{'═'*60}")
@@ -661,9 +921,9 @@ def run_arena_ppo_training():
 	print(f"   {'📡 Communication ON' if communicate else '🔇 Silent'}")
 	print(f"   Best combined: {best_combined:.0f} ticks")
 	print(f"   Avg (last 100): {avg_final:.1f} ticks")
-	print(f"   Total shouts: A={total_shouts_a}, B={total_shouts_b}, C={total_shouts_c}")
-	print(f"   Final width: A={agent_a.action_head[0].out_features}, B={agent_b.action_head[0].out_features}, C={agent_c.action_head[0].out_features}")
-	print(f"   Growths: A={total_growths_a}, B={total_growths_b}, C={total_growths_c}")
+	print(f"   Total shouts: A={total_shouts_a}, B={total_shouts_b}, C={total_shouts_c}, D={total_shouts_d}")
+	print(f"   Final width: A={agent_a.action_head[0].out_features}, B={agent_b.action_head[0].out_features}, C={agent_c.action_head[0].out_features}" + (f", D={agent_d.action_head[0].out_features}" if agent_d is not None else ""))
+	print(f"   Growths: A={total_growths_a}, B={total_growths_b}, C={total_growths_c}, D={total_growths_d}")
 	print(f"{'═'*60}")
 
 	logger.close()

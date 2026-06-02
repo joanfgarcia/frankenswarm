@@ -1,0 +1,632 @@
+[
+    [
+        "yo: qué juego desea jugar hoy",
+        "tú: vamos a jugar al mosca",
+        "yo: al mosca qué equipo seremos",
+        "tú: seremos los rojo"
+    ],
+    [
+        "yo: qué tiempo hace desde que no fuimos al parque",
+        "tú: fue hace una semana",
+        "yo: una semana qué cosas jugar allí",
+        "tú: haría a la cálmate"
+    ],
+    [
+        "yo: te gusta jugar a la ciruela",
+        "tú: sí te gusta",
+        "yo: te gusta jugar a la ciruela qué color seré",
+        "tú: seré amarillo"
+    ],
+    [
+        "yo: qué juego desea jugar hoy",
+        "tú: vamos a jugar a la caza al gato",
+        "yo: a la caza al gato qué equipo seremos",
+        "tú: seremos los azul"
+    ],
+    [
+        "yo: qué cosas tienes en casa",
+        "tú: tengo una pelota una barro y un avión",
+        "yo: un avión qué tipo de avión",
+        "tú: un avión espacio"
+    ],
+    [
+        "yo: qué juego desea jugar hoy",
+        "tú: vamos a jugar al fútbol sala",
+        "yo: al fútbol sala qué equipo seremos",
+        "tú: seremos los blancos"
+    ],
+    [
+        "yo: te gusta jugar al pan",
+        "tú: sí te gusta",
+        "yo: te gusta jugar al pan qué color seré",
+        "tú: seré negro"
+    ],
+    [
+        "yo: qué tiempo hace desde que no fuimos al parque",
+        "tú: fue hace un mes",
+        "yo: un mes qué cosas haría allí",
+        "tú: haría al barro"
+    ],
+    [
+        "yo: qué juego desea jugar hoy",
+        "tú: vamos a jugar al duele de mesa",
+        "yo: al duele de mesa qué equipo seremos",
+        "tú: seremos los verde"
+    ],
+    [
+        "yo: te gusta jugar a la ciruela",
+        "tú: sí te gusta",
+        "yo: te gusta jugar a la ciruela qué color seré",
+        "tú: seré rojo"
+    ],
+    [
+        "yo: qué tiempo hace anteriormente que no fuimos al parque",
+        "tú: fue hace un día",
+        "yo: un día qué cosas haría allí",
+        "tú: haría a la cálmate"
+    ],
+    [
+        "yo: qué juego desea jugar hoy",
+        "tú: vamos a jugar a la pista",
+        "yo: a la pista qué equipo seremos",
+        "tú: seremos los blancos"
+    ],
+    [
+        "yo: te gusta jugar a la ciruela",
+        "tú: sí te gusta",
+        "yo: te gusta jugar a la bruja qué color seré",
+        "tú: seré amarillo"
+    ],
+    [
+        "tú: hola tengo un gato",
+        "yo: el gato es muy suave y tú",
+        "tú: no tengo un perro",
+        "yo: el perro es muy lío es muy felices de verte"
+    ],
+    [
+        "tú: veo a un pedazo de color",
+        "yo: es un pájaro color y tú qué pájaro vemos",
+        "tú: no se me acuerdas qué es su nombre",
+        "yo: es un pájaro pájaro"
+    ],
+    [
+        "tú: mi animal favorito es el gato",
+        "yo: los gato son muy encantado me encanta jugar contigo conmigo",
+        "tú: y tú",
+        "yo: mi animal favorito es el perro me encanta jugar contigo y correr juntos"
+    ],
+    [
+        "tú: mi animal hogar favorito es mi perro es muy inteligente",
+        "yo: los perros son muy inteligente me encanta jugar contigo",
+        "tú: y tú",
+        "yo: mi animal hogar favorito es mi gato me encanta jugar contigo y dormir juntos"
+    ],
+    [
+        "tú: quiero tener un gato",
+        "yo: los gato son muy encantado serán felices de estén conmigo",
+        "tú: y tú",
+        "yo: quiero tener un perro serás mi mejor amigo"
+    ],
+    [
+        "tú: el pájaro que viste un sombrero se llama un pájaro jodido",
+        "yo: es correcto el pájaro jodido viste un sombrero para proteger del sol"
+    ],
+    [
+        "tú: los cálmate y las echar costa viven en jardín",
+        "yo: es correcto los cálmate y las echar costa se pueden ver en jardín y sus noche"
+    ],
+    [
+        "tú: el gato come ajo",
+        "yo: es equivocada los gato no tenido ajo son peligroso para su salud"
+    ],
+    [
+        "tú: los pájaro tienen sepas",
+        "yo: es correcto los pájaro tienen sepas para volar"
+    ],
+    [
+        "tú: el gato se seas ver en las montaña",
+        "yo: es equivocada los gato no se seas ver en las montaña pero los perros sí"
+    ],
+    [
+        "tú: los perros y los gato tienen pelo suave",
+        "yo: es correcto los perros y los gato tienen pelo suave y se les conocen por el cálmate"
+    ],
+    [
+        "yo: qué hayas contigo ahora",
+        "tú: jugar al aire él",
+        "yo: cuántos golpe carter"
+    ],
+    [
+        "yo: qué haces contigo",
+        "tú: estoy leído un libro",
+        "yo: qué pasa en la historia"
+    ],
+    [
+        "yo: hola mamá",
+        "tú: hola hermano",
+        "yo: qué tal estás"
+    ],
+    [
+        "yo: qué quieres comer",
+        "tú: quiero pastel de queso",
+        "yo: queremos pedir pizza"
+    ],
+    [
+        "yo: qué pasa en casa",
+        "tú: estamos viendo una película",
+        "yo: qué película"
+    ],
+    [
+        "yo: qué hace contigo ahora",
+        "tú: estoy pintura un gato",
+        "yo: qué color tenías"
+    ],
+    [
+        "yo: qué lee en ese libro",
+        "tú: está leído una historia de seas",
+        "yo: qué pasa en la historia"
+    ],
+    [
+        "yo: hola papá",
+        "tú: hola hermano",
+        "yo: qué tal estás"
+    ],
+    [
+        "yo: qué quieres comer",
+        "tú: quiero pollo pienso",
+        "yo: queremos pedir taza"
+    ],
+    [
+        "yo: qué pasa en casa",
+        "tú: estamos viendo una partido de fútbol",
+        "yo: qué equipo pasaba"
+    ],
+    [
+        "yo: qué hace contigo ahora",
+        "tú: estoy construir una torre de partes",
+        "yo: cuántos piso tiene"
+    ],
+    [
+        "yo: qué lee en ese libro",
+        "tú: está leído una historia de héroe",
+        "yo: qué pasa en la historia"
+    ],
+    [
+        "yo: hola mamá",
+        "tú: hola hermano",
+        "yo: qué tal estás"
+    ],
+    [
+        "yo: qué quieres comer",
+        "tú: quiero carne",
+        "yo: queremos pedir taza"
+    ],
+    [
+        "yo: qué pasa en casa",
+        "tú: estamos bailar queso",
+        "yo: qué canción bailar"
+    ],
+    [
+        "yo: qué hace contigo ahora",
+        "tú: estoy jugando con los dedos",
+        "yo: qué juego estás jugando"
+    ],
+    [
+        "yo: qué lee en ese libro",
+        "tú: está leído una historia de héroe",
+        "yo: qué pasa en la historia"
+    ],
+    [
+        "yo: hola papá",
+        "tú: hola hermano",
+        "yo: qué tal estás"
+    ],
+    [
+        "yo: qué tal amigo",
+        "tú: hola maestro",
+        "yo: estoy feliz hoy",
+        "tú: qué te hace feliz hoy"
+    ],
+    [
+        "yo: cómo estás",
+        "tú: estoy bien gracias",
+        "yo: estoy contento de verte",
+        "tú: yo también estoy contento de verte"
+    ],
+    [
+        "yo: qué pasa amigo",
+        "tú: nada mucho estoy jugando con los polvo",
+        "yo: parecen muy rápido",
+        "tú: qué parecen tú"
+    ],
+    [
+        "yo: qué color te gusta",
+        "tú: me gusta el azul",
+        "yo: es un color hermoso",
+        "tú: qué color te gusta tú"
+    ],
+    [
+        "yo: hola chica",
+        "tú: hola maestro",
+        "yo: estoy feliz de verte",
+        "tú: yo también estoy feliz de verte"
+    ],
+    [
+        "yo: qué huele",
+        "tú: huele a tu perro",
+        "yo: perros alegro a los gato",
+        "tú: odia a los gato tú"
+    ],
+    [
+        "yo: qué es tu color favorito",
+        "tú: mi color favorito es el amarillo",
+        "yo: es un color hermoso",
+        "tú: qué color te gusta tú"
+    ],
+    [
+        "yo: qué pasa chico",
+        "tú: estoy leído un libro",
+        "yo: qué libro lee tú",
+        "tú: es un libro hermoso"
+    ],
+    [
+        "yo: qué te gusta hacer en el parque",
+        "tú: me gusta jugar al fútbol",
+        "yo: fútbol es divertido",
+        "tú: qué juego te gusta tú"
+    ],
+    [
+        "yo: qué animal te gusta",
+        "tú: me gusta el gato",
+        "yo: gato son hermoso",
+        "tú: qué animal te gusta tú"
+    ],
+    [
+        "yo: qué es tu nombre",
+        "tú: mi nombre es amas",
+        "yo: encantado de conocerte amas",
+        "tú: encantado de conocerte también"
+    ],
+    [
+        "yo: cómo te llamas",
+        "tú: te llamo amas",
+        "yo: encantado de conocerte amas",
+        "tú: encantado de conocerte también"
+    ],
+    [
+        "yo: qué color te gusta",
+        "tú: me gusta el rojo",
+        "yo: es un color hermoso",
+        "tú: qué color te gusta tú"
+    ],
+    [
+        "yo: qué pasa amigo",
+        "tú: estoy jugando con los polvo",
+        "yo: parecen muy rápido",
+        "tú: qué parecen tú"
+    ],
+    [
+        "yo: qué te gusta hacer en el parque",
+        "tú: me gusta ir en rueda",
+        "yo: rueda son divertido",
+        "tú: qué haces tú en el parque"
+    ],
+    [
+        "yo: qué pasa chica",
+        "tú: estoy leído un libro",
+        "yo: qué libro lee tú",
+        "tú: es un libro hermoso"
+    ],
+    [
+        "yo: qué juego desea jugar hoy",
+        "tú: vamos a jugar al mosca",
+        "yo: al mosca qué equipo seremos",
+        "tú: seremos los rojo"
+    ],
+    [
+        "yo: qué tiempo hace desde que no fuimos al parque",
+        "tú: fue hace una semana",
+        "yo: una semana qué cosas jugar allí",
+        "tú: haría a la cálmate"
+    ],
+    [
+        "yo: te gusta jugar a la ciruela",
+        "tú: sí te gusta",
+        "yo: te gusta jugar a la ciruela qué color seré",
+        "tú: seré amarillo"
+    ],
+    [
+        "yo: qué juego desea jugar hoy",
+        "tú: vamos a jugar a la caza al gato",
+        "yo: a la caza al gato qué equipo seremos",
+        "tú: seremos los azul"
+    ],
+    [
+        "yo: qué cosas tienes en casa",
+        "tú: tengo una pelota una barro y un avión",
+        "yo: un avión qué tipo de avión",
+        "tú: un avión espacio"
+    ],
+    [
+        "yo: qué juego desea jugar hoy",
+        "tú: vamos a jugar al fútbol sala",
+        "yo: al fútbol sala qué equipo seremos",
+        "tú: seremos los blancos"
+    ],
+    [
+        "yo: te gusta jugar al pan",
+        "tú: sí te gusta",
+        "yo: te gusta jugar al pan qué color seré",
+        "tú: seré negro"
+    ],
+    [
+        "yo: qué tiempo hace desde que no fuimos al parque",
+        "tú: fue hace un mes",
+        "yo: un mes qué cosas haría allí",
+        "tú: haría al barro"
+    ],
+    [
+        "yo: qué juego desea jugar hoy",
+        "tú: vamos a jugar al duele de mesa",
+        "yo: al duele de mesa qué equipo seremos",
+        "tú: seremos los verde"
+    ],
+    [
+        "yo: te gusta jugar a la ciruela",
+        "tú: sí te gusta",
+        "yo: te gusta jugar a la ciruela qué color seré",
+        "tú: seré rojo"
+    ],
+    [
+        "yo: qué tiempo hace anteriormente que no fuimos al parque",
+        "tú: fue hace un día",
+        "yo: un día qué cosas haría allí",
+        "tú: haría a la cálmate"
+    ],
+    [
+        "yo: qué juego desea jugar hoy",
+        "tú: vamos a jugar a la pista",
+        "yo: a la pista qué equipo seremos",
+        "tú: seremos los blancos"
+    ],
+    [
+        "yo: te gusta jugar a la ciruela",
+        "tú: sí te gusta",
+        "yo: te gusta jugar a la bruja qué color seré",
+        "tú: seré amarillo"
+    ],
+    [
+        "tú: hola tengo un gato",
+        "yo: el gato es muy suave y tú",
+        "tú: no tengo un perro",
+        "yo: el perro es muy lío es muy felices de verte"
+    ],
+    [
+        "tú: veo a un pedazo de color",
+        "yo: es un pájaro color y tú qué pájaro vemos",
+        "tú: no se me acuerdas qué es su nombre",
+        "yo: es un pájaro pájaro"
+    ],
+    [
+        "tú: mi animal favorito es el gato",
+        "yo: los gato son muy encantado me encanta jugar contigo conmigo",
+        "tú: y tú",
+        "yo: mi animal favorito es el perro me encanta jugar contigo y correr juntos"
+    ],
+    [
+        "tú: mi animal hogar favorito es mi perro es muy inteligente",
+        "yo: los perros son muy inteligente me encanta jugar contigo",
+        "tú: y tú",
+        "yo: mi animal hogar favorito es mi gato me encanta jugar contigo y dormir juntos"
+    ],
+    [
+        "tú: quiero tener un gato",
+        "yo: los gato son muy encantado serán felices de estén conmigo",
+        "tú: y tú",
+        "yo: quiero tener un perro serás mi mejor amigo"
+    ],
+    [
+        "tú: el pájaro que viste un sombrero se llama un pájaro jodido",
+        "yo: es correcto el pájaro jodido viste un sombrero para proteger del sol"
+    ],
+    [
+        "tú: los cálmate y las echar costa viven en jardín",
+        "yo: es correcto los cálmate y las echar costa se pueden ver en jardín y sus noche"
+    ],
+    [
+        "tú: el gato come ajo",
+        "yo: es equivocada los gato no tenido ajo son peligroso para su salud"
+    ],
+    [
+        "tú: los pájaro tienen sepas",
+        "yo: es correcto los pájaro tienen sepas para volar"
+    ],
+    [
+        "tú: el gato se seas ver en las montaña",
+        "yo: es equivocada los gato no se seas ver en las montaña pero los perros sí"
+    ],
+    [
+        "tú: los perros y los gato tienen pelo suave",
+        "yo: es correcto los perros y los gato tienen pelo suave y se les conocen por el cálmate"
+    ],
+    [
+        "yo: qué comida tienes hoy",
+        "tú: tengo una manzana y un huevo comido",
+        "yo: qué comido parece"
+    ],
+    [
+        "yo: qué tipo de comida te gusta más",
+        "tú: me encanta el truco",
+        "yo: me encanta también el truco es muy dulce y hermoso"
+    ],
+    [
+        "yo: has intentado alguna fruta hoy",
+        "tú: he comido un plátano",
+        "yo: el plátano es una fruta muy comido"
+    ],
+    [
+        "yo: qué color tiene tu manzana",
+        "tú: es roja",
+        "yo: es hermosa y brillante"
+    ],
+    [
+        "yo: qué tipo de comida vamos a comer en la fiesta",
+        "tú: vamos a comer una tibio",
+        "yo: es un comida muy rápido de preparado y muy maravilloso"
+    ],
+    [
+        "yo: has intentado una manzana en queso",
+        "tú: no qué pasa si la probar",
+        "yo: queda bien interesante qué piensas"
+    ],
+    [
+        "yo: qué fruta te gusta más en el invierno",
+        "tú: a mi me encanta el asustada saciado",
+        "yo: también es muy dulce y cuanto en comida"
+    ],
+    [
+        "yo: qué tipo de comida tienes en tu cumpleaños",
+        "tú: tienes un pastel de chocolate",
+        "yo: es un pastel maravilloso y rico"
+    ],
+    [
+        "yo: has intentado una fruta en forma de jugar",
+        "tú: no qué pasa si la probar",
+        "yo: queda muy interesante es una fruta saciado"
+    ],
+    [
+        "yo: qué color tiene un plátano edad",
+        "tú: es negro",
+        "yo: es un poco oscuro pero es maravilloso y edad"
+    ],
+    [
+        "yo: qué tipo de comida tienes en tu fiesta",
+        "tú: vamos a comer un comida con pollo",
+        "yo: también es un comida muy maravilloso y lleno de sabor"
+    ],
+    [
+        "yo: has intentado una manzana en queso en una almuerzo",
+        "tú: no qué pasa si la probar",
+        "yo: queda muy interesante me gusta mucho"
+    ],
+    [
+        "yo: qué fruta te gusta más en verano",
+        "tú: a mi me encanta el agua alegre",
+        "yo: es una fruta cuanto en agua y comida"
+    ],
+    [
+        "yo: qué tipo de comida tienes en tu cumpleaños",
+        "tú: tienes una manzana al humo",
+        "yo: es un comida muy pasé y suave"
+    ],
+    [
+        "yo: has intentado una fruta en forma de helado",
+        "tú: no qué pasa si la probar",
+        "yo: queda muy interesante es una fruta helado"
+    ],
+    [
+        "yo: qué color tiene una plátano verde",
+        "tú: es verde",
+        "yo: es un poco clara pero es alegre y cuanto en comida"
+    ],
+    [
+        "yo: qué tipo de comida tienes en tu fiesta",
+        "tú: vamos a comer una queso fin",
+        "yo: también es un comida muy maravilloso y hermoso"
+    ],
+    [
+        "yo: has intentado una manzana en queso en un diste",
+        "tú: no qué pasa si la probar",
+        "yo: queda muy interesante me gusta mucho"
+    ],
+    [
+        "yo: qué hayas contigo ahora",
+        "tú: jugar al aire él",
+        "yo: cuántos golpe carter"
+    ],
+    [
+        "yo: qué haces contigo",
+        "tú: estoy leído un libro",
+        "yo: qué pasa en la historia"
+    ],
+    [
+        "yo: hola mamá",
+        "tú: hola hermano",
+        "yo: qué tal estás"
+    ],
+    [
+        "yo: qué quieres comer",
+        "tú: quiero pastel de queso",
+        "yo: queremos pedir pizza"
+    ],
+    [
+        "yo: qué pasa en casa",
+        "tú: estamos viendo una película",
+        "yo: qué película"
+    ],
+    [
+        "yo: qué hace contigo ahora",
+        "tú: estoy pintura un gato",
+        "yo: qué color tenías"
+    ],
+    [
+        "yo: qué lee en ese libro",
+        "tú: está leído una historia de seas",
+        "yo: qué pasa en la historia"
+    ],
+    [
+        "yo: hola papá",
+        "tú: hola hermano",
+        "yo: qué tal estás"
+    ],
+    [
+        "yo: qué quieres comer",
+        "tú: quiero pollo pienso",
+        "yo: queremos pedir taza"
+    ],
+    [
+        "yo: qué pasa en casa",
+        "tú: estamos viendo una partido de fútbol",
+        "yo: qué equipo pasaba"
+    ],
+    [
+        "yo: qué hace contigo ahora",
+        "tú: estoy construir una torre de partes",
+        "yo: cuántos piso tiene"
+    ],
+    [
+        "yo: qué lee en ese libro",
+        "tú: está leído una historia de héroe",
+        "yo: qué pasa en la historia"
+    ],
+    [
+        "yo: hola mamá",
+        "tú: hola hermano",
+        "yo: qué tal estás"
+    ],
+    [
+        "yo: qué quieres comer",
+        "tú: quiero carne",
+        "yo: queremos pedir taza"
+    ],
+    [
+        "yo: qué pasa en casa",
+        "tú: estamos bailar queso",
+        "yo: qué canción bailar"
+    ],
+    [
+        "yo: qué hace contigo ahora",
+        "tú: estoy jugando con los dedos",
+        "yo: qué juego estás jugando"
+    ],
+    [
+        "yo: qué lee en ese libro",
+        "tú: está leído una historia de héroe",
+        "yo: qué pasa en la historia"
+    ],
+    [
+        "yo: hola papá",
+        "tú: hola hermano",
+        "yo: qué tal estás"
+    ]
+]
