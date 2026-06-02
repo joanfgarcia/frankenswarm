@@ -53,10 +53,17 @@ class TestSkillSpecialization(unittest.TestCase):
 		world.agent_b.sed = 40.0
 		res_a, res_b, res_c, _ = world.step("dar", "ver", "ver")
 		
-		# Nico comparte el agua directamente (se consume)
+		# Nico comparte el agua de su mochila, llenando la mochila de Sofy
 		self.assertTrue(res_a["success"])
 		self.assertEqual(world.agent_a.mochila_agua, 0)
-		self.assertGreater(world.agent_b.sed, 40.0) # Sofy la consume directamente
+		self.assertEqual(world.agent_b.mochila_agua, 1)
+		self.assertLessEqual(world.agent_b.sed, 40.0) # no se consume directamente
+
+		# Ahora Sofy bebe el agua de su mochila
+		res_a, res_b, res_c, _ = world.step("ver", "beber", "ver")
+		self.assertTrue(res_b["success"])
+		self.assertEqual(world.agent_b.mochila_agua, 0)
+		self.assertGreater(world.agent_b.sed, 40.0) # se consume al beber
 
 	def test_hugo_food_exclusion(self):
 		world = CooperativeWorld(seed=42)
@@ -86,10 +93,17 @@ class TestSkillSpecialization(unittest.TestCase):
 		world.agent_c.hambre = 40.0
 		res_a, res_b, res_c, _ = world.step("dar", "ver", "ver")
 		
-		# Nico comparte la comida directamente (se consume)
+		# Nico comparte la comida de su mochila, llenando la mochila de Hugo
 		self.assertTrue(res_a["success"])
 		self.assertEqual(world.agent_a.mochila_comida, 0)
-		self.assertGreater(world.agent_c.hambre, 40.0) # Hugo la consume directamente
+		self.assertEqual(world.agent_c.mochila_comida, 1)
+		self.assertLessEqual(world.agent_c.hambre, 40.0) # no se consume directamente
+
+		# Ahora Hugo come la comida de su mochila
+		res_a, res_b, res_c, _ = world.step("ver", "ver", "comer")
+		self.assertTrue(res_c["success"])
+		self.assertEqual(world.agent_c.mochila_comida, 0)
+		self.assertGreater(world.agent_c.hambre, 40.0) # se consume al comer
 
 	def test_allowed_skills(self):
 		world = CooperativeWorld(seed=42)

@@ -2,14 +2,16 @@
 
 ## [Unreleased]
 
-### 🧬 Especialización de Habilidades y Asimetría Tribal (Fase 5)
-- **[FEAT] Asimetría de Supervivencia**: Implementación de restricciones específicas por rol en `CooperativeWorld` para forzar la interdependencia absoluta:
-  * Nico (Agente A) excluido del recuento de cazadores en la caza cooperativa.
-  * Sofy (Agente B) no sabe extraer agua del entorno (su mochila no se llena al pisar agua y no puede beber del suelo, requiriendo auxilio directo).
-  * Hugo (Agente C) no sabe recolectar comida del entorno (su mochila no se llena al pisar comida y no puede comer del suelo, requiriendo auxilio directo).
-- **[FEAT] Auxilio e Intercambio Cooperativo Directo**: Modificación de la acción `"dar"` para hidratar/alimentar directamente al compañero receptor si está crítico de sed/hambre, consumiendo el recurso de la mochila del emisor en el acto.
-- **[FEAT] Robustez de Carga Multidimensional**: Corrección de fallos por desajuste de dimensiones (`size mismatch`) en `load_agent` al reconstruir dinámicamente el Actor-Critic si el checkpoint ya posee más acciones o neuronas ocultas.
-- **[NEW] `scratch/test_specialization.py`**: Suite de tests unitarios que valida de forma aislada las restricciones de rol de Nico, Sofy y Hugo, y la resolución correcta del intercambio de recursos.
+### 🧬 Especialización de Habilidades y Asimetría Tribal (Fase 5 y 5.1 - Realismo de Mochila)
+- **[FEAT] Compartición Desacoplada de Mochilas (Fase 5.1)**: Modificación de la acción `"dar"` en `CooperativeWorld` para realizar una transferencia de mochila a mochila en lugar de consumo directo. El recurso (agua o comida) se mueve a la mochila del receptor (siempre que esté vacía y su nivel de necesidad sea < 80).
+- **[FEAT] Consumo de Segundo Paso (Fase 5.1)**: Los agentes especializados ahora deben aprender y ejecutar explícitamente `"comer"` o `"beber"` en ticks subsiguientes para ingerir el recurso que sus compañeros depositaron en su mochila.
+- **[FIX] Actualización de Pruebas Unitarias (Fase 5.1)**: Actualización de `scratch/test_specialization.py` (`test_sofy_water_exclusion` y `test_hugo_food_exclusion`) para verificar el flujo de dos pasos (dar llena mochila, comer/beber consume).
+- **[FEAT] Asimetría de Supervivencia (Fase 5)**: Restricciones por rol en `CooperativeWorld` para forzar la interdependencia:
+  * Nico (Agente A) excluido de la caza cooperativa.
+  * Sofy (Agente B) no sabe extraer agua del entorno (no se llena mochila pisando agua y no bebe del suelo).
+  * Hugo (Agente C) no sabe recolectar comida del entorno (no se llena mochila pisando comida y no come del suelo).
+- **[FEAT] Robustez de Carga Multidimensional (Fase 5)**: Corrección de fallos por desajuste de dimensiones (`size mismatch`) en `load_agent` al reconstruir dinámicamente el Actor-Critic si el checkpoint ya posee más acciones o neuronas ocultas.
+- **[NEW] `scratch/test_specialization.py` (Fase 5)**: Suite de tests unitarios que valida de forma aislada las restricciones de rol de Nico, Sofy y Hugo, y la resolución correcta del intercambio de recursos.
 
 ### 🏹 Tribu de 3 Agentes y Caza Cooperativa (Fase 4 - EXP_073_v5)
 - **[FEAT] Tribu Ampliada (N=3)**: Expansión de la arena `CooperativeWorld` para gestionar tres agentes (`Nico`, `Sofy`, `Hugo`) con posiciones de spawn distribuidas y modelos ToM multilaterales cruzados.

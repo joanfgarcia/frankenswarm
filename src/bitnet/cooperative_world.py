@@ -672,23 +672,22 @@ class CooperativeWorld:
 			transferred = False
 			for other_agent in others:
 				if other_agent.location == agent.location:
-					# 1. Dar agua si el otro la necesita (sed < 60)
-					if other_agent.sed < 60 and agent.mochila_agua > 0:
+					# 1. Dar agua si el otro tiene la mochila vacía y la necesita (sed < 80)
+					if other_agent.mochila_agua == 0 and other_agent.sed < 80 and agent.mochila_agua > 0:
 						agent.mochila_agua = 0
-						other_agent.sed = min(100.0, other_agent.sed + 50.0)
-						other_agent.salud = min(100.0, other_agent.salud + 10.0)
+						other_agent.mochila_agua = 1
 						result["success"] = True
-						result["event"] = f"comparte agua de su mochila con {other_agent.agent_id.upper()}"
+						result["event"] = f"comparte agua de su mochila con {other_agent.agent_id.upper()} (llena mochila)"
 						result["shared_resource"] = "agua"
 						result["shared_with"] = other_agent.agent_id
 						transferred = True
 						break
-					# 2. Dar comida si el otro la necesita
-					elif other_agent.hambre < 70 and agent.mochila_comida > 0:
+					# 2. Dar comida si el otro tiene la mochila vacía y la necesita (hambre < 80)
+					elif other_agent.mochila_comida == 0 and other_agent.hambre < 80 and agent.mochila_comida > 0:
 						agent.mochila_comida = 0
-						other_agent.hambre = min(100.0, other_agent.hambre + 40.0)
+						other_agent.mochila_comida = 1
 						result["success"] = True
-						result["event"] = f"comparte comida de su mochila con {other_agent.agent_id.upper()}"
+						result["event"] = f"comparte comida de su mochila con {other_agent.agent_id.upper()} (llena mochila)"
 						result["shared_resource"] = "comida"
 						result["shared_with"] = other_agent.agent_id
 						transferred = True
