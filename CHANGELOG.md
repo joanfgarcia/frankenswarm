@@ -2,7 +2,16 @@
 
 ## [Unreleased]
 
-### 🏹 Tribu de 3 Agentes y Caza Cooperativa (EXP_073_v5)
+### 🧬 Especialización de Habilidades y Asimetría Tribal (Fase 5)
+- **[FEAT] Asimetría de Supervivencia**: Implementación de restricciones específicas por rol en `CooperativeWorld` para forzar la interdependencia absoluta:
+  * Nico (Agente A) excluido del recuento de cazadores en la caza cooperativa.
+  * Sofy (Agente B) no sabe extraer agua del entorno (su mochila no se llena al pisar agua y no puede beber del suelo, requiriendo auxilio directo).
+  * Hugo (Agente C) no sabe recolectar comida del entorno (su mochila no se llena al pisar comida y no puede comer del suelo, requiriendo auxilio directo).
+- **[FEAT] Auxilio e Intercambio Cooperativo Directo**: Modificación de la acción `"dar"` para hidratar/alimentar directamente al compañero receptor si está crítico de sed/hambre, consumiendo el recurso de la mochila del emisor en el acto.
+- **[FEAT] Robustez de Carga Multidimensional**: Corrección de fallos por desajuste de dimensiones (`size mismatch`) en `load_agent` al reconstruir dinámicamente el Actor-Critic si el checkpoint ya posee más acciones o neuronas ocultas.
+- **[NEW] `scratch/test_specialization.py`**: Suite de tests unitarios que valida de forma aislada las restricciones de rol de Nico, Sofy y Hugo, y la resolución correcta del intercambio de recursos.
+
+### 🏹 Tribu de 3 Agentes y Caza Cooperativa (Fase 4 - EXP_073_v5)
 - **[FEAT] Tribu Ampliada (N=3)**: Expansión de la arena `CooperativeWorld` para gestionar tres agentes (`Nico`, `Sofy`, `Hugo`) con posiciones de spawn distribuidas y modelos ToM multilaterales cruzados.
 - **[FEAT] Broadcast de Gritos Half-Duplex**: Difusión en un solo tick de la señal del emisor a todos los receptores silenciosos de la tribu, actualizando sus ToM y targets de navegación.
 - **[FEAT] Worst-State ToM Routing**: Proyección dinámica del compañero en el estado más crítico de salud/hambre sobre los tokens ToM en `perceive()`, manteniendo la compatibilidad absoluta con el espacio de percepción de 6 tokens.

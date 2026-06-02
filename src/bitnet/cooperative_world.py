@@ -534,14 +534,19 @@ class CooperativeWorld:
 		# Llenar mochila automáticamente si está en un recurso disponible
 		caps = self.resource_capacities[agent.location]
 		if caps["food"] >= 1.0 and agent.mochila_comida == 0:
-			agent.mochila_comida = 1
-			caps["food"] -= 1.0
+			# Hugo (C) no puede recolectar comida
+			if agent.agent_id != "c":
+				agent.mochila_comida = 1
+				caps["food"] -= 1.0
 		if caps["water"] >= 1.0 and agent.mochila_agua == 0:
-			agent.mochila_agua = 1
-			caps["water"] -= 1.0
+			# Sofy (B) no puede extraer agua
+			if agent.agent_id != "b":
+				agent.mochila_agua = 1
+				caps["water"] -= 1.0
 
 		if action == "comer":
-			if caps["food"] >= 1.0:
+			# Hugo (C) no puede comer del suelo
+			if caps["food"] >= 1.0 and agent.agent_id != "c":
 				result["success"] = True
 				result["delta_hambre"] += 40.0
 				result["delta_sed"] -= 3.0  # penalización por digestión
@@ -555,9 +560,12 @@ class CooperativeWorld:
 				result["event"] = "come de su mochila"
 			else:
 				result["event"] = "no hay comida aquí ni en mochila"
+				if agent.agent_id == "c" and caps["food"] >= 1.0:
+					result["event"] = "Hugo no sabe recolectar comida del suelo"
 
 		elif action == "beber":
-			if caps["water"] >= 1.0:
+			# Sofy (B) no puede beber del suelo
+			if caps["water"] >= 1.0 and agent.agent_id != "b":
 				result["success"] = True
 				result["delta_sed"] += 50.0
 				result["delta_salud"] += 3.0
@@ -571,6 +579,8 @@ class CooperativeWorld:
 				result["event"] = "bebe agua de su mochila"
 			else:
 				result["event"] = "no hay agua aquí ni en mochila"
+				if agent.agent_id == "b" and caps["water"] >= 1.0:
+					result["event"] = "Sofy no sabe extraer agua del suelo"
 
 		elif action == "dormir":
 			# Tasa metabólica basal: desgaste a la mitad durante el sueño
@@ -750,10 +760,10 @@ class CooperativeWorld:
 		# --- Resolución de la Caza Cooperativa ---
 		prey_hunted = False
 		if self.prey_location:
+			# Nico (A) no sabe cazar presas y queda excluido del recuento de cazadores
 			hunters = [
 				agent for agent in self.agents
 				if agent.alive and agent.location == self.prey_location and (
-					(agent.agent_id == "a" and action_a == "luchar") or
 					(agent.agent_id == "b" and action_b == "luchar") or
 					(agent.agent_id == "c" and action_c == "luchar")
 				)
