@@ -1437,7 +1437,8 @@ class CooperativeWorld:
 
 	def get_reward(self, agent: CoopAgentState, result: dict) -> float:
 		"""Reward para un agente individual."""
-		reward = 0.0
+		# Bono básico de supervivencia por cada tick vivo (evita que prefieran morir temprano)
+		reward = 0.5
 
 		# Pain: necesidades no cubiertas
 		if agent.hambre < 30:
