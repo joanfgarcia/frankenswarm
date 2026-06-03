@@ -300,7 +300,7 @@ class CoopAgentState:
 		if self.map_knowledge is None:
 			self.map_knowledge = {
 				loc: {
-					"food": 0.0,
+					"food": 5.0 if (COOP_LOCATIONS[loc]["food_eligible"] or COOP_LOCATIONS[loc].get("fish_eligible")) else 0.0,
 					"water": 5.0 if COOP_LOCATIONS[loc]["water_available"] else 0.0,
 					"last_updated": 0
 				}
@@ -1453,6 +1453,26 @@ class CooperativeWorld:
 		if agent.aburrimiento > 50.0:
 			reward -= 0.5 * (agent.aburrimiento - 50.0) / 50.0
 
+		# Pena por inactividad si tiene hambre/sed
+		if (agent.hambre < 50.0 or agent.sed < 50.0) and agent.location == agent.previous_location:
+			if not (result.get("success") and (result.get("delta_hambre", 0.0) > 0.0 or result.get("delta_sed", 0.0) > 0.0)):
+				reward -= 0.5
+
+		# Penalización por dormir inútilmente con alta energía
+		if agent.last_action == "dormir":
+			energy_before = agent.energia - result.get("delta_energia", 0.0)
+			if energy_before > 60.0:
+				reward -= 1.0
+
+		# Penalización por intentar comer/beber fallidamente (no hay disponible)
+		if agent.last_action in ["comer", "beber"] and not result["success"]:
+			reward -= 0.8
+
+		# Penalización por luchar inútilmente (no hay amenaza ni presa)
+		if agent.last_action == "luchar":
+			if not (agent.danger_nearby or self.prey_location == agent.location):
+				reward -= 0.8
+
 		# Progress
 		if result["success"]:
 			if result.get("delta_hambre", 0) > 0:
@@ -1462,7 +1482,9 @@ class CooperativeWorld:
 			if result.get("delta_salud", 0) > 0:
 				reward += 0.3
 			if result.get("delta_energia", 0) > 5:
-				reward += 0.2
+				energy_before = agent.energia - result.get("delta_energia", 0.0)
+				if not (agent.last_action == "dormir" and energy_before > 60.0):
+					reward += 0.2
 
 		# Penalty por daño
 		if result.get("delta_salud", 0) < -10:

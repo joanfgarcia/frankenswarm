@@ -55,6 +55,40 @@ def grow_value_head(model: nn.Module, growth_factor: float = 1.5, noise_std: flo
 	model.value_head[2] = new_layer_out.to(device)
 
 
+def get_masked_probs(logits: torch.Tensor, episode: int, n_episodes: int, communicate: bool) -> torch.Tensor:
+	"""Enmascarar acciones no permitidas progresivamente para guiar el aprendizaje en early epochs."""
+	probs = F.softmax(logits, dim=-1)
+	
+	# Clonar para evitar modificar in-place
+	probs = probs.clone()
+	
+	# Crear una máscara para las acciones permitidas
+	mask = torch.ones_like(probs)
+	
+	# Si la comunicación está desactivada, enmascarar GRITAR (6)
+	if not communicate:
+		mask[..., 6] = 0.0
+		
+	# Desenmascaramiento progresivo:
+	# - Primer 35% de los episodios: sólo acciones básicas (comer=0, beber=1, dormir=2, mover=3, ver=4, luchar=5, gritar=6, dar=7)
+	# - De 35% a 60% de los episodios: habilitar fabricar (11), encender (13)
+	# - A partir del 60%: habilitar todas las acciones
+	progress = episode / n_episodes
+	if progress < 0.35:
+		mask[..., 8:14] = 0.0
+	elif progress < 0.60:
+		# Enmascarar enseñar (8), aprender (9), reproducir (10), construir (12)
+		mask[..., 8] = 0.0
+		mask[..., 9] = 0.0
+		mask[..., 10] = 0.0
+		mask[..., 12] = 0.0
+		
+	masked_probs = probs * mask
+	sum_probs = masked_probs.sum(dim=-1, keepdim=True)
+	masked_probs = masked_probs / torch.clamp(sum_probs, min=1e-8)
+	return masked_probs
+
+
 def run_arena_ppo_training():
 	parser = argparse.ArgumentParser(description="Arena 3-Agent PPO Training")
 	parser.add_argument("--config", type=str, required=True)
@@ -404,25 +438,13 @@ def run_arena_ppo_training():
 				if hidden_d is not None:
 					val_d = agent_d_episode.value_head(hidden_d).item()
 
-			probs_a = F.softmax(action_logits_a, dim=-1)
-			probs_b = F.softmax(action_logits_b, dim=-1)
-			probs_c = F.softmax(action_logits_c, dim=-1)
+			probs_a = get_masked_probs(action_logits_a, episode, n_episodes, communicate)
+			probs_b = get_masked_probs(action_logits_b, episode, n_episodes, communicate)
+			probs_c = get_masked_probs(action_logits_c, episode, n_episodes, communicate)
 
 			shout_probs_a = F.softmax(shout_logits_a, dim=-1)
 			shout_probs_b = F.softmax(shout_logits_b, dim=-1)
 			shout_probs_c = F.softmax(shout_logits_c, dim=-1)
-
-			# Enmascarar GRITAR si no hay comunicación
-			if not communicate:
-				probs_a = probs_a.clone()
-				probs_a[0, 6] = 0.0
-				probs_a = probs_a / probs_a.sum()
-				probs_b = probs_b.clone()
-				probs_b[0, 6] = 0.0
-				probs_b = probs_b / probs_b.sum()
-				probs_c = probs_c.clone()
-				probs_c[0, 6] = 0.0
-				probs_c = probs_c / probs_c.sum()
 
 			# Muestreo con exploración decreciente
 			explore_rate = max(0.02, 1.0 - episode / (n_episodes * 0.40))
@@ -436,11 +458,11 @@ def run_arena_ppo_training():
 				shout_concept_a_val = dist_shout_a.sample().item()
 				lp_shout_a = dist_shout_a.log_prob(torch.tensor(shout_concept_a_val, device=device)).item()
 
+			# Obtenemos los índices de las acciones permitidas (con prob > 0)
+			allowed_indices_a = torch.where(probs_a[0] > 0.0)[0].cpu().numpy()
+
 			if np.random.rand() < explore_rate:
-				if communicate:
-					idx_a = np.random.randint(0, COOP_N_ACTIONS)
-				else:
-					idx_a = np.random.choice([0, 1, 2, 3, 4, 5, 7])
+				idx_a = np.random.choice(allowed_indices_a)
 				lp_a = torch.log(probs_a[0, idx_a] + 1e-8).item()
 			else:
 				dist_a = torch.distributions.Categorical(probs_a)
@@ -459,11 +481,10 @@ def run_arena_ppo_training():
 				shout_concept_b_val = dist_shout_b.sample().item()
 				lp_shout_b = dist_shout_b.log_prob(torch.tensor(shout_concept_b_val, device=device)).item()
 
+			allowed_indices_b = torch.where(probs_b[0] > 0.0)[0].cpu().numpy()
+
 			if np.random.rand() < explore_rate:
-				if communicate:
-					idx_b = np.random.randint(0, COOP_N_ACTIONS)
-				else:
-					idx_b = np.random.choice([0, 1, 2, 3, 4, 5, 7])
+				idx_b = np.random.choice(allowed_indices_b)
 				lp_b = torch.log(probs_b[0, idx_b] + 1e-8).item()
 			else:
 				dist_b = torch.distributions.Categorical(probs_b)
@@ -482,11 +503,10 @@ def run_arena_ppo_training():
 				shout_concept_c_val = dist_shout_c.sample().item()
 				lp_shout_c = dist_shout_c.log_prob(torch.tensor(shout_concept_c_val, device=device)).item()
 
+			allowed_indices_c = torch.where(probs_c[0] > 0.0)[0].cpu().numpy()
+
 			if np.random.rand() < explore_rate:
-				if communicate:
-					idx_c = np.random.randint(0, COOP_N_ACTIONS)
-				else:
-					idx_c = np.random.choice([0, 1, 2, 3, 4, 5, 7])
+				idx_c = np.random.choice(allowed_indices_c)
 				lp_c = torch.log(probs_c[0, idx_c] + 1e-8).item()
 			else:
 				dist_c = torch.distributions.Categorical(probs_c)
@@ -501,12 +521,8 @@ def run_arena_ppo_training():
 			shout_concept_d_val = SILENCE_GLYPH
 			lp_d = 0.0
 			if state_d.alive and agent_d_episode is not None:
-				probs_d = F.softmax(action_logits_d, dim=-1)
+				probs_d = get_masked_probs(action_logits_d, episode, n_episodes, communicate)
 				shout_probs_d = F.softmax(shout_logits_d, dim=-1)
-				if not communicate:
-					probs_d = probs_d.clone()
-					probs_d[0, 6] = 0.0
-					probs_d = probs_d / probs_d.sum()
 
 				dist_shout_d = torch.distributions.Categorical(shout_probs_d)
 				if np.random.rand() < explore_rate:
@@ -516,11 +532,10 @@ def run_arena_ppo_training():
 					shout_concept_d_val = dist_shout_d.sample().item()
 					lp_shout_d = dist_shout_d.log_prob(torch.tensor(shout_concept_d_val, device=device)).item()
 
+				allowed_indices_d = torch.where(probs_d[0] > 0.0)[0].cpu().numpy()
+
 				if np.random.rand() < explore_rate:
-					if communicate:
-						idx_d = np.random.randint(0, COOP_N_ACTIONS)
-					else:
-						idx_d = np.random.choice([0, 1, 2, 3, 4, 5, 7])
+					idx_d = np.random.choice(allowed_indices_d)
 					lp_d = torch.log(probs_d[0, idx_d] + 1e-8).item()
 				else:
 					dist_d = torch.distributions.Categorical(probs_d)
@@ -771,11 +786,7 @@ def run_arena_ppo_training():
 				new_action_logits = agent.action_head(h_epoch)
 				new_values = agent.value_head(h_epoch).squeeze(-1)
 
-				new_probs = F.softmax(new_action_logits, dim=-1)
-				if not communicate:
-					new_probs = new_probs.clone()
-					new_probs[:, 6] = 0.0
-					new_probs = new_probs / new_probs.sum(dim=-1, keepdim=True)
+				new_probs = get_masked_probs(new_action_logits, episode, n_episodes, communicate)
 
 				dist = torch.distributions.Categorical(new_probs)
 				new_log_probs = dist.log_prob(actions_tensor)

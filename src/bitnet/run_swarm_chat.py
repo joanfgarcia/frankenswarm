@@ -1,6 +1,7 @@
 import os
 import json
 import re
+import numpy as np
 import torch
 import torch.nn.functional as F
 from src.bitnet.modeling_bitnet import BitNet4LayerModel
@@ -40,7 +41,7 @@ def generate_step(model, context_tokens, device, word_to_idx, idx_to_word, max_l
 		
 	return generated
 
-def run_chat_simulation():
+def run_chat_simulation(temp=0.7, penalty=1.2, turns=12, max_len=12):
 	device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 	print("═══ 🏟️ Simulación de Swarm Chat: Dos Bits Conversando (EXP_072) ═══")
 	print(f"[Device]: {device}")
@@ -80,12 +81,12 @@ def run_chat_simulation():
 	story_a_path = os.path.join(base_dir, "configs", "story_bit_a.txt")
 	story_b_path = os.path.join(base_dir, "configs", "story_bit_b.txt")
 	
-	nico_story_str = "yo soy nico y vivo cerca del río con perro grande"
+	nico_story_str = "yo tengo perro"
 	if os.path.exists(story_a_path):
 		with open(story_a_path, "r", encoding="utf-8") as f:
 			nico_story_str = f.read().strip()
 			
-	sofi_story_str = "yo soy sofi y tengo gato pequeño en casa cueva"
+	sofi_story_str = "yo tengo gato"
 	if os.path.exists(story_b_path):
 		with open(story_b_path, "r", encoding="utf-8") as f:
 			sofi_story_str = f.read().strip()
@@ -113,7 +114,7 @@ def run_chat_simulation():
 	
 	print("\n💬 Inicio del Diálogo Autónomo:\n")
 	
-	for turn_idx in range(12): # 12 turnos de conversación
+	for turn_idx in range(turns): # turnos de conversación
 		if current_speaker == 'A':
 			# Nico está hablando
 			# Construir contexto para Nico:
@@ -131,7 +132,7 @@ def run_chat_simulation():
 				history_part = context[len(nico_story):-1]
 				context = nico_story + history_part[-max_history_len:] + [word_to_idx.get("yo")]
 				
-			generated_tokens = generate_step(model, context, device, word_to_idx, idx_to_word, temperature=0.7)
+			generated_tokens = generate_step(model, context, device, word_to_idx, idx_to_word, max_len=max_len, temperature=temp, penalty_val=penalty)
 			msg_str = " ".join([idx_to_word[t] for t in generated_tokens])
 			print(f"👦 Nico (Bit-A) > {msg_str}")
 			
@@ -154,7 +155,7 @@ def run_chat_simulation():
 				history_part = context[len(sofi_story):-1]
 				context = sofi_story + history_part[-max_history_len:] + [word_to_idx.get("yo")]
 				
-			generated_tokens = generate_step(model, context, device, word_to_idx, idx_to_word, temperature=0.7)
+			generated_tokens = generate_step(model, context, device, word_to_idx, idx_to_word, max_len=max_len, temperature=temp, penalty_val=penalty)
 			msg_str = " ".join([idx_to_word[t] for t in generated_tokens])
 			print(f"👧 Sofi (Bit-B) > {msg_str}")
 			
@@ -162,6 +163,11 @@ def run_chat_simulation():
 			current_speaker = 'A'
 
 if __name__ == "__main__":
-	# Importar numpy localmente por consistencia
-	import numpy as np
-	run_chat_simulation()
+	import argparse
+	parser = argparse.ArgumentParser(description="Simulación de Swarm Chat")
+	parser.add_argument("--temp", type=float, default=0.7, help="Temperatura de muestreo (default: 0.7)")
+	parser.add_argument("--penalty", type=float, default=1.2, help="Penalización por repetición (default: 1.2)")
+	parser.add_argument("--turns", type=int, default=12, help="Número de turnos de diálogo (default: 12)")
+	parser.add_argument("--len", type=int, default=12, help="Longitud máxima de cada respuesta (default: 12)")
+	args = parser.parse_args()
+	run_chat_simulation(temp=args.temp, penalty=args.penalty, turns=args.turns, max_len=args.len)

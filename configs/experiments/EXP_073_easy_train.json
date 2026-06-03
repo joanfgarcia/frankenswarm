@@ -31,7 +31,7 @@
 	},
 	"training": {
 		"episodes": 2000,
-		"lr": 0.0005,
+		"lr": 0.001,
 		"gamma": 0.97,
 		"grad_clip": 1.0,
 		"entropy_bonus": 0.05,
@@ -42,7 +42,7 @@
 		"max_width": 648,
 		"patience": 50
 	},
-	"unfreeze_backbone": true,
+	"unfreeze_backbone": false,
 	"communication": {
 		"enabled": true
 	},
