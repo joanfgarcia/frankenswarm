@@ -160,6 +160,13 @@ def consolidate_latent_resonance(student_model, teaching_buffer, device, lr=1e-4
 	if not teaching_buffer:
 		return []
 
+	# Guardar el estado original de requires_grad para poder restaurarlo después
+	orig_grad_states = {}
+	for name, param in student_model.named_parameters():
+		orig_grad_states[name] = param.requires_grad
+		if "glyph_table" not in name:
+			param.requires_grad = True
+
 	# Agrupar muestras por habilidad
 	skills_in_buffer = set(sample["skill"] for sample in teaching_buffer)
 	graduated_skills = []
@@ -200,6 +207,10 @@ def consolidate_latent_resonance(student_model, teaching_buffer, device, lr=1e-4
 			graduated_skills.append(skill)
 		else:
 			print(f"    ⏳ [Sueño] Habilidad '{skill}' aún no dominada (pérdida >= 0.02).")
+
+	# Restaurar el estado original de requires_grad para el PPO
+	for name, param in student_model.named_parameters():
+		param.requires_grad = orig_grad_states[name]
 
 	return graduated_skills
 
