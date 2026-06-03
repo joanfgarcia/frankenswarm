@@ -70,16 +70,15 @@ def get_masked_probs(logits: torch.Tensor, episode: int, n_episodes: int, commun
 		mask[..., 6] = 0.0
 		
 	# Desenmascaramiento progresivo:
-	# - Primer 35% de los episodios: sólo acciones básicas (comer=0, beber=1, dormir=2, mover=3, ver=4, luchar=5, gritar=6, dar=7)
-	# - De 35% a 60% de los episodios: habilitar fabricar (11), encender (13)
-	# - A partir del 60%: habilitar todas las acciones
+	# - Primer 35% de los episodios: permitir acciones básicas + enseñar (8) y aprender (9)
+	#   (enmascaramos reproducir=10, fabricar=11, construir=12, encender=13)
+	# - De 35% a 60% de los episodios: habilitar fabricar (11) y encender (13)
+	# - A partir del 60%: habilitar reproducir (10) y construir (12)
 	progress = episode / n_episodes
 	if progress < 0.35:
-		mask[..., 8:14] = 0.0
+		mask[..., 10:14] = 0.0
 	elif progress < 0.60:
-		# Enmascarar enseñar (8), aprender (9), reproducir (10), construir (12)
-		mask[..., 8] = 0.0
-		mask[..., 9] = 0.0
+		# Enmascarar reproducir (10) y construir (12)
 		mask[..., 10] = 0.0
 		mask[..., 12] = 0.0
 		
