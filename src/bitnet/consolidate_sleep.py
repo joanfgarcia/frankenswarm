@@ -152,7 +152,7 @@ def run_sleep_cycle():
 	os.remove(session_words_path)
 	print("💤 [Sueño] ¡Consolidación de memoria completada! El modelo ha dormido y asimilado las nuevas palabras.")
 
-def consolidate_latent_resonance(student_model, teaching_buffer, device, lr=1e-4, epochs=10, n_think=2):
+def consolidate_latent_resonance(student_model, teaching_buffer, device, lr=1e-4, epochs=100, n_think=2):
 	"""
 	Realiza la destilación de resonancia latente durante el ciclo de sueño del alumno.
 	Minimiza la distancia coseno entre el estado oculto del alumno y el del maestro.
@@ -200,8 +200,10 @@ def consolidate_latent_resonance(student_model, teaching_buffer, device, lr=1e-4
 			loss.backward()
 			optimizer.step()
 			final_loss = loss.item()
+			if final_loss < 0.02:
+				break
 
-		print(f"    [Sueño] Pérdida de resonancia latente final para '{skill}': {final_loss:.4f}")
+		print(f"    [Sueño] Pérdida de resonancia latente final para '{skill}': {final_loss:.4f} (época {epoch+1}/{epochs})")
 		if final_loss < 0.02:
 			print(f"    🏆 [Sueño] ¡Habilidad '{skill}' graduada exitosamente!")
 			graduated_skills.append(skill)
