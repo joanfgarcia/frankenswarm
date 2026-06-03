@@ -646,6 +646,12 @@ class CooperativeWorld:
 
 	def act(self, agent: CoopAgentState, action: str, shout_concept_idx: int = None) -> dict:
 		"""Ejecutar acción para un agente."""
+		forced_sleep = False
+		original_action = action
+		if agent.energia <= 0.0 and action != "dormir":
+			action = "dormir"
+			forced_sleep = True
+
 		agent.previous_location = agent.location
 		loc_data = COOP_LOCATIONS[agent.location]
 		
@@ -744,7 +750,20 @@ class CooperativeWorld:
 			# Tasa metabólica basal: desgaste a la mitad durante el sueño
 			result["delta_hambre"] = -0.2 * 0.5 * peso_multiplicador
 			result["delta_sed"] = -1.0 * 0.5 * peso_multiplicador
-			if agent.danger_nearby:
+			
+			is_fishing_spot = loc_data.get("fish_eligible") or agent.location in ["río", "lago", "pantano"]
+			
+			if forced_sleep and original_action == "luchar":
+				result["delta_salud"] = -100.0
+				result["delta_energia"] = 0.0
+				result["success"] = False
+				result["event"] = "se desmaya de cansancio en medio del combate y es devorado"
+			elif forced_sleep and original_action == "comer" and is_fishing_spot:
+				result["delta_salud"] = -100.0
+				result["delta_energia"] = 0.0
+				result["success"] = False
+				result["event"] = "se desmaya de cansancio pescando y se ahoga en el agua"
+			elif agent.danger_nearby:
 				if getattr(agent, "tiene_lanza", False):
 					agent.tiene_lanza = False
 					result["delta_energia"] += 10.0
@@ -756,9 +775,14 @@ class CooperativeWorld:
 					result["event"] = "duerme pero depredador ataca!"
 			else:
 				result["success"] = True
-				result["delta_energia"] += 20.0
-				result["delta_salud"] += 3.0
-				result["event"] = "duerme y descansa"
+				if forced_sleep:
+					result["delta_energia"] += 10.0  # Menor recuperación por desmayo
+					result["delta_salud"] -= 2.0     # Penalización física leve por colapso
+					result["event"] = "colapsa por cansancio extremo y duerme forzosamente"
+				else:
+					result["delta_energia"] += 20.0
+					result["delta_salud"] += 3.0
+					result["event"] = "duerme y descansa"
 
 		elif action == "mover":
 			if agent.energia < 5:
