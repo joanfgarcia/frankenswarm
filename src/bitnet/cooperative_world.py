@@ -1092,6 +1092,7 @@ class CooperativeWorld:
 			agent.agent_id: {
 				"hambre": agent.hambre,
 				"sed": agent.sed,
+				"salud": agent.salud,
 				"location": agent.location
 			}
 			for agent in self.agents
@@ -1438,7 +1439,7 @@ class CooperativeWorld:
 	def get_reward(self, agent: CoopAgentState, result: dict) -> float:
 		"""Reward para un agente individual."""
 		# Bono básico de supervivencia por cada tick vivo (evita que prefieran morir temprano)
-		reward = 0.5
+		reward = 1.0
 
 		# Pain: necesidades no cubiertas
 		if agent.hambre < 30:
@@ -1465,23 +1466,29 @@ class CooperativeWorld:
 			if energy_before > 60.0:
 				reward -= 1.0
 
-		# Penalización por intentar comer/beber fallidamente (no hay disponible)
-		if agent.last_action in ["comer", "beber"] and not result["success"]:
-			reward -= 0.8
+		# Penalizaciones por intentar acciones de forma fallida o inútil (gastar ticks sin éxito)
+		if not result.get("success", False):
+			if agent.last_action in ["comer", "beber", "luchar", "dar", "enseñar", "aprender", "reproducir", "fabricar", "construir", "encender"]:
+				reward -= 0.3
 
-		# Penalización por luchar inútilmente (no hay amenaza ni presa)
-		if agent.last_action == "luchar":
-			if not (agent.danger_nearby or self.prey_location == agent.location):
-				reward -= 0.8
+		# Progress: Recompensas basadas en recursos recuperados efectivamente (evita farming al estar lleno)
+		if result.get("success", False):
+			start_stats = self.start_of_tick_stats.get(agent.agent_id) if hasattr(self, "start_of_tick_stats") else None
+			hambre_before = start_stats["hambre"] if start_stats else agent.hambre
+			sed_before = start_stats["sed"] if start_stats else agent.sed
+			salud_before = start_stats["salud"] if start_stats else agent.salud
 
-		# Progress
-		if result["success"]:
-			if result.get("delta_hambre", 0) > 0:
-				reward += 1.5   # comer = muy valioso (comida escasa)
-			if result.get("delta_sed", 0) > 0:
-				reward += 1.5   # beber = muy valioso (agua escasa)
-			if result.get("delta_salud", 0) > 0:
-				reward += 0.3
+			hambre_replenished = max(0.0, agent.hambre - hambre_before)
+			sed_replenished = max(0.0, agent.sed - sed_before)
+			salud_replenished = max(0.0, agent.salud - salud_before)
+
+			if hambre_replenished > 0.0:
+				reward += 1.5 * (hambre_replenished / 40.0)   # comer = muy valioso (comida escasa, máx +1.5)
+			if sed_replenished > 0.0:
+				reward += 1.5 * (sed_replenished / 50.0)     # beber = muy valioso (agua escasa, máx +1.5)
+			if salud_replenished > 0.0:
+				reward += 0.3 * (salud_replenished / 5.0)      # curarse (máx +0.3)
+
 			if result.get("delta_energia", 0) > 5:
 				energy_before = agent.energia - result.get("delta_energia", 0.0)
 				if not (agent.last_action == "dormir" and energy_before > 60.0):
