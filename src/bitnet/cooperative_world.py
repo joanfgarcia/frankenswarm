@@ -655,8 +655,8 @@ class CooperativeWorld:
 
 		result = {
 			"success": False,
-			"delta_hambre": -self.hunger_rate * peso_multiplicador,
-			"delta_sed": -self.hunger_rate * 2.0 * peso_multiplicador,
+			"delta_hambre": -0.2 * peso_multiplicador,
+			"delta_sed": -1.0 * peso_multiplicador,
 			"delta_salud": 0,
 			"delta_energia": -2.0 * peso_multiplicador,
 			"event": "",
@@ -708,23 +708,31 @@ class CooperativeWorld:
 			agent.mochila_agua = res["NewAgua"]
 			caps["food"] = res["NewGround"]
 			result["success"] = bool(res["Success"])
-			result["delta_hambre"] += res["AddHambre"]
-			result["delta_sed"] += res["AddSed"]
-			result["delta_salud"] += res["AddSalud"]
+			if result["success"]:
+				if res["Event"] == 'consume guiso caliente (comida++)':
+					result["delta_hambre"] += 85.0
+					result["delta_sed"] += 50.0
+				else:
+					result["delta_hambre"] += 75.0
+				result["delta_salud"] += res["AddSalud"]
+			else:
+				result["delta_hambre"] += res["AddHambre"]
+				result["delta_sed"] += res["AddSed"]
+				result["delta_salud"] += res["AddSalud"]
 			result["event"] = res["Event"]
 
 		elif action == "beber":
 			# Beber del suelo requiere la habilidad "agua"
 			if caps["water"] >= 1.0 and "agua" in agent.learned_skills:
 				result["success"] = True
-				result["delta_sed"] += 50.0
+				result["delta_sed"] += 75.0
 				result["delta_salud"] += 3.0
 				result["event"] = "bebe agua (suelo)"
 				caps["water"] -= 1.0
 			elif agent.mochila_agua > 0:
 				agent.mochila_agua = 0
 				result["success"] = True
-				result["delta_sed"] += 50.0
+				result["delta_sed"] += 75.0
 				result["delta_salud"] += 3.0
 				result["event"] = "bebe agua de su mochila"
 			else:
@@ -734,21 +742,21 @@ class CooperativeWorld:
 
 		elif action == "dormir":
 			# Tasa metabólica basal: desgaste a la mitad durante el sueño
-			result["delta_hambre"] = -self.hunger_rate * 0.5 * peso_multiplicador
-			result["delta_sed"] = -self.hunger_rate * 2.0 * 0.5 * peso_multiplicador
+			result["delta_hambre"] = -0.2 * 0.5 * peso_multiplicador
+			result["delta_sed"] = -1.0 * 0.5 * peso_multiplicador
 			if agent.danger_nearby:
 				if getattr(agent, "tiene_lanza", False):
 					agent.tiene_lanza = False
-					result["delta_energia"] += 15.0
+					result["delta_energia"] += 10.0
 					result["delta_salud"] += 3.0
 					result["event"] = "duerme y el depredador es repelido por la lanza (se rompe)"
 				else:
 					result["delta_salud"] -= 35.0 * self.predator_damage_multiplier
-					result["delta_energia"] += 15.0
+					result["delta_energia"] += 10.0
 					result["event"] = "duerme pero depredador ataca!"
 			else:
 				result["success"] = True
-				result["delta_energia"] += 35.0
+				result["delta_energia"] += 20.0
 				result["delta_salud"] += 3.0
 				result["event"] = "duerme y descansa"
 
@@ -1287,8 +1295,8 @@ class CooperativeWorld:
 				other_agent = next((ag for ag in self.agents if ag.agent_id == other_id), None)
 				if other_agent and not other_agent.alive:
 					continue
-				model["hambre"] = max(0.0, model.get("hambre", 60.0) - self.hunger_rate)
-				model["sed"] = max(0.0, model.get("sed", 80.0) - self.hunger_rate * 2.0)
+				model["hambre"] = max(0.0, model.get("hambre", 60.0) - 0.2)
+				model["sed"] = max(0.0, model.get("sed", 80.0) - 1.0)
 				model["energia"] = max(0.0, model.get("energia", 80.0) - 2.0)
 				model["aburrimiento"] = min(100.0, model.get("aburrimiento", 0.0) + 2.0)
 				
@@ -1483,16 +1491,33 @@ class CooperativeWorld:
 			salud_replenished = max(0.0, agent.salud - salud_before)
 
 			if hambre_replenished > 0.0:
-				reward += 1.5 * (hambre_replenished / 40.0)   # comer = muy valioso (comida escasa, máx +1.5)
+				# Horquilla preventiva de comida [50, 75]
+				if hambre_before <= 75.0:
+					factor = 1.0
+				else:
+					factor = max(0.0, 1.0 - (hambre_before - 75.0) / 25.0)
+				reward += 1.5 * factor   # comer = muy valioso (comida escasa, máx +1.5)
+
 			if sed_replenished > 0.0:
-				reward += 1.5 * (sed_replenished / 50.0)     # beber = muy valioso (agua escasa, máx +1.5)
+				# Horquilla preventiva de agua [50, 75]
+				if sed_before <= 75.0:
+					factor = 1.0
+				else:
+					factor = max(0.0, 1.0 - (sed_before - 75.0) / 25.0)
+				reward += 1.5 * factor     # beber = muy valioso (agua escasa, máx +1.5)
+
 			if salud_replenished > 0.0:
 				reward += 0.3 * (salud_replenished / 5.0)      # curarse (máx +0.3)
 
 			if result.get("delta_energia", 0) > 5:
 				energy_before = agent.energia - result.get("delta_energia", 0.0)
 				if not (agent.last_action == "dormir" and energy_before > 60.0):
-					reward += 0.2
+					# Horquilla preventiva de energía [50, 75]
+					if energy_before <= 75.0:
+						factor = 1.0
+					else:
+						factor = max(0.0, 1.0 - (energy_before - 75.0) / 25.0)
+					reward += 0.2 * factor
 
 		# Penalty por daño
 		if result.get("delta_salud", 0) < -10:

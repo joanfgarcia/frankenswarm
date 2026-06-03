@@ -20,7 +20,7 @@
 		"max_ticks": 500,
 		"food_interval": 12,
 		"food_duration": 8,
-		"hunger_rate": 1.5,
+		"hunger_rate": 0.2,
 		"resource_capacity": 10.0,
 		"resource_recovery": 0.5,
 		"predator_chance_multiplier": 0.1,
