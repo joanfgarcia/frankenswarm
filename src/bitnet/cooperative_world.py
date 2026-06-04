@@ -23,6 +23,7 @@ import os
 import random
 from collections import deque
 from dataclasses import dataclass
+
 from pyswip import Prolog
 
 from src.bitnet.glyph_vocabulary import EMOTION_INDEX, WORD_INDEX
@@ -368,19 +369,17 @@ class CoopAgentState:
 		self.aburrimiento = max(0.0, min(100.0, self.aburrimiento))
 		
 		# K.O. / Incapacitation Mode: falls unconscious instead of instant death
-		if self.alive and getattr(self, "debuff_inconsciente_ticks", 0) == 0:
-			if self.salud <= 0.0 or self.hambre <= 0.0 or self.sed <= 0.0:
-				self.debuff_inconsciente_ticks = 12
-				self.salud = 10.0
-				self.hambre = 10.0
-				self.sed = 10.0
-				self.just_fell_unconscious = True
+		if self.alive and getattr(self, "debuff_inconsciente_ticks", 0) == 0 and (self.salud <= 0.0 or self.hambre <= 0.0 or self.sed <= 0.0):
+			self.debuff_inconsciente_ticks = 12
+			self.salud = 10.0
+			self.hambre = 10.0
+			self.sed = 10.0
+			self.just_fell_unconscious = True
 		
 		# If unconscious and health drops to 0, they die permanently
-		if self.alive and getattr(self, "debuff_inconsciente_ticks", 0) > 0:
-			if self.salud <= 0.0:
-				self.alive = False
-				self.debuff_inconsciente_ticks = 0
+		if self.alive and getattr(self, "debuff_inconsciente_ticks", 0) > 0 and self.salud <= 0.0:
+			self.alive = False
+			self.debuff_inconsciente_ticks = 0
 
 
 # ── Mundo Cooperativo ───────────────────────────────────────────────────────
@@ -441,7 +440,7 @@ class CooperativeWorld:
 			for loc, loc_data in COOP_LOCATIONS.items()
 		}
 
-		self.fire_locations = {loc: 0 for loc in COOP_LOCATION_NAMES}
+		self.fire_locations = dict.fromkeys(COOP_LOCATION_NAMES, 0)
 
 		# Agentes
 		self.agent_a = CoopAgentState(agent_id="a")
@@ -535,7 +534,7 @@ class CooperativeWorld:
 			}
 			for loc, loc_data in COOP_LOCATIONS.items()
 		}
-		self.fire_locations = {loc: 0 for loc in COOP_LOCATION_NAMES}
+		self.fire_locations = dict.fromkeys(COOP_LOCATION_NAMES, 0)
 		self.prey_location = None
 		self.prey_timer = 0
 		self.prey_cooldown = self.rng.randint(5, self.prey_spawn_interval)
@@ -805,23 +804,17 @@ class CooperativeWorld:
 		# Llenar mochila automáticamente si está en un recurso disponible
 		caps = self.resource_capacities[agent.location]
 		if caps["food"] >= 1.0 and agent.mochila_comida == 0:
-			if "comida" in agent.learned_skills and loc_data["food_eligible"]:
-				agent.mochila_comida = 1
-				caps["food"] = max(0.0, caps["food"] - 1.0)
-				if caps["food"] <= 0.0 and self.replenish_cooldown_ticks > 0:
-					self.resource_cooldowns[agent.location]["food"] = self.replenish_cooldown_ticks
-			elif "pesca" in agent.learned_skills and loc_data.get("fish_eligible"):
+			if "comida" in agent.learned_skills and loc_data["food_eligible"] or "pesca" in agent.learned_skills and loc_data.get("fish_eligible"):
 				agent.mochila_comida = 1
 				caps["food"] = max(0.0, caps["food"] - 1.0)
 				if caps["food"] <= 0.0 and self.replenish_cooldown_ticks > 0:
 					self.resource_cooldowns[agent.location]["food"] = self.replenish_cooldown_ticks
 		
-		if caps["water"] >= 1.0 and agent.mochila_agua == 0:
-			if "agua" in agent.learned_skills and loc_data["water_available"]:
-				agent.mochila_agua = 1
-				caps["water"] = max(0.0, caps["water"] - 1.0)
-				if caps["water"] <= 0.0 and self.replenish_cooldown_ticks > 0:
-					self.resource_cooldowns[agent.location]["water"] = self.replenish_cooldown_ticks
+		if caps["water"] >= 1.0 and agent.mochila_agua == 0 and "agua" in agent.learned_skills and loc_data["water_available"]:
+			agent.mochila_agua = 1
+			caps["water"] = max(0.0, caps["water"] - 1.0)
+			if caps["water"] <= 0.0 and self.replenish_cooldown_ticks > 0:
+				self.resource_cooldowns[agent.location]["water"] = self.replenish_cooldown_ticks
 
 		if "artesanía" in agent.learned_skills:
 			if loc_data.get("branches_eligible") and caps["branches"] >= 1.0 and agent.mochila_ramas < 3:
@@ -942,10 +935,7 @@ class CooperativeWorld:
 				# Movimiento dirigido: si tiene destino, camina hacia él
 				if agent.nav_target and agent.nav_target != agent.location:
 					next_step = _bfs_next_step(agent.location, agent.nav_target)
-					if next_step and next_step in adjacent:
-						new_loc = next_step
-					else:
-						new_loc = self.rng.choice(adjacent)
+					new_loc = next_step if next_step and next_step in adjacent else self.rng.choice(adjacent)
 				else:
 					# Sin destino: exploración aleatoria
 					new_loc = self.rng.choice(adjacent)
@@ -1248,9 +1238,8 @@ class CooperativeWorld:
 				result["delta_hambre"] *= 1.2
 			if result.get("delta_sed", 0.0) < 0:
 				result["delta_sed"] *= 1.2
-			if action == "dormir":
-				if result.get("delta_energia", 0) > 0:
-					result["delta_energia"] *= 0.5
+			if action == "dormir" and result.get("delta_energia", 0) > 0:
+				result["delta_energia"] *= 0.5
 
 		# ── Aplicar deltas ──
 		agent.hambre += result["delta_hambre"]
@@ -1387,7 +1376,6 @@ class CooperativeWorld:
 			print(f"  👶 ¡Nace DOMI (D)! Padres: {p1.agent_id.upper()} y {p2.agent_id.upper()} | Skills: {self.agent_d.learned_skills} | Width: {self.agent_d.network_width}")
 
 		# --- Resolución de la Caza Cooperativa ---
-		prey_hunted = False
 		if self.prey_location:
 			# Excluir de la caza a quien no posea la habilidad "caza" (Fase 6)
 			hunters = [
@@ -1408,7 +1396,6 @@ class CooperativeWorld:
 					break
 			
 			if solo_spear_hunter:
-				prey_hunted = True
 				self.prey_location = None
 				solo_spear_hunter.tiene_lanza = False
 				solo_spear_hunter.hambre = min(100.0, solo_spear_hunter.hambre + 50.0)
@@ -1419,7 +1406,6 @@ class CooperativeWorld:
 				res["event"] = "caza individual exitosa de la presa usando la lanza! Comida obtenida."
 				res["delta_hambre"] = 50.0
 			elif len(hunters) >= 2:
-				prey_hunted = True
 				self.prey_location = None
 				for hunter in hunters:
 					hunter.hambre = min(100.0, hunter.hambre + 50.0)
@@ -1444,7 +1430,6 @@ class CooperativeWorld:
 					res["event"] += " La presa se asusta y huye."
 
 		# --- Resolución de la Caza del Gran Herbívoro (Stag Hunt) ---
-		mega_hunted = False
 		if self.megaherbivore_location:
 			# Agentes con habilidad "caza", con lanza, vivos, en la misma casilla y decidiendo LUCHAR
 			mega_hunters = [
@@ -1459,7 +1444,6 @@ class CooperativeWorld:
 
 			# Si hay al menos 3 cazadores con lanzas equipadas, éxito!
 			if len(mega_hunters) >= 3:
-				mega_hunted = True
 				loc = self.megaherbivore_location
 				self.megaherbivore_location = None
 				
@@ -1596,36 +1580,35 @@ class CooperativeWorld:
 		# ── Sincronización Física (Meetup) ──
 		for i, agent_x in enumerate(self.agents):
 			for j, agent_y in enumerate(self.agents):
-				if i < j and agent_x.alive and agent_y.alive:
-					if agent_x.location == agent_y.location:
-						for loc in COOP_LOCATION_NAMES:
-							t_x = agent_x.map_knowledge[loc]["last_updated"]
-							t_y = agent_y.map_knowledge[loc]["last_updated"]
-							if t_x > t_y:
-								agent_y.map_knowledge[loc] = agent_x.map_knowledge[loc].copy()
-							elif t_y > t_x:
-								agent_x.map_knowledge[loc] = agent_y.map_knowledge[loc].copy()
-								
-						agent_x.companion_model[agent_y.agent_id].update({
-							"location": agent_y.location,
-							"hambre": agent_y.hambre,
-							"sed": agent_y.sed,
-							"salud": agent_y.salud,
-							"energia": agent_y.energia,
-							"aburrimiento": agent_y.aburrimiento,
-							"emotion_name": agent_y.emotion_name,
-							"last_updated": self.world_tick
-						})
-						agent_y.companion_model[agent_x.agent_id].update({
-							"location": agent_x.location,
-							"hambre": agent_x.hambre,
-							"sed": agent_x.sed,
-							"salud": agent_x.salud,
-							"energia": agent_x.energia,
-							"aburrimiento": agent_x.aburrimiento,
-							"emotion_name": agent_x.emotion_name,
-							"last_updated": self.world_tick
-						})
+				if i < j and agent_x.alive and agent_y.alive and agent_x.location == agent_y.location:
+					for loc in COOP_LOCATION_NAMES:
+						t_x = agent_x.map_knowledge[loc]["last_updated"]
+						t_y = agent_y.map_knowledge[loc]["last_updated"]
+						if t_x > t_y:
+							agent_y.map_knowledge[loc] = agent_x.map_knowledge[loc].copy()
+						elif t_y > t_x:
+							agent_x.map_knowledge[loc] = agent_y.map_knowledge[loc].copy()
+							
+					agent_x.companion_model[agent_y.agent_id].update({
+						"location": agent_y.location,
+						"hambre": agent_y.hambre,
+						"sed": agent_y.sed,
+						"salud": agent_y.salud,
+						"energia": agent_y.energia,
+						"aburrimiento": agent_y.aburrimiento,
+						"emotion_name": agent_y.emotion_name,
+						"last_updated": self.world_tick
+					})
+					agent_y.companion_model[agent_x.agent_id].update({
+						"location": agent_x.location,
+						"hambre": agent_x.hambre,
+						"sed": agent_x.sed,
+						"salud": agent_x.salud,
+						"energia": agent_x.energia,
+						"aburrimiento": agent_x.aburrimiento,
+						"emotion_name": agent_x.emotion_name,
+						"last_updated": self.world_tick
+					})
 
 		# ── Planificación del Rescate Predictivo (nav_target) ──
 		for agent in self.agents:
@@ -1663,9 +1646,7 @@ class CooperativeWorld:
 				if receiver_id and receiver:
 					# Evitar exploitation de trading inútil entre agentes saciados
 					receiver_need = False
-					if res["shared_resource"] == "agua" and receiver.sed < 60.0:
-						receiver_need = True
-					elif res["shared_resource"] == "comida" and receiver.hambre < 60.0:
+					if res["shared_resource"] == "agua" and receiver.sed < 60.0 or res["shared_resource"] == "comida" and receiver.hambre < 60.0:
 						receiver_need = True
 					
 					if receiver_need:
@@ -1791,9 +1772,8 @@ class CooperativeWorld:
 				if agent.last_action == "comer" and agent.mochila_comida == 0:
 					if (loc_data["food_eligible"] or loc_data.get("fish_eligible")) and caps["food"] < 1.0:
 						reward -= 2.0
-				elif agent.last_action == "beber" and agent.mochila_agua == 0:
-					if loc_data["water_available"] and caps["water"] < 1.0:
-						reward -= 2.0
+				elif agent.last_action == "beber" and agent.mochila_agua == 0 and loc_data["water_available"] and caps["water"] < 1.0:
+					reward -= 2.0
 
 		# Penalización por comer/beber inútilmente cuando se está saciado (evita loops estáticos en recursos)
 		if result.get("success", False) and agent.last_action in ["comer", "beber"]:
@@ -1818,18 +1798,12 @@ class CooperativeWorld:
 
 			if hambre_replenished > 0.0:
 				# Horquilla preventiva de comida [50, 75]
-				if hambre_before <= 75.0:
-					factor = 1.0
-				else:
-					factor = max(0.0, 1.0 - (hambre_before - 75.0) / 25.0)
+				factor = 1.0 if hambre_before <= 75.0 else max(0.0, 1.0 - (hambre_before - 75.0) / 25.0)
 				reward += 1.5 * factor   # comer = muy valioso (comida escasa, máx +1.5)
 
 			if sed_replenished > 0.0:
 				# Horquilla preventiva de agua [50, 75]
-				if sed_before <= 75.0:
-					factor = 1.0
-				else:
-					factor = max(0.0, 1.0 - (sed_before - 75.0) / 25.0)
+				factor = 1.0 if sed_before <= 75.0 else max(0.0, 1.0 - (sed_before - 75.0) / 25.0)
 				reward += 1.5 * factor     # beber = muy valioso (agua escasa, máx +1.5)
 
 			if salud_replenished > 0.0:
@@ -1839,10 +1813,7 @@ class CooperativeWorld:
 				energy_before = agent.energia - result.get("delta_energia", 0.0)
 				if not (agent.last_action == "dormir" and energy_before > 60.0):
 					# Horquilla preventiva de energía [50, 75]
-					if energy_before <= 75.0:
-						factor = 1.0
-					else:
-						factor = max(0.0, 1.0 - (energy_before - 75.0) / 25.0)
+					factor = 1.0 if energy_before <= 75.0 else max(0.0, 1.0 - (energy_before - 75.0) / 25.0)
 					reward += 0.2 * factor
 
 		# Penalty por daño

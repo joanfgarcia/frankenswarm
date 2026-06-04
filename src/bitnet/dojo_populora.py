@@ -1,12 +1,11 @@
-import os
 import random
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
-import numpy as np
 
-from src.bitnet.glyph_vocabulary import WORD_INDEX, EMOTION_INDEX, EMOTION_NAMES
-from src.bitnet.cooperative_world import COOP_ACTIONS, COOP_LOCATION_GLYPHS, SILENCE_GLYPH
+import torch
+import torch.nn.functional as F
+
+from src.bitnet.cooperative_world import COOP_ACTIONS, COOP_LOCATION_GLYPHS
+from src.bitnet.glyph_vocabulary import EMOTION_INDEX, WORD_INDEX
+
 
 def generate_dojo_batch(batch_size=1024, device="cpu"):
 	"""
@@ -62,10 +61,7 @@ def generate_dojo_batch(batch_size=1024, device="cpu"):
 			emotion = "hambre" if random.random() < 0.5 else "alegría"
 			backpack = "noche"
 			# Nico y Hugo saben extraer agua del suelo, Sofy no
-			if agent_id in ["a", "c"]:
-				action = "beber"
-			else:
-				action = "mover"
+			action = "beber" if agent_id in ["a", "c"] else "mover"
 				
 		elif scen_type == "eat_backpack":
 			loc = random.choice(["cueva", "montaña", "lago"])
@@ -212,7 +208,7 @@ def train_dojo_step(agents_dict, device, batch_size=256, lr=1e-4, epochs=5, n_th
 		steps = 0
 		
 		# Entrenar en mini-lotes
-		for e in range(epochs):
+		for _e in range(epochs):
 			for i in range(0, len(agent_inputs), batch_size):
 				batch_in = agent_inputs[i:i+batch_size]
 				batch_emo = agent_emotions[i:i+batch_size]

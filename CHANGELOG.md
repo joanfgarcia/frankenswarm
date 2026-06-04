@@ -2,6 +2,18 @@
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-06-04
+
+### 🎓 Entorno de Entrenamiento Híbrido (Dojo de PopuLoRA) y Estabilización PPO
+- **[FEAT] El Dojo de PopuLoRA (currículo supervisado)**: Integración de `dojo_populora.py` para generar lotes de entrenamiento supervisado basados en plantillas expertas (alimentación, mochila, combate, gritos y reanimación de emergencia).
+- **[FEAT] Pre-entrenamiento y consolidación de sueño**: Aplicación de 50 pasos de Dojo pre-entrenamiento para alinear los pesos iniciales de las cabezas de política, y 5 épocas de consolidación de Dojo en cada fase de sueño (unfreezing backbone).
+- **[FEAT] Estabilización de PPO**: Congelamiento del backbone de representación durante la optimización PPO diurna. Implementación de limitador de ratios (ratios clamped a 10.0) y uso de Huber Loss (delta=5.0) para evitar explosiones de gradientes en penalizaciones negativas (K.O./muertes).
+- **[FEAT] Mecánica de K.O. y Muerte Permanente**: Reducción drástica del exploit de inmortalidad. Los agentes que llegan a homeostasis 0 entran en debuff de inconsciencia (K.O.) por 12 ticks. Si un compañero no usa `reanimar`, mueren definitivamente y aplican debuff de tristeza (72 ticks) a los supervivientes.
+- **[FEAT] Criterio de Maestría (Dominio Alcanzado)**: Detención automática de la simulación cuando la tribu sobrevive 200 ticks deterministas consecutivos en evaluación sin entrar en K.O. (alcanzado en episodio 342).
+- **[DOCS] Boletín de Notas y Sesiones**: Mapeo completo del currículo de 4 grados en `curriculum_plan.md` y registro en `walkthrough.md` dentro de `docs/sessions/20260603/`.
+
+## [0.2.0] - 2026-05-30
+
 ### 🧬 Especialización de Habilidades y Asimetría Tribal (Fase 5 y 5.1 - Realismo de Mochila)
 - **[FEAT] Compartición Desacoplada de Mochilas (Fase 5.1)**: Modificación de la acción `"dar"` en `CooperativeWorld` para realizar una transferencia de mochila a mochila en lugar de consumo directo. El recurso (agua o comida) se mueve a la mochila del receptor (siempre que esté vacía y su nivel de necesidad sea < 80).
 - **[FEAT] Consumo de Segundo Paso (Fase 5.1)**: Los agentes especializados ahora deben aprender y ejecutar explícitamente `"comer"` o `"beber"` en ticks subsiguientes para ingerir el recurso que sus compañeros depositaron en su mochila.

@@ -10,6 +10,7 @@ Origen: Aleth & Joan, 2026-06-02
 import argparse
 import json
 import os
+
 import numpy as np
 import torch
 import torch.nn as nn
@@ -118,7 +119,7 @@ def run_eval_episode(world, agent_a, agent_b, agent_c, agent_d, device, communic
 	if agent_d is not None:
 		agent_d.eval()
 
-	for tick in range(1, 501):
+	for _tick in range(1, 501):
 		if not state_a.alive and not state_b.alive and not state_c.alive:
 			break
 			
@@ -299,7 +300,7 @@ def run_arena_ppo_training():
 				copy_limit = min(old_out, COOP_N_ACTIONS)
 				new_linear.weight[:copy_limit] = old_linear.weight[:copy_limit].clone()
 				new_linear.bias[:copy_limit] = old_linear.bias[:copy_limit].clone()
-				if COOP_N_ACTIONS > old_out:
+				if old_out < COOP_N_ACTIONS:
 					new_linear.weight[old_out:] = torch.randn(COOP_N_ACTIONS - old_out, old_width) * 0.01
 					new_linear.bias[old_out:] = 0.0
 			m.action_head = nn.Sequential(
@@ -391,9 +392,7 @@ def run_arena_ppo_training():
 
 		unfreeze = config.get("unfreeze_backbone", True)
 		for name, param in m.named_parameters():
-			if "glyph_table" in name:
-				param.requires_grad = False
-			elif not unfreeze and "action_head" not in name and "value_head" not in name:
+			if "glyph_table" in name or not unfreeze and "action_head" not in name and "value_head" not in name:
 				param.requires_grad = False
 			else:
 				param.requires_grad = True
@@ -427,7 +426,6 @@ def run_arena_ppo_training():
 
 	best_combined = 0.0
 	survival_hist = []
-	success_mastery = False
 	total_growths_a = 0
 	total_growths_b = 0
 	total_growths_c = 0
@@ -456,7 +454,7 @@ def run_arena_ppo_training():
 	dojo_pretrain_steps = config.get("dojo", {}).get("pretrain_steps", 50)
 	dojo_pretrain_epochs = config.get("dojo", {}).get("pretrain_epochs", 10)
 	if dojo_pretrain_steps > 0:
-		print(f"\n🎓 [DOJO] Iniciando pre-entrenamiento del Manual de Instrucciones en el Dojo...")
+		print("\n🎓 [DOJO] Iniciando pre-entrenamiento del Manual de Instrucciones en el Dojo...")
 		agents_dict = {"a": agent_a, "b": agent_b, "c": agent_c}
 		if agent_d is not None:
 			agents_dict["d"] = agent_d
@@ -493,7 +491,7 @@ def run_arena_ppo_training():
 
 		agent_d_episode = agent_d
 
-		for tick in range(max_ticks):
+		for _tick in range(max_ticks):
 			# Terminar solo si todos los fundadores activos están muertos
 			if not state_a.alive and not state_b.alive and not state_c.alive:
 				break
@@ -896,7 +894,7 @@ def run_arena_ppo_training():
 		dojo_interval = config.get("dojo", {}).get("interval", 1)
 		dojo_sleep_epochs = config.get("dojo", {}).get("sleep_epochs", 5)
 		if dojo_sleep_epochs > 0 and (episode + 1) % dojo_interval == 0:
-			print(f"  💤 [Dojo] Nico, Sofy y Hugo visitan el Dojo de PopuLoRA con el profesor...")
+			print("  💤 [Dojo] Nico, Sofy y Hugo visitan el Dojo de PopuLoRA con el profesor...")
 			agents_dict = {"a": agent_a, "b": agent_b, "c": agent_c}
 			if agent_d_episode is not None:
 				agents_dict["d"] = agent_d_episode
@@ -1061,7 +1059,7 @@ def run_arena_ppo_training():
 		if agent_d_episode is not None:
 			neuro_list.append(("D", agent_d_episode, state_d, "opt_d"))
 
-		for label, model, state, opt_ref in neuro_list:
+		for label, model, state, _opt_ref in neuro_list:
 			curr_w = model.action_head[0].out_features
 			if len(survival_hist) >= 10 and curr_w < max_width:
 				avg_s = np.mean(survival_hist[-10:])
@@ -1090,9 +1088,9 @@ def run_arena_ppo_training():
 		# Logging periódico
 		if episode % 10 == 0 or episode == n_episodes - 1:
 			avg = np.mean(survival_hist[-50:]) if survival_hist else 0
-			w_a = agent_a.action_head[0].out_features
-			w_b = agent_b.action_head[0].out_features
-			w_c = agent_c.action_head[0].out_features
+			agent_a.action_head[0].out_features
+			agent_b.action_head[0].out_features
+			agent_c.action_head[0].out_features
 			food_str = f"🍖{world_info['food_location'] or 'none'}"
 			prey_str = f"🎯{world.prey_location or 'none'}"
 			d_ticks_str = f" D:{state_d.tick:3d}" if state_d.alive else " D: --"
@@ -1121,7 +1119,7 @@ def run_arena_ppo_training():
 		eval_success = run_eval_episode(world, agent_a, agent_b, agent_c, agent_d_episode, device, communicate, n_think=n_think)
 		if eval_success:
 			print(f"\n{'🏆'*30}")
-			print(f"🥇 ¡DOMINIO ALCANZADO! Los 3 agentes han sobrevivido 200 ticks deterministas consecutivos sin entrar en K.O.")
+			print("🥇 ¡DOMINIO ALCANZADO! Los 3 agentes han sobrevivido 200 ticks deterministas consecutivos sin entrar en K.O.")
 			print(f"🥇 Deteniendo simulación de entrenamiento con éxito en el episodio {episode+1}.")
 			print(f"{'🏆'*30}\n")
 			torch.save(agent_a.state_dict(), os.path.join(exp_dir, "best_agent_a.pt"))
