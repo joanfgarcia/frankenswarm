@@ -267,14 +267,25 @@ class BitNet4LayerModel(nn.Module):
 		logits = self._decode_hidden(h, logit_mask=logit_mask)
 		return logits
 
-	def generate_message(self, x: torch.Tensor, tau: float = 1.0, hard: bool = True, logit_mask: torch.Tensor = None) -> torch.Tensor:
+	def generate_message(self, x: torch.Tensor, tau: float = 1.0, hard: bool = True, logit_mask: torch.Tensor = None, mode: str = "gumbel") -> torch.Tensor:
 		"""
-		Genera un mensaje utilizando Gumbel-Softmax para mantener la diferenciabilidad del canal.
-		Devuelve un tensor de vectores one-hot relajados.
+		Genera un mensaje discreto/relajado manteniendo la diferenciabilidad del canal.
+		Soporta:
+		  - "gumbel": Gumbel-Softmax (con temperatura tau).
+		  - "ste": Straight-Through Estimator (argmax + gradiente de softmax).
 		"""
 		logits = self.forward(x, logit_mask=logit_mask)
-		# Aplicamos Gumbel-Softmax sobre la dimensión del vocabulario
-		message = F.gumbel_softmax(logits, tau=tau, hard=hard, dim=-1)
+		if mode == "ste":
+			# Softmax probability for backward pass
+			y_soft = F.softmax(logits / tau, dim=-1)
+			# Argmax for forward pass
+			indices = logits.argmax(dim=-1)
+			y_hard = F.one_hot(indices, num_classes=logits.size(-1)).float()
+			# Straight-Through trick
+			message = y_hard - y_soft.detach() + y_soft
+		else:
+			# Default: Gumbel-Softmax
+			message = F.gumbel_softmax(logits, tau=tau, hard=hard, dim=-1)
 		return message
 
 	def _load_from_state_dict(self, state_dict, prefix, local_metadata, strict, missing_keys, unexpected_keys, error_msgs):

@@ -59,10 +59,32 @@ def project_model_to_width(parent_model, target_width, device):
 	return model_copy
 
 
+def align_tensor(src_tensor, target_shape, default_tensor=None):
+	"""
+	Alinea src_tensor al target_shape cortándolo o rellenándolo.
+	Usa default_tensor como base si se provee.
+	"""
+	if src_tensor.shape == target_shape:
+		return src_tensor
+	if default_tensor is not None:
+		out = default_tensor.clone()
+	else:
+		out = torch.zeros(target_shape, device=src_tensor.device, dtype=src_tensor.dtype)
+	slices_src = []
+	slices_out = []
+	for dim_src, dim_out in zip(src_tensor.shape, target_shape):
+		m = min(dim_src, dim_out)
+		slices_src.append(slice(0, m))
+		slices_out.append(slice(0, m))
+	out[tuple(slices_out)] = src_tensor[tuple(slices_src)]
+	return out
+
+
 def svd_crossover(parent_a, parent_b, child, alpha=0.5, sigma=0.01):
 	"""
 	Realiza el cruzamiento SVD de pesos entre parent_a y parent_b y escribe en child.
 	Asume que parent_a, parent_b y child tienen la misma arquitectura y dimensiones.
+	Soporta alineación de tensores en caso de discrepancias de tamaño por carga de pesos parciales.
 	"""
 	with torch.no_grad():
 		for name, param in child.named_parameters():
@@ -70,8 +92,12 @@ def svd_crossover(parent_a, parent_b, child, alpha=0.5, sigma=0.01):
 				continue
 			p_a = parent_a.state_dict()[name]
 			p_b = parent_b.state_dict()[name]
-			if p_a.ndim == 2:
-				w_avg = alpha * p_a + (1.0 - alpha) * p_b
+			
+			aligned_a = align_tensor(p_a, param.shape, default_tensor=param)
+			aligned_b = align_tensor(p_b, param.shape, default_tensor=param)
+			
+			if aligned_a.ndim == 2:
+				w_avg = alpha * aligned_a + (1.0 - alpha) * aligned_b
 				try:
 					u, s, vh = torch.linalg.svd(w_avg, full_matrices=False)
 					s_perturbed = (s + torch.randn_like(s) * sigma).clamp_(min=0.0)
@@ -79,7 +105,7 @@ def svd_crossover(parent_a, parent_b, child, alpha=0.5, sigma=0.01):
 				except Exception:
 					param.copy_(w_avg)
 			else:
-				param.copy_(alpha * p_a + (1.0 - alpha) * p_b + torch.randn_like(p_a) * sigma)
+				param.copy_(alpha * aligned_a + (1.0 - alpha) * aligned_b + torch.randn_like(aligned_a) * sigma)
 
 
 def recombine_parents(parent_model_a, parent_model_b, child_model, target_width, device):

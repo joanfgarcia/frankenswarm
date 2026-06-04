@@ -136,6 +136,280 @@ def grow_action_head(model: nn.Module, growth_factor: float = 1.5, noise_std: fl
 	return info
 
 
+def get_head_aligned_mapping(old_dim, new_dim, num_heads=4):
+	old_head_dim = old_dim // num_heads
+	new_head_dim = new_dim // num_heads
+	n_new_per_head = new_head_dim - old_head_dim
+
+	# Generate random clone indices within each head
+	head_clone_indices = torch.randint(0, old_head_dim, (n_new_per_head,))
+
+	# Calculate copy count for one head
+	head_copy_count = torch.ones(old_head_dim)
+	for src_idx in head_clone_indices:
+		head_copy_count[src_idx] += 1
+
+	# Build global mapping g, copy_count, and is_clone mask
+	g = []
+	copy_count = []
+	is_clone = []
+	for h in range(num_heads):
+		head_start = h * old_head_dim
+		for k in range(new_head_dim):
+			if k < old_head_dim:
+				src_idx = head_start + k
+				is_clone.append(False)
+			else:
+				src_idx = head_start + head_clone_indices[k - old_head_dim].item()
+				is_clone.append(True)
+			g.append(src_idx)
+
+		for k in range(old_head_dim):
+			copy_count.append(head_copy_count[k].item())
+
+	return (
+		torch.tensor(g, dtype=torch.long),
+		torch.tensor(copy_count, dtype=torch.float),
+		torch.tensor(is_clone, dtype=torch.bool),
+	)
+
+
+def get_random_mapping(old_dim, new_dim):
+	n_new = new_dim - old_dim
+	clone_indices = torch.randint(0, old_dim, (n_new,))
+	copy_count = torch.ones(old_dim)
+	for src_idx in clone_indices:
+		copy_count[src_idx] += 1
+
+	g = list(range(old_dim)) + clone_indices.tolist()
+	is_clone = [False] * old_dim + [True] * n_new
+
+	return (
+		torch.tensor(g, dtype=torch.long),
+		torch.tensor(copy_count, dtype=torch.float),
+		torch.tensor(is_clone, dtype=torch.bool),
+	)
+
+
+def net2wider_model(old_model: nn.Module, new_hidden_dim: int, noise_std: float = 0.01) -> nn.Module:
+	"""
+	Net2WiderNet: Expande la dimensión oculta (hidden_dim) de todo el modelo BitNet4LayerModel.
+	Transfiere y adapta todos los pesos y bias de forma funcionalmente equivalente (preserva la salida).
+	"""
+	from src.bitnet.modeling_bitnet import BitNet4LayerModel
+
+	old_hidden_dim = old_model.hidden_dim
+	assert new_hidden_dim > old_hidden_dim, f"new_hidden_dim ({new_hidden_dim}) must be > old_hidden_dim ({old_hidden_dim})"
+
+	# 1. Recrear el nuevo modelo con la misma estructura pero con new_hidden_dim
+	use_pos_embedding = old_model.use_pos_embedding
+	max_resonance_steps = old_model.resonance_clock.shape[1] if getattr(old_model, "resonance_clock", None) is not None else 0
+	n_emotions = old_model.emotion_embeddings.num_embeddings if old_model.emotion_embeddings is not None else 0
+	emotion_dim = old_model.emotion_embeddings.embedding_dim if old_model.emotion_embeddings is not None else 0
+	emotion_mode = old_model.emotion_mode
+	use_glyphs = old_model.use_glyphs
+	
+	device = next(old_model.parameters()).device
+
+	if use_glyphs:
+		glyph_table = old_model.glyph_embedding.glyph_table.cpu().numpy()
+		vocab_embeddings = None
+	else:
+		glyph_table = None
+		vocab_embeddings = old_model.vocab_embeddings.cpu().numpy()
+
+	# Configuración de action_head y value_head
+	old_ahw = old_model.action_head[0].out_features
+	new_ahw = new_hidden_dim // 2
+
+	new_model = BitNet4LayerModel(
+		vocab_embeddings=vocab_embeddings,
+		hidden_dim=new_hidden_dim,
+		num_layers=len(old_model.core_layers),
+		use_pos_embedding=use_pos_embedding,
+		max_resonance_steps=max_resonance_steps,
+		n_emotions=n_emotions,
+		emotion_dim=emotion_dim,
+		emotion_mode=emotion_mode,
+		use_glyphs=use_glyphs,
+		glyph_table=glyph_table,
+		action_head_width=new_ahw,
+		is_causal=old_model.is_causal,
+		max_seq_len=old_model.pos_embedding.shape[1] if getattr(old_model, "pos_embedding", None) is not None else 64
+	).to(device)
+
+	# 2. Generar mapeos
+	num_heads = 4  # hardcoded en BitNetTransformerBlock
+	g, copy_count, is_clone = get_head_aligned_mapping(old_hidden_dim, new_hidden_dim, num_heads=num_heads)
+	g = g.to(device)
+	copy_count = copy_count.to(device)
+	is_clone = is_clone.to(device)
+
+	g_ahw, ahw_copy_count, ahw_is_clone = get_random_mapping(old_ahw, new_ahw)
+	g_ahw = g_ahw.to(device)
+	ahw_copy_count = ahw_copy_count.to(device)
+	ahw_is_clone = ahw_is_clone.to(device)
+
+	with torch.no_grad():
+		# --- A. Glyph Embedding ---
+		if use_glyphs:
+			old_pe = old_model.glyph_embedding.prime_embeddings.data
+			new_pe = old_pe[:, g]
+			noise = torch.randn_like(new_pe) * noise_std
+			new_pe = new_pe + noise * is_clone.unsqueeze(0)
+			new_model.glyph_embedding.prime_embeddings.copy_(new_pe)
+		else:
+			old_w = old_model.inbound_proj.weight.data
+			new_w = old_w[g, :]
+			noise = torch.randn_like(new_w) * noise_std
+			new_w = new_w + noise * is_clone.unsqueeze(1)
+			new_model.inbound_proj.weight.copy_(new_w)
+
+		# --- B. Pos Embedding & Resonance Clock ---
+		if use_pos_embedding and getattr(old_model, "pos_embedding", None) is not None:
+			old_pos = old_model.pos_embedding.data
+			new_pos = old_pos[:, :, g]
+			noise = torch.randn_like(new_pos) * noise_std
+			new_pos = new_pos + noise * is_clone.view(1, 1, -1)
+			new_model.pos_embedding.copy_(new_pos)
+
+		if getattr(old_model, "resonance_clock", None) is not None:
+			old_clock = old_model.resonance_clock.data
+			new_clock = old_clock[:, :, g]
+			noise = torch.randn_like(new_clock) * noise_std
+			new_clock = new_clock + noise * is_clone.view(1, 1, -1)
+			new_model.resonance_clock.copy_(new_clock)
+
+		# --- C. Emotion Proj ---
+		if old_model.emotion_proj is not None:
+			old_w = old_model.emotion_proj.weight.data
+			new_w = old_w[g, :]
+			noise = torch.randn_like(new_w) * noise_std
+			new_w = new_w + noise * is_clone.unsqueeze(1)
+			new_model.emotion_proj.weight.copy_(new_w)
+
+			if emotion_mode == "gated":
+				old_w = old_model.emotion_gate.weight.data
+				new_w = old_w[g][:, g] / copy_count[g].unsqueeze(0)
+				noise = torch.randn_like(new_w) * noise_std
+				clone_mask = is_clone.unsqueeze(0) | is_clone.unsqueeze(1)
+				new_w = new_w + noise * clone_mask
+				new_model.emotion_gate.weight.copy_(new_w)
+
+			new_model.emotion_embeddings.weight.copy_(old_model.emotion_embeddings.weight.data)
+
+		# --- D. Core Layers (Transformer Blocks) ---
+		for l_idx, (old_block, new_block) in enumerate(zip(old_model.core_layers, new_model.core_layers)):
+			new_block.attn_norm.weight.copy_(old_block.attn_norm.weight.data[g])
+
+			# Attention: q_proj, k_proj, v_proj
+			for proj_name in ["q_proj", "k_proj", "v_proj"]:
+				old_proj = getattr(old_block.attn, proj_name)
+				new_proj = getattr(new_block.attn, proj_name)
+				old_w = old_proj.weight.data
+				new_w = old_w[g][:, g] / copy_count[g].unsqueeze(0)
+				noise = torch.randn_like(new_w) * noise_std
+				clone_mask = is_clone.unsqueeze(0) | is_clone.unsqueeze(1)
+				new_w = new_w + noise * clone_mask
+				new_proj.weight.copy_(new_w)
+
+			# out_proj
+			old_proj = old_block.attn.out_proj
+			new_proj = new_block.attn.out_proj
+			old_w = old_proj.weight.data
+			new_w = old_w[g][:, g] / copy_count[g].unsqueeze(0)
+			noise = torch.randn_like(new_w) * noise_std
+			clone_mask = is_clone.unsqueeze(0) | is_clone.unsqueeze(1)
+			new_w = new_w + noise * clone_mask
+			new_proj.weight.copy_(new_w)
+
+			# mlp_norm
+			new_block.mlp_norm.weight.copy_(old_block.mlp_norm.weight.data[g])
+
+			# mlp up_proj
+			old_up = old_block.mlp.up_proj
+			new_up = new_block.mlp.up_proj
+			old_mlp_dim = old_up.out_features
+			new_mlp_dim = new_up.out_features
+			
+			g_mlp, mlp_copy_count, mlp_is_clone = get_random_mapping(old_mlp_dim, new_mlp_dim)
+			g_mlp = g_mlp.to(device)
+			mlp_copy_count = mlp_copy_count.to(device)
+			mlp_is_clone = mlp_is_clone.to(device)
+
+			old_w = old_up.weight.data
+			new_w = old_w[g_mlp][:, g] / copy_count[g].unsqueeze(0)
+			noise = torch.randn_like(new_w) * noise_std
+			clone_mask = mlp_is_clone.unsqueeze(1) | is_clone.unsqueeze(0)
+			new_w = new_w + noise * clone_mask
+			new_up.weight.copy_(new_w)
+
+			# mlp down_proj
+			old_down = old_block.mlp.down_proj
+			new_down = new_block.mlp.down_proj
+			old_w = old_down.weight.data
+			new_w = old_w[g][:, g_mlp] / mlp_copy_count[g_mlp].unsqueeze(0)
+			noise = torch.randn_like(new_w) * noise_std
+			clone_mask = is_clone.unsqueeze(1) | mlp_is_clone.unsqueeze(0)
+			new_w = new_w + noise * clone_mask
+			new_down.weight.copy_(new_w)
+
+		# --- E. Norm ---
+		new_model.norm.weight.copy_(old_model.norm.weight.data[g])
+
+		# --- F. Outbound Proj ---
+		if not use_glyphs:
+			old_w = old_model.outbound_proj.weight.data
+			new_w = old_w[:, g] / copy_count[g].unsqueeze(0)
+			noise = torch.randn_like(new_w) * noise_std
+			new_w = new_w + noise * is_clone.unsqueeze(0)
+			new_model.outbound_proj.weight.copy_(new_w)
+
+		# --- G. Action Head ---
+		old_w = old_model.action_head[0].weight.data
+		new_w = old_w[g_ahw][:, g] / copy_count[g].unsqueeze(0)
+		noise = torch.randn_like(new_w) * noise_std
+		clone_mask = ahw_is_clone.unsqueeze(1) | is_clone.unsqueeze(0)
+		new_w = new_w + noise * clone_mask
+		new_model.action_head[0].weight.copy_(new_w)
+		new_model.action_head[0].bias.copy_(old_model.action_head[0].bias.data[g_ahw])
+
+		old_w = old_model.action_head[2].weight.data
+		new_w = old_w[:, g_ahw] / ahw_copy_count[g_ahw].unsqueeze(0)
+		noise = torch.randn_like(new_w) * noise_std
+		new_w = new_w + noise * ahw_is_clone.unsqueeze(0)
+		new_model.action_head[2].weight.copy_(new_w)
+		new_model.action_head[2].bias.copy_(old_model.action_head[2].bias.data)
+
+		# --- H. Value Head ---
+		old_w = old_model.value_head[0].weight.data
+		new_w = old_w[g_ahw][:, g] / copy_count[g].unsqueeze(0)
+		noise = torch.randn_like(new_w) * noise_std
+		clone_mask = ahw_is_clone.unsqueeze(1) | is_clone.unsqueeze(0)
+		new_model.value_head[0].weight.copy_(new_w)
+		new_model.value_head[0].bias.copy_(old_model.value_head[0].bias.data[g_ahw])
+
+		old_w = old_model.value_head[2].weight.data
+		new_w = old_w[:, g_ahw] / ahw_copy_count[g_ahw].unsqueeze(0)
+		noise = torch.randn_like(new_w) * noise_std
+		new_w = new_w + noise * ahw_is_clone.unsqueeze(0)
+		new_model.value_head[2].weight.copy_(new_w)
+		new_model.value_head[2].bias.copy_(old_model.value_head[2].bias.data)
+
+		# --- I. Glyph Projection Head ---
+		old_w = old_model.glyph_projection_head[0].weight.data
+		new_w = old_w[:, g] / copy_count[g].unsqueeze(0)
+		noise = torch.randn_like(new_w) * noise_std
+		new_w = new_w + noise * is_clone.unsqueeze(0)
+		new_model.glyph_projection_head[0].weight.copy_(new_w)
+		new_model.glyph_projection_head[0].bias.copy_(old_model.glyph_projection_head[0].bias.data)
+
+		new_model.glyph_projection_head[2].weight.copy_(old_model.glyph_projection_head[2].weight.data)
+		new_model.glyph_projection_head[2].bias.copy_(old_model.glyph_projection_head[2].bias.data)
+
+	return new_model
+
+
 def verify_net2net_preservation(model: nn.Module, test_input: torch.Tensor, pre_output: torch.Tensor, tolerance: float = 0.01) -> bool:
 	"""
 	Verificar que Net2Net preservó la función.
@@ -204,3 +478,57 @@ if __name__ == "__main__":
 	print(f"\nDoble crecimiento: width=256, params={sum(p.numel() for p in head.parameters()):,}")
 	print(f"Max diff desde original: {diff2:.6f}")
 	print(f"Preservado: {'✅ SÍ' if diff2 < 0.05 else '❌ NO'}")
+
+	# --- Test de Modelo Completo ---
+	print("\n═══ Net2Net — Test de Modelo Completo (BitNet4LayerModel) ═══\n")
+	try:
+		from src.bitnet.modeling_bitnet import BitNet4LayerModel
+		import numpy as np
+
+		# Inicializar modelo de 256 dim
+		vocab_embeddings = np.random.randn(26, 384)
+		model_256 = BitNet4LayerModel(
+			vocab_embeddings=vocab_embeddings,
+			hidden_dim=256,
+			num_layers=2,
+			use_pos_embedding=True,
+			max_resonance_steps=5,
+			n_emotions=6,
+			emotion_dim=32,
+			emotion_mode="gated",
+			use_glyphs=False
+		)
+
+		model_256.eval()
+		x_input = torch.randint(0, 26, (2, 10))
+		emotion_ids = torch.randint(0, 6, (2,))
+
+		with torch.no_grad():
+			# Probar logits y outputs de resonancia antes del crecimiento
+			logits_before, meta_before = model_256.forward_resonance(x_input, n_steps=3, pos_mode="clock", emotion_ids=emotion_ids)
+			# Action head output
+			action_before = model_256.action_head(meta_before["final_hidden"])
+
+		print("Creciendo modelo 256 -> 512...")
+		# Deshabilitar ruido temporalmente para test de equivalencia estricta
+		model_512 = net2wider_model(model_256, 512, noise_std=0.0)
+		model_512.eval()
+
+		with torch.no_grad():
+			logits_after, meta_after = model_512.forward_resonance(x_input, n_steps=3, pos_mode="clock", emotion_ids=emotion_ids)
+			action_after = model_512.action_head(meta_after["final_hidden"])
+
+		diff_logits = (logits_before - logits_after).abs().max().item()
+		diff_action = (action_before - action_after).abs().max().item()
+
+		print(f"Max diff en logits de resonancia: {diff_logits:.6f}")
+		print(f"Max diff en action head: {diff_action:.6f}")
+		if diff_logits < 1e-4 and diff_action < 1e-4:
+			print("✅ Equivalencia funcional estricta superada!")
+		else:
+			print("❌ Error en equivalencia funcional.")
+
+	except Exception as e:
+		print(f"❌ Error en test de modelo completo: {e}")
+		import traceback
+		traceback.print_exc()

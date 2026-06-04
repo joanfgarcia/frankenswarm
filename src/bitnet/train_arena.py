@@ -151,10 +151,11 @@ def run_arena_training():
     n_verify = config.get("resonance", {}).get("n_verify", 2)
 
     # World config
-    world_cfg = config.get("world", {})
-    food_interval = world_cfg.get("food_interval", 10)
-    food_duration = world_cfg.get("food_duration", 5)
-    hunger_rate = world_cfg.get("hunger_rate", 5.0)
+	world_cfg = config.get("world", {})
+	food_interval = world_cfg.get("food_interval", 10)
+	food_duration = world_cfg.get("food_duration", 5)
+	hunger_rate = world_cfg.get("hunger_rate", 5.0)
+	replenish_cooldown_ticks = world_cfg.get("replenish_cooldown_ticks", 0)
 
     # Growth config
     growth_cfg = config.get("growth", {})
@@ -183,12 +184,13 @@ def run_arena_training():
     print(f"📈 Episodes: {n_episodes}, max_ticks: {max_ticks}")
 
     for episode in range(n_episodes):
-        world = CooperativeWorld(
-            seed=seed + episode,
-            food_interval=food_interval,
-            food_duration=food_duration,
-            hunger_rate=hunger_rate,
-        )
+		world = CooperativeWorld(
+			seed=seed + episode,
+			food_interval=food_interval,
+			food_duration=food_duration,
+			hunger_rate=hunger_rate,
+			replenish_cooldown_ticks=replenish_cooldown_ticks,
+		)
         state_a, state_b = world.reset()
 
         buf_a = {"log_probs": [], "rewards": [], "entropies": []}

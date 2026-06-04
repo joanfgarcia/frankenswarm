@@ -1,0 +1,1719 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>BÜNKER NEURAL MONITOR — Frankenswarm Telemetry</title>
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;700&family=Inter:wght@300;400;500;600;700&family=Orbitron:wght@400;600;800;900&display=swap" rel="stylesheet">
+	<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+	<style>
+		:root {
+			--bg-dark: #0b0f19;
+			--bg-card: rgba(17, 24, 39, 0.7);
+			--border-color: rgba(255, 255, 255, 0.07);
+			--text-primary: #f3f4f6;
+			--text-secondary: #9ca3af;
+			--accent-blue: #00e5ff;
+			--accent-orange: #ff6d00;
+			--accent-green: #00e676;
+			--accent-purple: #d500f9;
+			--accent-red: #ff1744;
+			--neon-shadow-blue: 0 0 10px rgba(0, 229, 255, 0.3);
+			--neon-shadow-orange: 0 0 10px rgba(255, 109, 0, 0.3);
+		}
+
+		* {
+			box-sizing: border-box;
+			margin: 0;
+			padding: 0;
+		}
+
+		body {
+			background-color: var(--bg-dark);
+			background-image: 
+				radial-gradient(at 0% 0%, rgba(0, 229, 255, 0.03) 0px, transparent 50%),
+				radial-gradient(at 100% 100%, rgba(255, 109, 0, 0.03) 0px, transparent 50%),
+				radial-gradient(at 50% 50%, rgba(213, 0, 249, 0.02) 0px, transparent 50%);
+			background-attachment: fixed;
+			color: var(--text-primary);
+			font-family: 'Inter', sans-serif;
+			min-height: 100vh;
+			overflow-x: hidden;
+		}
+
+		header {
+			background: rgba(11, 15, 25, 0.8);
+			backdrop-filter: blur(12px);
+			border-bottom: 1px solid var(--border-color);
+			padding: 1.2rem 2rem;
+			position: sticky;
+			top: 0;
+			z-index: 100;
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+		}
+
+		.logo-container {
+			display: flex;
+			align-items: center;
+			gap: 12px;
+		}
+
+		.logo-glyph {
+			font-size: 1.8rem;
+			text-shadow: var(--neon-shadow-orange);
+			animation: pulse 2s infinite ease-in-out;
+		}
+
+		.logo-title {
+			font-family: 'Orbitron', sans-serif;
+			font-weight: 900;
+			font-size: 1.4rem;
+			letter-spacing: 2px;
+			background: linear-gradient(90deg, var(--accent-orange), var(--accent-blue));
+			-webkit-background-clip: text;
+			-webkit-text-fill-color: transparent;
+		}
+
+		.controls {
+			display: flex;
+			align-items: center;
+			gap: 16px;
+		}
+
+		.file-input-wrapper {
+			position: relative;
+			overflow: hidden;
+			display: inline-block;
+		}
+
+		.btn {
+			background: rgba(255, 255, 255, 0.03);
+			border: 1px solid var(--border-color);
+			color: var(--text-primary);
+			padding: 8px 16px;
+			border-radius: 8px;
+			font-family: 'Orbitron', sans-serif;
+			font-size: 0.85rem;
+			font-weight: 600;
+			cursor: pointer;
+			transition: all 0.3s ease;
+			display: flex;
+			align-items: center;
+			gap: 8px;
+		}
+
+		.btn:hover {
+			background: rgba(255, 109, 0, 0.1);
+			border-color: var(--accent-orange);
+			box-shadow: var(--neon-shadow-orange);
+		}
+
+		.btn-primary {
+			background: linear-gradient(135deg, var(--accent-orange), #e65100);
+			border: none;
+		}
+
+		.btn-primary:hover {
+			background: linear-gradient(135deg, #ff9100, var(--accent-orange));
+			box-shadow: 0 0 15px rgba(255, 109, 0, 0.5);
+		}
+
+		.file-input-wrapper input[type=file] {
+			font-size: 100px;
+			position: absolute;
+			left: 0;
+			top: 0;
+			opacity: 0;
+			cursor: pointer;
+		}
+
+		main {
+			max-width: 1600px;
+			margin: 0 auto;
+			padding: 2rem;
+			display: grid;
+			grid-template-columns: 1fr;
+			gap: 2rem;
+		}
+
+		@media (min-width: 1200px) {
+			main {
+				grid-template-columns: 3fr 1.2fr;
+			}
+		}
+
+		.dashboard-content {
+			display: flex;
+			flex-direction: column;
+			gap: 2rem;
+		}
+
+		/* Grid de tarjetas resumen */
+		.summary-grid {
+			display: grid;
+			grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+			gap: 1.5rem;
+		}
+
+		.summary-card {
+			background: var(--bg-card);
+			backdrop-filter: blur(12px);
+			border: 1px solid var(--border-color);
+			border-radius: 12px;
+			padding: 1.5rem;
+			position: relative;
+			overflow: hidden;
+			transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+		}
+
+		.summary-card:hover {
+			transform: translateY(-4px);
+			border-color: rgba(0, 229, 255, 0.2);
+			box-shadow: rgba(0, 0, 0, 0.3) 0 10px 20px;
+		}
+
+		.summary-card::before {
+			content: '';
+			position: absolute;
+			top: 0;
+			left: 0;
+			width: 4px;
+			height: 100%;
+			background: var(--accent-blue);
+		}
+
+		.summary-card.orange::before { background: var(--accent-orange); }
+		.summary-card.green::before { background: var(--accent-green); }
+		.summary-card.purple::before { background: var(--accent-purple); }
+
+		.summary-label {
+			font-size: 0.75rem;
+			text-transform: uppercase;
+			color: var(--text-secondary);
+			letter-spacing: 1.5px;
+			font-family: 'Orbitron', sans-serif;
+			margin-bottom: 8px;
+		}
+
+		.summary-value {
+			font-size: 2.2rem;
+			font-weight: 800;
+			font-family: 'Fira Code', monospace;
+			color: var(--text-primary);
+			text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+		}
+
+		.summary-subtext {
+			font-size: 0.75rem;
+			color: var(--text-secondary);
+			margin-top: 6px;
+			display: flex;
+			align-items: center;
+			gap: 4px;
+		}
+
+		/* Panel de gráficas */
+		.chart-container {
+			background: var(--bg-card);
+			backdrop-filter: blur(12px);
+			border: 1px solid var(--border-color);
+			border-radius: 16px;
+			padding: 1.5rem;
+			position: relative;
+		}
+
+		.chart-header {
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+			margin-bottom: 1.5rem;
+			border-bottom: 1px solid rgba(255,255,255,0.05);
+			padding-bottom: 0.8rem;
+		}
+
+		.chart-title {
+			font-family: 'Orbitron', sans-serif;
+			font-size: 1.05rem;
+			font-weight: 700;
+			letter-spacing: 1px;
+			display: flex;
+			align-items: center;
+			gap: 8px;
+		}
+
+		.chart-title-icon {
+			color: var(--accent-orange);
+		}
+
+		.canvas-wrapper {
+			position: relative;
+			height: 350px;
+			width: 100%;
+		}
+
+		.charts-subgrid {
+			display: grid;
+			grid-template-columns: 1fr;
+			gap: 2rem;
+		}
+
+		@media (min-width: 900px) {
+			.charts-subgrid {
+				grid-template-columns: 1fr 1fr;
+			}
+		}
+
+		/* Panel lateral: Línea Temporal de Hitos (Timeline) */
+		.timeline-panel {
+			background: var(--bg-card);
+			backdrop-filter: blur(12px);
+			border: 1px solid var(--border-color);
+			border-radius: 16px;
+			padding: 1.5rem;
+			display: flex;
+			flex-direction: column;
+			height: calc(100vh - 120px);
+			position: sticky;
+			top: 100px;
+		}
+
+		.timeline-header {
+			margin-bottom: 1.5rem;
+			border-bottom: 1px solid rgba(255,255,255,0.05);
+			padding-bottom: 0.8rem;
+		}
+
+		.timeline-title {
+			font-family: 'Orbitron', sans-serif;
+			font-size: 1.1rem;
+			font-weight: 800;
+			letter-spacing: 1px;
+			color: var(--text-primary);
+			display: flex;
+			align-items: center;
+			gap: 8px;
+		}
+
+		.timeline-scroll {
+			flex: 1;
+			overflow-y: auto;
+			padding-right: 8px;
+		}
+
+		.timeline-scroll::-webkit-scrollbar {
+			width: 6px;
+		}
+
+		.timeline-scroll::-webkit-scrollbar-track {
+			background: rgba(0,0,0,0.1);
+		}
+
+		.timeline-scroll::-webkit-scrollbar-thumb {
+			background: rgba(255,255,255,0.1);
+			border-radius: 3px;
+		}
+
+		.timeline-scroll::-webkit-scrollbar-thumb:hover {
+			background: rgba(255, 109, 0, 0.3);
+		}
+
+		.timeline-wrapper {
+			position: relative;
+			border-left: 2px solid rgba(255,255,255,0.05);
+			margin-left: 14px;
+			padding-left: 24px;
+			display: flex;
+			flex-direction: column;
+			gap: 1.5rem;
+		}
+
+		.timeline-item {
+			position: relative;
+		}
+
+		.timeline-badge {
+			position: absolute;
+			left: -37px;
+			top: 0;
+			width: 24px;
+			height: 24px;
+			border-radius: 50%;
+			background: var(--bg-dark);
+			border: 2px solid var(--accent-blue);
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			font-size: 0.8rem;
+			z-index: 2;
+			box-shadow: 0 0 8px rgba(0, 0, 0, 0.8);
+		}
+
+		.timeline-content {
+			background: rgba(255,255,255,0.02);
+			border: 1px solid rgba(255,255,255,0.03);
+			border-radius: 8px;
+			padding: 1rem;
+			transition: all 0.2s ease;
+		}
+
+		.timeline-content:hover {
+			background: rgba(255,255,255,0.04);
+			border-color: rgba(255, 255, 255, 0.08);
+		}
+
+		.timeline-meta {
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+			margin-bottom: 6px;
+		}
+
+		.timeline-ep {
+			font-family: 'Fira Code', monospace;
+			font-size: 0.75rem;
+			color: var(--accent-orange);
+			background: rgba(255, 109, 0, 0.08);
+			padding: 2px 6px;
+			border-radius: 4px;
+			border: 1px solid rgba(255, 109, 0, 0.15);
+		}
+
+		.timeline-type {
+			font-size: 0.7rem;
+			text-transform: uppercase;
+			color: var(--text-secondary);
+			letter-spacing: 1px;
+		}
+
+		.timeline-item-title {
+			font-size: 0.9rem;
+			font-weight: 700;
+			margin-bottom: 4px;
+		}
+
+		.timeline-desc {
+			font-size: 0.8rem;
+			color: var(--text-secondary);
+			line-height: 1.4;
+		}
+
+		/* Zona drag and drop inicial */
+		.dropzone {
+			border: 2px dashed rgba(255,255,255,0.1);
+			background: rgba(255,255,255,0.01);
+			border-radius: 16px;
+			padding: 3rem 2rem;
+			text-align: center;
+			cursor: pointer;
+			transition: all 0.3s ease;
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			gap: 1rem;
+		}
+
+		.dropzone.hover {
+			border-color: var(--accent-orange);
+			background: rgba(255, 109, 0, 0.02);
+			box-shadow: inset 0 0 20px rgba(255, 109, 0, 0.05);
+		}
+
+		.dropzone-icon {
+			font-size: 3rem;
+			text-shadow: var(--neon-shadow-blue);
+			animation: float 3s infinite ease-in-out;
+		}
+
+		.dropzone-title {
+			font-family: 'Orbitron', sans-serif;
+			font-size: 1.1rem;
+			font-weight: 700;
+			letter-spacing: 0.5px;
+		}
+
+		.dropzone-desc {
+			font-size: 0.85rem;
+			color: var(--text-secondary);
+			max-width: 400px;
+			line-height: 1.5;
+		}
+
+		/* Consola de logs */
+		.console-panel {
+			background: #060913;
+			border: 1px solid var(--border-color);
+			border-radius: 12px;
+			padding: 1rem;
+			font-family: 'Fira Code', monospace;
+			font-size: 0.8rem;
+			height: 250px;
+			overflow-y: auto;
+			box-shadow: inset 0 4px 20px rgba(0,0,0,0.8);
+		}
+
+		.console-line {
+			line-height: 1.5;
+			color: #38bdf8;
+			white-space: pre-wrap;
+		}
+
+		.console-line.milestone {
+			color: #fb7185;
+			font-weight: 700;
+		}
+
+		.console-line.success {
+			color: #4ade80;
+		}
+
+		.console-line.system {
+			color: #94a3b8;
+		}
+
+		/* Animaciones */
+		@keyframes pulse {
+			0%, 100% { transform: scale(1); opacity: 1; }
+			50% { transform: scale(1.05); opacity: 0.8; }
+		}
+
+		@keyframes float {
+			0%, 100% { transform: translateY(0); }
+			50% { transform: translateY(-10px); }
+		}
+
+		/* Elemento oculto cuando no hay datos */
+		.hidden {
+			display: none !important;
+		}
+
+		/* Centrar vacíos */
+		.empty-timeline {
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			justify-content: center;
+			height: 100%;
+			color: var(--text-secondary);
+			text-align: center;
+			font-size: 0.85rem;
+			gap: 8px;
+		}
+
+		.btn-toggle {
+			padding: 4px 10px;
+			font-size: 0.75rem;
+			font-family: 'Orbitron', sans-serif;
+			background: rgba(255, 255, 255, 0.03);
+			border: 1px solid var(--border-color);
+			color: var(--text-secondary);
+			border-radius: 6px;
+			cursor: pointer;
+			transition: all 0.2s ease;
+		}
+
+		.btn-toggle:hover {
+			border-color: var(--accent-orange);
+			color: var(--text-primary);
+		}
+
+		.btn-toggle.active {
+			background: rgba(255, 109, 0, 0.2);
+			border-color: var(--accent-orange);
+			color: var(--text-primary);
+			box-shadow: var(--neon-shadow-orange);
+		}
+	</style>
+</head>
+<body>
+
+	<header>
+		<div class="logo-container">
+			<span class="logo-glyph">🧠</span>
+			<span class="logo-title">BÜNKER NEURAL MONITOR</span>
+		</div>
+		<div class="controls">
+			<button class="btn" id="btn-load-mock" onclick="loadMockData()">
+				<span>📊</span> Cargar Demo
+			</button>
+			<div class="file-input-wrapper">
+				<button class="btn btn-primary">
+					<span>📂</span> Cargar Archivo .log
+				</button>
+				<input type="file" id="log-file" accept=".log,.txt" onchange="handleFileSelect(event)">
+			</div>
+		</div>
+	</header>
+
+	<main>
+		<!-- Panel Principal (Izquierda) -->
+		<div class="dashboard-content">
+			<!-- Zona Dropzone -->
+			<div class="dropzone" id="drop-zone" onclick="document.getElementById('log-file').click()">
+				<div class="dropzone-icon">🚀</div>
+				<div class="dropzone-title">ARRASTRA EL LOG DE ENTRENAMIENTO</div>
+				<div class="dropzone-desc">Arrastra tu archivo de log (ej. <code>task-1562.log</code>) aquí o haz clic para seleccionarlo del explorador de archivos del sistema.</div>
+			</div>
+
+			<!-- Dashboard de Métricas (Oculto hasta que haya datos) -->
+			<div id="metrics-dashboard" class="hidden" style="display: flex; flex-direction: column; gap: 2rem;">
+				<!-- Resumen de Tarjetas -->
+				<div class="summary-grid">
+					<div class="summary-card">
+						<div class="summary-label">Supervivencia Máxima</div>
+						<div class="summary-value" id="card-max-ticks">--</div>
+						<div class="summary-subtext"><span>🎯</span> Ticks récord en un episodio</div>
+					</div>
+					<div class="summary-card orange">
+						<div class="summary-label">Tendencia Avg50</div>
+						<div class="summary-value" id="card-avg-ticks">--</div>
+						<div class="summary-subtext"><span>📈</span> Supervivencia media (50 ep)</div>
+					</div>
+					<div class="summary-card green">
+						<div class="summary-label">Neurogénesis</div>
+						<div class="summary-value" id="card-neuro-count">--</div>
+						<div class="summary-subtext"><span>🧬</span> Ampliaciones cerebrales (L3)</div>
+					</div>
+					<div class="summary-card purple">
+						<div class="summary-label">Habilidades Graduadas</div>
+						<div class="summary-value" id="card-skills-count">--</div>
+						<div class="summary-subtext"><span>🏆</span> Traspasos de conocimiento</div>
+					</div>
+				</div>
+
+				<!-- Gráfica Principal: Supervivencia -->
+				<div class="chart-container">
+					<div class="chart-header" style="flex-wrap: wrap; gap: 10px;">
+						<div class="chart-title">
+							<span class="chart-title-icon">📈</span> TRAYECTORIA DE SUPERVIVENCIA (LA ARENA)
+						</div>
+						<div class="agent-selector" id="survival-agent-selector" style="display: flex; gap: 6px;">
+							<button class="btn-toggle active" onclick="filterSurvivalAgent('all', event)">Todos</button>
+							<button class="btn-toggle" onclick="filterSurvivalAgent('A', event)">Nico</button>
+							<button class="btn-toggle" onclick="filterSurvivalAgent('B', event)">Sofy</button>
+							<button class="btn-toggle" onclick="filterSurvivalAgent('C', event)">Hugo</button>
+						</div>
+						<div style="font-size: 0.75rem; color: var(--text-secondary); font-family: 'Fira Code', monospace;" id="chart-sub-1">
+							Episodios parsed: 0
+						</div>
+					</div>
+					<div class="canvas-wrapper">
+						<canvas id="chart-survival"></canvas>
+					</div>
+				</div>
+
+				<!-- Gráficas Secundarias -->
+				<div class="charts-subgrid">
+					<!-- Pérdidas de Entrenamiento (Loss) -->
+					<div class="chart-container">
+						<div class="chart-header">
+							<div class="chart-title">
+								<span class="chart-title-icon">📉</span> EVOLUCIÓN DEL GRADIENT LOSS (PPO)
+							</div>
+						</div>
+						<div class="canvas-wrapper" style="height: 280px;">
+							<canvas id="chart-loss"></canvas>
+						</div>
+					</div>
+
+					<!-- Comunicación y Habilidades -->
+					<div class="chart-container">
+						<div class="chart-header">
+							<div class="chart-title">
+								<span class="chart-title-icon">📡</span> COMUNICACIÓN Y HABILIDADES
+							</div>
+						</div>
+						<div class="canvas-wrapper" style="height: 280px;">
+							<canvas id="chart-comms"></canvas>
+						</div>
+					</div>
+				</div>
+
+				<!-- Consola de Logs original -->
+				<div class="chart-container">
+					<div class="chart-header">
+						<div class="chart-title">
+							<span class="chart-title-icon">📟</span> LOG EN TIEMPO REAL PARSEADO
+						</div>
+					</div>
+					<div class="console-panel" id="console-output"></div>
+				</div>
+			</div>
+		</div>
+
+		<!-- Panel Lateral (Derecha): Timeline de hitos -->
+		<div class="timeline-panel">
+			<div class="timeline-header">
+				<div class="timeline-title">
+					<span>🧬</span> COGNITIVE MILESTONES
+				</div>
+			</div>
+			<div class="timeline-scroll" id="timeline-scroll-container">
+				<div class="empty-timeline" id="empty-timeline-msg">
+					<span>📭</span>
+					<span>No se ha cargado ningún log todavía.</span>
+				</div>
+				<div class="timeline-wrapper hidden" id="timeline-wrapper">
+					<!-- Se genera dinámicamente -->
+				</div>
+			</div>
+		</div>
+	</main>
+
+	<!-- Script de mock data (Datos del entrenamiento task-1562 extraídos hasta Ep 401) -->
+	<script>
+		const mockLogData = `Running as unit: run-p360535-i360536.scope; invocation ID: f9da4de5d80e4392b124d
+Loaded A weights from: /home/joan/Documents/IA/frankenswarm/storage/experiments/EXP_036_pretrained/best_agent.pt
+Resize action head (PRESERVING WEIGHTS): 6 -> 14 actions (width=128)
+🔒 A Backbone frozen
+Loaded B weights from: /home/joan/Documents/IA/frankenswarm/storage/experiments/EXP_036_pretrained/best_agent.pt
+Resize action head (PRESERVING WEIGHTS): 6 -> 14 actions (width=128)
+🔒 B Backbone frozen
+Loaded C weights from: /home/joan/Documents/IA/frankenswarm/storage/experiments/EXP_036_pretrained/best_agent.pt
+Resize action head (PRESERVING WEIGHTS): 6 -> 14 actions (width=128)
+🔒 C Backbone frozen
+═══ 🏟️ Arena 3-Agent PPO — EXP_073_easy_train ═══
+  📡 COMUNICACIÓN ON
+Ep    1/2000 | A: 77 B: 77 C: 77 D: -- | Best:77 Avg50:77.0 | Loss A:50.322 B:41.886 C:93.264 D:0.000 | 📡 shouts:23 | G_A:0 G_B:0 G_C:0 G_D:0 | 🍖valle 🎯none
+Ep   11/2000 | A:105 B:105 C:105 D: -- | Best:192 Avg50:105.8 | Loss A:30.751 B:39.156 C:39.260 D:0.000 | 📡 shouts:29 | G_A:0 G_B:0 G_C:0 G_D:0 | 🍖bosque 🎯none
+Ep   21/2000 | A: 79 B: 79 C: 79 D: -- | Best:261 Avg50:103.3 | Loss A:28.064 B:50.868 C:31.133 D:0.000 | 📡 shouts:17 | G_A:0 G_B:0 G_C:0 G_D:0 | 🍖valle 🎯none
+Ep   31/2000 | A: 81 B: 81 C: 81 D: -- | Best:261 Avg50:99.2 | Loss A:8.249 B:9.677 C:14.454 D:0.000 | 📡 shouts:24 | G_A:0 G_B:0 G_C:0 G_D:0 | 🍖valle 🎯pantano
+Ep   41/2000 | A: 62 B: 62 C: 62 D: -- | Best:261 Avg50:93.3 | Loss A:53.476 B:36.295 C:16.229 D:0.000 | 📡 shouts:18 | G_A:0 G_B:0 G_C:0 G_D:0 | 🍖bosque 🎯río
+Ep   51/2000 | A:156 B:156 C:156 D: -- | Best:261 Avg50:96.2 | Loss A:281.042 B:29.291 C:25.590 D:0.000 | 📡 shouts:47 | G_A:0 G_B:0 G_C:0 G_D:0 | 🍖bosque 🎯none
+Ep   61/2000 | A: 46 B: 46 C: 46 D: -- | Best:261 Avg50:92.9 | Loss A:28.643 B:20.663 C:8.568 D:0.000 | 📡 shouts:16 | G_A:0 G_B:0 G_C:0 G_D:0 | 🍖bosque 🎯none
+Ep   71/2000 | A: 81 B: 81 C: 81 D: -- | Best:261 Avg50:86.8 | Loss A:28.772 B:11.952 C:22.553 D:0.000 | 📡 shouts:7 | G_A:0 G_B:0 G_C:0 G_D:0 | 🍖bosque 🎯none
+Ep   81/2000 | A: 80 B: 80 C: 80 D: -- | Best:261 Avg50:87.1 | Loss A:46.999 B:17.809 C:31.584 D:0.000 | 📡 shouts:22 | G_A:0 G_B:0 G_C:0 G_D:0 | 🍖bosque 🎯none
+Ep   91/2000 | A: 79 B: 79 C: 79 D: -- | Best:261 Avg50:90.3 | Loss A:26.371 B:28.879 C:33.361 D:0.000 | 📡 shouts:24 | G_A:0 G_B:0 G_C:0 G_D:0 | 🍖bosque 🎯none
+Ep  101/2000 | A: 67 B: 67 C: 67 D: -- | Best:261 Avg50:84.0 | Loss A:18.740 B:24.259 C:22.986 D:0.000 | 📡 shouts:19 | G_A:0 G_B:0 G_C:0 G_D:0 | 🍖bosque 🎯ruinas
+Ep  111/2000 | A: 63 B: 63 C: 63 D: -- | Best:261 Avg50:82.8 | Loss A:29.024 B:31.617 C:50.631 D:0.000 | 📡 shouts:15 | G_A:0 G_B:0 G_C:0 G_D:0 | 🍖bosque 🎯valle
+Ep  121/2000 | A: 66 B: 66 C: 66 D: -- | Best:261 Avg50:81.5 | Loss A:61.271 B:17.715 C:35.398 D:0.000 | 📡 shouts:19 | G_A:0 G_B:0 G_C:0 G_D:0 | 🍖bosque 🎯none
+Ep  131/2000 | A: 42 B: 42 C: 42 D: -- | Best:261 Avg50:77.8 | Loss A:22.991 B:16.224 C:16.081 D:0.000 | 📡 shouts:12 | G_A:0 G_B:0 G_C:0 G_D:0 | 🍖bosque 🎯río
+Ep  141/2000 | A: 65 B: 65 C: 65 D: -- | Best:261 Avg50:77.4 | Loss A:56.389 B:26.823 C:24.608 D:0.000 | 📡 shouts:24 | G_A:0 G_B:0 G_C:0 G_D:0 | 🍖bosque 🎯lago
+Ep  151/2000 | A: 56 B: 56 C: 56 D: -- | Best:261 Avg50:77.9 | Loss A:29.268 B:20.817 C:12427.205 D:0.000 | 📡 shouts:11 | G_A:0 G_B:0 G_C:0 G_D:0 | 🍖bosque 🎯none
+Ep  161/2000 | A: 42 B: 42 C: 42 D: -- | Best:261 Avg50:72.9 | Loss A:68.428 B:38.006 C:44.549 D:0.000 | 📡 shouts:9 | G_A:0 G_B:0 G_C:0 G_D:0 | 🍖bosque 🎯río
+Ep  171/2000 | A:126 B:126 C:126 D: -- | Best:261 Avg50:77.9 | Loss A:47.034 B:33.270 C:53.394 D:0.000 | 📡 shouts:40 | G_A:0 G_B:0 G_C:0 G_D:0 | 🍖bosque 🎯none
+Ep  181/2000 | A:148 B:148 C:148 D: -- | Best:261 Avg50:78.5 | Loss A:21.499 B:16.070 C:29.927 D:0.000 | 📡 shouts:34 | G_A:0 G_B:0 G_C:0 G_D:0 | 🍖bosque 🎯none
+Ep  191/2000 | A: 56 B: 56 C: 56 D: -- | Best:261 Avg50:73.9 | Loss A:38.165 B:27.187 C:11.049 D:0.000 | 📡 shouts:8 | G_A:0 G_B:0 G_C:0 G_D:0 | 🍖bosque 🎯none
+Ep  201/2000 | A: 48 B: 48 C: 48 D: -- | Best:261 Avg50:71.7 | Loss A:31.918 B:19.891 C:42.801 D:0.000 | 📡 shouts:15 | G_A:0 G_B:0 G_C:0 G_D:0 | 🍖bosque 🎯none
+Ep  211/2000 | A: 56 B: 56 C: 56 D: -- | Best:261 Avg50:72.2 | Loss A:24.311 B:13.352 C:43.637 D:0.000 | 📡 shouts:9 | G_A:0 G_B:0 G_C:0 G_D:0 | 🍖valle 🎯none
+Ep  221/2000 | A:124 B:124 C:124 D: -- | Best:261 Avg50:68.9 | Loss A:39.424 B:25.669 C:29.800 D:0.000 | 📡 shouts:26 | G_A:0 G_B:0 G_C:0 G_D:0 | 🍖bosque 🎯none
+Ep  231/2000 | A: 62 B: 62 C: 62 D: -- | Best:261 Avg50:65.9 | Loss A:30.203 B:17.344 C:29.208 D:0.000 | 📡 shouts:14 | G_A:0 G_B:0 G_C:0 G_D:0 | 🍖bosque 🎯bosque
+Ep  241/2000 | A:110 B:110 C:110 D: -- | Best:261 Avg50:67.5 | Loss A:45.336 B:13.986 C:9.163 D:0.000 | 📡 shouts:22 | G_A:0 G_B:0 G_C:0 G_D:0 | 🍖bosque 🎯none
+Ep  251/2000 | A: 66 B: 66 C: 66 D: -- | Best:261 Avg50:66.6 | Loss A:17.451 B:15.661 C:13.520 D:0.000 | 📡 shouts:13 | G_A:0 G_B:0 G_C:0 G_D:0 | 🍖valle 🎯río
+  🧬 A NEUROGENÉSIS | width: 128 -> 192
+  🧬 B NEUROGENÉSIS | width: 128 -> 192
+  🧬 C NEUROGENÉSIS | width: 128 -> 192
+Ep  261/2000 | A: 66 B: 66 C: 66 D: -- | Best:261 Avg50:67.1 | Loss A:94.947 B:43.747 C:30.199 D:0.000 | 📡 shouts:14 | G_A:1 G_B:1 G_C:1 G_D:0 | 🍖bosque 🎯río
+  💤 [Sueño] Destilando resonancia latente para habilidad 'caza' (1 muestras)...
+    [Sueño] Pérdida de resonancia latente final para 'caza': 0.0196 (época 27/100)
+    🏆 [Sueño] ¡Habilidad 'caza' graduada exitosamente!
+  🏆 Maestro B (SOFY) recibe +15.0 de bono altruista por graduar a A en 'caza'.
+Ep  271/2000 | A: 77 B: 77 C: 77 D: -- | Best:261 Avg50:67.3 | Loss A:46.203 B:23.977 C:19.437 D:0.000 | 📡 shouts:15 | G_A:1 G_B:1 G_C:1 G_D:0 | 🍖bosque 🎯none
+Ep  281/2000 | A: 72 B: 72 C: 72 D: -- | Best:261 Avg50:69.7 | Loss A:38.220 B:11.500 C:39.276 D:0.000 | 📡 shouts:12 | G_A:1 G_B:1 G_C:1 G_D:0 | 🍖bosque 🎯none
+  💤 [Sueño] Destilando resonancia latente para habilidad 'comida' (1 muestras)...
+    [Sueño] Pérdida de resonancia latente final para 'comida': 0.0194 (época 23/100)
+    🏆 [Sueño] ¡Habilidad 'comida' graduada exitosamente!
+  🏆 Maestro B (SOFY) recibe +15.0 de bono altruista por graduar a C en 'comida'.
+Ep  291/2000 | A: 84 B: 84 C: 84 D: -- | Best:261 Avg50:66.9 | Loss A:28.347 B:27.580 C:30.112 D:0.000 | 📡 shouts:16 | G_A:1 G_B:1 G_C:1 G_D:0 | 🍖bosque 🎯río
+Ep  301/2000 | A: 43 B: 43 C: 43 D: -- | Best:261 Avg50:66.6 | Loss A:24.931 B:8.494 C:44.386 D:0.000 | 📡 shouts:7 | G_A:1 G_B:1 G_C:1 G_D:0 | 🍖bosque 🎯none
+  💤 [Sueño] Destilando resonancia latente para habilidad 'agua' (1 muestras)...
+    [Sueño] Pérdida de resonancia latente final para 'agua': 0.0175 (época 10/100)
+    🏆 [Sueño] ¡Habilidad 'agua' graduada exitosamente!
+  🏆 Maestro C (HUGO) recibe +15.0 de bono altruista por graduar a B en 'agua'.
+Ep  311/2000 | A: 63 B: 63 C: 63 D: -- | Best:261 Avg50:66.6 | Loss A:59.305 B:36.344 C:33.337 D:0.000 | 📡 shouts:10 | G_A:1 G_B:1 G_C:1 G_D:0 | 🍖bosque 🎯ruinas
+Ep  321/2000 | A: 36 B: 36 C: 36 D: -- | Best:261 Avg50:63.7 | Loss A:108.771 B:16.495 C:31.763 D:0.000 | 📡 shouts:6 | G_A:1 G_B:1 G_C:1 G_D:0 | 🍖valle 🎯none
+  🧬 A NEUROGENÉSIS | width: 192 -> 288
+  🧬 B NEUROGENÉSIS | width: 192 -> 288
+  🧬 C NEUROGENÉSIS | width: 192 -> 288
+  🧬 A NEUROGENÉSIS | width: 288 -> 432
+  🧬 B NEUROGENÉSIS | width: 288 -> 432
+  🧬 C NEUROGENÉSIS | width: 288 -> 432
+  🧬 A NEUROGENÉSIS | width: 432 -> 648
+  🧬 B NEUROGENÉSIS | width: 432 -> 648
+  🧬 C NEUROGENÉSIS | width: 432 -> 648
+Ep  331/2000 | A: 46 B: 46 C: 46 D: -- | Best:261 Avg50:57.6 | Loss A:48.339 B:12.307 C:25.238 D:0.000 | 📡 shouts:8 | G_A:4 G_B:4 G_C:4 G_D:0 | 🍖bosque 🎯none
+Ep  341/2000 | A: 30 B: 30 C: 30 D: -- | Best:261 Avg50:57.8 | Loss A:9697.639 B:20.570 C:61.154 D:0.000 | 📡 shouts:3 | G_A:4 G_B:4 G_C:4 G_D:0 | 🍖bosque 🎯pantano
+Ep  351/2000 | A: 37 B: 37 C: 37 D: -- | Best:261 Avg50:57.9 | Loss A:41.745 B:24.082 C:30.667 D:0.000 | 📡 shouts:6 | G_A:4 G_B:4 G_C:4 G_D:0 | 🍖bosque 🎯none
+Ep  361/2000 | A: 41 B: 41 C: 41 D: -- | Best:261 Avg50:56.8 | Loss A:54.497 B:10.764 C:53.450 D:0.000 | 📡 shouts:5 | G_A:4 G_B:4 G_C:4 G_D:0 | 🍖bosque 🎯ruinas
+Ep  371/2000 | A: 74 B: 74 C: 74 D: -- | Best:261 Avg50:55.7 | Loss A:58.556 B:33.700 C:13.102 D:0.000 | 📡 shouts:6 | G_A:4 G_B:4 G_C:4 G_D:0 | 🍖bosque 🎯none
+Ep  381/2000 | A: 40 B: 40 C: 40 D: -- | Best:261 Avg50:58.3 | Loss A:41.257 B:12.762 C:31.537 D:0.000 | 📡 shouts:5 | G_A:4 G_B:4 G_C:4 G_D:0 | 🍖bosque 🎯lago
+Ep  391/2000 | A: 76 B: 76 C: 76 D: -- | Best:261 Avg50:59.3 | Loss A:60.584 B:14.539 C:53.079 D:0.000 | 📡 shouts:5 | G_A:4 G_B:4 G_C:4 G_D:0 | 🍖bosque 🎯none
+Ep  401/2000 | A: 46 B: 46 C: 46 D: -- | Best:261 Avg50:57.2 | Loss A:14.546 B:10.687 C:16.732 D:0.000 | 📡 shouts:10 | G_A:4 G_B:4 G_C:4 G_D:0 | 🍖bosque 🎯none`;
+
+		let charts = {};
+
+		// Manejo del drag and drop
+		const dropZone = document.getElementById('drop-zone');
+		['dragenter', 'dragover'].forEach(eventName => {
+			dropZone.addEventListener(eventName, e => {
+				e.preventDefault();
+				dropZone.classList.add('hover');
+			}, false);
+		});
+
+		['dragleave', 'drop'].forEach(eventName => {
+			dropZone.addEventListener(eventName, e => {
+				e.preventDefault();
+				dropZone.classList.remove('hover');
+			}, false);
+		});
+
+		dropZone.addEventListener('drop', e => {
+			const dt = e.dataTransfer;
+			const files = dt.files;
+			if (files.length > 0) {
+				processFile(files[0]);
+			}
+		}, false);
+
+		function handleFileSelect(event) {
+			const file = event.target.files[0];
+			if (file) {
+				processFile(file);
+			}
+		}
+
+		function processFile(file) {
+			const reader = new FileReader();
+			reader.onload = function(e) {
+				const text = e.target.result;
+				loadLogText(text, file.name);
+			};
+			reader.readAsText(file);
+		}
+
+		function loadMockData() {
+			loadLogText(mockLogData, "task-1562.log (Demo)");
+		}
+
+		// Parser del log
+		function parseLog(text) {
+			const lines = text.split('\n');
+			
+			// Detectar el tipo de log de forma robusta en todo el archivo
+			let isSimulation = text.includes("[Tick ") || text.includes("SIMULACIÓN EN LA ARENA");
+
+			if (isSimulation) {
+				return parseSimulationLog(lines);
+			} else {
+				return parseTrainingLog(lines);
+			}
+		}
+
+		function parseSimulationLog(lines) {
+			const cleanedLines = [];
+			let buffer = "";
+
+			for (let i = 0; i < lines.length; i++) {
+				const line = lines[i].trim();
+				if (!line) continue;
+
+				if (line.startsWith("[Tick") || line.startsWith("Mundo:") || 
+					line.match(/^[A-Za-z]+\s*\([A-D]\):/) || 
+					line.startsWith("Estima") || 
+					line.startsWith("Percepción") || 
+					line.startsWith("👉") || 
+					line.startsWith("☠️") ||
+					line.startsWith("Running") || line.startsWith("Loading") || line.startsWith("═══")) {
+					if (buffer) {
+						cleanedLines.push(buffer);
+					}
+					buffer = line;
+				} else {
+					if (buffer) {
+						const lastChar = buffer.slice(-1);
+						const firstChar = line.slice(0, 1);
+						const isWordOrNum = /[\wáéíóúñÁÉÍÓÚÑ\.:-]/;
+						if (isWordOrNum.test(lastChar) && isWordOrNum.test(firstChar)) {
+							buffer += line;
+						} else {
+							buffer += " " + line;
+						}
+					} else {
+						cleanedLines.push(line);
+					}
+				}
+			}
+			if (buffer) {
+				cleanedLines.push(buffer);
+			}
+
+			const data = {
+				logType: 'simulation',
+				ticks: [],
+				agents: {
+					A: { name: 'Nico', hunger: [], thirst: [], health: [], energy: [], location: [] },
+					B: { name: 'Sofy', hunger: [], thirst: [], health: [], energy: [], location: [] },
+					C: { name: 'Hugo', hunger: [], thirst: [], health: [], energy: [], location: [] },
+					D: { name: 'Domi', hunger: [], thirst: [], health: [], energy: [], location: [] }
+				},
+				resources: {
+					bosque_food: [],
+					rio_food: [],
+					rio_water: [],
+					lago_water: []
+				},
+				preyLocation: [],
+				milestones: [],
+				rawLines: cleanedLines
+			};
+
+			let currentTick = 0;
+
+			for (let i = 0; i < cleanedLines.length; i++) {
+				const line = cleanedLines[i];
+
+				// Detectar Tick
+				const tickMatch = line.match(/\[Tick\s+(\d+)\]/);
+				if (tickMatch) {
+					currentTick = parseInt(tickMatch[1]);
+					data.ticks.push(currentTick);
+					continue;
+				}
+
+				// Detectar estado de agente (permitiendo caracteres en español en la localización y anclando al inicio de línea)
+				const agentMatch = line.match(/^\s*(\w+)\s+\(([A-D])\):\s*Loc:\s*([^\s|]+)\s*\|\s*Hambre:\s*([\d\.-]+)\s*\|\s*Sed:\s*([\d\.-]+)\s*\|\s*Salud:\s*([\d\.-]+)\s*\|\s*Energ[ií]a:\s*([\d\.-]+)/);
+				if (agentMatch) {
+					const letter = agentMatch[2];
+					const name = agentMatch[1];
+					const loc = agentMatch[3];
+					const hunger = parseFloat(agentMatch[4]);
+					const thirst = parseFloat(agentMatch[5]);
+					const health = parseFloat(agentMatch[6]);
+					const energy = parseFloat(agentMatch[7]);
+
+					if (currentTick > 0) {
+						// Evitar duplicar el mismo tick si se parsea más de una vez en líneas de ToM
+						const agentObj = data.agents[letter];
+						if (agentObj.location.length < data.ticks.length) {
+							agentObj.name = name;
+							agentObj.location.push(loc);
+							agentObj.hunger.push(hunger);
+							agentObj.thirst.push(thirst);
+							agentObj.health.push(health);
+							agentObj.energy.push(energy);
+						}
+					}
+					continue;
+				}
+
+				// Detectar acción
+				const actionMatch = line.match(/👉\s*(\w+)\s*\(([A-D])\)\s*decide\s*(\w+):\s*(.*)/);
+				if (actionMatch) {
+					const agentName = actionMatch[1];
+					const actionName = actionMatch[3];
+					const details = actionMatch[4];
+					data.milestones.push({
+						tick: currentTick,
+						type: 'action',
+						agent: actionMatch[2],
+						icon: actionName === 'DORMIR' ? '💤' : (actionName === 'COMER' ? '🍖' : (actionName === 'BEBER' ? '💧' : '🏃')),
+						title: `${agentName} decide ${actionName}`,
+						desc: details,
+						color: actionName === 'DORMIR' ? 'var(--accent-blue)' : (actionName === 'COMER' ? 'var(--accent-orange)' : 'var(--accent-green)')
+					});
+					continue;
+				}
+
+				// Detectar recursos del mundo
+				if (line.startsWith("Mundo:")) {
+					const bFood = line.match(/Bosque:\s*\[🍖:\s*([\d\.]+)/);
+					const rFood = line.match(/R[ií]o:\s*\[🍖:\s*([\d\.]+)/);
+					const rWater = line.match(/R[ií]o:.*💧:\s*([\d\.]+)/);
+					const lWater = line.match(/Lago:\s*\[💧:\s*([\d\.]+)/);
+					const prey = line.match(/🎯\s*(.*)/);
+
+					// Solo registrar si el número de registros es coherente
+					if (data.resources.bosque_food.length < data.ticks.length) {
+						data.resources.bosque_food.push(bFood ? parseFloat(bFood[1]) : 0);
+						data.resources.rio_food.push(rFood ? parseFloat(rFood[1]) : 0);
+						data.resources.rio_water.push(rWater ? parseFloat(rWater[1]) : 0);
+						data.resources.lago_water.push(lWater ? parseFloat(lWater[1]) : 0);
+						data.preyLocation.push(prey ? prey[1].trim() : 'Sin presa');
+					}
+					continue;
+				}
+
+				// Detectar muertes/colapsos
+				if (line.includes("☠️") || line.includes("terminado") || line.includes("muerto")) {
+					data.milestones.push({
+						tick: currentTick,
+						type: 'death',
+						icon: '☠️',
+						title: `Simulación Terminada`,
+						desc: line,
+						color: 'var(--accent-red)'
+					});
+					continue;
+				}
+			}
+			return data;
+		}
+
+		function parseTrainingLog(lines) {
+			const cleanedLines = [];
+			let buffer = "";
+
+			for (let i = 0; i < lines.length; i++) {
+				const line = lines[i].trim();
+				if (!line) continue;
+
+				if (line.startsWith("Ep")) {
+					if (buffer) {
+						cleanedLines.push(buffer);
+					}
+					buffer = line;
+				} else if (line.startsWith("🧬") || line.startsWith("💤") || line.startsWith("🏆") || line.startsWith("Maestro") || line.startsWith("Running") || line.startsWith("Loaded") || line.startsWith("🔒") || line.includes("Arena") || line.includes("COMUNICACIÓN")) {
+					if (buffer) {
+						cleanedLines.push(buffer);
+						buffer = "";
+					}
+					cleanedLines.push(line);
+				} else {
+					if (buffer) {
+						const lastChar = buffer.slice(-1);
+						const firstChar = line.slice(0, 1);
+						const isWordOrNum = /[\wáéíóúñÁÉÍÓÚÑ\.:-]/;
+						if (isWordOrNum.test(lastChar) && isWordOrNum.test(firstChar)) {
+							buffer += line;
+						} else {
+							buffer += " " + line;
+						}
+					} else {
+						cleanedLines.push(line);
+					}
+				}
+			}
+			if (buffer) {
+				cleanedLines.push(buffer);
+			}
+
+			const data = {
+				logType: 'training',
+				episodes: [],
+				survivalA: [],
+				survivalB: [],
+				survivalC: [],
+				best: [],
+				avg50: [],
+				lossA: [],
+				lossB: [],
+				lossC: [],
+				shouts: [],
+				g_a: [],
+				g_b: [],
+				g_c: [],
+				milestones: [],
+				rawLines: cleanedLines
+			};
+
+			let currentEpisode = 0;
+
+			for (let i = 0; i < cleanedLines.length; i++) {
+				const line = cleanedLines[i];
+
+				const epNumMatch = line.match(/Ep\s+(\d+)/);
+
+				if (epNumMatch) {
+					const ep = parseInt(epNumMatch[1]);
+					currentEpisode = ep;
+
+					const getVal = (regex, defaultVal = null) => {
+						const m = line.match(regex);
+						return m ? m[1] : defaultVal;
+					};
+
+					const sA = getVal(/A:\s*(\d+|--)/);
+					const sB = getVal(/B:\s*(\d+|--)/);
+					const sC = getVal(/C:\s*(\d+|--)/);
+					const bestVal = getVal(/Best:\s*(\d+)/);
+					const avgVal = getVal(/Avg50:\s*([\d\.]+)/);
+					const shoutsVal = getVal(/shouts:\s*(\d+)/);
+					const gaVal = getVal(/G_A:\s*(\d+)/);
+					const gbVal = getVal(/G_B:\s*(\d+)/);
+					const gcVal = getVal(/G_C:\s*(\d+)/);
+
+					let lA = 0.01, lB = 0.01, lC = 0.01;
+					const lossMatch = line.match(/Loss\s+A:\s*([\d\.-]+)\s+B:\s*([\d\.-]+)\s+C:\s*([\d\.-]+)/);
+					if (lossMatch) {
+						const valA = parseFloat(lossMatch[1]);
+						const valB = parseFloat(lossMatch[2]);
+						const valC = parseFloat(lossMatch[3]);
+						lA = (!isNaN(valA) && valA > 0) ? valA : 0.01;
+						lB = (!isNaN(valB) && valB > 0) ? valB : 0.01;
+						lC = (!isNaN(valC) && valC > 0) ? valC : 0.01;
+					}
+
+					data.episodes.push(ep);
+					data.survivalA.push(sA === '--' || sA === null ? null : parseInt(sA));
+					data.survivalB.push(sB === '--' || sB === null ? null : parseInt(sB));
+					data.survivalC.push(sC === '--' || sC === null ? null : parseInt(sC));
+					data.best.push(bestVal === null ? 0 : parseInt(bestVal));
+					data.avg50.push(avgVal === null ? 0.0 : parseFloat(avgVal));
+					data.lossA.push(lA);
+					data.lossB.push(lB);
+					data.lossC.push(lC);
+					data.shouts.push(shoutsVal === null ? 0 : parseInt(shoutsVal));
+					data.g_a.push(gaVal === null ? 0 : parseInt(gaVal));
+					data.g_b.push(gbVal === null ? 0 : parseInt(gbVal));
+					data.g_c.push(gcVal === null ? 0 : parseInt(gcVal));
+					continue;
+				}
+
+				const neuroMatch = line.match(/🧬\s+([A-D])\s+NEUROGENÉSIS\s*\|\s*width:\s*(\d+)\s*->\s*(\d+)/);
+				if (neuroMatch) {
+					data.milestones.push({
+						episode: currentEpisode,
+						type: 'neurogenesis',
+						agent: neuroMatch[1],
+						from: neuroMatch[2],
+						to: neuroMatch[3],
+						icon: '🧬',
+						title: `Neurogénesis: Agente ${neuroMatch[1]}`,
+						desc: `El ancho de banda de la Capa 3 se expandió de ${neuroMatch[2]} a ${neuroMatch[3]} nodos debido al estrés cognitivo.`,
+						color: 'var(--accent-orange)'
+					});
+					continue;
+				}
+
+				const dreamMatch = line.match(/💤\s+\[Sueño\]\s+Destilando\s+resonancia\s+latente\s+para\s+habilidad\s+'(\w+)'/);
+				if (dreamMatch) {
+					data.milestones.push({
+						episode: currentEpisode,
+						type: 'dream_start',
+						skill: dreamMatch[1],
+						icon: '💤',
+						title: `Ciclo de Sueño: '${dreamMatch[1]}'`,
+						desc: `Inicio de destilación del estado latente para codificar la habilidad de forma permanente.`,
+						color: 'var(--accent-blue)'
+					});
+					continue;
+				}
+
+				const gradMatch = line.match(/🏆\s+\[Sueño\]\s+¡Habilidad\s+'(\w+)'\s+graduada/);
+				if (gradMatch) {
+					data.milestones.push({
+						episode: currentEpisode,
+						type: 'graduation',
+						skill: gradMatch[1],
+						icon: '🏆',
+						title: `Habilidad Graduada: '${gradMatch[1]}'`,
+						desc: `Los pesos de la habilidad se asimilaron correctamente en los parámetros del modelo.`,
+						color: 'var(--accent-green)'
+					});
+					continue;
+				}
+
+				const teacherMatch = line.match(/🏆\s+Maestro\s+(\w+)\s+\((\w+)\)\s+recibe\s+\+([\d\.]+)\s+de\s+bono\s+altruista\s+por\s+graduar\s+a\s+(\w+)\s+en\s+'(\w+)'/);
+				if (teacherMatch) {
+					data.milestones.push({
+						episode: currentEpisode,
+						type: 'altruist',
+						teacher: teacherMatch[2],
+						student: teacherMatch[4],
+						skill: teacherMatch[5],
+						bonus: teacherMatch[3],
+						icon: '🤝',
+						title: `Bono Altruista: ${teacherMatch[2]} → ${teacherMatch[4]}`,
+						desc: `El maestro ${teacherMatch[2]} recibió +${teacherMatch[3]} de recompensa colectiva por enseñar '${teacherMatch[5]}'.`,
+						color: 'var(--accent-purple)'
+					});
+					continue;
+				}
+			}
+			return data;
+		}
+
+		function loadLogText(text, filename) {
+			const parsed = parseLog(text);
+			window.lastParsedData = parsed;
+			if (parsed.logType === 'training' && parsed.episodes.length === 0) {
+				alert("No se detectaron líneas de episodios válidas en el log. Comprueba que el formato coincida con el del Búnker.");
+				return;
+			}
+			if (parsed.logType === 'simulation' && parsed.ticks.length === 0) {
+				alert("No se detectaron líneas de ticks válidas en la simulación.");
+				return;
+			}
+
+			// Ocultar dropzone, mostrar dashboard
+			document.getElementById('drop-zone').classList.add('hidden');
+			document.getElementById('metrics-dashboard').classList.remove('hidden');
+			
+			if (parsed.logType === 'simulation') {
+				document.getElementById('chart-sub-1').innerText = `${filename} | ${parsed.ticks.length} ticks simulados`;
+				
+				// Actualizar tarjetas resumen para simulación
+				const ticksCount = parsed.ticks.length;
+				const lastA = parsed.agents.A;
+				const lastB = parsed.agents.B;
+				const lastC = parsed.agents.C;
+				
+				const valOrZero = (arr, idx) => (arr && arr.length > idx && !isNaN(arr[idx])) ? arr[idx] : 0;
+
+				const aliveCount = (valOrZero(lastA.health, ticksCount-1) > 0 ? 1 : 0) + 
+								   (valOrZero(lastB.health, ticksCount-1) > 0 ? 1 : 0) + 
+								   (valOrZero(lastC.health, ticksCount-1) > 0 ? 1 : 0);
+				
+				const avgHunger = Math.round((valOrZero(lastA.hunger, ticksCount-1) + valOrZero(lastB.hunger, ticksCount-1) + valOrZero(lastC.hunger, ticksCount-1)) / 3);
+				const avgEnergy = Math.round((valOrZero(lastA.energy, ticksCount-1) + valOrZero(lastB.energy, ticksCount-1) + valOrZero(lastC.energy, ticksCount-1)) / 3);
+
+				document.getElementById('card-max-ticks').innerText = ticksCount;
+				document.querySelector('#card-max-ticks + .summary-subtext').innerHTML = "<span>⏱️</span> Ticks de duración";
+				document.querySelector('#card-max-ticks').previousElementSibling.innerText = "Ticks Simulados";
+
+				document.getElementById('card-avg-ticks').innerText = aliveCount;
+				document.querySelector('#card-avg-ticks + .summary-subtext').innerHTML = "<span>👤</span> Agentes vivos al final";
+				document.querySelector('#card-avg-ticks').previousElementSibling.innerText = "Supervivientes";
+
+				document.getElementById('card-neuro-count').innerText = avgHunger;
+				document.querySelector('#card-neuro-count + .summary-subtext').innerHTML = "<span>🍖</span> Media final de nutrición";
+				document.querySelector('#card-neuro-count').previousElementSibling.innerText = "Hambre Promedio";
+
+				document.getElementById('card-skills-count').innerText = avgEnergy;
+				document.querySelector('#card-skills-count + .summary-subtext').innerHTML = "<span>⚡</span> Media final de energía";
+				document.querySelector('#card-skills-count').previousElementSibling.innerText = "Energía Promedio";
+			} else {
+				document.getElementById('chart-sub-1').innerText = `${filename} | ${parsed.episodes.length} registros`;
+
+				// Tarjetas de entrenamiento normal
+				const maxSurvival = Math.max(...parsed.best);
+				const latestAvg = parsed.avg50[parsed.avg50.length - 1];
+				const neuroCount = parsed.milestones.filter(m => m.type === 'neurogenesis').length;
+				const skillsCount = parsed.milestones.filter(m => m.type === 'graduation').length;
+
+				document.getElementById('card-max-ticks').innerText = maxSurvival;
+				document.querySelector('#card-max-ticks + .summary-subtext').innerHTML = "<span>🎯</span> Ticks récord en un episodio";
+				document.querySelector('#card-max-ticks').previousElementSibling.innerText = "Supervivencia Máxima";
+
+				document.getElementById('card-avg-ticks').innerText = latestAvg.toFixed(1);
+				document.querySelector('#card-avg-ticks + .summary-subtext').innerHTML = "<span>📈</span> Supervivencia media (50 ep)";
+				document.querySelector('#card-avg-ticks').previousElementSibling.innerText = "Tendencia Avg50";
+
+				document.getElementById('card-neuro-count').innerText = neuroCount;
+				document.querySelector('#card-neuro-count + .summary-subtext').innerHTML = "<span>🧬</span> Ampliaciones cerebrales (L3)";
+				document.querySelector('#card-neuro-count').previousElementSibling.innerText = "Neurogénesis";
+
+				document.getElementById('card-skills-count').innerText = skillsCount;
+				document.querySelector('#card-skills-count + .summary-subtext').innerHTML = "<span>🏆</span> Traspasos de conocimiento";
+				document.querySelector('#card-skills-count').previousElementSibling.innerText = "Habilidades Graduadas";
+			}
+
+			// Actualizar consola de logs
+			const consoleOutput = document.getElementById('console-output');
+			consoleOutput.innerHTML = '';
+			parsed.rawLines.forEach(line => {
+				const el = document.createElement('div');
+				el.className = 'console-line';
+				if (line.includes('NEUROGENÉSIS') || line.includes('desmaya') || line.includes('muerto') || line.includes('ahoga')) {
+					el.className += ' milestone';
+				} else if (line.includes('🏆') || line.includes('exitosa')) {
+					el.className += ' success';
+				} else if (line.startsWith('Running') || line.startsWith('Loaded') || line.includes('Backbone') || line.startsWith('Mundo:')) {
+					el.className += ' system';
+				}
+				el.innerText = line;
+				consoleOutput.appendChild(el);
+			});
+			consoleOutput.scrollTop = consoleOutput.scrollHeight;
+
+			// Actualizar Timeline lateral
+			const emptyTimeline = document.getElementById('empty-timeline-msg');
+			if (emptyTimeline) emptyTimeline.remove();
+			
+			const timelineWrapper = document.getElementById('timeline-wrapper');
+			timelineWrapper.classList.remove('hidden');
+			timelineWrapper.innerHTML = '';
+
+			if (parsed.milestones.length === 0) {
+				timelineWrapper.innerHTML = '<div class="empty-timeline"><span>📭</span><span>Ningún hito detectado aún.</span></div>';
+			} else {
+				parsed.milestones.forEach(m => {
+					const item = document.createElement('div');
+					item.className = 'timeline-item';
+					const stepLabel = parsed.logType === 'simulation' ? `Tick ${m.tick}` : `Episodio ${m.episode}`;
+					item.innerHTML = `
+						<div class="timeline-badge" style="border-color: ${m.color}">${m.icon}</div>
+						<div class="timeline-content">
+							<div class="timeline-meta">
+								<span class="timeline-ep">${stepLabel}</span>
+								<span class="timeline-type">${m.type}</span>
+							</div>
+							<div class="timeline-item-title">${m.title}</div>
+							<div class="timeline-desc">${m.desc}</div>
+						</div>
+					`;
+					timelineWrapper.appendChild(item);
+				});
+			}
+
+			// Renderizar gráficos
+			renderCharts(parsed);
+		}
+
+		function filterSurvivalAgent(agent, event) {
+			if (!charts.survival || !window.lastParsedData) return;
+			const chart = charts.survival;
+			const parsed = window.lastParsedData;
+			
+			// Highlight active button
+			const container = document.getElementById('survival-agent-selector');
+			if (container && event) {
+				container.querySelectorAll('.btn-toggle').forEach(btn => btn.classList.remove('active'));
+				event.currentTarget.classList.add('active');
+			}
+
+			if (parsed.logType === 'simulation') {
+				// datasets: 0: Nico Salud, 1: Sofy Salud, 2: Hugo Salud, 3: Nico Energía, 4: Sofy Energía, 5: Hugo Energía
+				chart.data.datasets.forEach((ds, idx) => {
+					if (agent === 'all') {
+						chart.setDatasetVisibility(idx, true);
+					} else {
+						const isTarget = ds.label.includes(agent === 'A' ? 'Nico' : (agent === 'B' ? 'Sofy' : 'Hugo'));
+						chart.setDatasetVisibility(idx, isTarget);
+					}
+				});
+			} else {
+				// datasets: 0: Nico (A), 1: Sofy (B), 2: Hugo (C), 3: Record, 4: Avg50
+				chart.data.datasets.forEach((ds, idx) => {
+					if (agent === 'all') {
+						chart.setDatasetVisibility(idx, true);
+					} else {
+						if (idx < 3) {
+							chart.setDatasetVisibility(idx, idx === (agent === 'A' ? 0 : (agent === 'B' ? 1 : 2)));
+						} else {
+							chart.setDatasetVisibility(idx, true); // keep record and avg visible
+						}
+					}
+				});
+			}
+			chart.update();
+		}
+
+		function renderCharts(parsed) {
+			// Destruir gráficos anteriores si existen
+			Object.values(charts).forEach(chart => chart.destroy());
+
+			// Reset agent selector UI state to 'Todos'
+			const selector = document.getElementById('survival-agent-selector');
+			if (selector) {
+				selector.querySelectorAll('.btn-toggle').forEach(btn => btn.classList.remove('active'));
+				const allBtn = selector.querySelector('.btn-toggle[onclick*="all"]');
+				if (allBtn) allBtn.classList.add('active');
+			}
+
+			if (parsed.logType === 'simulation') {
+				// Gráfico 1: Salud y Energía en la Simulación
+				const ctxSurvival = document.getElementById('chart-survival').getContext('2d');
+				charts.survival = new Chart(ctxSurvival, {
+					type: 'line',
+					data: {
+						labels: parsed.ticks,
+						datasets: [
+							{
+								label: 'Nico (A) Salud',
+								data: parsed.agents.A.health,
+								borderColor: 'rgba(0, 229, 255, 0.9)',
+								backgroundColor: 'transparent',
+								borderWidth: 2,
+								pointRadius: 1
+							},
+							{
+								label: 'Sofy (B) Salud',
+								data: parsed.agents.B.health,
+								borderColor: 'rgba(255, 109, 0, 0.9)',
+								backgroundColor: 'transparent',
+								borderWidth: 2,
+								pointRadius: 1
+							},
+							{
+								label: 'Hugo (C) Salud',
+								data: parsed.agents.C.health,
+								borderColor: 'rgba(213, 0, 249, 0.9)',
+								backgroundColor: 'transparent',
+								borderWidth: 2,
+								pointRadius: 1
+							},
+							{
+								label: 'Nico (A) Energía',
+								data: parsed.agents.A.energy,
+								borderColor: 'rgba(0, 229, 255, 0.3)',
+								borderDash: [3, 3],
+								backgroundColor: 'transparent',
+								borderWidth: 1.5,
+								pointRadius: 0
+							},
+							{
+								label: 'Sofy (B) Energía',
+								data: parsed.agents.B.energy,
+								borderColor: 'rgba(255, 109, 0, 0.3)',
+								borderDash: [3, 3],
+								backgroundColor: 'transparent',
+								borderWidth: 1.5,
+								pointRadius: 0
+							},
+							{
+								label: 'Hugo (C) Energía',
+								data: parsed.agents.C.energy,
+								borderColor: 'rgba(213, 0, 249, 0.3)',
+								borderDash: [3, 3],
+								backgroundColor: 'transparent',
+								borderWidth: 1.5,
+								pointRadius: 0
+							}
+						]
+					},
+					options: {
+						responsive: true,
+						maintainAspectRatio: false,
+						plugins: {
+							legend: { labels: { color: '#9ca3af', font: { family: 'Orbitron', size: 10 } } }
+						},
+						scales: {
+							x: {
+								grid: { color: 'rgba(255,255,255,0.03)' },
+								ticks: { color: '#9ca3af', font: { family: 'Fira Code' } },
+								title: { display: true, text: 'Ticks de Simulación', color: '#9ca3af' }
+							},
+							y: {
+								grid: { color: 'rgba(255,255,255,0.03)' },
+								ticks: { color: '#9ca3af', font: { family: 'Fira Code' } },
+								suggestedMax: 100
+							}
+						}
+					}
+				});
+
+				// Gráfico 2: Hambre en la Simulación
+				const ctxLoss = document.getElementById('chart-loss').getContext('2d');
+				document.querySelector('#chart-loss').parentElement.previousElementSibling.querySelector('.chart-title').innerHTML = "<span class='chart-title-icon'>📈</span> NIVELES DE SATISFACCIÓN (HAMBRE)";
+				charts.loss = new Chart(ctxLoss, {
+					type: 'line',
+					data: {
+						labels: parsed.ticks,
+						datasets: [
+							{
+								label: 'Nico (A) Hambre',
+								data: parsed.agents.A.hunger,
+								borderColor: '#38bdf8',
+								backgroundColor: 'transparent',
+								borderWidth: 2,
+								pointRadius: 0
+							},
+							{
+								label: 'Sofy (B) Hambre',
+								data: parsed.agents.B.hunger,
+								borderColor: '#fb7185',
+								backgroundColor: 'transparent',
+								borderWidth: 2,
+								pointRadius: 0
+							},
+							{
+								label: 'Hugo (C) Hambre',
+								data: parsed.agents.C.hunger,
+								borderColor: '#34d399',
+								backgroundColor: 'transparent',
+								borderWidth: 2,
+								pointRadius: 0
+							}
+						]
+					},
+					options: {
+						responsive: true,
+						maintainAspectRatio: false,
+						plugins: {
+							legend: { labels: { color: '#9ca3af', font: { family: 'Orbitron', size: 9 } } }
+						},
+						scales: {
+							x: {
+								grid: { display: false },
+								ticks: { color: '#9ca3af', font: { family: 'Fira Code', size: 9 } }
+							},
+							y: {
+								grid: { color: 'rgba(255,255,255,0.03)' },
+								ticks: { color: '#9ca3af', font: { family: 'Fira Code', size: 9 } },
+								suggestedMax: 100
+							}
+						}
+					}
+				});
+
+				// Gráfico 3: Recursos en la Simulación
+				const ctxComms = document.getElementById('chart-comms').getContext('2d');
+				document.querySelector('#chart-comms').parentElement.previousElementSibling.querySelector('.chart-title').innerHTML = "<span class='chart-title-icon'>💧</span> RECURSOS DE LOCALIZACIÓN EN EL MAPA";
+				charts.comms = new Chart(ctxComms, {
+					type: 'line',
+					data: {
+						labels: parsed.ticks,
+						datasets: [
+							{
+								label: 'Bosque Comida',
+								data: parsed.resources.bosque_food,
+								borderColor: '#a78bfa',
+								backgroundColor: 'transparent',
+								borderWidth: 2,
+								pointRadius: 0
+							},
+							{
+								label: 'Río Comida',
+								data: parsed.resources.rio_food,
+								borderColor: '#f472b6',
+								backgroundColor: 'transparent',
+								borderWidth: 2,
+								pointRadius: 0
+							},
+							{
+								label: 'Río Agua',
+								data: parsed.resources.rio_water,
+								borderColor: '#60a5fa',
+								backgroundColor: 'transparent',
+								borderWidth: 2,
+								pointRadius: 0
+							},
+							{
+								label: 'Lago Agua',
+								data: parsed.resources.lago_water,
+								borderColor: '#34d399',
+								backgroundColor: 'transparent',
+								borderWidth: 2,
+								pointRadius: 0
+							}
+						]
+					},
+					options: {
+						responsive: true,
+						maintainAspectRatio: false,
+						plugins: {
+							legend: { labels: { color: '#9ca3af', font: { family: 'Orbitron', size: 9 } } }
+						},
+						scales: {
+							x: {
+								grid: { display: false },
+								ticks: { color: '#9ca3af', font: { family: 'Fira Code', size: 9 } }
+							},
+							y: {
+								grid: { color: 'rgba(255,255,255,0.03)' },
+								ticks: { color: '#9ca3af', font: { family: 'Fira Code', size: 9 } },
+								suggestedMax: 10
+							}
+						}
+					}
+				});
+
+			} else {
+				// Gráfico 1: Supervivencia (Entrenamiento)
+				const ctxSurvival = document.getElementById('chart-survival').getContext('2d');
+				charts.survival = new Chart(ctxSurvival, {
+					type: 'line',
+					data: {
+						labels: parsed.episodes,
+						datasets: [
+							{
+								label: 'Nico (A)',
+								data: parsed.survivalA,
+								borderColor: 'rgba(0, 229, 255, 0.4)',
+								backgroundColor: 'transparent',
+								borderWidth: 1.5,
+								pointRadius: 2,
+								tension: 0.1
+							},
+							{
+								label: 'Sofy (B)',
+								data: parsed.survivalB,
+								borderColor: 'rgba(255, 109, 0, 0.4)',
+								backgroundColor: 'transparent',
+								borderWidth: 1.5,
+								pointRadius: 2,
+								tension: 0.1
+							},
+							{
+								label: 'Hugo (C)',
+								data: parsed.survivalC,
+								borderColor: 'rgba(213, 0, 249, 0.4)',
+								backgroundColor: 'transparent',
+								borderWidth: 1.5,
+								pointRadius: 2,
+								tension: 0.1
+							},
+							{
+								label: 'Récord Histórico',
+								data: parsed.best,
+								borderColor: 'rgba(213, 0, 249, 0.6)',
+								borderDash: [5, 5],
+								backgroundColor: 'transparent',
+								borderWidth: 1.5,
+								pointRadius: 0
+							},
+							{
+								label: 'Media Móvil (Avg50)',
+								data: parsed.avg50,
+								borderColor: 'var(--accent-orange)',
+								backgroundColor: 'rgba(255, 109, 0, 0.05)',
+								fill: true,
+								borderWidth: 3,
+								pointRadius: 0,
+								tension: 0.3
+							}
+						]
+					},
+					options: {
+						responsive: true,
+						maintainAspectRatio: false,
+						plugins: {
+							legend: {
+								labels: { color: '#9ca3af', font: { family: 'Orbitron' } }
+							}
+						},
+						scales: {
+							x: {
+								grid: { color: 'rgba(255,255,255,0.03)' },
+								ticks: { color: '#9ca3af', font: { family: 'Fira Code' } }
+							},
+							y: {
+								grid: { color: 'rgba(255,255,255,0.03)' },
+								ticks: { color: '#9ca3af', font: { family: 'Fira Code' } },
+								suggestedMax: 300
+							}
+						}
+					}
+				});
+
+				// Gráfico 2: Loss (Entrenamiento)
+				const ctxLoss = document.getElementById('chart-loss').getContext('2d');
+				document.querySelector('#chart-loss').parentElement.previousElementSibling.querySelector('.chart-title').innerHTML = "<span class='chart-title-icon'>📉</span> EVOLUCIÓN DEL GRADIENT LOSS (PPO)";
+				charts.loss = new Chart(ctxLoss, {
+					type: 'line',
+					data: {
+						labels: parsed.episodes,
+						datasets: [
+							{
+								label: 'Loss A',
+								data: parsed.lossA,
+								borderColor: '#38bdf8',
+								backgroundColor: 'transparent',
+								borderWidth: 1.5,
+								pointRadius: 0,
+								tension: 0.2
+							},
+							{
+								label: 'Loss B',
+								data: parsed.lossB,
+								borderColor: '#fb7185',
+								backgroundColor: 'transparent',
+								borderWidth: 1.5,
+								pointRadius: 0,
+								tension: 0.2
+							},
+							{
+								label: 'Loss C',
+								data: parsed.lossC,
+								borderColor: '#34d399',
+								backgroundColor: 'transparent',
+								borderWidth: 1.5,
+								pointRadius: 0,
+								tension: 0.2
+							}
+						]
+					},
+					options: {
+						responsive: true,
+						maintainAspectRatio: false,
+						plugins: {
+							legend: { labels: { color: '#9ca3af', font: { family: 'Orbitron', size: 9 } } }
+						},
+						scales: {
+							x: {
+								grid: { display: false },
+								ticks: { color: '#9ca3af', font: { family: 'Fira Code', size: 9 } }
+							},
+							y: {
+								type: 'logarithmic',
+								min: 0.01,
+								grid: { color: 'rgba(255,255,255,0.03)' },
+								ticks: { color: '#9ca3af', font: { family: 'Fira Code', size: 9 } }
+							}
+						}
+					}
+				});
+
+				// Gráfico 3: Comunicación (Entrenamiento)
+				const ctxComms = document.getElementById('chart-comms').getContext('2d');
+				document.querySelector('#chart-comms').parentElement.previousElementSibling.querySelector('.chart-title').innerHTML = "<span class='chart-title-icon'>📡</span> COMUNICACIÓN Y HABILIDADES";
+				charts.comms = new Chart(ctxComms, {
+					type: 'line',
+					data: {
+						labels: parsed.episodes,
+						datasets: [
+							{
+								label: 'Gritos en la Red (Shouts)',
+								data: parsed.shouts,
+								borderColor: '#a78bfa',
+								backgroundColor: 'rgba(167, 139, 250, 0.05)',
+								fill: true,
+								borderWidth: 2,
+								pointRadius: 1,
+								yAxisID: 'y'
+							},
+							{
+								label: 'Habilidades Nico',
+								data: parsed.g_a,
+								borderColor: 'rgba(0, 229, 255, 0.7)',
+								borderWidth: 1.5,
+								pointRadius: 0,
+								tension: 0.1,
+								yAxisID: 'y1'
+							},
+							{
+								label: 'Habilidades Sofi',
+								data: parsed.g_b,
+								borderColor: 'rgba(255, 109, 0, 0.7)',
+								borderWidth: 1.5,
+								pointRadius: 0,
+								tension: 0.1,
+								yAxisID: 'y1'
+							},
+							{
+								label: 'Habilidades Hugo',
+								data: parsed.g_c,
+								borderColor: 'rgba(213, 0, 249, 0.7)',
+								borderWidth: 1.5,
+								pointRadius: 0,
+								tension: 0.1,
+								yAxisID: 'y1'
+							}
+						]
+					},
+					options: {
+						responsive: true,
+						maintainAspectRatio: false,
+						plugins: {
+							legend: { labels: { color: '#9ca3af', font: { family: 'Orbitron', size: 9 } } }
+						},
+						scales: {
+							x: {
+								grid: { display: false },
+								ticks: { color: '#9ca3af', font: { family: 'Fira Code', size: 9 } }
+							},
+							y: {
+								position: 'left',
+								grid: { color: 'rgba(255,255,255,0.03)' },
+								ticks: { color: '#9ca3af', font: { family: 'Fira Code', size: 9 } },
+								title: { display: true, text: 'Gritos', color: '#9ca3af' }
+							},
+							y1: {
+								position: 'right',
+								grid: { display: false },
+								ticks: { color: '#9ca3af', font: { family: 'Fira Code', size: 9 }, stepSize: 1 },
+								title: { display: true, text: 'Skills', color: '#9ca3af' }
+							}
+						}
+					}
+				});
+			}
+		}
+	</script>
+</body>
+</html>

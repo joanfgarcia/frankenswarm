@@ -1,0 +1,1526 @@
+Loading 3 agents for experiment 'EXP_075_loop_fix'...
+Loaded weights from /home/joan/Documents/IA/frankenswarm/storage/experiments/EXP_075_loop_fix/best_agent_a.pt
+Loaded weights from /home/joan/Documents/IA/frankenswarm/storage/experiments/EXP_075_loop_fix/best_agent_b.pt
+Loaded weights from /home/joan/Documents/IA/frankenswarm/storage/experiments/EXP_075_loop_fix/best_agent_c.pt
+
+══════════════════════════════════════════════════════════════════════
+🏟️  SIMULACIÓN EN LA ARENA COOPERATIVA (3 AGENTES)
+  Nico (Agente A) en pradera
+  Sofi (Agente B) en ruinas
+  Hugo (Agente C) en valle
+  Configuración: configs/experiments/EXP_075_loop_fix.json
+  Metabolismo (Hambre): 1.50/tick
+  Capacidad de recursos: 10.0 | Recuperación: +0.50/tick
+  Multiplicadores Depredador: chance=0.10, daño=0.10
+  Multiplicadores Clima: chance=0.10, daño=0.10
+  Frecuencia Presa: cada 15 ticks
+  Samantha disponible: True
+══════════════════════════════════════════════════════════════════════
+
+[Tick 001] ───────────────────────────────────────────────────────
+  Mundo: Bosque: [🍖: 10.0/10.0] | Río: [🍖: 10.0/10.0, 💧: 10.0/10.0] | Lago: [💧: 10.0/10.0] | 🎯 Sin presa | 🦣 Sin Gran Herbívoro
+  Nico (A): Loc: pradera  | Hambre:  60.0 | Sed:  80.0 | Salud: 100.0 | Energía:  80.0 | Emo: ira | Mochila: [🍖: 0/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Sofi (B): [Loc: ruinas   | Hambre:  60.0 | Sed:  80.0 | Salud: 100.0 | Emo: alegría]
+            Estima a Hugo (c): [Loc: valle    | Hambre:  60.0 | Sed:  80.0 | Salud: 100.0 | Emo: alegría]
+  Sofi (B): Loc: ruinas   | Hambre:  60.0 | Sed:  80.0 | Salud: 100.0 | Energía:  80.0 | Emo: ira | Mochila: [🍖: 0/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: pradera  | Hambre:  60.0 | Sed:  80.0 | Salud: 100.0 | Emo: alegría]
+            Estima a Hugo (C): [Loc: valle    | Hambre:  60.0 | Sed:  80.0 | Salud: 100.0 | Emo: alegría]
+  Hugo (C): Loc: valle    | Hambre:  60.0 | Sed:  80.0 | Salud: 100.0 | Energía:  80.0 | Emo: ira | Mochila: [🍖: 0/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: pradera  | Hambre:  60.0 | Sed:  80.0 | Salud: 100.0 | Emo: alegría]
+            Estima a Sofi (B): [Loc: ruinas   | Hambre:  60.0 | Sed:  80.0 | Salud: 100.0 | Emo: alegría]
+  👉 Nico (A) decide MOVER: se mueve a cueva
+  👉 Sofi (B) decide MOVER: se mueve a pantano
+  👉 Hugo (C) decide MOVER: se mueve a río
+
+[Tick 002] ───────────────────────────────────────────────────────
+  Mundo: Bosque: [🍖: 9.5/10.0] | Río: [🍖: 9.5/10.0, 💧: 10.0/10.0] | Lago: [💧: 10.0/10.0] | 🎯 Sin presa | 🦣 Sin Gran Herbívoro
+  Nico (A): Loc: cueva    | Hambre:  59.8 | Sed:  79.0 | Salud: 100.0 | Energía:  74.0 | Emo: ira | Mochila: [🍖: 0/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Sofi (B): [Loc: ruinas   | Hambre:  59.8 | Sed:  79.0 | Salud: 100.0 | Emo: ira]
+            Estima a Hugo (c): [Loc: valle    | Hambre:  59.8 | Sed:  79.0 | Salud: 100.0 | Emo: ira]
+  Sofi (B): Loc: pantano  | Hambre:  59.8 | Sed:  79.0 | Salud: 100.0 | Energía:  74.0 | Emo: ira | Mochila: [🍖: 1/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: pradera  | Hambre:  59.8 | Sed:  79.0 | Salud: 100.0 | Emo: ira]
+            Estima a Hugo (C): [Loc: valle    | Hambre:  59.8 | Sed:  79.0 | Salud: 100.0 | Emo: ira]
+  Hugo (C): Loc: río      | Hambre:  59.8 | Sed:  79.0 | Salud: 100.0 | Energía:  74.0 | Emo: ira | Mochila: [🍖: 0/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: pradera  | Hambre:  59.8 | Sed:  79.0 | Salud: 100.0 | Emo: ira]
+            Estima a Sofi (B): [Loc: ruinas   | Hambre:  59.8 | Sed:  79.0 | Salud: 100.0 | Emo: ira]
+  👉 Nico (A) decide MOVER: se mueve a lago
+  👉 Sofi (B) decide MOVER: se mueve a ruinas
+  👉 Hugo (C) decide MOVER: se mueve a pantano
+
+[Tick 003] ───────────────────────────────────────────────────────
+  Mundo: Bosque: [🍖: 9.5/10.0] | Río: [🍖: 9.5/10.0, 💧: 9.0/10.0] | Lago: [💧: 10.0/10.0] | 🎯 Sin presa | 🦣 Sin Gran Herbívoro
+  Nico (A): Loc: lago     | Hambre:  59.6 | Sed:  78.0 | Salud: 100.0 | Energía:  68.0 | Emo: ira | Mochila: [🍖: 0/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Sofi (B): [Loc: ruinas   | Hambre:  59.6 | Sed:  78.0 | Salud: 100.0 | Emo: ira]
+            Estima a Hugo (c): [Loc: valle    | Hambre:  59.6 | Sed:  78.0 | Salud: 100.0 | Emo: ira]
+  Sofi (B): Loc: ruinas   | Hambre:  59.6 | Sed:  77.9 | Salud: 100.0 | Energía:  67.8 | Emo: ira | Mochila: [🍖: 1/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: pradera  | Hambre:  59.6 | Sed:  78.0 | Salud: 100.0 | Emo: ira]
+            Estima a Hugo (C): [Loc: valle    | Hambre:  59.6 | Sed:  78.0 | Salud: 100.0 | Emo: ira]
+  Hugo (C): Loc: pantano  | Hambre:  59.6 | Sed:  78.0 | Salud: 100.0 | Energía:  68.0 | Emo: ira | Mochila: [🍖: 0/1, 💧: 1/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: pradera  | Hambre:  59.6 | Sed:  78.0 | Salud: 100.0 | Emo: ira]
+            Estima a Sofi (B): [Loc: ruinas   | Hambre:  59.6 | Sed:  78.0 | Salud: 100.0 | Emo: ira]
+  👉 Nico (A) decide MOVER: se mueve a pradera
+  👉 Sofi (B) decide MOVER: se mueve a bosque
+  👉 Hugo (C) decide MOVER: se mueve a río
+
+[Tick 004] ───────────────────────────────────────────────────────
+  Mundo: Bosque: [🍖: 9.5/10.0] | Río: [🍖: 9.5/10.0, 💧: 9.5/10.0] | Lago: [💧: 9.0/10.0] | 🎯 Sin presa | 🦣 Sin Gran Herbívoro
+  Nico (A): Loc: pradera  | Hambre:  59.4 | Sed:  77.0 | Salud: 100.0 | Energía:  62.0 | Emo: ira | Mochila: [🍖: 0/1, 💧: 1/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Sofi (B): [Loc: ruinas   | Hambre:  59.4 | Sed:  77.0 | Salud: 100.0 | Emo: ira]
+            Estima a Hugo (c): [Loc: valle    | Hambre:  59.4 | Sed:  77.0 | Salud: 100.0 | Emo: ira]
+  Sofi (B): Loc: bosque   | Hambre:  59.4 | Sed:  76.8 | Salud: 100.0 | Energía:  61.6 | Emo: ira | Mochila: [🍖: 1/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: pradera  | Hambre:  59.4 | Sed:  77.0 | Salud: 100.0 | Emo: ira]
+            Estima a Hugo (C): [Loc: valle    | Hambre:  59.4 | Sed:  77.0 | Salud: 100.0 | Emo: ira]
+  Hugo (C): Loc: río      | Hambre:  59.4 | Sed:  76.9 | Salud: 100.0 | Energía:  61.8 | Emo: ira | Mochila: [🍖: 0/1, 💧: 1/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: pradera  | Hambre:  59.4 | Sed:  77.0 | Salud: 100.0 | Emo: ira]
+            Estima a Sofi (B): [Loc: ruinas   | Hambre:  59.4 | Sed:  77.0 | Salud: 100.0 | Emo: ira]
+  👉 Nico (A) decide BEBER: bebe agua de su mochila
+  👉 Sofi (B) decide VER: observa el entorno
+  👉 Hugo (C) decide BEBER: bebe agua (suelo)
+
+[Tick 005] ───────────────────────────────────────────────────────
+  Mundo: Bosque: [🍖: 9.5/10.0] | Río: [🍖: 9.5/10.0, 💧: 9.0/10.0] | Lago: [💧: 9.5/10.0] | 🎯 Sin presa | 🦣 Sin Gran Herbívoro
+  Nico (A): Loc: pradera  | Hambre:  59.2 | Sed: 100.0 | Salud: 100.0 | Energía:  59.8 | Emo: ira | Mochila: [🍖: 0/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Sofi (B): [Loc: ruinas   | Hambre:  59.2 | Sed:  76.0 | Salud: 100.0 | Emo: ira]
+            Estima a Hugo (c): [Loc: valle    | Hambre:  59.2 | Sed:  76.0 | Salud: 100.0 | Emo: ira]
+  Sofi (B): Loc: bosque   | Hambre:  59.1 | Sed:  75.7 | Salud: 100.0 | Energía:  58.4 | Emo: ira | Mochila: [🍖: 1/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: pradera  | Hambre:  59.2 | Sed:  76.0 | Salud: 100.0 | Emo: ira]
+            Estima a Hugo (C): [Loc: valle    | Hambre:  59.2 | Sed:  76.0 | Salud: 100.0 | Emo: ira]
+  Hugo (C): Loc: río      | Hambre:  59.2 | Sed: 100.0 | Salud: 100.0 | Energía:  59.6 | Emo: ira | Mochila: [🍖: 0/1, 💧: 1/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: pradera  | Hambre:  59.2 | Sed:  76.0 | Salud: 100.0 | Emo: ira]
+            Estima a Sofi (B): [Loc: ruinas   | Hambre:  59.2 | Sed:  76.0 | Salud: 100.0 | Emo: ira]
+  👉 Nico (A) decide MOVER: se mueve a cueva
+  👉 Sofi (B) decide MOVER: se mueve a río
+  👉 Hugo (C) decide BEBER: bebe agua (suelo)
+
+[Tick 006] ───────────────────────────────────────────────────────
+  Mundo: Bosque: [🍖: 9.5/10.0] | Río: [🍖: 9.5/10.0, 💧: 8.5/10.0] | Lago: [💧: 10.0/10.0] | 🎯 Sin presa | 🦣 Sin Gran Herbívoro
+  Nico (A): Loc: cueva    | Hambre:  59.0 | Sed:  99.0 | Salud: 100.0 | Energía:  53.8 | Emo: ira | Mochila: [🍖: 0/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Sofi (B): [Loc: ruinas   | Hambre:  59.0 | Sed:  75.0 | Salud: 100.0 | Emo: ira]
+            Estima a Hugo (c): [Loc: valle    | Hambre:  59.0 | Sed:  75.0 | Salud: 100.0 | Emo: ira]
+  Sofi (B): Loc: río      | Hambre:  58.9 | Sed:  74.6 | Salud: 100.0 | Energía:  52.2 | Emo: ira | Mochila: [🍖: 1/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: pradera  | Hambre:  59.0 | Sed:  75.0 | Salud: 100.0 | Emo: ira]
+            Estima a Hugo (C): [Loc: río      | Hambre:  58.9 | Sed: 100.0 | Salud: 100.0 | Emo: ira]
+  Hugo (C): Loc: río      | Hambre:  58.9 | Sed: 100.0 | Salud: 100.0 | Energía:  57.4 | Emo: ira | Mochila: [🍖: 0/1, 💧: 1/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: pradera  | Hambre:  59.0 | Sed:  75.0 | Salud: 100.0 | Emo: ira]
+            Estima a Sofi (B): [Loc: río      | Hambre:  58.9 | Sed:  74.6 | Salud: 100.0 | Emo: ira]
+  👉 Nico (A) decide MOVER: se mueve a valle
+  👉 Sofi (B) decide DAR: intenta dar comida a C pero no ha sido solicitada
+  👉 Hugo (C) decide DAR: intenta dar agua a B pero no ha sido solicitada
+
+[Tick 007] ───────────────────────────────────────────────────────
+  Mundo: Bosque: [🍖: 9.5/10.0] | Río: [🍖: 9.5/10.0, 💧: 9.0/10.0] | Lago: [💧: 10.0/10.0] | 🎯 Sin presa | 🦣 Sin Gran Herbívoro
+  Nico (A): Loc: valle    | Hambre:  58.8 | Sed:  98.0 | Salud: 100.0 | Energía:  47.8 | Emo: ira | Mochila: [🍖: 0/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Sofi (B): [Loc: ruinas   | Hambre:  58.8 | Sed:  74.0 | Salud: 100.0 | Emo: ira]
+            Estima a Hugo (c): [Loc: valle    | Hambre:  58.8 | Sed:  74.0 | Salud: 100.0 | Emo: ira]
+  Sofi (B): Loc: río      | Hambre:  58.7 | Sed:  73.5 | Salud: 100.0 | Energía:  50.0 | Emo: ira | Mochila: [🍖: 1/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: pradera  | Hambre:  58.8 | Sed:  74.0 | Salud: 100.0 | Emo: ira]
+            Estima a Hugo (C): [Loc: río      | Hambre:  58.7 | Sed:  98.9 | Salud: 100.0 | Emo: ira]
+  Hugo (C): Loc: río      | Hambre:  58.7 | Sed:  98.9 | Salud: 100.0 | Energía:  55.2 | Emo: ira | Mochila: [🍖: 0/1, 💧: 1/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: pradera  | Hambre:  58.8 | Sed:  74.0 | Salud: 100.0 | Emo: ira]
+            Estima a Sofi (B): [Loc: río      | Hambre:  58.7 | Sed:  73.5 | Salud: 100.0 | Emo: ira]
+  👉 Nico (A) decide MOVER: se mueve a cueva
+  👉 Sofi (B) decide DAR: intenta dar comida a C pero no ha sido solicitada
+  👉 Hugo (C) decide MOVER: se mueve a bosque
+
+[Tick 008] ───────────────────────────────────────────────────────
+  Mundo: Bosque: [🍖: 9.5/10.0] | Río: [🍖: 9.5/10.0, 💧: 9.5/10.0] | Lago: [💧: 10.0/10.0] | 🎯 Sin presa | 🦣 Sin Gran Herbívoro
+  Nico (A): Loc: cueva    | Hambre:  58.6 | Sed:  97.0 | Salud: 100.0 | Energía:  41.8 | Emo: ira | Mochila: [🍖: 1/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Sofi (B): [Loc: ruinas   | Hambre:  58.6 | Sed:  73.0 | Salud: 100.0 | Emo: ira]
+            Estima a Hugo (c): [Loc: valle    | Hambre:  58.6 | Sed:  73.0 | Salud: 100.0 | Emo: ira]
+  Sofi (B): Loc: río      | Hambre:  58.5 | Sed:  72.4 | Salud: 100.0 | Energía:  47.8 | Emo: ira | Mochila: [🍖: 1/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: pradera  | Hambre:  58.6 | Sed:  73.0 | Salud: 100.0 | Emo: ira]
+            Estima a Hugo (C): [Loc: río      | Hambre:  58.5 | Sed:  97.9 | Salud: 100.0 | Emo: ira]
+  Hugo (C): Loc: bosque   | Hambre:  58.5 | Sed:  97.8 | Salud: 100.0 | Energía:  49.0 | Emo: ira | Mochila: [🍖: 0/1, 💧: 1/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: pradera  | Hambre:  58.6 | Sed:  73.0 | Salud: 100.0 | Emo: ira]
+            Estima a Sofi (B): [Loc: río      | Hambre:  58.5 | Sed:  72.5 | Salud: 100.0 | Emo: ira]
+  👉 Nico (A) decide MOVER: se mueve a lago
+  👉 Sofi (B) decide MOVER: se mueve a pantano
+  👉 Hugo (C) decide BEBER: bebe agua de su mochila
+
+[Tick 009] ───────────────────────────────────────────────────────
+  Mundo: Bosque: [🍖: 9.5/10.0] | Río: [🍖: 9.5/10.0, 💧: 10.0/10.0] | Lago: [💧: 10.0/10.0] | 🎯 Sin presa | 🦣 Sin Gran Herbívoro
+  Nico (A): Loc: lago     | Hambre:  58.4 | Sed:  95.9 | Salud: 100.0 | Energía:  35.6 | Emo: ira | Mochila: [🍖: 1/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Sofi (B): [Loc: ruinas   | Hambre:  58.4 | Sed:  72.0 | Salud: 100.0 | Emo: ira]
+            Estima a Hugo (c): [Loc: valle    | Hambre:  58.4 | Sed:  72.0 | Salud: 100.0 | Emo: ira]
+  Sofi (B): Loc: pantano  | Hambre:  58.3 | Sed:  71.3 | Salud: 100.0 | Energía:  41.6 | Emo: ira | Mochila: [🍖: 1/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: pradera  | Hambre:  58.4 | Sed:  72.0 | Salud: 100.0 | Emo: ira]
+            Estima a Hugo (C): [Loc: río      | Hambre:  58.3 | Sed:  96.9 | Salud: 100.0 | Emo: ira]
+  Hugo (C): Loc: bosque   | Hambre:  58.3 | Sed: 100.0 | Salud: 100.0 | Energía:  46.8 | Emo: ira | Mochila: [🍖: 0/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: pradera  | Hambre:  58.4 | Sed:  72.0 | Salud: 100.0 | Emo: ira]
+            Estima a Sofi (B): [Loc: río      | Hambre:  58.3 | Sed:  71.5 | Salud: 100.0 | Emo: ira]
+  👉 Nico (A) decide BEBER: bebe agua (suelo)
+  👉 Sofi (B) decide MOVER: se mueve a ruinas
+  👉 Hugo (C) decide MOVER: se mueve a ruinas
+
+[Tick 010] ───────────────────────────────────────────────────────
+  Mundo: Bosque: [🍖: 9.5/10.0] | Río: [🍖: 9.5/10.0, 💧: 10.0/10.0] | Lago: [💧: 8.0/10.0] | 🎯 Presa en valle (10t) | 🦣 Sin Gran Herbívoro
+  Nico (A): Loc: lago     | Hambre:  58.1 | Sed: 100.0 | Salud: 100.0 | Energía:  33.4 | Emo: ira | Mochila: [🍖: 1/1, 💧: 1/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Sofi (B): [Loc: ruinas   | Hambre:  58.2 | Sed:  71.0 | Salud: 100.0 | Emo: ira]
+            Estima a Hugo (c): [Loc: valle    | Hambre:  58.2 | Sed:  71.0 | Salud: 100.0 | Emo: ira]
+  Sofi (B): Loc: ruinas   | Hambre:  58.0 | Sed:  70.2 | Salud: 100.0 | Energía:  35.4 | Emo: ira | Mochila: [🍖: 1/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: pradera  | Hambre:  58.2 | Sed:  71.0 | Salud: 100.0 | Emo: ira]
+            Estima a Hugo (C): [Loc: ruinas   | Hambre:  58.1 | Sed:  99.0 | Salud: 100.0 | Emo: ira]
+  Hugo (C): Loc: ruinas   | Hambre:  58.1 | Sed:  99.0 | Salud: 100.0 | Energía:  40.8 | Emo: ira | Mochila: [🍖: 0/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: pradera  | Hambre:  58.2 | Sed:  71.0 | Salud: 100.0 | Emo: ira]
+            Estima a Sofi (B): [Loc: ruinas   | Hambre:  58.0 | Sed:  70.2 | Salud: 100.0 | Emo: ira]
+  👉 Nico (A) decide MOVER: se mueve a montaña
+  👉 Sofi (B) decide DAR: intenta dar comida a C pero no ha sido solicitada
+  👉 Hugo (C) decide MOVER: se mueve a bosque
+
+[Tick 011] ───────────────────────────────────────────────────────
+  Mundo: Bosque: [🍖: 9.5/10.0] | Río: [🍖: 9.5/10.0, 💧: 10.0/10.0] | Lago: [💧: 8.5/10.0] | 🎯 Presa en valle (9t) | 🦣 Sin Gran Herbívoro
+  Nico (A): Loc: montaña  | Hambre:  57.9 | Sed:  98.8 | Salud: 100.0 | Energía:  27.0 | Emo: ira | Mochila: [🍖: 1/1, 💧: 1/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Sofi (B): [Loc: ruinas   | Hambre:  58.0 | Sed:  70.0 | Salud: 100.0 | Emo: ira]
+            Estima a Hugo (c): [Loc: valle    | Hambre:  58.0 | Sed:  70.0 | Salud: 100.0 | Emo: ira]
+  Sofi (B): Loc: ruinas   | Hambre:  57.8 | Sed:  69.1 | Salud: 100.0 | Energía:  33.2 | Emo: ira | Mochila: [🍖: 1/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: pradera  | Hambre:  58.0 | Sed:  70.0 | Salud: 100.0 | Emo: ira]
+            Estima a Hugo (C): [Loc: ruinas   | Hambre:  57.9 | Sed:  98.0 | Salud: 100.0 | Emo: ira]
+  Hugo (C): Loc: bosque   | Hambre:  57.9 | Sed:  98.0 | Salud: 100.0 | Energía:  34.8 | Emo: ira | Mochila: [🍖: 0/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: pradera  | Hambre:  58.0 | Sed:  70.0 | Salud: 100.0 | Emo: ira]
+            Estima a Sofi (B): [Loc: ruinas   | Hambre:  57.8 | Sed:  69.2 | Salud: 100.0 | Emo: ira]
+  👉 Nico (A) decide MOVER: se mueve a pantano
+  👉 Sofi (B) decide MOVER: se mueve a bosque
+  👉 Hugo (C) decide MOVER: se mueve a río
+
+[Tick 012] ───────────────────────────────────────────────────────
+  Mundo: Bosque: [🍖: 9.5/10.0] | Río: [🍖: 9.5/10.0, 💧: 10.0/10.0] | Lago: [💧: 9.0/10.0] | 🎯 Presa en valle (8t) | 🦣 Sin Gran Herbívoro
+  Nico (A): Loc: pantano  | Hambre:  57.7 | Sed:  97.6 | Salud: 100.0 | Energía:  20.6 | Emo: ira | Mochila: [🍖: 1/1, 💧: 1/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Sofi (B): [Loc: ruinas   | Hambre:  57.8 | Sed:  69.0 | Salud: 100.0 | Emo: ira]
+            Estima a Hugo (c): [Loc: valle    | Hambre:  57.8 | Sed:  69.0 | Salud: 100.0 | Emo: ira]
+  Sofi (B): Loc: bosque   | Hambre:  57.6 | Sed:  68.0 | Salud: 100.0 | Energía:  27.0 | Emo: ira | Mochila: [🍖: 1/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: pradera  | Hambre:  57.8 | Sed:  69.0 | Salud: 100.0 | Emo: ira]
+            Estima a Hugo (C): [Loc: ruinas   | Hambre:  57.7 | Sed:  97.0 | Salud: 100.0 | Emo: ira]
+  Hugo (C): Loc: río      | Hambre:  57.7 | Sed:  97.0 | Salud: 100.0 | Energía:  28.8 | Emo: ira | Mochila: [🍖: 0/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: pradera  | Hambre:  57.8 | Sed:  69.0 | Salud: 100.0 | Emo: ira]
+            Estima a Sofi (B): [Loc: ruinas   | Hambre:  57.6 | Sed:  68.2 | Salud: 100.0 | Emo: ira]
+  👉 Nico (A) decide BEBER: bebe agua (suelo)
+  👉 Sofi (B) decide MOVER: se mueve a ruinas
+  👉 Hugo (C) decide MOVER: se mueve a bosque
+
+[Tick 013] ───────────────────────────────────────────────────────
+  Mundo: Bosque: [🍖: 9.5/10.0] | Río: [🍖: 9.5/10.0, 💧: 9.0/10.0] | Lago: [💧: 9.5/10.0] | 🎯 Presa en valle (7t) | 🦣 Sin Gran Herbívoro
+  Nico (A): Loc: pantano  | Hambre:  57.4 | Sed: 100.0 | Salud: 100.0 | Energía:  18.2 | Emo: tristeza | Mochila: [🍖: 1/1, 💧: 1/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Sofi (B): [Loc: ruinas   | Hambre:  57.6 | Sed:  68.0 | Salud: 100.0 | Emo: ira]
+            Estima a Hugo (c): [Loc: valle    | Hambre:  57.6 | Sed:  68.0 | Salud: 100.0 | Emo: ira]
+  Sofi (B): Loc: ruinas   | Hambre:  57.4 | Sed:  66.9 | Salud: 100.0 | Energía:  20.8 | Emo: ira | Mochila: [🍖: 1/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: pradera  | Hambre:  57.6 | Sed:  68.0 | Salud: 100.0 | Emo: ira]
+            Estima a Hugo (C): [Loc: ruinas   | Hambre:  57.5 | Sed:  96.0 | Salud: 100.0 | Emo: ira]
+  Hugo (C): Loc: bosque   | Hambre:  57.5 | Sed:  96.0 | Salud: 100.0 | Energía:  22.8 | Emo: ira | Mochila: [🍖: 0/1, 💧: 1/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: pradera  | Hambre:  57.6 | Sed:  68.0 | Salud: 100.0 | Emo: ira]
+            Estima a Sofi (B): [Loc: ruinas   | Hambre:  57.4 | Sed:  67.2 | Salud: 100.0 | Emo: ira]
+  👉 Nico (A) decide MOVER: se mueve a río
+  👉 Sofi (B) decide MOVER: se mueve a pantano
+  👉 Hugo (C) decide BEBER: bebe agua de su mochila
+
+[Tick 014] ───────────────────────────────────────────────────────
+  Mundo: Bosque: [🍖: 9.5/10.0] | Río: [🍖: 9.5/10.0, 💧: 9.5/10.0] | Lago: [💧: 10.0/10.0] | 🎯 Presa en valle (6t) | 🦣 Sin Gran Herbívoro
+  Nico (A): Loc: río      | Hambre:  57.2 | Sed:  98.8 | Salud: 100.0 | Energía:  11.8 | Emo: tristeza | Mochila: [🍖: 1/1, 💧: 1/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Sofi (B): [Loc: ruinas   | Hambre:  57.4 | Sed:  67.0 | Salud: 100.0 | Emo: ira]
+            Estima a Hugo (c): [Loc: valle    | Hambre:  57.4 | Sed:  67.0 | Salud: 100.0 | Emo: ira]
+  Sofi (B): Loc: pantano  | Hambre:  57.2 | Sed:  65.8 | Salud: 100.0 | Energía:  14.6 | Emo: tristeza | Mochila: [🍖: 1/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: pradera  | Hambre:  57.4 | Sed:  67.0 | Salud: 100.0 | Emo: ira]
+            Estima a Hugo (C): [Loc: ruinas   | Hambre:  57.3 | Sed:  95.0 | Salud: 100.0 | Emo: ira]
+  Hugo (C): Loc: bosque   | Hambre:  57.3 | Sed: 100.0 | Salud: 100.0 | Energía:  20.6 | Emo: ira | Mochila: [🍖: 0/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: pradera  | Hambre:  57.4 | Sed:  67.0 | Salud: 100.0 | Emo: ira]
+            Estima a Sofi (B): [Loc: ruinas   | Hambre:  57.2 | Sed:  66.2 | Salud: 100.0 | Emo: ira]
+  👉 Nico (A) decide BEBER: bebe agua (suelo)
+  👉 Sofi (B) decide MOVER: se mueve a montaña
+  👉 Hugo (C) decide MOVER: se mueve a ruinas
+
+[Tick 015] ───────────────────────────────────────────────────────
+  Mundo: Bosque: [🍖: 9.5/10.0] | Río: [🍖: 9.5/10.0, 💧: 9.0/10.0] | Lago: [💧: 10.0/10.0] | 🎯 Presa en valle (5t) | 🦣 Sin Gran Herbívoro
+  Nico (A): Loc: río      | Hambre:  56.9 | Sed: 100.0 | Salud: 100.0 | Energía:   9.4 | Emo: tristeza | Mochila: [🍖: 1/1, 💧: 1/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Sofi (B): [Loc: ruinas   | Hambre:  57.2 | Sed:  66.0 | Salud: 100.0 | Emo: ira]
+            Estima a Hugo (c): [Loc: valle    | Hambre:  57.2 | Sed:  66.0 | Salud: 100.0 | Emo: ira]
+  Sofi (B): Loc: montaña  | Hambre:  56.9 | Sed:  64.7 | Salud: 100.0 | Energía:   8.4 | Emo: tristeza | Mochila: [🍖: 1/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: pradera  | Hambre:  57.2 | Sed:  66.0 | Salud: 100.0 | Emo: ira]
+            Estima a Hugo (C): [Loc: ruinas   | Hambre:  57.1 | Sed:  94.0 | Salud: 100.0 | Emo: ira]
+  Hugo (C): Loc: ruinas   | Hambre:  57.1 | Sed:  99.0 | Salud: 100.0 | Energía:  14.6 | Emo: tristeza | Mochila: [🍖: 0/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: pradera  | Hambre:  57.2 | Sed:  66.0 | Salud: 100.0 | Emo: ira]
+            Estima a Sofi (B): [Loc: ruinas   | Hambre:  57.0 | Sed:  65.2 | Salud: 100.0 | Emo: ira]
+  👉 Nico (A) decide BEBER: bebe agua (suelo)
+  👉 Sofi (B) decide MOVER: se mueve a pradera
+  👉 Hugo (C) decide MOVER: se mueve a bosque
+
+[Tick 016] ───────────────────────────────────────────────────────
+  Mundo: Bosque: [🍖: 9.5/10.0] | Río: [🍖: 9.5/10.0, 💧: 8.5/10.0] | Lago: [💧: 10.0/10.0] | 🎯 Presa en valle (4t) | 🦣 Sin Gran Herbívoro
+  Nico (A): Loc: río      | Hambre:  56.7 | Sed: 100.0 | Salud: 100.0 | Energía:   7.0 | Emo: tristeza | Mochila: [🍖: 1/1, 💧: 1/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Sofi (B): [Loc: ruinas   | Hambre:  57.0 | Sed:  65.0 | Salud: 100.0 | Emo: ira]
+            Estima a Hugo (c): [Loc: valle    | Hambre:  57.0 | Sed:  65.0 | Salud: 100.0 | Emo: ira]
+  Sofi (B): Loc: pradera  | Hambre:  56.7 | Sed:  63.6 | Salud: 100.0 | Energía:   2.2 | Emo: tristeza | Mochila: [🍖: 1/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: pradera  | Hambre:  57.0 | Sed:  65.0 | Salud: 100.0 | Emo: ira]
+            Estima a Hugo (C): [Loc: ruinas   | Hambre:  56.9 | Sed:  93.0 | Salud: 100.0 | Emo: ira]
+  Hugo (C): Loc: bosque   | Hambre:  56.9 | Sed:  98.0 | Salud: 100.0 | Energía:   8.6 | Emo: tristeza | Mochila: [🍖: 0/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: pradera  | Hambre:  57.0 | Sed:  65.0 | Salud: 100.0 | Emo: ira]
+            Estima a Sofi (B): [Loc: ruinas   | Hambre:  56.8 | Sed:  64.2 | Salud: 100.0 | Emo: ira]
+  👉 Nico (A) decide BEBER: bebe agua (suelo)
+  👉 Sofi (B) decide MOVER: demasiado cansado para moverse
+  👉 Hugo (C) decide MOVER: se mueve a río
+
+[Tick 017] ───────────────────────────────────────────────────────
+  Mundo: Bosque: [🍖: 9.5/10.0] | Río: [🍖: 9.5/10.0, 💧: 8.0/10.0] | Lago: [💧: 10.0/10.0] | 🎯 Presa en valle (3t) | 🦣 Gran Herbívoro en pradera (25t)
+  Nico (A): Loc: río      | Hambre:  56.5 | Sed: 100.0 | Salud: 100.0 | Energía:   4.6 | Emo: tristeza | Mochila: [🍖: 1/1, 💧: 1/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Sofi (B): [Loc: ruinas   | Hambre:  56.8 | Sed:  64.0 | Salud: 100.0 | Emo: ira]
+            Estima a Hugo (c): [Loc: río      | Hambre:  56.7 | Sed:  97.0 | Salud: 100.0 | Emo: tristeza]
+  Sofi (B): Loc: pradera  | Hambre:  56.5 | Sed:  62.5 | Salud: 100.0 | Energía:   0.0 | Emo: tristeza | Mochila: [🍖: 1/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: pradera  | Hambre:  56.8 | Sed:  64.0 | Salud: 100.0 | Emo: ira]
+            Estima a Hugo (C): [Loc: ruinas   | Hambre:  56.7 | Sed:  92.0 | Salud: 100.0 | Emo: ira]
+  Hugo (C): Loc: río      | Hambre:  56.7 | Sed:  97.0 | Salud: 100.0 | Energía:   2.6 | Emo: tristeza | Mochila: [🍖: 0/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: río      | Hambre:  56.5 | Sed: 100.0 | Salud: 100.0 | Emo: tristeza]
+            Estima a Sofi (B): [Loc: ruinas   | Hambre:  56.6 | Sed:  63.2 | Salud: 100.0 | Emo: ira]
+  👉 Nico (A) decide BEBER: bebe agua (suelo) | depredador ataca
+  👉 Sofi (B) decide MOVER: colapsa por cansancio extremo y duerme forzosamente
+  👉 Hugo (C) decide BEBER: bebe agua (suelo)
+
+[Tick 018] ───────────────────────────────────────────────────────
+  Mundo: Bosque: [🍖: 9.5/10.0] | Río: [🍖: 9.5/10.0, 💧: 5.5/10.0] | Lago: [💧: 10.0/10.0] | 🎯 Presa en valle (2t) | 🦣 Gran Herbívoro en pradera (24t)
+  Nico (A): Loc: río      | Hambre:  56.2 | Sed: 100.0 | Salud: 100.0 | Energía:   2.2 | Emo: tristeza | Mochila: [🍖: 1/1, 💧: 1/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Sofi (B): [Loc: ruinas   | Hambre:  56.6 | Sed:  63.0 | Salud: 100.0 | Emo: ira]
+            Estima a Hugo (c): [Loc: río      | Hambre:  56.5 | Sed: 100.0 | Salud: 100.0 | Emo: tristeza]
+  Sofi (B): Loc: pradera  | Hambre:  56.4 | Sed:  62.0 | Salud:  98.0 | Energía:   7.8 | Emo: tristeza | Mochila: [🍖: 1/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: pradera  | Hambre:  56.6 | Sed:  63.0 | Salud: 100.0 | Emo: ira]
+            Estima a Hugo (C): [Loc: ruinas   | Hambre:  56.5 | Sed:  91.0 | Salud: 100.0 | Emo: ira]
+  Hugo (C): Loc: río      | Hambre:  56.5 | Sed: 100.0 | Salud: 100.0 | Energía:   0.6 | Emo: tristeza | Mochila: [🍖: 0/1, 💧: 1/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: río      | Hambre:  56.2 | Sed: 100.0 | Salud: 100.0 | Emo: tristeza]
+            Estima a Sofi (B): [Loc: ruinas   | Hambre:  56.4 | Sed:  62.2 | Salud: 100.0 | Emo: tristeza]
+  👉 Nico (A) decide DAR: intenta dar comida a C pero no ha sido solicitada
+  👉 Sofi (B) decide MOVER: se mueve a valle
+  👉 Hugo (C) decide BEBER: bebe agua (suelo)
+
+[Tick 019] ───────────────────────────────────────────────────────
+  Mundo: Bosque: [🍖: 9.5/10.0] | Río: [🍖: 9.5/10.0, 💧: 5.0/10.0] | Lago: [💧: 10.0/10.0] | 🎯 Presa en valle (1t) | 🦣 Gran Herbívoro en pradera (23t)
+  Nico (A): Loc: río      | Hambre:  56.0 | Sed:  98.8 | Salud: 100.0 | Energía:   0.0 | Emo: tristeza | Mochila: [🍖: 1/1, 💧: 1/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Sofi (B): [Loc: ruinas   | Hambre:  56.4 | Sed:  62.0 | Salud: 100.0 | Emo: ira]
+            Estima a Hugo (c): [Loc: río      | Hambre:  56.2 | Sed: 100.0 | Salud: 100.0 | Emo: tristeza]
+  Sofi (B): Loc: valle    | Hambre:  56.2 | Sed:  60.9 | Salud:  98.0 | Energía:   1.6 | Emo: tristeza | Mochila: [🍖: 1/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: pradera  | Hambre:  56.4 | Sed:  62.0 | Salud: 100.0 | Emo: ira]
+            Estima a Hugo (C): [Loc: ruinas   | Hambre:  56.3 | Sed:  90.0 | Salud: 100.0 | Emo: ira]
+  Hugo (C): Loc: río      | Hambre:  56.2 | Sed: 100.0 | Salud: 100.0 | Energía:   0.0 | Emo: tristeza | Mochila: [🍖: 0/1, 💧: 1/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: río      | Hambre:  56.0 | Sed:  98.8 | Salud: 100.0 | Emo: tristeza]
+            Estima a Sofi (B): [Loc: ruinas   | Hambre:  56.2 | Sed:  61.2 | Salud: 100.0 | Emo: tristeza]
+  👉 Nico (A) decide DAR: colapsa por cansancio extremo y duerme forzosamente
+  👉 Sofi (B) decide MOVER: demasiado cansado para moverse
+  👉 Hugo (C) decide DAR: colapsa por cansancio extremo y duerme forzosamente
+
+[Tick 020] ───────────────────────────────────────────────────────
+  Mundo: Bosque: [🍖: 9.5/10.0] | Río: [🍖: 9.5/10.0, 💧: 5.5/10.0] | Lago: [💧: 10.0/10.0] | 🎯 Sin presa | 🦣 Gran Herbívoro en lago (22t)
+  Nico (A): Loc: río      | Hambre:  55.9 | Sed:  98.2 | Salud:  98.0 | Energía:   7.6 | Emo: tristeza | Mochila: [🍖: 1/1, 💧: 1/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Sofi (B): [Loc: ruinas   | Hambre:  56.2 | Sed:  61.0 | Salud: 100.0 | Emo: ira]
+            Estima a Hugo (c): [Loc: río      | Hambre:  56.1 | Sed:  99.5 | Salud:  98.0 | Emo: tristeza]
+  Sofi (B): Loc: valle    | Hambre:  56.0 | Sed:  59.8 | Salud:  98.0 | Energía:   0.0 | Emo: tristeza | Mochila: [🍖: 1/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: pradera  | Hambre:  56.2 | Sed:  61.0 | Salud: 100.0 | Emo: ira]
+            Estima a Hugo (C): [Loc: ruinas   | Hambre:  56.1 | Sed:  89.0 | Salud: 100.0 | Emo: ira]
+  Hugo (C): Loc: río      | Hambre:  56.1 | Sed:  99.5 | Salud:  98.0 | Energía:   7.8 | Emo: tristeza | Mochila: [🍖: 0/1, 💧: 1/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: río      | Hambre:  55.9 | Sed:  98.2 | Salud:  98.0 | Emo: tristeza]
+            Estima a Sofi (B): [Loc: ruinas   | Hambre:  56.0 | Sed:  60.2 | Salud: 100.0 | Emo: tristeza]
+  👉 Nico (A) decide MOVER: se mueve a valle
+  👉 Sofi (B) decide MOVER: colapsa por cansancio extremo y duerme forzosamente
+  👉 Hugo (C) decide BEBER: bebe agua (suelo)
+
+[Tick 021] ───────────────────────────────────────────────────────
+  Mundo: Bosque: [🍖: 9.5/10.0] | Río: [🍖: 9.5/10.0, 💧: 5.0/10.0] | Lago: [💧: 10.0/10.0] | 🎯 Sin presa | 🦣 Gran Herbívoro en lago (21t)
+  Nico (A): Loc: valle    | Hambre:  55.6 | Sed:  97.0 | Salud:  98.0 | Energía:   1.2 | Emo: tristeza | Mochila: [🍖: 1/1, 💧: 1/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Sofi (B): [Loc: valle    | Hambre:  55.8 | Sed:  59.2 | Salud:  96.0 | Emo: tristeza]
+            Estima a Hugo (c): [Loc: río      | Hambre:  55.9 | Sed:  98.5 | Salud:  98.0 | Emo: tristeza]
+  Sofi (B): Loc: valle    | Hambre:  55.8 | Sed:  59.2 | Salud:  96.0 | Energía:   7.8 | Emo: tristeza | Mochila: [🍖: 1/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: valle    | Hambre:  55.6 | Sed:  97.0 | Salud:  98.0 | Emo: tristeza]
+            Estima a Hugo (C): [Loc: ruinas   | Hambre:  55.9 | Sed:  88.0 | Salud: 100.0 | Emo: tristeza]
+  Hugo (C): Loc: río      | Hambre:  55.9 | Sed: 100.0 | Salud: 100.0 | Energía:   5.6 | Emo: tristeza | Mochila: [🍖: 0/1, 💧: 1/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: río      | Hambre:  55.7 | Sed:  97.2 | Salud:  98.0 | Emo: tristeza]
+            Estima a Sofi (B): [Loc: ruinas   | Hambre:  55.8 | Sed:  59.2 | Salud: 100.0 | Emo: tristeza]
+  👉 Nico (A) decide DAR: intenta dar agua a B pero no ha sido solicitada
+  👉 Sofi (B) decide DAR: mochila vacía, compañeros saciados o solos
+  👉 Hugo (C) decide MOVER: se mueve a valle
+
+[Tick 022] ───────────────────────────────────────────────────────
+  Mundo: Bosque: [🍖: 9.5/10.0] | Río: [🍖: 9.5/10.0, 💧: 5.5/10.0] | Lago: [💧: 10.0/10.0] | 🎯 Sin presa | 🦣 Gran Herbívoro en lago (20t)
+  Nico (A): Loc: valle    | Hambre:  55.4 | Sed:  95.8 | Salud:  98.0 | Energía:   0.0 | Emo: tristeza | Mochila: [🍖: 1/1, 💧: 1/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Sofi (B): [Loc: valle    | Hambre:  55.6 | Sed:  58.1 | Salud:  96.0 | Emo: tristeza]
+            Estima a Hugo (c): [Loc: valle    | Hambre:  55.7 | Sed:  98.9 | Salud: 100.0 | Emo: tristeza]
+  Sofi (B): Loc: valle    | Hambre:  55.6 | Sed:  58.1 | Salud:  96.0 | Energía:   5.6 | Emo: tristeza | Mochila: [🍖: 1/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: valle    | Hambre:  55.4 | Sed:  95.8 | Salud:  98.0 | Emo: tristeza]
+            Estima a Hugo (C): [Loc: valle    | Hambre:  55.7 | Sed:  98.9 | Salud: 100.0 | Emo: tristeza]
+  Hugo (C): Loc: valle    | Hambre:  55.7 | Sed:  98.9 | Salud: 100.0 | Energía:   0.0 | Emo: tristeza | Mochila: [🍖: 0/1, 💧: 1/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: valle    | Hambre:  55.4 | Sed:  95.8 | Salud:  98.0 | Emo: tristeza]
+            Estima a Sofi (B): [Loc: valle    | Hambre:  55.6 | Sed:  58.1 | Salud:  96.0 | Emo: tristeza]
+  👉 Nico (A) decide BEBER: colapsa por cansancio extremo y duerme forzosamente
+  👉 Sofi (B) decide DAR: intenta dar comida a C pero no ha sido solicitada
+  👉 Hugo (C) decide DAR: colapsa por cansancio extremo y duerme forzosamente
+
+[Tick 023] ───────────────────────────────────────────────────────
+  Mundo: Bosque: [🍖: 9.5/10.0] | Río: [🍖: 9.5/10.0, 💧: 6.0/10.0] | Lago: [💧: 10.0/10.0] | 🎯 Sin presa | 🦣 Gran Herbívoro en lago (19t)
+  Nico (A): Loc: valle    | Hambre:  55.3 | Sed:  95.2 | Salud:  96.0 | Energía:   7.6 | Emo: tristeza | Mochila: [🍖: 1/1, 💧: 1/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Sofi (B): [Loc: valle    | Hambre:  55.4 | Sed:  57.0 | Salud:  96.0 | Emo: tristeza]
+            Estima a Hugo (c): [Loc: valle    | Hambre:  55.6 | Sed:  98.4 | Salud:  98.0 | Emo: tristeza]
+  Sofi (B): Loc: valle    | Hambre:  55.4 | Sed:  57.0 | Salud:  96.0 | Energía:   3.4 | Emo: tristeza | Mochila: [🍖: 1/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: valle    | Hambre:  55.3 | Sed:  95.2 | Salud:  96.0 | Emo: tristeza]
+            Estima a Hugo (C): [Loc: valle    | Hambre:  55.6 | Sed:  98.4 | Salud:  98.0 | Emo: tristeza]
+  Hugo (C): Loc: valle    | Hambre:  55.6 | Sed:  98.4 | Salud:  98.0 | Energía:   7.8 | Emo: tristeza | Mochila: [🍖: 0/1, 💧: 1/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: valle    | Hambre:  55.3 | Sed:  95.2 | Salud:  96.0 | Emo: tristeza]
+            Estima a Sofi (B): [Loc: valle    | Hambre:  55.4 | Sed:  57.0 | Salud:  96.0 | Emo: tristeza]
+  👉 Nico (A) decide MOVER: se mueve a pradera
+  👉 Sofi (B) decide DAR: intenta dar comida a C pero no ha sido solicitada
+  👉 Hugo (C) decide DAR: intenta dar agua a B pero no ha sido solicitada
+
+[Tick 024] ───────────────────────────────────────────────────────
+  Mundo: Bosque: [🍖: 9.5/10.0] | Río: [🍖: 9.5/10.0, 💧: 6.5/10.0] | Lago: [💧: 10.0/10.0] | 🎯 Sin presa | 🦣 Gran Herbívoro en lago (18t)
+  Nico (A): Loc: pradera  | Hambre:  55.0 | Sed:  94.0 | Salud:  96.0 | Energía:   1.2 | Emo: tristeza | Mochila: [🍖: 1/1, 💧: 1/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Sofi (B): [Loc: valle    | Hambre:  55.2 | Sed:  56.0 | Salud:  96.0 | Emo: tristeza]
+            Estima a Hugo (c): [Loc: valle    | Hambre:  55.4 | Sed:  97.4 | Salud:  98.0 | Emo: tristeza]
+  Sofi (B): Loc: valle    | Hambre:  55.2 | Sed:  55.9 | Salud:  96.0 | Energía:   1.2 | Emo: tristeza | Mochila: [🍖: 1/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: valle    | Hambre:  55.1 | Sed:  94.2 | Salud:  96.0 | Emo: tristeza]
+            Estima a Hugo (C): [Loc: valle    | Hambre:  55.4 | Sed:  97.3 | Salud:  98.0 | Emo: tristeza]
+  Hugo (C): Loc: valle    | Hambre:  55.4 | Sed:  97.3 | Salud:  98.0 | Energía:   5.6 | Emo: tristeza | Mochila: [🍖: 0/1, 💧: 1/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: valle    | Hambre:  55.1 | Sed:  94.2 | Salud:  96.0 | Emo: tristeza]
+            Estima a Sofi (B): [Loc: valle    | Hambre:  55.2 | Sed:  55.9 | Salud:  96.0 | Emo: tristeza]
+  👉 Nico (A) decide MOVER: demasiado cansado para moverse
+  👉 Sofi (B) decide DAR: intenta dar comida a C pero no ha sido solicitada
+  👉 Hugo (C) decide MOVER: se mueve a río | tormenta
+
+[Tick 025] ───────────────────────────────────────────────────────
+  Mundo: Bosque: [🍖: 9.5/10.0] | Río: [🍖: 9.5/10.0, 💧: 7.0/10.0] | Lago: [💧: 10.0/10.0] | 🎯 Sin presa | 🦣 Gran Herbívoro en lago (17t)
+  Nico (A): Loc: pradera  | Hambre:  54.8 | Sed:  92.8 | Salud:  96.0 | Energía:   0.0 | Emo: tristeza | Mochila: [🍖: 1/1, 💧: 1/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Sofi (B): [Loc: valle    | Hambre:  55.0 | Sed:  55.0 | Salud:  96.0 | Emo: tristeza]
+            Estima a Hugo (c): [Loc: valle    | Hambre:  55.2 | Sed:  96.4 | Salud:  98.0 | Emo: tristeza]
+  Sofi (B): Loc: valle    | Hambre:  55.0 | Sed:  54.8 | Salud:  96.0 | Energía:   0.0 | Emo: tristeza | Mochila: [🍖: 1/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: valle    | Hambre:  54.9 | Sed:  93.2 | Salud:  96.0 | Emo: tristeza]
+            Estima a Hugo (C): [Loc: valle    | Hambre:  55.2 | Sed:  96.3 | Salud:  98.0 | Emo: tristeza]
+  Hugo (C): Loc: río      | Hambre:  55.1 | Sed:  96.2 | Salud:  96.8 | Energía:   0.0 | Emo: tristeza | Mochila: [🍖: 0/1, 💧: 1/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: valle    | Hambre:  54.9 | Sed:  93.2 | Salud:  96.0 | Emo: tristeza]
+            Estima a Sofi (B): [Loc: valle    | Hambre:  55.0 | Sed:  54.9 | Salud:  96.0 | Emo: tristeza]
+  👉 Nico (A) decide MOVER: colapsa por cansancio extremo y duerme forzosamente
+  👉 Sofi (B) decide MOVER: colapsa por cansancio extremo y duerme forzosamente
+  👉 Hugo (C) decide BEBER: colapsa por cansancio extremo y duerme forzosamente
+
+[Tick 026] ───────────────────────────────────────────────────────
+  Mundo: Bosque: [🍖: 9.5/10.0] | Río: [🍖: 9.5/10.0, 💧: 7.5/10.0] | Lago: [💧: 10.0/10.0] | 🎯 Sin presa | 🦣 Gran Herbívoro en montaña (16t)
+  Nico (A): Loc: pradera  | Hambre:  54.7 | Sed:  92.2 | Salud:  94.0 | Energía:   7.6 | Emo: tristeza | Mochila: [🍖: 1/1, 💧: 1/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Sofi (B): [Loc: valle    | Hambre:  54.8 | Sed:  54.0 | Salud:  96.0 | Emo: tristeza]
+            Estima a Hugo (c): [Loc: valle    | Hambre:  55.0 | Sed:  95.4 | Salud:  98.0 | Emo: tristeza]
+  Sofi (B): Loc: valle    | Hambre:  54.9 | Sed:  54.3 | Salud:  94.0 | Energía:   7.8 | Emo: tristeza | Mochila: [🍖: 1/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: valle    | Hambre:  54.7 | Sed:  92.2 | Salud:  96.0 | Emo: tristeza]
+            Estima a Hugo (C): [Loc: valle    | Hambre:  55.0 | Sed:  95.3 | Salud:  98.0 | Emo: tristeza]
+  Hugo (C): Loc: río      | Hambre:  55.0 | Sed:  95.6 | Salud:  94.8 | Energía:   7.8 | Emo: tristeza | Mochila: [🍖: 0/1, 💧: 1/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: valle    | Hambre:  54.7 | Sed:  92.2 | Salud:  96.0 | Emo: tristeza]
+            Estima a Sofi (B): [Loc: valle    | Hambre:  54.8 | Sed:  53.9 | Salud:  96.0 | Emo: tristeza]
+  👉 Nico (A) decide BEBER: bebe agua de su mochila
+  👉 Sofi (B) decide MOVER: se mueve a cueva
+  👉 Hugo (C) decide MOVER: se mueve a pantano
+
+[Tick 027] ───────────────────────────────────────────────────────
+  Mundo: Bosque: [🍖: 9.5/10.0] | Río: [🍖: 9.5/10.0, 💧: 8.0/10.0] | Lago: [💧: 10.0/10.0] | 🎯 Sin presa | 🦣 Gran Herbívoro en montaña (15t)
+  Nico (A): Loc: pradera  | Hambre:  54.4 | Sed: 100.0 | Salud:  97.0 | Energía:   5.2 | Emo: tristeza | Mochila: [🍖: 1/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Sofi (B): [Loc: valle    | Hambre:  54.6 | Sed:  53.0 | Salud:  96.0 | Emo: tristeza]
+            Estima a Hugo (c): [Loc: valle    | Hambre:  54.8 | Sed:  94.4 | Salud:  98.0 | Emo: tristeza]
+  Sofi (B): Loc: cueva    | Hambre:  54.6 | Sed:  53.2 | Salud:  94.0 | Energía:   1.6 | Emo: tristeza | Mochila: [🍖: 1/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: valle    | Hambre:  54.5 | Sed:  91.2 | Salud:  96.0 | Emo: tristeza]
+            Estima a Hugo (C): [Loc: valle    | Hambre:  54.8 | Sed:  94.3 | Salud:  98.0 | Emo: tristeza]
+  Hugo (C): Loc: pantano  | Hambre:  54.8 | Sed:  94.5 | Salud:  94.8 | Energía:   1.6 | Emo: tristeza | Mochila: [🍖: 0/1, 💧: 1/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: valle    | Hambre:  54.5 | Sed:  91.2 | Salud:  96.0 | Emo: tristeza]
+            Estima a Sofi (B): [Loc: valle    | Hambre:  54.6 | Sed:  52.9 | Salud:  96.0 | Emo: tristeza]
+  👉 Nico (A) decide MOVER: se mueve a montaña
+  👉 Sofi (B) decide MOVER: demasiado cansado para moverse
+  👉 Hugo (C) decide MOVER: demasiado cansado para moverse
+
+[Tick 028] ───────────────────────────────────────────────────────
+  Mundo: Bosque: [🍖: 9.5/10.0] | Río: [🍖: 9.5/10.0, 💧: 8.5/10.0] | Lago: [💧: 10.0/10.0] | 🎯 Sin presa | 🦣 Gran Herbívoro en montaña (14t)
+  Nico (A): Loc: montaña  | Hambre:  54.2 | Sed:  98.9 | Salud:  97.0 | Energía:   0.0 | Emo: tristeza | Mochila: [🍖: 1/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Sofi (B): [Loc: valle    | Hambre:  54.4 | Sed:  52.0 | Salud:  96.0 | Emo: tristeza]
+            Estima a Hugo (c): [Loc: valle    | Hambre:  54.6 | Sed:  93.4 | Salud:  98.0 | Emo: tristeza]
+  Sofi (B): Loc: cueva    | Hambre:  54.4 | Sed:  52.1 | Salud:  94.0 | Energía:   0.0 | Emo: tristeza | Mochila: [🍖: 1/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: valle    | Hambre:  54.3 | Sed:  90.2 | Salud:  96.0 | Emo: tristeza]
+            Estima a Hugo (C): [Loc: valle    | Hambre:  54.6 | Sed:  93.3 | Salud:  98.0 | Emo: tristeza]
+  Hugo (C): Loc: pantano  | Hambre:  54.6 | Sed:  93.4 | Salud:  94.8 | Energía:   0.0 | Emo: tristeza | Mochila: [🍖: 0/1, 💧: 1/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: valle    | Hambre:  54.3 | Sed:  90.2 | Salud:  96.0 | Emo: tristeza]
+            Estima a Sofi (B): [Loc: valle    | Hambre:  54.4 | Sed:  51.9 | Salud:  96.0 | Emo: tristeza]
+  👉 Nico (A) decide MOVER: colapsa por cansancio extremo y duerme forzosamente
+  👉 Sofi (B) decide MOVER: colapsa por cansancio extremo y duerme forzosamente
+  👉 Hugo (C) decide MOVER: colapsa por cansancio extremo y duerme forzosamente
+
+[Tick 029] ───────────────────────────────────────────────────────
+  Mundo: Bosque: [🍖: 9.5/10.0] | Río: [🍖: 9.5/10.0, 💧: 9.0/10.0] | Lago: [💧: 10.0/10.0] | 🎯 Sin presa | 🦣 Gran Herbívoro en montaña (13t)
+  Nico (A): Loc: montaña  | Hambre:  54.1 | Sed:  98.4 | Salud:  95.0 | Energía:   7.8 | Emo: tristeza | Mochila: [🍖: 1/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Sofi (B): [Loc: valle    | Hambre:  54.2 | Sed:  51.0 | Salud:  96.0 | Emo: tristeza]
+            Estima a Hugo (c): [Loc: valle    | Hambre:  54.4 | Sed:  92.4 | Salud:  98.0 | Emo: tristeza]
+  Sofi (B): Loc: cueva    | Hambre:  54.3 | Sed:  51.5 | Salud:  92.0 | Energía:   7.8 | Emo: tristeza | Mochila: [🍖: 1/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: valle    | Hambre:  54.1 | Sed:  89.2 | Salud:  96.0 | Emo: tristeza]
+            Estima a Hugo (C): [Loc: valle    | Hambre:  54.4 | Sed:  92.3 | Salud:  98.0 | Emo: tristeza]
+  Hugo (C): Loc: pantano  | Hambre:  54.5 | Sed:  92.9 | Salud:  92.8 | Energía:   7.8 | Emo: tristeza | Mochila: [🍖: 0/1, 💧: 1/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: valle    | Hambre:  54.1 | Sed:  89.2 | Salud:  96.0 | Emo: tristeza]
+            Estima a Sofi (B): [Loc: valle    | Hambre:  54.2 | Sed:  50.9 | Salud:  96.0 | Emo: tristeza]
+  👉 Nico (A) decide MOVER: se mueve a pradera
+  👉 Sofi (B) decide MOVER: se mueve a pradera
+  👉 Hugo (C) decide MOVER: se mueve a ruinas
+
+[Tick 030] ───────────────────────────────────────────────────────
+  Mundo: Bosque: [🍖: 9.5/10.0] | Río: [🍖: 9.5/10.0, 💧: 9.5/10.0] | Lago: [💧: 10.0/10.0] | 🎯 Sin presa | 🦣 Gran Herbívoro en montaña (12t)
+  Nico (A): Loc: pradera  | Hambre:  53.9 | Sed:  97.3 | Salud:  95.0 | Energía:   1.6 | Emo: tristeza | Mochila: [🍖: 1/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Sofi (B): [Loc: pradera  | Hambre:  54.1 | Sed:  50.4 | Salud:  92.0 | Emo: tristeza]
+            Estima a Hugo (c): [Loc: valle    | Hambre:  54.2 | Sed:  91.4 | Salud:  98.0 | Emo: tristeza]
+  Sofi (B): Loc: pradera  | Hambre:  54.1 | Sed:  50.4 | Salud:  92.0 | Energía:   1.6 | Emo: tristeza | Mochila: [🍖: 1/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: pradera  | Hambre:  53.9 | Sed:  97.3 | Salud:  95.0 | Emo: tristeza]
+            Estima a Hugo (C): [Loc: valle    | Hambre:  54.2 | Sed:  91.3 | Salud:  98.0 | Emo: tristeza]
+  Hugo (C): Loc: ruinas   | Hambre:  54.3 | Sed:  91.8 | Salud:  92.8 | Energía:   1.6 | Emo: tristeza | Mochila: [🍖: 0/1, 💧: 1/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: valle    | Hambre:  53.9 | Sed:  88.2 | Salud:  96.0 | Emo: tristeza]
+            Estima a Sofi (B): [Loc: valle    | Hambre:  54.0 | Sed:  49.9 | Salud:  96.0 | Emo: tristeza]
+  👉 Nico (A) decide DAR: mochila vacía, compañeros saciados o solos
+  👉 Sofi (B) decide DAR: mochila vacía, compañeros saciados o solos
+  👉 Hugo (C) decide BEBER: bebe agua de su mochila
+
+[Tick 031] ───────────────────────────────────────────────────────
+  Mundo: Bosque: [🍖: 9.5/10.0] | Río: [🍖: 9.5/10.0, 💧: 10.0/10.0] | Lago: [💧: 10.0/10.0] | 🎯 Sin presa | 🦣 Gran Herbívoro en montaña (11t)
+  Nico (A): Loc: pradera  | Hambre:  53.6 | Sed:  96.2 | Salud:  95.0 | Energía:   0.0 | Emo: tristeza | Mochila: [🍖: 1/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Sofi (B): [Loc: pradera  | Hambre:  53.9 | Sed:  49.3 | Salud:  92.0 | Emo: tristeza]
+            Estima a Hugo (c): [Loc: valle    | Hambre:  54.0 | Sed:  90.4 | Salud:  98.0 | Emo: tristeza]
+  Sofi (B): Loc: pradera  | Hambre:  53.9 | Sed:  49.3 | Salud:  92.0 | Energía:   0.0 | Emo: tristeza | Mochila: [🍖: 1/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: pradera  | Hambre:  53.6 | Sed:  96.2 | Salud:  95.0 | Emo: tristeza]
+            Estima a Hugo (C): [Loc: valle    | Hambre:  54.0 | Sed:  90.3 | Salud:  98.0 | Emo: tristeza]
+  Hugo (C): Loc: ruinas   | Hambre:  54.0 | Sed: 100.0 | Salud:  95.8 | Energía:   0.0 | Emo: tristeza | Mochila: [🍖: 0/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: valle    | Hambre:  53.7 | Sed:  87.2 | Salud:  96.0 | Emo: tristeza]
+            Estima a Sofi (B): [Loc: valle    | Hambre:  53.8 | Sed:  48.9 | Salud:  96.0 | Emo: tristeza]
+  👉 Nico (A) decide DAR: colapsa por cansancio extremo y duerme forzosamente
+  👉 Sofi (B) decide DAR: colapsa por cansancio extremo y duerme forzosamente
+  👉 Hugo (C) decide MOVER: colapsa por cansancio extremo y duerme forzosamente
+
+[Tick 032] ───────────────────────────────────────────────────────
+  Mundo: Bosque: [🍖: 9.5/10.0] | Río: [🍖: 9.5/10.0, 💧: 10.0/10.0] | Lago: [💧: 10.0/10.0] | 🎯 Sin presa | 🦣 Gran Herbívoro en montaña (10t)
+  Nico (A): Loc: pradera  | Hambre:  53.5 | Sed:  95.6 | Salud:  93.0 | Energía:   7.8 | Emo: tristeza | Mochila: [🍖: 1/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Sofi (B): [Loc: pradera  | Hambre:  53.8 | Sed:  48.8 | Salud:  90.0 | Emo: tristeza]
+            Estima a Hugo (c): [Loc: valle    | Hambre:  53.8 | Sed:  89.4 | Salud:  98.0 | Emo: tristeza]
+  Sofi (B): Loc: pradera  | Hambre:  53.8 | Sed:  48.8 | Salud:  90.0 | Energía:   7.8 | Emo: tristeza | Mochila: [🍖: 1/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: pradera  | Hambre:  53.5 | Sed:  95.6 | Salud:  93.0 | Emo: tristeza]
+            Estima a Hugo (C): [Loc: valle    | Hambre:  53.8 | Sed:  89.3 | Salud:  98.0 | Emo: tristeza]
+  Hugo (C): Loc: ruinas   | Hambre:  53.9 | Sed:  99.5 | Salud:  93.8 | Energía:   8.0 | Emo: tristeza | Mochila: [🍖: 0/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: valle    | Hambre:  53.5 | Sed:  86.2 | Salud:  96.0 | Emo: tristeza]
+            Estima a Sofi (B): [Loc: valle    | Hambre:  53.6 | Sed:  47.9 | Salud:  96.0 | Emo: tristeza]
+  👉 Nico (A) decide DAR: mochila vacía, compañeros saciados o solos
+  👉 Sofi (B) decide DAR: mochila vacía, compañeros saciados o solos
+  👉 Hugo (C) decide MOVER: se mueve a bosque
+
+[Tick 033] ───────────────────────────────────────────────────────
+  Mundo: Bosque: [🍖: 9.5/10.0] | Río: [🍖: 9.5/10.0, 💧: 10.0/10.0] | Lago: [💧: 10.0/10.0] | 🎯 Sin presa | 🦣 Gran Herbívoro en pantano (9t)
+  Nico (A): Loc: pradera  | Hambre:  53.3 | Sed:  94.5 | Salud:  93.0 | Energía:   5.6 | Emo: tristeza | Mochila: [🍖: 1/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Sofi (B): [Loc: pradera  | Hambre:  53.5 | Sed:  47.7 | Salud:  90.0 | Emo: tristeza]
+            Estima a Hugo (c): [Loc: valle    | Hambre:  53.6 | Sed:  88.4 | Salud:  98.0 | Emo: tristeza]
+  Sofi (B): Loc: pradera  | Hambre:  53.5 | Sed:  47.7 | Salud:  90.0 | Energía:   5.6 | Emo: tristeza | Mochila: [🍖: 1/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: pradera  | Hambre:  53.3 | Sed:  94.5 | Salud:  93.0 | Emo: tristeza]
+            Estima a Hugo (C): [Loc: valle    | Hambre:  53.6 | Sed:  88.3 | Salud:  98.0 | Emo: tristeza]
+  Hugo (C): Loc: bosque   | Hambre:  53.7 | Sed:  98.5 | Salud:  93.8 | Energía:   2.0 | Emo: tristeza | Mochila: [🍖: 0/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: valle    | Hambre:  53.3 | Sed:  85.2 | Salud:  96.0 | Emo: tristeza]
+            Estima a Sofi (B): [Loc: valle    | Hambre:  53.4 | Sed:  46.9 | Salud:  96.0 | Emo: tristeza]
+  👉 Nico (A) decide MOVER: se mueve a montaña
+  👉 Sofi (B) decide DAR: mochila vacía, compañeros saciados o solos
+  👉 Hugo (C) decide MOVER: demasiado cansado para moverse
+
+[Tick 034] ───────────────────────────────────────────────────────
+  Mundo: Bosque: [🍖: 9.5/10.0] | Río: [🍖: 9.5/10.0, 💧: 10.0/10.0] | Lago: [💧: 10.0/10.0] | 🎯 Sin presa | 🦣 Gran Herbívoro en pantano (8t)
+  Nico (A): Loc: montaña  | Hambre:  53.1 | Sed:  93.4 | Salud:  93.0 | Energía:   0.0 | Emo: tristeza | Mochila: [🍖: 1/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Sofi (B): [Loc: pradera  | Hambre:  53.3 | Sed:  46.7 | Salud:  90.0 | Emo: tristeza]
+            Estima a Hugo (c): [Loc: valle    | Hambre:  53.4 | Sed:  87.4 | Salud:  98.0 | Emo: tristeza]
+  Sofi (B): Loc: pradera  | Hambre:  53.3 | Sed:  46.6 | Salud:  90.0 | Energía:   3.4 | Emo: tristeza | Mochila: [🍖: 1/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: pradera  | Hambre:  53.1 | Sed:  93.5 | Salud:  93.0 | Emo: tristeza]
+            Estima a Hugo (C): [Loc: valle    | Hambre:  53.4 | Sed:  87.3 | Salud:  98.0 | Emo: tristeza]
+  Hugo (C): Loc: bosque   | Hambre:  53.5 | Sed:  97.5 | Salud:  93.8 | Energía:   0.0 | Emo: tristeza | Mochila: [🍖: 0/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: valle    | Hambre:  53.1 | Sed:  84.2 | Salud:  96.0 | Emo: tristeza]
+            Estima a Sofi (B): [Loc: valle    | Hambre:  53.2 | Sed:  45.9 | Salud:  96.0 | Emo: tristeza]
+  👉 Nico (A) decide MOVER: colapsa por cansancio extremo y duerme forzosamente
+  👉 Sofi (B) decide MOVER: demasiado cansado para moverse
+  👉 Hugo (C) decide MOVER: colapsa por cansancio extremo y duerme forzosamente
+
+[Tick 035] ───────────────────────────────────────────────────────
+  Mundo: Bosque: [🍖: 9.5/10.0] | Río: [🍖: 9.5/10.0, 💧: 10.0/10.0] | Lago: [💧: 10.0/10.0] | 🎯 Presa en valle (10t) | 🦣 Gran Herbívoro en pantano (7t)
+  Nico (A): Loc: montaña  | Hambre:  53.0 | Sed:  92.9 | Salud:  91.0 | Energía:   7.8 | Emo: tristeza | Mochila: [🍖: 1/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Sofi (B): [Loc: pradera  | Hambre:  53.1 | Sed:  45.7 | Salud:  90.0 | Emo: tristeza]
+            Estima a Hugo (c): [Loc: valle    | Hambre:  53.2 | Sed:  86.4 | Salud:  98.0 | Emo: tristeza]
+  Sofi (B): Loc: pradera  | Hambre:  53.1 | Sed:  45.5 | Salud:  90.0 | Energía:   1.2 | Emo: tristeza | Mochila: [🍖: 1/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: pradera  | Hambre:  52.9 | Sed:  92.5 | Salud:  93.0 | Emo: tristeza]
+            Estima a Hugo (C): [Loc: valle    | Hambre:  53.2 | Sed:  86.3 | Salud:  98.0 | Emo: tristeza]
+  Hugo (C): Loc: bosque   | Hambre:  53.4 | Sed:  97.0 | Salud:  91.8 | Energía:   8.0 | Emo: tristeza | Mochila: [🍖: 0/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: valle    | Hambre:  52.9 | Sed:  83.2 | Salud:  96.0 | Emo: tristeza]
+            Estima a Sofi (B): [Loc: valle    | Hambre:  53.0 | Sed:  44.9 | Salud:  96.0 | Emo: tristeza]
+  👉 Nico (A) decide MOVER: se mueve a lago
+  👉 Sofi (B) decide MOVER: demasiado cansado para moverse
+  👉 Hugo (C) decide MOVER: se mueve a río
+
+[Tick 036] ───────────────────────────────────────────────────────
+  Mundo: Bosque: [🍖: 9.5/10.0] | Río: [🍖: 9.5/10.0, 💧: 10.0/10.0] | Lago: [💧: 10.0/10.0] | 🎯 Presa en valle (9t) | 🦣 Gran Herbívoro en pantano (6t)
+  Nico (A): Loc: lago     | Hambre:  52.8 | Sed:  91.8 | Salud:  91.0 | Energía:   1.6 | Emo: tristeza | Mochila: [🍖: 1/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Sofi (B): [Loc: pradera  | Hambre:  52.9 | Sed:  44.7 | Salud:  90.0 | Emo: tristeza]
+            Estima a Hugo (c): [Loc: valle    | Hambre:  53.0 | Sed:  85.4 | Salud:  98.0 | Emo: tristeza]
+  Sofi (B): Loc: pradera  | Hambre:  52.9 | Sed:  44.4 | Salud:  90.0 | Energía:   0.0 | Emo: tristeza | Mochila: [🍖: 1/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: pradera  | Hambre:  52.7 | Sed:  91.5 | Salud:  93.0 | Emo: tristeza]
+            Estima a Hugo (C): [Loc: valle    | Hambre:  53.0 | Sed:  85.3 | Salud:  98.0 | Emo: tristeza]
+  Hugo (C): Loc: río      | Hambre:  53.2 | Sed:  96.0 | Salud:  91.8 | Energía:   2.0 | Emo: tristeza | Mochila: [🍖: 0/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: valle    | Hambre:  52.7 | Sed:  82.2 | Salud:  96.0 | Emo: tristeza]
+            Estima a Sofi (B): [Loc: valle    | Hambre:  52.8 | Sed:  43.9 | Salud:  96.0 | Emo: tristeza]
+  👉 Nico (A) decide MOVER: demasiado cansado para moverse
+  👉 Sofi (B) decide MOVER: colapsa por cansancio extremo y duerme forzosamente
+  👉 Hugo (C) decide MOVER: demasiado cansado para moverse
+
+[Tick 037] ───────────────────────────────────────────────────────
+  Mundo: Bosque: [🍖: 9.5/10.0] | Río: [🍖: 9.5/10.0, 💧: 9.0/10.0] | Lago: [💧: 9.0/10.0] | 🎯 Presa en valle (8t) | 🦣 Gran Herbívoro en pantano (5t)
+  Nico (A): Loc: lago     | Hambre:  52.5 | Sed:  90.7 | Salud:  91.0 | Energía:   0.0 | Emo: tristeza | Mochila: [🍖: 1/1, 💧: 1/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Sofi (B): [Loc: pradera  | Hambre:  52.7 | Sed:  43.7 | Salud:  90.0 | Emo: tristeza]
+            Estima a Hugo (c): [Loc: valle    | Hambre:  52.8 | Sed:  84.4 | Salud:  98.0 | Emo: tristeza]
+  Sofi (B): Loc: pradera  | Hambre:  52.8 | Sed:  43.8 | Salud:  88.0 | Energía:   7.8 | Emo: tristeza | Mochila: [🍖: 1/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: pradera  | Hambre:  52.5 | Sed:  90.5 | Salud:  93.0 | Emo: tristeza]
+            Estima a Hugo (C): [Loc: valle    | Hambre:  52.8 | Sed:  84.3 | Salud:  98.0 | Emo: tristeza]
+  Hugo (C): Loc: río      | Hambre:  53.0 | Sed:  95.0 | Salud:  91.8 | Energía:   0.0 | Emo: tristeza | Mochila: [🍖: 0/1, 💧: 1/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: valle    | Hambre:  52.5 | Sed:  81.2 | Salud:  96.0 | Emo: tristeza]
+            Estima a Sofi (B): [Loc: valle    | Hambre:  52.6 | Sed:  42.9 | Salud:  96.0 | Emo: tristeza]
+  👉 Nico (A) decide BEBER: colapsa por cansancio extremo y duerme forzosamente
+  👉 Sofi (B) decide MOVER: se mueve a valle
+  👉 Hugo (C) decide BEBER: colapsa por cansancio extremo y duerme forzosamente
+
+[Tick 038] ───────────────────────────────────────────────────────
+  Mundo: Bosque: [🍖: 9.5/10.0] | Río: [🍖: 9.5/10.0, 💧: 9.5/10.0] | Lago: [💧: 9.5/10.0] | 🎯 Presa en valle (7t) | 🦣 Gran Herbívoro en pantano (4t)
+  Nico (A): Loc: lago     | Hambre:  52.4 | Sed:  90.1 | Salud:  89.0 | Energía:   7.6 | Emo: tristeza | Mochila: [🍖: 1/1, 💧: 1/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Sofi (B): [Loc: pradera  | Hambre:  52.5 | Sed:  42.7 | Salud:  90.0 | Emo: tristeza]
+            Estima a Hugo (c): [Loc: valle    | Hambre:  52.6 | Sed:  83.4 | Salud:  98.0 | Emo: tristeza]
+  Sofi (B): Loc: valle    | Hambre:  52.5 | Sed:  42.7 | Salud:  88.0 | Energía:   1.6 | Emo: tristeza | Mochila: [🍖: 1/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: pradera  | Hambre:  52.3 | Sed:  89.5 | Salud:  93.0 | Emo: tristeza]
+            Estima a Hugo (C): [Loc: valle    | Hambre:  52.6 | Sed:  83.3 | Salud:  98.0 | Emo: tristeza]
+  Hugo (C): Loc: río      | Hambre:  52.9 | Sed:  94.5 | Salud:  89.8 | Energía:   7.8 | Emo: tristeza | Mochila: [🍖: 0/1, 💧: 1/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: valle    | Hambre:  52.3 | Sed:  80.2 | Salud:  96.0 | Emo: tristeza]
+            Estima a Sofi (B): [Loc: valle    | Hambre:  52.4 | Sed:  41.9 | Salud:  96.0 | Emo: tristeza]
+  👉 Nico (A) decide BEBER: bebe agua (suelo)
+  👉 Sofi (B) decide MOVER: demasiado cansado para moverse
+  👉 Hugo (C) decide BEBER: bebe agua (suelo)
+
+[Tick 039] ───────────────────────────────────────────────────────
+  Mundo: Bosque: [🍖: 9.5/10.0] | Río: [🍖: 9.5/10.0, 💧: 9.0/10.0] | Lago: [💧: 9.0/10.0] | 🎯 Presa en valle (6t) | 🦣 Gran Herbívoro en pantano (3t)
+  Nico (A): Loc: lago     | Hambre:  52.2 | Sed: 100.0 | Salud:  92.0 | Energía:   5.2 | Emo: tristeza | Mochila: [🍖: 1/1, 💧: 1/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Sofi (B): [Loc: pradera  | Hambre:  52.3 | Sed:  41.7 | Salud:  90.0 | Emo: tristeza]
+            Estima a Hugo (c): [Loc: valle    | Hambre:  52.4 | Sed:  82.4 | Salud:  98.0 | Emo: tristeza]
+  Sofi (B): Loc: valle    | Hambre:  52.3 | Sed:  41.6 | Salud:  88.0 | Energía:   0.0 | Emo: tristeza | Mochila: [🍖: 1/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: pradera  | Hambre:  52.1 | Sed:  88.5 | Salud:  93.0 | Emo: tristeza]
+            Estima a Hugo (C): [Loc: valle    | Hambre:  52.4 | Sed:  82.3 | Salud:  98.0 | Emo: tristeza]
+  Hugo (C): Loc: río      | Hambre:  52.7 | Sed: 100.0 | Salud:  92.8 | Energía:   5.6 | Emo: tristeza | Mochila: [🍖: 0/1, 💧: 1/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: valle    | Hambre:  52.1 | Sed:  79.2 | Salud:  96.0 | Emo: tristeza]
+            Estima a Sofi (B): [Loc: valle    | Hambre:  52.2 | Sed:  40.9 | Salud:  96.0 | Emo: tristeza]
+  👉 Nico (A) decide BEBER: bebe agua (suelo)
+  👉 Sofi (B) decide MOVER: colapsa por cansancio extremo y duerme forzosamente
+  👉 Hugo (C) decide BEBER: bebe agua (suelo)
+
+[Tick 040] ───────────────────────────────────────────────────────
+  Mundo: Bosque: [🍖: 9.5/10.0] | Río: [🍖: 9.5/10.0, 💧: 8.5/10.0] | Lago: [💧: 8.5/10.0] | 🎯 Presa en valle (5t) | 🦣 Gran Herbívoro en pantano (2t)
+  Nico (A): Loc: lago     | Hambre:  51.9 | Sed: 100.0 | Salud:  95.0 | Energía:   2.8 | Emo: tristeza | Mochila: [🍖: 1/1, 💧: 1/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Sofi (B): [Loc: pradera  | Hambre:  52.1 | Sed:  40.7 | Salud:  90.0 | Emo: tristeza]
+            Estima a Hugo (c): [Loc: valle    | Hambre:  52.2 | Sed:  81.4 | Salud:  98.0 | Emo: tristeza]
+  Sofi (B): Loc: valle    | Hambre:  52.2 | Sed:  41.1 | Salud:  86.0 | Energía:   7.8 | Emo: tristeza | Mochila: [🍖: 1/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: pradera  | Hambre:  51.9 | Sed:  87.5 | Salud:  93.0 | Emo: tristeza]
+            Estima a Hugo (C): [Loc: valle    | Hambre:  52.2 | Sed:  81.3 | Salud:  98.0 | Emo: tristeza]
+  Hugo (C): Loc: río      | Hambre:  52.5 | Sed: 100.0 | Salud:  95.8 | Energía:   3.4 | Emo: tristeza | Mochila: [🍖: 0/1, 💧: 1/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: valle    | Hambre:  51.9 | Sed:  78.2 | Salud:  96.0 | Emo: tristeza]
+            Estima a Sofi (B): [Loc: valle    | Hambre:  52.0 | Sed:  39.9 | Salud:  96.0 | Emo: tristeza]
+  👉 Nico (A) decide MOVER: demasiado cansado para moverse
+  👉 Sofi (B) decide MOVER: se mueve a pradera
+  👉 Hugo (C) decide BEBER: bebe agua (suelo)
+
+[Tick 041] ───────────────────────────────────────────────────────
+  Mundo: Bosque: [🍖: 9.5/10.0] | Río: [🍖: 9.5/10.0, 💧: 8.0/10.0] | Lago: [💧: 9.0/10.0] | 🎯 Presa en valle (4t) | 🦣 Gran Herbívoro en ruinas (1t)
+  Nico (A): Loc: lago     | Hambre:  51.7 | Sed:  98.8 | Salud:  95.0 | Energía:   0.4 | Emo: tristeza | Mochila: [🍖: 1/1, 💧: 1/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Sofi (B): [Loc: pradera  | Hambre:  51.9 | Sed:  39.7 | Salud:  90.0 | Emo: tristeza]
+            Estima a Hugo (c): [Loc: valle    | Hambre:  52.0 | Sed:  80.4 | Salud:  98.0 | Emo: tristeza]
+  Sofi (B): Loc: pradera  | Hambre:  52.0 | Sed:  40.0 | Salud:  86.0 | Energía:   1.6 | Emo: tristeza | Mochila: [🍖: 1/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: pradera  | Hambre:  51.7 | Sed:  86.5 | Salud:  93.0 | Emo: tristeza]
+            Estima a Hugo (C): [Loc: valle    | Hambre:  52.0 | Sed:  80.3 | Salud:  98.0 | Emo: tristeza]
+  Hugo (C): Loc: río      | Hambre:  52.3 | Sed: 100.0 | Salud:  98.8 | Energía:   1.2 | Emo: tristeza | Mochila: [🍖: 0/1, 💧: 1/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: valle    | Hambre:  51.7 | Sed:  77.2 | Salud:  96.0 | Emo: tristeza]
+            Estima a Sofi (B): [Loc: valle    | Hambre:  51.8 | Sed:  38.9 | Salud:  96.0 | Emo: tristeza]
+  👉 Nico (A) decide BEBER: bebe agua (suelo)
+  👉 Sofi (B) decide MOVER: demasiado cansado para moverse
+  👉 Hugo (C) decide BEBER: bebe agua (suelo)
+
+[Tick 042] ───────────────────────────────────────────────────────
+  Mundo: Bosque: [🍖: 9.5/10.0] | Río: [🍖: 9.5/10.0, 💧: 7.5/10.0] | Lago: [💧: 8.5/10.0] | 🎯 Presa en valle (3t) | 🦣 Sin Gran Herbívoro
+  Nico (A): Loc: lago     | Hambre:  51.5 | Sed: 100.0 | Salud:  98.0 | Energía:   0.0 | Emo: tristeza | Mochila: [🍖: 1/1, 💧: 1/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Sofi (B): [Loc: pradera  | Hambre:  51.7 | Sed:  38.7 | Salud:  90.0 | Emo: tristeza]
+            Estima a Hugo (c): [Loc: valle    | Hambre:  51.8 | Sed:  79.4 | Salud:  98.0 | Emo: tristeza]
+  Sofi (B): Loc: pradera  | Hambre:  51.8 | Sed:  38.9 | Salud:  86.0 | Energía:   0.0 | Emo: tristeza | Mochila: [🍖: 1/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: pradera  | Hambre:  51.5 | Sed:  85.5 | Salud:  93.0 | Emo: tristeza]
+            Estima a Hugo (C): [Loc: valle    | Hambre:  51.8 | Sed:  79.3 | Salud:  98.0 | Emo: tristeza]
+  Hugo (C): Loc: río      | Hambre:  52.0 | Sed: 100.0 | Salud: 100.0 | Energía:   0.0 | Emo: tristeza | Mochila: [🍖: 0/1, 💧: 1/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: valle    | Hambre:  51.5 | Sed:  76.2 | Salud:  96.0 | Emo: tristeza]
+            Estima a Sofi (B): [Loc: valle    | Hambre:  51.6 | Sed:  37.9 | Salud:  96.0 | Emo: tristeza]
+  👉 Nico (A) decide BEBER: colapsa por cansancio extremo y duerme forzosamente
+  👉 Sofi (B) decide MOVER: colapsa por cansancio extremo y duerme forzosamente
+  👉 Hugo (C) decide MOVER: colapsa por cansancio extremo y duerme forzosamente
+
+[Tick 043] ───────────────────────────────────────────────────────
+  Mundo: Bosque: [🍖: 9.5/10.0] | Río: [🍖: 9.5/10.0, 💧: 8.0/10.0] | Lago: [💧: 9.0/10.0] | 🎯 Presa en valle (2t) | 🦣 Sin Gran Herbívoro
+  Nico (A): Loc: lago     | Hambre:  51.3 | Sed:  99.4 | Salud:  96.0 | Energía:   7.6 | Emo: tristeza | Mochila: [🍖: 1/1, 💧: 1/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Sofi (B): [Loc: pradera  | Hambre:  51.5 | Sed:  37.7 | Salud:  90.0 | Emo: tristeza]
+            Estima a Hugo (c): [Loc: valle    | Hambre:  51.6 | Sed:  78.4 | Salud:  98.0 | Emo: tristeza]
+  Sofi (B): Loc: pradera  | Hambre:  51.7 | Sed:  38.3 | Salud:  84.0 | Energía:   7.8 | Emo: tristeza | Mochila: [🍖: 1/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: pradera  | Hambre:  51.3 | Sed:  84.5 | Salud:  93.0 | Emo: tristeza]
+            Estima a Hugo (C): [Loc: valle    | Hambre:  51.6 | Sed:  78.3 | Salud:  98.0 | Emo: tristeza]
+  Hugo (C): Loc: río      | Hambre:  51.9 | Sed:  99.5 | Salud:  98.0 | Energía:   7.8 | Emo: tristeza | Mochila: [🍖: 0/1, 💧: 1/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: valle    | Hambre:  51.3 | Sed:  75.2 | Salud:  96.0 | Emo: tristeza]
+            Estima a Sofi (B): [Loc: valle    | Hambre:  51.4 | Sed:  36.9 | Salud:  96.0 | Emo: tristeza]
+  👉 Nico (A) decide MOVER: se mueve a pradera (→pradera)
+  👉 Sofi (B) decide MOVER: se mueve a montaña
+  👉 Hugo (C) decide MOVER: se mueve a valle (→valle)
+
+[Tick 044] ───────────────────────────────────────────────────────
+  Mundo: Bosque: [🍖: 9.5/10.0] | Río: [🍖: 9.5/10.0, 💧: 8.5/10.0] | Lago: [💧: 9.5/10.0] | 🎯 Presa en valle (1t) | 🦣 Sin Gran Herbívoro
+  Nico (A): Loc: pradera  | Hambre:  51.1 | Sed:  98.2 | Salud:  96.0 | Energía:   1.2 | Emo: tristeza | Mochila: [🍖: 1/1, 💧: 1/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Sofi (B): [Loc: pradera  | Hambre:  51.3 | Sed:  36.7 | Salud:  90.0 | Emo: tristeza]
+            Estima a Hugo (c): [Loc: valle    | Hambre:  51.4 | Sed:  77.4 | Salud:  98.0 | Emo: tristeza]
+  Sofi (B): Loc: montaña  | Hambre:  51.4 | Sed:  37.2 | Salud:  84.0 | Energía:   1.6 | Emo: tristeza | Mochila: [🍖: 1/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: pradera  | Hambre:  51.1 | Sed:  83.5 | Salud:  93.0 | Emo: tristeza]
+            Estima a Hugo (C): [Loc: valle    | Hambre:  51.4 | Sed:  77.3 | Salud:  98.0 | Emo: tristeza]
+  Hugo (C): Loc: valle    | Hambre:  51.7 | Sed:  98.4 | Salud:  98.0 | Energía:   1.6 | Emo: tristeza | Mochila: [🍖: 0/1, 💧: 1/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: valle    | Hambre:  51.1 | Sed:  74.2 | Salud:  96.0 | Emo: tristeza]
+            Estima a Sofi (B): [Loc: valle    | Hambre:  51.2 | Sed:  35.9 | Salud:  96.0 | Emo: tristeza]
+  👉 Nico (A) decide BEBER: bebe agua de su mochila
+  👉 Sofi (B) decide MOVER: demasiado cansado para moverse
+  👉 Hugo (C) decide BEBER: bebe agua de su mochila
+
+[Tick 045] ───────────────────────────────────────────────────────
+  Mundo: Bosque: [🍖: 9.5/10.0] | Río: [🍖: 9.5/10.0, 💧: 9.0/10.0] | Lago: [💧: 10.0/10.0] | 🎯 Sin presa | 🦣 Sin Gran Herbívoro
+  Nico (A): Loc: pradera  | Hambre:  50.9 | Sed: 100.0 | Salud:  99.0 | Energía:   0.0 | Emo: tristeza | Mochila: [🍖: 1/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Sofi (B): [Loc: pradera  | Hambre:  51.1 | Sed:  35.7 | Salud:  90.0 | Emo: tristeza]
+            Estima a Hugo (c): [Loc: valle    | Hambre:  51.2 | Sed:  76.4 | Salud:  98.0 | Emo: tristeza]
+  Sofi (B): Loc: montaña  | Hambre:  51.2 | Sed:  36.1 | Salud:  84.0 | Energía:   0.0 | Emo: tristeza | Mochila: [🍖: 1/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: pradera  | Hambre:  50.9 | Sed:  82.5 | Salud:  93.0 | Emo: tristeza]
+            Estima a Hugo (C): [Loc: valle    | Hambre:  51.2 | Sed:  76.3 | Salud:  98.0 | Emo: tristeza]
+  Hugo (C): Loc: valle    | Hambre:  51.5 | Sed: 100.0 | Salud: 100.0 | Energía:   0.0 | Emo: tristeza | Mochila: [🍖: 0/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: valle    | Hambre:  50.9 | Sed:  73.2 | Salud:  96.0 | Emo: tristeza]
+            Estima a Sofi (B): [Loc: valle    | Hambre:  51.0 | Sed:  34.9 | Salud:  96.0 | Emo: tristeza]
+  👉 Nico (A) decide MOVER: colapsa por cansancio extremo y duerme forzosamente
+  👉 Sofi (B) decide MOVER: colapsa por cansancio extremo y duerme forzosamente
+  👉 Hugo (C) decide MOVER: colapsa por cansancio extremo y duerme forzosamente
+
+[Tick 046] ───────────────────────────────────────────────────────
+  Mundo: Bosque: [🍖: 9.5/10.0] | Río: [🍖: 9.5/10.0, 💧: 9.5/10.0] | Lago: [💧: 10.0/10.0] | 🎯 Sin presa | 🦣 Sin Gran Herbívoro
+  Nico (A): Loc: pradera  | Hambre:  50.8 | Sed:  99.5 | Salud:  97.0 | Energía:   7.8 | Emo: tristeza | Mochila: [🍖: 1/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Sofi (B): [Loc: pradera  | Hambre:  50.9 | Sed:  34.7 | Salud:  90.0 | Emo: tristeza]
+            Estima a Hugo (c): [Loc: valle    | Hambre:  51.0 | Sed:  75.4 | Salud:  98.0 | Emo: tristeza]
+  Sofi (B): Loc: montaña  | Hambre:  51.1 | Sed:  35.6 | Salud:  82.0 | Energía:   7.8 | Emo: tristeza | Mochila: [🍖: 1/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: pradera  | Hambre:  50.7 | Sed:  81.5 | Salud:  93.0 | Emo: tristeza]
+            Estima a Hugo (C): [Loc: valle    | Hambre:  51.0 | Sed:  75.3 | Salud:  98.0 | Emo: tristeza]
+  Hugo (C): Loc: valle    | Hambre:  51.4 | Sed:  99.5 | Salud:  98.0 | Energía:   8.0 | Emo: tristeza | Mochila: [🍖: 0/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: valle    | Hambre:  50.7 | Sed:  72.2 | Salud:  96.0 | Emo: tristeza]
+            Estima a Sofi (B): [Loc: valle    | Hambre:  50.8 | Sed:  33.9 | Salud:  96.0 | Emo: tristeza]
+  👉 Nico (A) decide MOVER: se mueve a lago
+  👉 Sofi (B) decide MOVER: se mueve a lago
+  👉 Hugo (C) decide MOVER: se mueve a cueva | tormenta
+
+[Tick 047] ───────────────────────────────────────────────────────
+  Mundo: Bosque: [🍖: 9.5/10.0] | Río: [🍖: 9.5/10.0, 💧: 10.0/10.0] | Lago: [💧: 10.0/10.0] | 🎯 Sin presa | 🦣 Sin Gran Herbívoro
+  Nico (A): Loc: lago     | Hambre:  50.5 | Sed:  98.4 | Salud:  97.0 | Energía:   1.6 | Emo: tristeza | Mochila: [🍖: 1/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Sofi (B): [Loc: lago     | Hambre:  50.9 | Sed:  34.5 | Salud:  82.0 | Emo: tristeza]
+            Estima a Hugo (c): [Loc: valle    | Hambre:  50.8 | Sed:  74.4 | Salud:  98.0 | Emo: tristeza]
+  Sofi (B): Loc: lago     | Hambre:  50.9 | Sed:  34.5 | Salud:  82.0 | Energía:   1.6 | Emo: tristeza | Mochila: [🍖: 1/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: lago     | Hambre:  50.5 | Sed:  98.4 | Salud:  97.0 | Emo: tristeza]
+            Estima a Hugo (C): [Loc: valle    | Hambre:  50.8 | Sed:  74.3 | Salud:  98.0 | Emo: tristeza]
+  Hugo (C): Loc: cueva    | Hambre:  51.2 | Sed:  98.5 | Salud:  96.8 | Energía:   0.0 | Emo: tristeza | Mochila: [🍖: 0/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: valle    | Hambre:  50.5 | Sed:  71.2 | Salud:  96.0 | Emo: tristeza]
+            Estima a Sofi (B): [Loc: valle    | Hambre:  50.6 | Sed:  32.9 | Salud:  96.0 | Emo: tristeza]
+  👉 Nico (A) decide BEBER: bebe agua (suelo)
+  👉 Sofi (B) decide DAR: mochila vacía, compañeros saciados o solos
+  👉 Hugo (C) decide MOVER: colapsa por cansancio extremo y duerme forzosamente
+
+[Tick 048] ───────────────────────────────────────────────────────
+  Mundo: Bosque: [🍖: 9.5/10.0] | Río: [🍖: 9.5/10.0, 💧: 10.0/10.0] | Lago: [💧: 8.0/10.0] | 🎯 Sin presa | 🦣 Sin Gran Herbívoro
+  Nico (A): Loc: lago     | Hambre:  50.3 | Sed: 100.0 | Salud: 100.0 | Energía:   0.0 | Emo: tristeza | Mochila: [🍖: 1/1, 💧: 1/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Sofi (B): [Loc: lago     | Hambre:  50.7 | Sed:  33.4 | Salud:  82.0 | Emo: tristeza]
+            Estima a Hugo (c): [Loc: valle    | Hambre:  50.6 | Sed:  73.4 | Salud:  98.0 | Emo: tristeza]
+  Sofi (B): Loc: lago     | Hambre:  50.7 | Sed:  33.4 | Salud:  82.0 | Energía:   0.0 | Emo: tristeza | Mochila: [🍖: 1/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: lago     | Hambre:  50.3 | Sed: 100.0 | Salud: 100.0 | Emo: tristeza]
+            Estima a Hugo (C): [Loc: valle    | Hambre:  50.6 | Sed:  73.3 | Salud:  98.0 | Emo: tristeza]
+  Hugo (C): Loc: cueva    | Hambre:  51.1 | Sed:  98.0 | Salud:  94.8 | Energía:   8.0 | Emo: tristeza | Mochila: [🍖: 0/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: valle    | Hambre:  50.3 | Sed:  70.2 | Salud:  96.0 | Emo: tristeza]
+            Estima a Sofi (B): [Loc: valle    | Hambre:  50.4 | Sed:  31.9 | Salud:  96.0 | Emo: tristeza]
+  👉 Nico (A) decide BEBER: colapsa por cansancio extremo y duerme forzosamente
+  👉 Sofi (B) decide DAR: colapsa por cansancio extremo y duerme forzosamente
+  👉 Hugo (C) decide MOVER: se mueve a valle
+
+[Tick 049] ───────────────────────────────────────────────────────
+  Mundo: Bosque: [🍖: 9.5/10.0] | Río: [🍖: 9.5/10.0, 💧: 10.0/10.0] | Lago: [💧: 8.5/10.0] | 🎯 Sin presa | 🦣 Sin Gran Herbívoro
+  Nico (A): Loc: lago     | Hambre:  50.2 | Sed:  99.4 | Salud:  98.0 | Energía:   7.6 | Emo: tristeza | Mochila: [🍖: 1/1, 💧: 1/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Sofi (B): [Loc: lago     | Hambre:  50.6 | Sed:  32.8 | Salud:  80.0 | Emo: tristeza]
+            Estima a Hugo (c): [Loc: valle    | Hambre:  50.4 | Sed:  72.4 | Salud:  98.0 | Emo: tristeza]
+  Sofi (B): Loc: lago     | Hambre:  50.6 | Sed:  32.8 | Salud:  80.0 | Energía:   7.8 | Emo: tristeza | Mochila: [🍖: 1/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: lago     | Hambre:  50.2 | Sed:  99.4 | Salud:  98.0 | Emo: tristeza]
+            Estima a Hugo (C): [Loc: valle    | Hambre:  50.4 | Sed:  72.3 | Salud:  98.0 | Emo: tristeza]
+  Hugo (C): Loc: valle    | Hambre:  50.9 | Sed:  97.0 | Salud:  94.8 | Energía:   2.0 | Emo: tristeza | Mochila: [🍖: 0/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: valle    | Hambre:  50.1 | Sed:  69.2 | Salud:  96.0 | Emo: tristeza]
+            Estima a Sofi (B): [Loc: valle    | Hambre:  50.2 | Sed:  30.9 | Salud:  96.0 | Emo: tristeza]
+  👉 Nico (A) decide DAR: intenta dar agua a B pero no ha sido solicitada
+  👉 Sofi (B) decide DAR: mochila vacía, compañeros saciados o solos
+  👉 Hugo (C) decide MOVER: demasiado cansado para moverse
+
+[Tick 050] ───────────────────────────────────────────────────────
+  Mundo: Bosque: [🍖: 9.5/10.0] | Río: [🍖: 9.5/10.0, 💧: 10.0/10.0] | Lago: [💧: 9.0/10.0] | 🎯 Sin presa | 🦣 Sin Gran Herbívoro
+  Nico (A): Loc: lago     | Hambre:  50.0 | Sed:  98.2 | Salud:  98.0 | Energía:   5.2 | Emo: tristeza | Mochila: [🍖: 1/1, 💧: 1/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Sofi (B): [Loc: lago     | Hambre:  50.3 | Sed:  31.7 | Salud:  80.0 | Emo: tristeza]
+            Estima a Hugo (c): [Loc: valle    | Hambre:  50.2 | Sed:  71.4 | Salud:  98.0 | Emo: tristeza]
+  Sofi (B): Loc: lago     | Hambre:  50.3 | Sed:  31.7 | Salud:  80.0 | Energía:   5.6 | Emo: tristeza | Mochila: [🍖: 1/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: lago     | Hambre:  50.0 | Sed:  98.2 | Salud:  98.0 | Emo: tristeza]
+            Estima a Hugo (C): [Loc: valle    | Hambre:  50.2 | Sed:  71.3 | Salud:  98.0 | Emo: tristeza]
+  Hugo (C): Loc: valle    | Hambre:  50.7 | Sed:  96.0 | Salud:  94.8 | Energía:   0.0 | Emo: tristeza | Mochila: [🍖: 0/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: valle    | Hambre:  49.9 | Sed:  68.2 | Salud:  96.0 | Emo: tristeza]
+            Estima a Sofi (B): [Loc: valle    | Hambre:  50.0 | Sed:  29.9 | Salud:  96.0 | Emo: tristeza]
+  👉 Nico (A) decide MOVER: se mueve a cueva
+  👉 Sofi (B) decide DAR: mochila vacía, compañeros saciados o solos
+  👉 Hugo (C) decide MOVER: colapsa por cansancio extremo y duerme forzosamente
+
+[Tick 051] ───────────────────────────────────────────────────────
+  Mundo: Bosque: [🍖: 9.5/10.0] | Río: [🍖: 9.5/10.0, 💧: 10.0/10.0] | Lago: [💧: 9.5/10.0] | 🎯 Sin presa | 🦣 Sin Gran Herbívoro
+  Nico (A): Loc: cueva    | Hambre:  49.7 | Sed:  97.0 | Salud:  98.0 | Energía:   0.0 | Emo: tristeza | Mochila: [🍖: 1/1, 💧: 1/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Sofi (B): [Loc: lago     | Hambre:  50.1 | Sed:  30.7 | Salud:  80.0 | Emo: tristeza]
+            Estima a Hugo (c): [Loc: valle    | Hambre:  50.0 | Sed:  70.4 | Salud:  98.0 | Emo: tristeza]
+  Sofi (B): Loc: lago     | Hambre:  50.1 | Sed:  30.6 | Salud:  80.0 | Energía:   3.4 | Emo: tristeza | Mochila: [🍖: 1/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: lago     | Hambre:  49.8 | Sed:  97.2 | Salud:  98.0 | Emo: tristeza]
+            Estima a Hugo (C): [Loc: valle    | Hambre:  50.0 | Sed:  70.3 | Salud:  98.0 | Emo: tristeza]
+  Hugo (C): Loc: valle    | Hambre:  50.6 | Sed:  95.5 | Salud:  92.8 | Energía:   8.0 | Emo: tristeza | Mochila: [🍖: 0/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: valle    | Hambre:  49.7 | Sed:  67.2 | Salud:  96.0 | Emo: tristeza]
+            Estima a Sofi (B): [Loc: valle    | Hambre:  49.8 | Sed:  28.9 | Salud:  96.0 | Emo: tristeza]
+  👉 Nico (A) decide BEBER: colapsa por cansancio extremo y duerme forzosamente
+  👉 Sofi (B) decide MOVER: demasiado cansado para moverse
+  👉 Hugo (C) decide MOVER: se mueve a río
+
+[Tick 052] ───────────────────────────────────────────────────────
+  Mundo: Bosque: [🍖: 9.5/10.0] | Río: [🍖: 9.5/10.0, 💧: 10.0/10.0] | Lago: [💧: 10.0/10.0] | 🎯 Sin presa | 🦣 Sin Gran Herbívoro
+  Nico (A): Loc: cueva    | Hambre:  49.6 | Sed:  96.4 | Salud:  96.0 | Energía:   7.6 | Emo: tristeza | Mochila: [🍖: 1/1, 💧: 1/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Sofi (B): [Loc: lago     | Hambre:  49.9 | Sed:  29.7 | Salud:  80.0 | Emo: tristeza]
+            Estima a Hugo (c): [Loc: valle    | Hambre:  49.8 | Sed:  69.4 | Salud:  98.0 | Emo: tristeza]
+  Sofi (B): Loc: lago     | Hambre:  49.9 | Sed:  29.5 | Salud:  80.0 | Energía:   1.2 | Emo: tristeza | Mochila: [🍖: 1/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: lago     | Hambre:  49.6 | Sed:  96.2 | Salud:  98.0 | Emo: tristeza]
+            Estima a Hugo (C): [Loc: valle    | Hambre:  49.8 | Sed:  69.3 | Salud:  98.0 | Emo: tristeza]
+  Hugo (C): Loc: río      | Hambre:  50.4 | Sed:  94.5 | Salud:  92.8 | Energía:   2.0 | Emo: tristeza | Mochila: [🍖: 0/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: valle    | Hambre:  49.5 | Sed:  66.2 | Salud:  96.0 | Emo: tristeza]
+            Estima a Sofi (B): [Loc: valle    | Hambre:  49.6 | Sed:  27.9 | Salud:  96.0 | Emo: tristeza]
+  👉 Nico (A) decide BEBER: bebe agua de su mochila
+  👉 Sofi (B) decide MOVER: demasiado cansado para moverse
+  👉 Hugo (C) decide MOVER: demasiado cansado para moverse
+
+[Tick 053] ───────────────────────────────────────────────────────
+  Mundo: Bosque: [🍖: 9.5/10.0] | Río: [🍖: 9.5/10.0, 💧: 9.0/10.0] | Lago: [💧: 10.0/10.0] | 🎯 Sin presa | 🦣 Sin Gran Herbívoro
+  Nico (A): Loc: cueva    | Hambre:  49.4 | Sed: 100.0 | Salud:  99.0 | Energía:   5.2 | Emo: tristeza | Mochila: [🍖: 1/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Sofi (B): [Loc: lago     | Hambre:  49.7 | Sed:  28.7 | Salud:  80.0 | Emo: tristeza]
+            Estima a Hugo (c): [Loc: valle    | Hambre:  49.6 | Sed:  68.4 | Salud:  98.0 | Emo: tristeza]
+  Sofi (B): Loc: lago     | Hambre:  49.7 | Sed:  28.4 | Salud:  80.0 | Energía:   0.0 | Emo: tristeza | Mochila: [🍖: 1/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: lago     | Hambre:  49.4 | Sed:  95.2 | Salud:  98.0 | Emo: tristeza]
+            Estima a Hugo (C): [Loc: valle    | Hambre:  49.6 | Sed:  68.3 | Salud:  98.0 | Emo: tristeza]
+  Hugo (C): Loc: río      | Hambre:  50.2 | Sed:  93.5 | Salud:  92.8 | Energía:   0.0 | Emo: tristeza | Mochila: [🍖: 0/1, 💧: 1/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: valle    | Hambre:  49.3 | Sed:  65.2 | Salud:  96.0 | Emo: tristeza]
+            Estima a Sofi (B): [Loc: valle    | Hambre:  49.4 | Sed:  26.9 | Salud:  96.0 | Emo: tristeza]
+  👉 Nico (A) decide MOVER: se mueve a lago (→lago)
+  👉 Sofi (B) decide MOVER: colapsa por cansancio extremo y duerme forzosamente
+  👉 Hugo (C) decide BEBER: colapsa por cansancio extremo y duerme forzosamente
+
+[Tick 054] ───────────────────────────────────────────────────────
+  Mundo: Bosque: [🍖: 9.5/10.0] | Río: [🍖: 9.5/10.0, 💧: 9.5/10.0] | Lago: [💧: 10.0/10.0] | 🎯 Sin presa | 🦣 Sin Gran Herbívoro
+  Nico (A): Loc: lago     | Hambre:  49.1 | Sed:  98.9 | Salud:  99.0 | Energía:   0.0 | Emo: tristeza | Mochila: [🍖: 1/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Sofi (B): [Loc: lago     | Hambre:  49.6 | Sed:  27.9 | Salud:  78.0 | Emo: tristeza]
+            Estima a Hugo (c): [Loc: valle    | Hambre:  49.4 | Sed:  67.4 | Salud:  98.0 | Emo: tristeza]
+  Sofi (B): Loc: lago     | Hambre:  49.6 | Sed:  27.9 | Salud:  78.0 | Energía:   7.8 | Emo: tristeza | Mochila: [🍖: 1/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: lago     | Hambre:  49.1 | Sed:  98.9 | Salud:  99.0 | Emo: tristeza]
+            Estima a Hugo (C): [Loc: valle    | Hambre:  49.4 | Sed:  67.3 | Salud:  98.0 | Emo: tristeza]
+  Hugo (C): Loc: río      | Hambre:  50.1 | Sed:  93.0 | Salud:  90.8 | Energía:   7.8 | Emo: tristeza | Mochila: [🍖: 0/1, 💧: 1/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: valle    | Hambre:  49.1 | Sed:  64.2 | Salud:  96.0 | Emo: tristeza]
+            Estima a Sofi (B): [Loc: valle    | Hambre:  49.2 | Sed:  25.9 | Salud:  96.0 | Emo: tristeza]
+  👉 Nico (A) decide BEBER: colapsa por cansancio extremo y duerme forzosamente
+  👉 Sofi (B) decide DAR: mochila vacía, compañeros saciados o solos
+  👉 Hugo (C) decide BEBER: bebe agua (suelo)
+
+[Tick 055] ───────────────────────────────────────────────────────
+  Mundo: Bosque: [🍖: 9.5/10.0] | Río: [🍖: 9.5/10.0, 💧: 9.0/10.0] | Lago: [💧: 9.0/10.0] | 🎯 Sin presa | 🦣 Sin Gran Herbívoro
+  Nico (A): Loc: lago     | Hambre:  49.0 | Sed:  98.4 | Salud:  97.0 | Energía:   7.8 | Emo: tristeza | Mochila: [🍖: 1/1, 💧: 1/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Sofi (B): [Loc: lago     | Hambre:  49.4 | Sed:  26.8 | Salud:  78.0 | Emo: tristeza]
+            Estima a Hugo (c): [Loc: valle    | Hambre:  49.2 | Sed:  66.4 | Salud:  98.0 | Emo: tristeza]
+  Sofi (B): Loc: lago     | Hambre:  49.4 | Sed:  26.8 | Salud:  78.0 | Energía:   5.6 | Emo: tristeza | Mochila: [🍖: 1/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: lago     | Hambre:  49.0 | Sed:  98.4 | Salud:  97.0 | Emo: tristeza]
+            Estima a Hugo (C): [Loc: valle    | Hambre:  49.2 | Sed:  66.3 | Salud:  98.0 | Emo: tristeza]
+  Hugo (C): Loc: río      | Hambre:  49.9 | Sed: 100.0 | Salud:  93.8 | Energía:   5.6 | Emo: tristeza | Mochila: [🍖: 0/1, 💧: 1/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: valle    | Hambre:  48.9 | Sed:  63.2 | Salud:  96.0 | Emo: tristeza]
+            Estima a Sofi (B): [Loc: valle    | Hambre:  49.0 | Sed:  24.9 | Salud:  96.0 | Emo: tristeza]
+  👉 Nico (A) decide MOVER: se mueve a pradera
+  👉 Sofi (B) decide DAR: mochila vacía, compañeros saciados o solos
+  👉 Hugo (C) decide MOVER: se mueve a valle (→valle)
+
+[Tick 056] ───────────────────────────────────────────────────────
+  Mundo: Bosque: [🍖: 9.5/10.0] | Río: [🍖: 9.5/10.0, 💧: 9.5/10.0] | Lago: [💧: 9.5/10.0] | 🎯 Sin presa | 🦣 Sin Gran Herbívoro
+  Nico (A): Loc: pradera  | Hambre:  48.8 | Sed:  97.2 | Salud:  97.0 | Energía:   1.4 | Emo: tristeza | Mochila: [🍖: 1/1, 💧: 1/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Sofi (B): [Loc: lago     | Hambre:  49.2 | Sed:  25.8 | Salud:  78.0 | Emo: tristeza]
+            Estima a Hugo (c): [Loc: valle    | Hambre:  49.0 | Sed:  65.4 | Salud:  98.0 | Emo: tristeza]
+  Sofi (B): Loc: lago     | Hambre:  49.1 | Sed:  25.7 | Salud:  78.0 | Energía:   3.4 | Emo: tristeza | Mochila: [🍖: 1/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: lago     | Hambre:  48.8 | Sed:  97.4 | Salud:  97.0 | Emo: tristeza]
+            Estima a Hugo (C): [Loc: valle    | Hambre:  49.0 | Sed:  65.3 | Salud:  98.0 | Emo: tristeza]
+  Hugo (C): Loc: valle    | Hambre:  49.6 | Sed:  98.9 | Salud:  93.8 | Energía:   0.0 | Emo: tristeza | Mochila: [🍖: 0/1, 💧: 1/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: valle    | Hambre:  48.7 | Sed:  62.2 | Salud:  96.0 | Emo: tristeza]
+            Estima a Sofi (B): [Loc: valle    | Hambre:  48.8 | Sed:  23.9 | Salud:  96.0 | Emo: tristeza]
+  👉 Nico (A) decide BEBER: bebe agua de su mochila
+  👉 Sofi (B) decide MOVER: demasiado cansado para moverse
+  👉 Hugo (C) decide MOVER: colapsa por cansancio extremo y duerme forzosamente
+
+[Tick 057] ───────────────────────────────────────────────────────
+  Mundo: Bosque: [🍖: 9.5/10.0] | Río: [🍖: 9.5/10.0, 💧: 10.0/10.0] | Lago: [💧: 10.0/10.0] | 🎯 Sin presa | 🦣 Sin Gran Herbívoro
+  Nico (A): Loc: pradera  | Hambre:  48.5 | Sed: 100.0 | Salud: 100.0 | Energía:   0.0 | Emo: tristeza | Mochila: [🍖: 1/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Sofi (B): [Loc: lago     | Hambre:  49.0 | Sed:  24.8 | Salud:  78.0 | Emo: tristeza]
+            Estima a Hugo (c): [Loc: valle    | Hambre:  48.8 | Sed:  64.4 | Salud:  98.0 | Emo: tristeza]
+  Sofi (B): Loc: lago     | Hambre:  48.9 | Sed:  24.6 | Salud:  78.0 | Energía:   1.2 | Emo: tristeza | Mochila: [🍖: 1/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: lago     | Hambre:  48.6 | Sed:  96.4 | Salud:  97.0 | Emo: tristeza]
+            Estima a Hugo (C): [Loc: valle    | Hambre:  48.8 | Sed:  64.3 | Salud:  98.0 | Emo: tristeza]
+  Hugo (C): Loc: valle    | Hambre:  49.5 | Sed:  98.4 | Salud:  91.8 | Energía:   7.8 | Emo: tristeza | Mochila: [🍖: 0/1, 💧: 1/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: valle    | Hambre:  48.5 | Sed:  61.2 | Salud:  96.0 | Emo: tristeza]
+            Estima a Sofi (B): [Loc: valle    | Hambre:  48.6 | Sed:  22.9 | Salud:  96.0 | Emo: tristeza]
+  👉 Nico (A) decide MOVER: colapsa por cansancio extremo y duerme forzosamente
+  👉 Sofi (B) decide MOVER: demasiado cansado para moverse
+  👉 Hugo (C) decide MOVER: se mueve a pradera
+
+[Tick 058] ───────────────────────────────────────────────────────
+  Mundo: Bosque: [🍖: 9.5/10.0] | Río: [🍖: 9.5/10.0, 💧: 10.0/10.0] | Lago: [💧: 10.0/10.0] | 🎯 Sin presa | 🦣 Sin Gran Herbívoro
+  Nico (A): Loc: pradera  | Hambre:  48.4 | Sed:  99.5 | Salud:  98.0 | Energía:   7.8 | Emo: tristeza | Mochila: [🍖: 1/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Sofi (B): [Loc: lago     | Hambre:  48.8 | Sed:  23.8 | Salud:  78.0 | Emo: tristeza]
+            Estima a Hugo (c): [Loc: pradera  | Hambre:  49.3 | Sed:  97.3 | Salud:  91.8 | Emo: tristeza]
+  Sofi (B): Loc: lago     | Hambre:  48.7 | Sed:  23.5 | Salud:  78.0 | Energía:   0.0 | Emo: tristeza | Mochila: [🍖: 1/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: lago     | Hambre:  48.4 | Sed:  95.4 | Salud:  97.0 | Emo: tristeza]
+            Estima a Hugo (C): [Loc: valle    | Hambre:  48.6 | Sed:  63.3 | Salud:  98.0 | Emo: tristeza]
+  Hugo (C): Loc: pradera  | Hambre:  49.3 | Sed:  97.3 | Salud:  91.8 | Energía:   1.6 | Emo: tristeza | Mochila: [🍖: 0/1, 💧: 1/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: pradera  | Hambre:  48.4 | Sed:  99.5 | Salud:  98.0 | Emo: tristeza]
+            Estima a Sofi (B): [Loc: valle    | Hambre:  48.4 | Sed:  21.9 | Salud:  96.0 | Emo: tristeza]
+  👉 Nico (A) decide DAR: intenta dar comida a C pero no ha sido solicitada
+  👉 Sofi (B) decide MOVER: colapsa por cansancio extremo y duerme forzosamente
+  👉 Hugo (C) decide DAR: mochila vacía, compañeros saciados o solos
+
+[Tick 059] ───────────────────────────────────────────────────────
+  Mundo: Bosque: [🍖: 9.5/10.0] | Río: [🍖: 9.5/10.0, 💧: 10.0/10.0] | Lago: [💧: 10.0/10.0] | 🎯 Sin presa | 🦣 Sin Gran Herbívoro
+  Nico (A): Loc: pradera  | Hambre:  48.2 | Sed:  98.4 | Salud:  98.0 | Energía:   5.6 | Emo: tristeza | Mochila: [🍖: 1/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Sofi (B): [Loc: lago     | Hambre:  48.6 | Sed:  22.8 | Salud:  78.0 | Emo: tristeza]
+            Estima a Hugo (c): [Loc: pradera  | Hambre:  49.1 | Sed:  96.2 | Salud:  91.8 | Emo: tristeza]
+  Sofi (B): Loc: lago     | Hambre:  48.6 | Sed:  22.9 | Salud:  76.0 | Energía:   7.8 | Emo: tristeza | Mochila: [🍖: 1/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: lago     | Hambre:  48.2 | Sed:  94.4 | Salud:  97.0 | Emo: tristeza]
+            Estima a Hugo (C): [Loc: valle    | Hambre:  48.4 | Sed:  62.3 | Salud:  98.0 | Emo: tristeza]
+  Hugo (C): Loc: pradera  | Hambre:  49.1 | Sed:  96.2 | Salud:  91.8 | Energía:   0.0 | Emo: tristeza | Mochila: [🍖: 0/1, 💧: 1/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: pradera  | Hambre:  48.2 | Sed:  98.4 | Salud:  98.0 | Emo: tristeza]
+            Estima a Sofi (B): [Loc: valle    | Hambre:  48.2 | Sed:  20.9 | Salud:  96.0 | Emo: tristeza]
+  👉 Nico (A) decide DAR: intenta dar comida a C pero no ha sido solicitada
+  👉 Sofi (B) decide MOVER: se mueve a cueva
+  👉 Hugo (C) decide DAR: colapsa por cansancio extremo y duerme forzosamente
+
+[Tick 060] ───────────────────────────────────────────────────────
+  Mundo: Bosque: [🍖: 9.5/10.0] | Río: [🍖: 9.5/10.0, 💧: 10.0/10.0] | Lago: [💧: 10.0/10.0] | 🎯 Presa en río (10t) | 🦣 Sin Gran Herbívoro
+  Nico (A): Loc: pradera  | Hambre:  48.0 | Sed:  97.3 | Salud:  98.0 | Energía:   3.4 | Emo: tristeza | Mochila: [🍖: 1/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Sofi (B): [Loc: lago     | Hambre:  48.4 | Sed:  21.8 | Salud:  78.0 | Emo: tristeza]
+            Estima a Hugo (c): [Loc: pradera  | Hambre:  49.0 | Sed:  95.6 | Salud:  89.8 | Emo: tristeza]
+  Sofi (B): Loc: cueva    | Hambre:  48.4 | Sed:  21.8 | Salud:  76.0 | Energía:   1.6 | Emo: tristeza | Mochila: [🍖: 1/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: lago     | Hambre:  48.0 | Sed:  93.4 | Salud:  97.0 | Emo: tristeza]
+            Estima a Hugo (C): [Loc: valle    | Hambre:  48.2 | Sed:  61.3 | Salud:  98.0 | Emo: tristeza]
+  Hugo (C): Loc: pradera  | Hambre:  49.0 | Sed:  95.6 | Salud:  89.8 | Energía:   7.8 | Emo: tristeza | Mochila: [🍖: 0/1, 💧: 1/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: pradera  | Hambre:  48.0 | Sed:  97.3 | Salud:  98.0 | Emo: tristeza]
+            Estima a Sofi (B): [Loc: valle    | Hambre:  48.0 | Sed:  19.9 | Salud:  96.0 | Emo: dolor]
+  👉 Nico (A) decide DAR: intenta dar comida a C pero no ha sido solicitada
+  👉 Sofi (B) decide MOVER: demasiado cansado para moverse
+  👉 Hugo (C) decide BEBER: bebe agua de su mochila
+
+[Tick 061] ───────────────────────────────────────────────────────
+  Mundo: Bosque: [🍖: 9.5/10.0] | Río: [🍖: 9.5/10.0, 💧: 10.0/10.0] | Lago: [💧: 10.0/10.0] | 🎯 Presa en río (9t) | 🦣 Sin Gran Herbívoro
+  Nico (A): Loc: pradera  | Hambre:  47.8 | Sed:  96.2 | Salud:  98.0 | Energía:   1.2 | Emo: tristeza | Mochila: [🍖: 1/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Sofi (B): [Loc: lago     | Hambre:  48.2 | Sed:  20.8 | Salud:  78.0 | Emo: tristeza]
+            Estima a Hugo (c): [Loc: pradera  | Hambre:  48.8 | Sed: 100.0 | Salud:  92.8 | Emo: tristeza]
+  Sofi (B): Loc: cueva    | Hambre:  48.1 | Sed:  20.7 | Salud:  76.0 | Energía:   0.0 | Emo: tristeza | Mochila: [🍖: 1/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: lago     | Hambre:  47.8 | Sed:  92.4 | Salud:  97.0 | Emo: tristeza]
+            Estima a Hugo (C): [Loc: valle    | Hambre:  48.0 | Sed:  60.3 | Salud:  98.0 | Emo: tristeza]
+  Hugo (C): Loc: pradera  | Hambre:  48.8 | Sed: 100.0 | Salud:  92.8 | Energía:   5.6 | Emo: tristeza | Mochila: [🍖: 0/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: pradera  | Hambre:  47.8 | Sed:  96.2 | Salud:  98.0 | Emo: tristeza]
+            Estima a Sofi (B): [Loc: valle    | Hambre:  47.8 | Sed:  18.9 | Salud:  96.0 | Emo: dolor]
+  👉 Nico (A) decide DAR: intenta dar comida a C pero no ha sido solicitada
+  👉 Sofi (B) decide MOVER: colapsa por cansancio extremo y duerme forzosamente
+  👉 Hugo (C) decide MOVER: se mueve a valle (→valle)
+
+[Tick 062] ───────────────────────────────────────────────────────
+  Mundo: Bosque: [🍖: 9.5/10.0] | Río: [🍖: 9.5/10.0, 💧: 10.0/10.0] | Lago: [💧: 10.0/10.0] | 🎯 Presa en río (8t) | 🦣 Sin Gran Herbívoro
+  Nico (A): Loc: pradera  | Hambre:  47.6 | Sed:  95.1 | Salud:  98.0 | Energía:   0.0 | Emo: tristeza | Mochila: [🍖: 1/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Sofi (B): [Loc: lago     | Hambre:  48.0 | Sed:  19.8 | Salud:  78.0 | Emo: dolor]
+            Estima a Hugo (c): [Loc: pradera  | Hambre:  48.6 | Sed:  99.0 | Salud:  92.8 | Emo: tristeza]
+  Sofi (B): Loc: cueva    | Hambre:  48.0 | Sed:  20.2 | Salud:  74.0 | Energía:   7.8 | Emo: tristeza | Mochila: [🍖: 1/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: lago     | Hambre:  47.6 | Sed:  91.4 | Salud:  97.0 | Emo: tristeza]
+            Estima a Hugo (C): [Loc: valle    | Hambre:  47.8 | Sed:  59.3 | Salud:  98.0 | Emo: tristeza]
+  Hugo (C): Loc: valle    | Hambre:  48.6 | Sed:  99.0 | Salud:  92.8 | Energía:   0.0 | Emo: tristeza | Mochila: [🍖: 0/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: pradera  | Hambre:  47.6 | Sed:  95.2 | Salud:  98.0 | Emo: tristeza]
+            Estima a Sofi (B): [Loc: valle    | Hambre:  47.6 | Sed:  17.9 | Salud:  96.0 | Emo: dolor]
+  👉 Nico (A) decide MOVER: colapsa por cansancio extremo y duerme forzosamente
+  👉 Sofi (B) decide MOVER: se mueve a valle
+  👉 Hugo (C) decide MOVER: colapsa por cansancio extremo y duerme forzosamente
+
+[Tick 063] ───────────────────────────────────────────────────────
+  Mundo: Bosque: [🍖: 9.5/10.0] | Río: [🍖: 9.5/10.0, 💧: 10.0/10.0] | Lago: [💧: 10.0/10.0] | 🎯 Presa en río (7t) | 🦣 Sin Gran Herbívoro
+  Nico (A): Loc: pradera  | Hambre:  47.4 | Sed:  94.5 | Salud:  96.0 | Energía:   7.8 | Emo: tristeza | Mochila: [🍖: 1/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Sofi (B): [Loc: lago     | Hambre:  47.8 | Sed:  18.8 | Salud:  78.0 | Emo: dolor]
+            Estima a Hugo (c): [Loc: pradera  | Hambre:  48.4 | Sed:  98.0 | Salud:  92.8 | Emo: tristeza]
+  Sofi (B): Loc: valle    | Hambre:  47.8 | Sed:  19.1 | Salud:  74.0 | Energía:   1.6 | Emo: dolor | Mochila: [🍖: 1/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: lago     | Hambre:  47.4 | Sed:  90.4 | Salud:  97.0 | Emo: tristeza]
+            Estima a Hugo (C): [Loc: valle    | Hambre:  48.5 | Sed:  98.5 | Salud:  90.8 | Emo: tristeza]
+  Hugo (C): Loc: valle    | Hambre:  48.5 | Sed:  98.5 | Salud:  90.8 | Energía:   8.0 | Emo: tristeza | Mochila: [🍖: 0/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: pradera  | Hambre:  47.4 | Sed:  94.2 | Salud:  98.0 | Emo: tristeza]
+            Estima a Sofi (B): [Loc: valle    | Hambre:  47.8 | Sed:  19.1 | Salud:  74.0 | Emo: dolor]
+  👉 Nico (A) decide MOVER: se mueve a lago (→lago)
+  👉 Sofi (B) decide DAR: intenta dar comida a C pero no ha sido solicitada
+  👉 Hugo (C) decide MOVER: se mueve a cueva
+
+[Tick 064] ───────────────────────────────────────────────────────
+  Mundo: Bosque: [🍖: 9.5/10.0] | Río: [🍖: 9.5/10.0, 💧: 10.0/10.0] | Lago: [💧: 10.0/10.0] | 🎯 Presa en río (6t) | 🦣 Sin Gran Herbívoro
+  Nico (A): Loc: lago     | Hambre:  47.2 | Sed:  93.4 | Salud:  96.0 | Energía:   1.6 | Emo: tristeza | Mochila: [🍖: 1/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Sofi (B): [Loc: lago     | Hambre:  47.6 | Sed:  17.8 | Salud:  78.0 | Emo: dolor]
+            Estima a Hugo (c): [Loc: pradera  | Hambre:  48.2 | Sed:  97.0 | Salud:  92.8 | Emo: tristeza]
+  Sofi (B): Loc: valle    | Hambre:  47.6 | Sed:  18.0 | Salud:  74.0 | Energía:   0.0 | Emo: dolor | Mochila: [🍖: 1/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: lago     | Hambre:  47.2 | Sed:  89.4 | Salud:  97.0 | Emo: tristeza]
+            Estima a Hugo (C): [Loc: valle    | Hambre:  48.3 | Sed:  97.5 | Salud:  90.8 | Emo: tristeza]
+  Hugo (C): Loc: cueva    | Hambre:  48.3 | Sed:  97.5 | Salud:  90.8 | Energía:   2.0 | Emo: tristeza | Mochila: [🍖: 0/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: pradera  | Hambre:  47.2 | Sed:  93.2 | Salud:  98.0 | Emo: tristeza]
+            Estima a Sofi (B): [Loc: valle    | Hambre:  47.6 | Sed:  18.1 | Salud:  74.0 | Emo: dolor]
+  👉 Nico (A) decide BEBER: bebe agua (suelo)
+  👉 Sofi (B) decide MOVER: colapsa por cansancio extremo y duerme forzosamente
+  👉 Hugo (C) decide MOVER: demasiado cansado para moverse
+
+[Tick 065] ───────────────────────────────────────────────────────
+  Mundo: Bosque: [🍖: 9.5/10.0] | Río: [🍖: 9.5/10.0, 💧: 10.0/10.0] | Lago: [💧: 8.0/10.0] | 🎯 Presa en río (5t) | 🦣 Sin Gran Herbívoro
+  Nico (A): Loc: lago     | Hambre:  47.0 | Sed: 100.0 | Salud:  99.0 | Energía:   0.0 | Emo: tristeza | Mochila: [🍖: 1/1, 💧: 1/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Sofi (B): [Loc: lago     | Hambre:  47.4 | Sed:  16.8 | Salud:  78.0 | Emo: dolor]
+            Estima a Hugo (c): [Loc: pradera  | Hambre:  48.0 | Sed:  96.0 | Salud:  92.8 | Emo: tristeza]
+  Sofi (B): Loc: valle    | Hambre:  47.5 | Sed:  17.4 | Salud:  72.0 | Energía:   7.8 | Emo: dolor | Mochila: [🍖: 1/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: lago     | Hambre:  47.0 | Sed:  88.4 | Salud:  97.0 | Emo: tristeza]
+            Estima a Hugo (C): [Loc: valle    | Hambre:  48.1 | Sed:  96.5 | Salud:  90.8 | Emo: tristeza]
+  Hugo (C): Loc: cueva    | Hambre:  48.1 | Sed:  96.5 | Salud:  90.8 | Energía:   0.0 | Emo: tristeza | Mochila: [🍖: 0/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: pradera  | Hambre:  47.0 | Sed:  92.2 | Salud:  98.0 | Emo: tristeza]
+            Estima a Sofi (B): [Loc: valle    | Hambre:  47.4 | Sed:  17.1 | Salud:  74.0 | Emo: dolor]
+  👉 Nico (A) decide BEBER: colapsa por cansancio extremo y duerme forzosamente
+  👉 Sofi (B) decide MOVER: se mueve a pradera
+  👉 Hugo (C) decide MOVER: colapsa por cansancio extremo y duerme forzosamente
+
+[Tick 066] ───────────────────────────────────────────────────────
+  Mundo: Bosque: [🍖: 9.5/10.0] | Río: [🍖: 9.5/10.0, 💧: 10.0/10.0] | Lago: [💧: 8.5/10.0] | 🎯 Presa en río (4t) | 🦣 Sin Gran Herbívoro
+  Nico (A): Loc: lago     | Hambre:  46.9 | Sed:  99.4 | Salud:  97.0 | Energía:   7.6 | Emo: tristeza | Mochila: [🍖: 1/1, 💧: 1/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Sofi (B): [Loc: lago     | Hambre:  47.2 | Sed:  15.8 | Salud:  78.0 | Emo: dolor]
+            Estima a Hugo (c): [Loc: pradera  | Hambre:  47.8 | Sed:  95.0 | Salud:  92.8 | Emo: tristeza]
+  Sofi (B): Loc: pradera  | Hambre:  47.3 | Sed:  16.3 | Salud:  72.0 | Energía:   1.6 | Emo: dolor | Mochila: [🍖: 1/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: lago     | Hambre:  46.8 | Sed:  87.4 | Salud:  97.0 | Emo: tristeza]
+            Estima a Hugo (C): [Loc: valle    | Hambre:  47.9 | Sed:  95.5 | Salud:  90.8 | Emo: tristeza]
+  Hugo (C): Loc: cueva    | Hambre:  48.0 | Sed:  96.0 | Salud:  88.8 | Energía:   8.0 | Emo: tristeza | Mochila: [🍖: 0/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: pradera  | Hambre:  46.8 | Sed:  91.2 | Salud:  98.0 | Emo: tristeza]
+            Estima a Sofi (B): [Loc: valle    | Hambre:  47.2 | Sed:  16.1 | Salud:  74.0 | Emo: dolor]
+  👉 Nico (A) decide MOVER: se mueve a pradera
+  👉 Sofi (B) decide MOVER: demasiado cansado para moverse
+  👉 Hugo (C) decide MOVER: se mueve a lago
+
+[Tick 067] ───────────────────────────────────────────────────────
+  Mundo: Bosque: [🍖: 9.5/10.0] | Río: [🍖: 9.5/10.0, 💧: 10.0/10.0] | Lago: [💧: 9.0/10.0] | 🎯 Presa en río (3t) | 🦣 Sin Gran Herbívoro
+  Nico (A): Loc: pradera  | Hambre:  46.6 | Sed:  98.2 | Salud:  97.0 | Energía:   1.2 | Emo: tristeza | Mochila: [🍖: 1/1, 💧: 1/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Sofi (B): [Loc: pradera  | Hambre:  47.0 | Sed:  15.2 | Salud:  72.0 | Emo: dolor]
+            Estima a Hugo (c): [Loc: pradera  | Hambre:  47.6 | Sed:  94.0 | Salud:  92.8 | Emo: tristeza]
+  Sofi (B): Loc: pradera  | Hambre:  47.0 | Sed:  15.2 | Salud:  72.0 | Energía:   0.0 | Emo: dolor | Mochila: [🍖: 1/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: pradera  | Hambre:  46.6 | Sed:  98.2 | Salud:  97.0 | Emo: tristeza]
+            Estima a Hugo (C): [Loc: valle    | Hambre:  47.7 | Sed:  94.5 | Salud:  90.8 | Emo: tristeza]
+  Hugo (C): Loc: lago     | Hambre:  47.8 | Sed:  95.0 | Salud:  88.8 | Energía:   2.0 | Emo: tristeza | Mochila: [🍖: 0/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: pradera  | Hambre:  46.6 | Sed:  90.2 | Salud:  98.0 | Emo: tristeza]
+            Estima a Sofi (B): [Loc: valle    | Hambre:  47.0 | Sed:  15.1 | Salud:  74.0 | Emo: dolor]
+  👉 Nico (A) decide MOVER: demasiado cansado para moverse
+  👉 Sofi (B) decide DAR: colapsa por cansancio extremo y duerme forzosamente
+  👉 Hugo (C) decide BEBER: bebe agua (suelo)
+
+[Tick 068] ───────────────────────────────────────────────────────
+  Mundo: Bosque: [🍖: 9.5/10.0] | Río: [🍖: 9.5/10.0, 💧: 10.0/10.0] | Lago: [💧: 7.5/10.0] | 🎯 Presa en río (2t) | 🦣 Sin Gran Herbívoro
+  Nico (A): Loc: pradera  | Hambre:  46.4 | Sed:  97.0 | Salud:  97.0 | Energía:   0.0 | Emo: tristeza | Mochila: [🍖: 1/1, 💧: 1/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Sofi (B): [Loc: pradera  | Hambre:  46.9 | Sed:  14.7 | Salud:  70.0 | Emo: dolor]
+            Estima a Hugo (c): [Loc: pradera  | Hambre:  47.4 | Sed:  93.0 | Salud:  92.8 | Emo: tristeza]
+  Sofi (B): Loc: pradera  | Hambre:  46.9 | Sed:  14.7 | Salud:  70.0 | Energía:   7.8 | Emo: dolor | Mochila: [🍖: 1/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: pradera  | Hambre:  46.4 | Sed:  97.0 | Salud:  97.0 | Emo: tristeza]
+            Estima a Hugo (C): [Loc: valle    | Hambre:  47.5 | Sed:  93.5 | Salud:  90.8 | Emo: tristeza]
+  Hugo (C): Loc: lago     | Hambre:  47.6 | Sed: 100.0 | Salud:  91.8 | Energía:   0.0 | Emo: tristeza | Mochila: [🍖: 0/1, 💧: 1/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: pradera  | Hambre:  46.4 | Sed:  89.2 | Salud:  98.0 | Emo: tristeza]
+            Estima a Sofi (B): [Loc: valle    | Hambre:  46.8 | Sed:  14.1 | Salud:  74.0 | Emo: dolor]
+  👉 Nico (A) decide DAR: colapsa por cansancio extremo y duerme forzosamente
+  👉 Sofi (B) decide DAR: mochila vacía, compañeros saciados o solos
+  👉 Hugo (C) decide BEBER: colapsa por cansancio extremo y duerme forzosamente
+
+[Tick 069] ───────────────────────────────────────────────────────
+  Mundo: Bosque: [🍖: 9.5/10.0] | Río: [🍖: 9.5/10.0, 💧: 10.0/10.0] | Lago: [💧: 8.0/10.0] | 🎯 Presa en río (1t) | 🦣 Sin Gran Herbívoro
+  Nico (A): Loc: pradera  | Hambre:  46.3 | Sed:  96.4 | Salud:  95.0 | Energía:   7.6 | Emo: tristeza | Mochila: [🍖: 1/1, 💧: 1/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Sofi (B): [Loc: pradera  | Hambre:  46.7 | Sed:  13.6 | Salud:  70.0 | Emo: dolor]
+            Estima a Hugo (c): [Loc: pradera  | Hambre:  47.2 | Sed:  92.0 | Salud:  92.8 | Emo: tristeza]
+  Sofi (B): Loc: pradera  | Hambre:  46.7 | Sed:  13.6 | Salud:  70.0 | Energía:   5.6 | Emo: dolor | Mochila: [🍖: 1/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: pradera  | Hambre:  46.3 | Sed:  96.4 | Salud:  95.0 | Emo: tristeza]
+            Estima a Hugo (C): [Loc: valle    | Hambre:  47.3 | Sed:  92.5 | Salud:  90.8 | Emo: tristeza]
+  Hugo (C): Loc: lago     | Hambre:  47.5 | Sed:  99.5 | Salud:  89.8 | Energía:   7.8 | Emo: tristeza | Mochila: [🍖: 0/1, 💧: 1/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: pradera  | Hambre:  46.2 | Sed:  88.2 | Salud:  98.0 | Emo: tristeza]
+            Estima a Sofi (B): [Loc: valle    | Hambre:  46.6 | Sed:  13.1 | Salud:  74.0 | Emo: dolor]
+  👉 Nico (A) decide BEBER: bebe agua de su mochila
+  👉 Sofi (B) decide DAR: mochila vacía, compañeros saciados o solos
+  👉 Hugo (C) decide BEBER: bebe agua (suelo)
+
+[Tick 070] ───────────────────────────────────────────────────────
+  Mundo: Bosque: [🍖: 9.5/10.0] | Río: [🍖: 9.5/10.0, 💧: 10.0/10.0] | Lago: [💧: 7.5/10.0] | 🎯 Sin presa | 🦣 Sin Gran Herbívoro
+  Nico (A): Loc: pradera  | Hambre:  46.0 | Sed: 100.0 | Salud:  98.0 | Energía:   5.2 | Emo: tristeza | Mochila: [🍖: 1/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Sofi (B): [Loc: pradera  | Hambre:  46.5 | Sed:  12.5 | Salud:  70.0 | Emo: dolor]
+            Estima a Hugo (c): [Loc: pradera  | Hambre:  47.0 | Sed:  91.0 | Salud:  92.8 | Emo: tristeza]
+  Sofi (B): Loc: pradera  | Hambre:  46.5 | Sed:  12.5 | Salud:  70.0 | Energía:   3.4 | Emo: dolor | Mochila: [🍖: 1/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: pradera  | Hambre:  46.0 | Sed: 100.0 | Salud:  98.0 | Emo: tristeza]
+            Estima a Hugo (C): [Loc: valle    | Hambre:  47.1 | Sed:  91.5 | Salud:  90.8 | Emo: tristeza]
+  Hugo (C): Loc: lago     | Hambre:  47.2 | Sed: 100.0 | Salud:  92.8 | Energía:   5.6 | Emo: tristeza | Mochila: [🍖: 0/1, 💧: 1/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: pradera  | Hambre:  46.0 | Sed:  87.2 | Salud:  98.0 | Emo: tristeza]
+            Estima a Sofi (B): [Loc: valle    | Hambre:  46.4 | Sed:  12.1 | Salud:  74.0 | Emo: dolor]
+  👉 Nico (A) decide DAR: mochila vacía, compañeros saciados o solos
+  👉 Sofi (B) decide DAR: mochila vacía, compañeros saciados o solos
+  👉 Hugo (C) decide BEBER: bebe agua (suelo)
+
+[Tick 071] ───────────────────────────────────────────────────────
+  Mundo: Bosque: [🍖: 9.5/10.0] | Río: [🍖: 9.5/10.0, 💧: 10.0/10.0] | Lago: [💧: 7.0/10.0] | 🎯 Sin presa | 🦣 Sin Gran Herbívoro
+  Nico (A): Loc: pradera  | Hambre:  45.8 | Sed:  98.9 | Salud:  98.0 | Energía:   3.0 | Emo: tristeza | Mochila: [🍖: 1/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Sofi (B): [Loc: pradera  | Hambre:  46.3 | Sed:  11.4 | Salud:  70.0 | Emo: dolor]
+            Estima a Hugo (c): [Loc: pradera  | Hambre:  46.8 | Sed:  90.0 | Salud:  92.8 | Emo: tristeza]
+  Sofi (B): Loc: pradera  | Hambre:  46.3 | Sed:  11.4 | Salud:  70.0 | Energía:   1.2 | Emo: dolor | Mochila: [🍖: 1/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: pradera  | Hambre:  45.8 | Sed:  98.9 | Salud:  98.0 | Emo: tristeza]
+            Estima a Hugo (C): [Loc: valle    | Hambre:  46.9 | Sed:  90.5 | Salud:  90.8 | Emo: tristeza]
+  Hugo (C): Loc: lago     | Hambre:  47.0 | Sed: 100.0 | Salud:  95.8 | Energía:   3.4 | Emo: tristeza | Mochila: [🍖: 0/1, 💧: 1/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: pradera  | Hambre:  45.8 | Sed:  86.2 | Salud:  98.0 | Emo: tristeza]
+            Estima a Sofi (B): [Loc: valle    | Hambre:  46.2 | Sed:  11.1 | Salud:  74.0 | Emo: dolor]
+  👉 Nico (A) decide DAR: mochila vacía, compañeros saciados o solos
+  👉 Sofi (B) decide DAR: mochila vacía, compañeros saciados o solos
+  👉 Hugo (C) decide MOVER: demasiado cansado para moverse
+
+[Tick 072] ───────────────────────────────────────────────────────
+  Mundo: Bosque: [🍖: 9.5/10.0] | Río: [🍖: 9.5/10.0, 💧: 10.0/10.0] | Lago: [💧: 7.5/10.0] | 🎯 Sin presa | 🦣 Sin Gran Herbívoro
+  Nico (A): Loc: pradera  | Hambre:  45.6 | Sed:  97.8 | Salud:  98.0 | Energía:   0.8 | Emo: tristeza | Mochila: [🍖: 1/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Sofi (B): [Loc: pradera  | Hambre:  46.1 | Sed:  10.3 | Salud:  70.0 | Emo: dolor]
+            Estima a Hugo (c): [Loc: pradera  | Hambre:  46.6 | Sed:  89.0 | Salud:  92.8 | Emo: tristeza]
+  Sofi (B): Loc: pradera  | Hambre:  46.1 | Sed:  10.3 | Salud:  70.0 | Energía:   0.0 | Emo: dolor | Mochila: [🍖: 1/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: pradera  | Hambre:  45.6 | Sed:  97.8 | Salud:  98.0 | Emo: tristeza]
+            Estima a Hugo (C): [Loc: valle    | Hambre:  46.7 | Sed:  89.5 | Salud:  90.8 | Emo: tristeza]
+  Hugo (C): Loc: lago     | Hambre:  46.8 | Sed:  98.9 | Salud:  95.8 | Energía:   1.2 | Emo: tristeza | Mochila: [🍖: 0/1, 💧: 1/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: pradera  | Hambre:  45.6 | Sed:  85.2 | Salud:  98.0 | Emo: tristeza]
+            Estima a Sofi (B): [Loc: valle    | Hambre:  46.0 | Sed:  10.1 | Salud:  74.0 | Emo: dolor]
+  👉 Nico (A) decide DAR: mochila vacía, compañeros saciados o solos
+  👉 Sofi (B) decide DAR: colapsa por cansancio extremo y duerme forzosamente
+  👉 Hugo (C) decide BEBER: bebe agua (suelo)
+
+[Tick 073] ───────────────────────────────────────────────────────
+  Mundo: Bosque: [🍖: 9.5/10.0] | Río: [🍖: 9.5/10.0, 💧: 10.0/10.0] | Lago: [💧: 7.0/10.0] | 🎯 Sin presa | 🦣 Sin Gran Herbívoro
+  Nico (A): Loc: pradera  | Hambre:  45.4 | Sed:  96.7 | Salud:  98.0 | Energía:   0.0 | Emo: tristeza | Mochila: [🍖: 1/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Sofi (B): [Loc: pradera  | Hambre:  45.9 | Sed:   9.7 | Salud:  68.0 | Emo: dolor]
+            Estima a Hugo (c): [Loc: pradera  | Hambre:  46.4 | Sed:  88.0 | Salud:  92.8 | Emo: tristeza]
+  Sofi (B): Loc: pradera  | Hambre:  45.9 | Sed:   9.7 | Salud:  68.0 | Energía:   7.8 | Emo: dolor | Mochila: [🍖: 1/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: pradera  | Hambre:  45.4 | Sed:  96.7 | Salud:  98.0 | Emo: tristeza]
+            Estima a Hugo (C): [Loc: valle    | Hambre:  46.5 | Sed:  88.5 | Salud:  90.8 | Emo: tristeza]
+  Hugo (C): Loc: lago     | Hambre:  46.6 | Sed: 100.0 | Salud:  98.8 | Energía:   0.0 | Emo: tristeza | Mochila: [🍖: 0/1, 💧: 1/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: pradera  | Hambre:  45.4 | Sed:  84.2 | Salud:  98.0 | Emo: tristeza]
+            Estima a Sofi (B): [Loc: valle    | Hambre:  45.8 | Sed:   9.1 | Salud:  74.0 | Emo: dolor]
+  👉 Nico (A) decide MOVER: colapsa por cansancio extremo y duerme forzosamente
+  👉 Sofi (B) decide DAR: mochila vacía, compañeros saciados o solos
+  👉 Hugo (C) decide BEBER: colapsa por cansancio extremo y duerme forzosamente
+
+[Tick 074] ───────────────────────────────────────────────────────
+  Mundo: Bosque: [🍖: 9.5/10.0] | Río: [🍖: 9.5/10.0, 💧: 10.0/10.0] | Lago: [💧: 7.5/10.0] | 🎯 Sin presa | 🦣 Sin Gran Herbívoro
+  Nico (A): Loc: pradera  | Hambre:  45.3 | Sed:  96.2 | Salud:  96.0 | Energía:   7.8 | Emo: tristeza | Mochila: [🍖: 1/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Sofi (B): [Loc: pradera  | Hambre:  45.7 | Sed:   8.6 | Salud:  68.0 | Emo: dolor]
+            Estima a Hugo (c): [Loc: pradera  | Hambre:  46.2 | Sed:  87.0 | Salud:  92.8 | Emo: tristeza]
+  Sofi (B): Loc: pradera  | Hambre:  45.7 | Sed:   8.6 | Salud:  68.0 | Energía:   5.6 | Emo: dolor | Mochila: [🍖: 1/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: pradera  | Hambre:  45.3 | Sed:  96.2 | Salud:  96.0 | Emo: tristeza]
+            Estima a Hugo (C): [Loc: valle    | Hambre:  46.3 | Sed:  87.5 | Salud:  90.8 | Emo: tristeza]
+  Hugo (C): Loc: lago     | Hambre:  46.5 | Sed:  99.5 | Salud:  96.8 | Energía:   7.8 | Emo: tristeza | Mochila: [🍖: 0/1, 💧: 1/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: pradera  | Hambre:  45.2 | Sed:  83.2 | Salud:  98.0 | Emo: tristeza]
+            Estima a Sofi (B): [Loc: valle    | Hambre:  45.6 | Sed:   8.1 | Salud:  74.0 | Emo: dolor]
+  👉 Nico (A) decide MOVER: se mueve a cueva
+  👉 Sofi (B) decide DAR: mochila vacía, compañeros saciados o solos
+  👉 Hugo (C) decide BEBER: bebe agua (suelo)
+
+[Tick 075] ───────────────────────────────────────────────────────
+  Mundo: Bosque: [🍖: 9.5/10.0] | Río: [🍖: 9.5/10.0, 💧: 10.0/10.0] | Lago: [💧: 7.0/10.0] | 🎯 Sin presa | 🦣 Sin Gran Herbívoro
+  Nico (A): Loc: cueva    | Hambre:  45.1 | Sed:  95.1 | Salud:  96.0 | Energía:   1.6 | Emo: tristeza | Mochila: [🍖: 1/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Sofi (B): [Loc: pradera  | Hambre:  45.5 | Sed:   7.6 | Salud:  68.0 | Emo: dolor]
+            Estima a Hugo (c): [Loc: pradera  | Hambre:  46.0 | Sed:  86.0 | Salud:  92.8 | Emo: tristeza]
+  Sofi (B): Loc: pradera  | Hambre:  45.5 | Sed:   7.5 | Salud:  68.0 | Energía:   3.4 | Emo: dolor | Mochila: [🍖: 1/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: pradera  | Hambre:  45.1 | Sed:  95.2 | Salud:  96.0 | Emo: tristeza]
+            Estima a Hugo (C): [Loc: valle    | Hambre:  46.1 | Sed:  86.5 | Salud:  90.8 | Emo: tristeza]
+  Hugo (C): Loc: lago     | Hambre:  46.2 | Sed: 100.0 | Salud:  99.8 | Energía:   5.6 | Emo: tristeza | Mochila: [🍖: 0/1, 💧: 1/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: pradera  | Hambre:  45.0 | Sed:  82.2 | Salud:  98.0 | Emo: tristeza]
+            Estima a Sofi (B): [Loc: valle    | Hambre:  45.4 | Sed:   7.1 | Salud:  74.0 | Emo: dolor]
+  👉 Nico (A) decide MOVER: demasiado cansado para moverse
+  👉 Sofi (B) decide MOVER: demasiado cansado para moverse
+  👉 Hugo (C) decide BEBER: bebe agua (suelo)
+
+[Tick 076] ───────────────────────────────────────────────────────
+  Mundo: Bosque: [🍖: 9.5/10.0] | Río: [🍖: 9.5/10.0, 💧: 10.0/10.0] | Lago: [💧: 6.5/10.0] | 🎯 Sin presa | 🦣 Sin Gran Herbívoro
+  Nico (A): Loc: cueva    | Hambre:  44.8 | Sed:  94.0 | Salud:  96.0 | Energía:   0.0 | Emo: tristeza | Mochila: [🍖: 1/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Sofi (B): [Loc: pradera  | Hambre:  45.3 | Sed:   6.6 | Salud:  68.0 | Emo: dolor]
+            Estima a Hugo (c): [Loc: pradera  | Hambre:  45.8 | Sed:  85.0 | Salud:  92.8 | Emo: tristeza]
+  Sofi (B): Loc: pradera  | Hambre:  45.3 | Sed:   6.4 | Salud:  68.0 | Energía:   1.2 | Emo: dolor | Mochila: [🍖: 1/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: pradera  | Hambre:  44.9 | Sed:  94.2 | Salud:  96.0 | Emo: tristeza]
+            Estima a Hugo (C): [Loc: valle    | Hambre:  45.9 | Sed:  85.5 | Salud:  90.8 | Emo: tristeza]
+  Hugo (C): Loc: lago     | Hambre:  46.0 | Sed: 100.0 | Salud: 100.0 | Energía:   3.4 | Emo: tristeza | Mochila: [🍖: 0/1, 💧: 1/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: pradera  | Hambre:  44.8 | Sed:  81.2 | Salud:  98.0 | Emo: tristeza]
+            Estima a Sofi (B): [Loc: valle    | Hambre:  45.2 | Sed:   6.1 | Salud:  74.0 | Emo: dolor]
+  👉 Nico (A) decide MOVER: colapsa por cansancio extremo y duerme forzosamente
+  👉 Sofi (B) decide MOVER: demasiado cansado para moverse
+  👉 Hugo (C) decide BEBER: bebe agua (suelo)
+
+[Tick 077] ───────────────────────────────────────────────────────
+  Mundo: Bosque: [🍖: 9.5/10.0] | Río: [🍖: 9.5/10.0, 💧: 10.0/10.0] | Lago: [💧: 6.0/10.0] | 🎯 Sin presa | 🦣 Sin Gran Herbívoro
+  Nico (A): Loc: cueva    | Hambre:  44.7 | Sed:  93.4 | Salud:  94.0 | Energía:   7.8 | Emo: tristeza | Mochila: [🍖: 1/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Sofi (B): [Loc: pradera  | Hambre:  45.1 | Sed:   5.6 | Salud:  68.0 | Emo: dolor]
+            Estima a Hugo (c): [Loc: pradera  | Hambre:  45.6 | Sed:  84.0 | Salud:  92.8 | Emo: tristeza]
+  Sofi (B): Loc: pradera  | Hambre:  45.1 | Sed:   5.3 | Salud:  68.0 | Energía:   0.0 | Emo: dolor | Mochila: [🍖: 1/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: pradera  | Hambre:  44.7 | Sed:  93.2 | Salud:  96.0 | Emo: tristeza]
+            Estima a Hugo (C): [Loc: valle    | Hambre:  45.7 | Sed:  84.5 | Salud:  90.8 | Emo: tristeza]
+  Hugo (C): Loc: lago     | Hambre:  45.8 | Sed: 100.0 | Salud: 100.0 | Energía:   1.2 | Emo: tristeza | Mochila: [🍖: 0/1, 💧: 1/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: pradera  | Hambre:  44.6 | Sed:  80.2 | Salud:  98.0 | Emo: tristeza]
+            Estima a Sofi (B): [Loc: valle    | Hambre:  45.0 | Sed:   5.1 | Salud:  74.0 | Emo: dolor]
+  👉 Nico (A) decide MOVER: se mueve a pradera (→pradera)
+  👉 Sofi (B) decide MOVER: colapsa por cansancio extremo y duerme forzosamente
+  👉 Hugo (C) decide BEBER: bebe agua (suelo)
+
+[Tick 078] ───────────────────────────────────────────────────────
+  Mundo: Bosque: [🍖: 9.5/10.0] | Río: [🍖: 9.5/10.0, 💧: 10.0/10.0] | Lago: [💧: 5.5/10.0] | 🎯 Sin presa | 🦣 Sin Gran Herbívoro
+  Nico (A): Loc: pradera  | Hambre:  44.5 | Sed:  92.3 | Salud:  94.0 | Energía:   1.6 | Emo: tristeza | Mochila: [🍖: 1/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Sofi (B): [Loc: pradera  | Hambre:  45.0 | Sed:   4.8 | Salud:  66.0 | Emo: dolor]
+            Estima a Hugo (c): [Loc: pradera  | Hambre:  45.4 | Sed:  83.0 | Salud:  92.8 | Emo: tristeza]
+  Sofi (B): Loc: pradera  | Hambre:  45.0 | Sed:   4.8 | Salud:  66.0 | Energía:   7.8 | Emo: dolor | Mochila: [🍖: 1/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: pradera  | Hambre:  44.5 | Sed:  92.3 | Salud:  94.0 | Emo: tristeza]
+            Estima a Hugo (C): [Loc: valle    | Hambre:  45.5 | Sed:  83.5 | Salud:  90.8 | Emo: tristeza]
+  Hugo (C): Loc: lago     | Hambre:  45.6 | Sed: 100.0 | Salud: 100.0 | Energía:   0.0 | Emo: tristeza | Mochila: [🍖: 0/1, 💧: 1/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: pradera  | Hambre:  44.4 | Sed:  79.2 | Salud:  98.0 | Emo: tristeza]
+            Estima a Sofi (B): [Loc: valle    | Hambre:  44.8 | Sed:   4.1 | Salud:  74.0 | Emo: dolor]
+  👉 Nico (A) decide DAR: mochila vacía, compañeros saciados o solos
+  👉 Sofi (B) decide DAR: mochila vacía, compañeros saciados o solos
+  👉 Hugo (C) decide BEBER: colapsa por cansancio extremo y duerme forzosamente
+
+[Tick 079] ───────────────────────────────────────────────────────
+  Mundo: Bosque: [🍖: 9.5/10.0] | Río: [🍖: 9.5/10.0, 💧: 10.0/10.0] | Lago: [💧: 6.0/10.0] | 🎯 Sin presa | 🦣 Sin Gran Herbívoro
+  Nico (A): Loc: pradera  | Hambre:  44.3 | Sed:  91.2 | Salud:  94.0 | Energía:   0.0 | Emo: tristeza | Mochila: [🍖: 1/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Sofi (B): [Loc: pradera  | Hambre:  44.7 | Sed:   3.7 | Salud:  66.0 | Emo: dolor]
+            Estima a Hugo (c): [Loc: pradera  | Hambre:  45.2 | Sed:  82.0 | Salud:  92.8 | Emo: tristeza]
+  Sofi (B): Loc: pradera  | Hambre:  44.7 | Sed:   3.7 | Salud:  66.0 | Energía:   5.6 | Emo: dolor | Mochila: [🍖: 1/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: pradera  | Hambre:  44.3 | Sed:  91.2 | Salud:  94.0 | Emo: tristeza]
+            Estima a Hugo (C): [Loc: valle    | Hambre:  45.3 | Sed:  82.5 | Salud:  90.8 | Emo: tristeza]
+  Hugo (C): Loc: lago     | Hambre:  45.5 | Sed:  99.5 | Salud:  98.0 | Energía:   7.8 | Emo: tristeza | Mochila: [🍖: 0/1, 💧: 1/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: pradera  | Hambre:  44.2 | Sed:  78.2 | Salud:  98.0 | Emo: tristeza]
+            Estima a Sofi (B): [Loc: valle    | Hambre:  44.6 | Sed:   3.1 | Salud:  74.0 | Emo: dolor]
+  👉 Nico (A) decide DAR: colapsa por cansancio extremo y duerme forzosamente
+  👉 Sofi (B) decide DAR: mochila vacía, compañeros saciados o solos
+  👉 Hugo (C) decide MOVER: se mueve a cueva (→valle)
+
+[Tick 080] ───────────────────────────────────────────────────────
+  Mundo: Bosque: [🍖: 9.5/10.0] | Río: [🍖: 9.5/10.0, 💧: 10.0/10.0] | Lago: [💧: 6.5/10.0] | 🎯 Sin presa | 🦣 Sin Gran Herbívoro
+  Nico (A): Loc: pradera  | Hambre:  44.2 | Sed:  90.7 | Salud:  92.0 | Energía:   7.8 | Emo: tristeza | Mochila: [🍖: 1/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Sofi (B): [Loc: pradera  | Hambre:  44.5 | Sed:   2.6 | Salud:  66.0 | Emo: dolor]
+            Estima a Hugo (c): [Loc: pradera  | Hambre:  45.0 | Sed:  81.0 | Salud:  92.8 | Emo: tristeza]
+  Sofi (B): Loc: pradera  | Hambre:  44.5 | Sed:   2.6 | Salud:  66.0 | Energía:   3.4 | Emo: dolor | Mochila: [🍖: 1/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: pradera  | Hambre:  44.2 | Sed:  90.7 | Salud:  92.0 | Emo: tristeza]
+            Estima a Hugo (C): [Loc: valle    | Hambre:  45.1 | Sed:  81.5 | Salud:  90.8 | Emo: tristeza]
+  Hugo (C): Loc: cueva    | Hambre:  45.3 | Sed:  98.4 | Salud:  98.0 | Energía:   1.6 | Emo: tristeza | Mochila: [🍖: 0/1, 💧: 1/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: pradera  | Hambre:  44.0 | Sed:  77.2 | Salud:  98.0 | Emo: tristeza]
+            Estima a Sofi (B): [Loc: valle    | Hambre:  44.4 | Sed:   2.1 | Salud:  74.0 | Emo: dolor]
+  👉 Nico (A) decide DAR: mochila vacía, compañeros saciados o solos
+  👉 Sofi (B) decide DAR: mochila vacía, compañeros saciados o solos
+  👉 Hugo (C) decide BEBER: bebe agua de su mochila
+
+[Tick 081] ───────────────────────────────────────────────────────
+  Mundo: Bosque: [🍖: 9.5/10.0] | Río: [🍖: 9.5/10.0, 💧: 10.0/10.0] | Lago: [💧: 7.0/10.0] | 🎯 Sin presa | 🦣 Sin Gran Herbívoro
+  Nico (A): Loc: pradera  | Hambre:  44.0 | Sed:  89.6 | Salud:  92.0 | Energía:   5.6 | Emo: tristeza | Mochila: [🍖: 1/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Sofi (B): [Loc: pradera  | Hambre:  44.3 | Sed:   1.5 | Salud:  66.0 | Emo: dolor]
+            Estima a Hugo (c): [Loc: pradera  | Hambre:  44.8 | Sed:  80.0 | Salud:  92.8 | Emo: tristeza]
+  Sofi (B): Loc: pradera  | Hambre:  44.3 | Sed:   1.5 | Salud:  66.0 | Energía:   1.2 | Emo: dolor | Mochila: [🍖: 1/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: pradera  | Hambre:  44.0 | Sed:  89.6 | Salud:  92.0 | Emo: tristeza]
+            Estima a Hugo (C): [Loc: valle    | Hambre:  44.9 | Sed:  80.5 | Salud:  90.8 | Emo: tristeza]
+  Hugo (C): Loc: cueva    | Hambre:  45.0 | Sed: 100.0 | Salud: 100.0 | Energía:   0.0 | Emo: tristeza | Mochila: [🍖: 0/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: pradera  | Hambre:  43.8 | Sed:  76.2 | Salud:  98.0 | Emo: tristeza]
+            Estima a Sofi (B): [Loc: valle    | Hambre:  44.2 | Sed:   1.1 | Salud:  74.0 | Emo: dolor]
+  👉 Nico (A) decide DAR: mochila vacía, compañeros saciados o solos
+  👉 Sofi (B) decide DAR: mochila vacía, compañeros saciados o solos
+  👉 Hugo (C) decide MOVER: colapsa por cansancio extremo y duerme forzosamente
+
+[Tick 082] ───────────────────────────────────────────────────────
+  Mundo: Bosque: [🍖: 9.5/10.0] | Río: [🍖: 9.5/10.0, 💧: 10.0/10.0] | Lago: [💧: 7.5/10.0] | 🎯 Sin presa | 🦣 Gran Herbívoro en valle (25t)
+  Nico (A): Loc: pradera  | Hambre:  43.7 | Sed:  88.5 | Salud:  92.0 | Energía:   3.4 | Emo: tristeza | Mochila: [🍖: 1/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Sofi (B): [Loc: pradera  | Hambre:  44.1 | Sed:   0.4 | Salud:  66.0 | Emo: dolor]
+            Estima a Hugo (c): [Loc: pradera  | Hambre:  44.6 | Sed:  79.0 | Salud:  92.8 | Emo: tristeza]
+  Sofi (B): Loc: pradera  | Hambre:  44.1 | Sed:   0.4 | Salud:  66.0 | Energía:   0.0 | Emo: dolor | Mochila: [🍖: 1/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: pradera  | Hambre:  43.7 | Sed:  88.5 | Salud:  92.0 | Emo: tristeza]
+            Estima a Hugo (C): [Loc: valle    | Hambre:  44.7 | Sed:  79.5 | Salud:  90.8 | Emo: tristeza]
+  Hugo (C): Loc: cueva    | Hambre:  44.9 | Sed:  99.5 | Salud:  98.0 | Energía:   8.0 | Emo: tristeza | Mochila: [🍖: 0/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: pradera  | Hambre:  43.6 | Sed:  75.2 | Salud:  98.0 | Emo: tristeza]
+            Estima a Sofi (B): [Loc: valle    | Hambre:  44.0 | Sed:   0.1 | Salud:  74.0 | Emo: dolor]
+  👉 Nico (A) decide MOVER: demasiado cansado para moverse
+  👉 Sofi (B) decide DAR: colapsa por cansancio extremo y duerme forzosamente
+  👉 Hugo (C) decide MOVER: se mueve a valle (→valle)
+
+[Tick 083] ───────────────────────────────────────────────────────
+  Mundo: Bosque: [🍖: 9.5/10.0] | Río: [🍖: 9.5/10.0, 💧: 10.0/10.0] | Lago: [💧: 8.0/10.0] | 🎯 Sin presa | 🦣 Gran Herbívoro en cueva (24t)
+  Nico (A): Loc: pradera  | Hambre:  43.5 | Sed:  87.4 | Salud:  92.0 | Energía:   1.2 | Emo: tristeza | Mochila: [🍖: 1/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Sofi (B): [Loc: pradera  | Hambre:  50.0 | Sed:  50.0 | Salud:  50.0 | Emo: tristeza]
+            Estima a Hugo (c): [Loc: pradera  | Hambre:  44.4 | Sed:  78.0 | Salud:  92.8 | Emo: tristeza]
+  Sofi (B): Loc: pradera  | Hambre:  50.0 | Sed:  50.0 | Salud:  50.0 | Energía:   7.8 | Emo: tristeza | Mochila: [🍖: 1/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: pradera  | Hambre:  43.5 | Sed:  87.4 | Salud:  92.0 | Emo: tristeza]
+            Estima a Hugo (C): [Loc: valle    | Hambre:  44.5 | Sed:  78.5 | Salud:  90.8 | Emo: tristeza]
+  Hugo (C): Loc: valle    | Hambre:  44.7 | Sed:  98.5 | Salud:  98.0 | Energía:   2.0 | Emo: tristeza | Mochila: [🍖: 0/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: pradera  | Hambre:  43.4 | Sed:  74.2 | Salud:  98.0 | Emo: tristeza]
+            Estima a Sofi (B): [Loc: valle    | Hambre:  43.8 | Sed:   0.0 | Salud:  71.5 | Emo: dolor]
+  👉 Nico (A) decide REANIMAR: ¡REANIMACIÓN! Despertó a B
+  👉 Sofi (B) decide DORMIR: duerme y descansa
+  👉 Hugo (C) decide MOVER: demasiado cansado para moverse
+
+[Tick 084] ───────────────────────────────────────────────────────
+  Mundo: Bosque: [🍖: 9.5/10.0] | Río: [🍖: 9.5/10.0, 💧: 10.0/10.0] | Lago: [💧: 8.5/10.0] | 🎯 Sin presa | 🦣 Gran Herbívoro en cueva (23t)
+  Nico (A): Loc: pradera  | Hambre:  43.3 | Sed:  86.3 | Salud:  92.0 | Energía:   0.0 | Emo: tristeza | Mochila: [🍖: 1/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Sofi (B): [Loc: pradera  | Hambre:  49.9 | Sed:  49.5 | Salud:  63.0 | Emo: ira]
+            Estima a Hugo (c): [Loc: pradera  | Hambre:  44.2 | Sed:  77.0 | Salud:  92.8 | Emo: tristeza]
+  Sofi (B): Loc: pradera  | Hambre:  49.9 | Sed:  49.5 | Salud:  63.0 | Energía:  25.6 | Emo: ira | Mochila: [🍖: 1/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: pradera  | Hambre:  43.3 | Sed:  86.3 | Salud:  92.0 | Emo: tristeza]
+            Estima a Hugo (C): [Loc: valle    | Hambre:  44.3 | Sed:  77.5 | Salud:  90.8 | Emo: tristeza]
+  Hugo (C): Loc: valle    | Hambre:  44.5 | Sed:  97.5 | Salud:  98.0 | Energía:   0.0 | Emo: tristeza | Mochila: [🍖: 0/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: pradera  | Hambre:  43.2 | Sed:  73.2 | Salud:  98.0 | Emo: tristeza]
+            Estima a Sofi (B): [Loc: valle    | Hambre:  43.6 | Sed:   0.0 | Salud:  69.0 | Emo: dolor]
+  👉 Nico (A) decide DAR: colapsa por cansancio extremo y duerme forzosamente
+  👉 Sofi (B) decide DAR: mochila vacía, compañeros saciados o solos
+  👉 Hugo (C) decide MOVER: colapsa por cansancio extremo y duerme forzosamente
+
+[Tick 085] ───────────────────────────────────────────────────────
+  Mundo: Bosque: [🍖: 9.5/10.0] | Río: [🍖: 9.5/10.0, 💧: 10.0/10.0] | Lago: [💧: 9.0/10.0] | 🎯 Presa en río (10t) | 🦣 Gran Herbívoro en pradera (22t)
+  Nico (A): Loc: pradera  | Hambre:  43.2 | Sed:  85.7 | Salud:  90.0 | Energía:   7.8 | Emo: tristeza | Mochila: [🍖: 1/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Sofi (B): [Loc: pradera  | Hambre:  49.7 | Sed:  48.4 | Salud:  63.0 | Emo: ira]
+            Estima a Hugo (c): [Loc: pradera  | Hambre:  44.0 | Sed:  76.0 | Salud:  92.8 | Emo: tristeza]
+  Sofi (B): Loc: pradera  | Hambre:  49.7 | Sed:  48.4 | Salud:  63.0 | Energía:  23.4 | Emo: ira | Mochila: [🍖: 1/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: pradera  | Hambre:  43.2 | Sed:  85.7 | Salud:  90.0 | Emo: tristeza]
+            Estima a Hugo (C): [Loc: valle    | Hambre:  44.1 | Sed:  76.5 | Salud:  90.8 | Emo: tristeza]
+  Hugo (C): Loc: valle    | Hambre:  44.4 | Sed:  97.0 | Salud:  96.0 | Energía:   8.0 | Emo: tristeza | Mochila: [🍖: 0/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: pradera  | Hambre:  43.0 | Sed:  72.2 | Salud:  98.0 | Emo: tristeza]
+            Estima a Sofi (B): [Loc: valle    | Hambre:  43.4 | Sed:   0.0 | Salud:  66.5 | Emo: dolor]
+  👉 Nico (A) decide DAR: mochila vacía, compañeros saciados o solos | depredador ataca
+  👉 Sofi (B) decide DAR: mochila vacía, compañeros saciados o solos
+  👉 Hugo (C) decide MOVER: se mueve a cueva
+
+[Tick 086] ───────────────────────────────────────────────────────
+  Mundo: Bosque: [🍖: 9.5/10.0] | Río: [🍖: 9.5/10.0, 💧: 10.0/10.0] | Lago: [💧: 9.5/10.0] | 🎯 Presa en río (9t) | 🦣 Gran Herbívoro en pradera (21t)
+  Nico (A): Loc: pradera  | Hambre:  43.0 | Sed:  84.6 | Salud:  88.0 | Energía:   5.6 | Emo: tristeza | Mochila: [🍖: 1/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Sofi (B): [Loc: pradera  | Hambre:  49.5 | Sed:  47.2 | Salud:  63.0 | Emo: ira]
+            Estima a Hugo (c): [Loc: pradera  | Hambre:  43.8 | Sed:  75.0 | Salud:  92.8 | Emo: tristeza]
+  Sofi (B): Loc: pradera  | Hambre:  49.5 | Sed:  47.2 | Salud:  63.0 | Energía:  21.2 | Emo: ira | Mochila: [🍖: 1/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: pradera  | Hambre:  43.0 | Sed:  84.6 | Salud:  88.0 | Emo: tristeza]
+            Estima a Hugo (C): [Loc: valle    | Hambre:  43.9 | Sed:  75.5 | Salud:  90.8 | Emo: tristeza]
+  Hugo (C): Loc: cueva    | Hambre:  44.2 | Sed:  96.0 | Salud:  96.0 | Energía:   2.0 | Emo: tristeza | Mochila: [🍖: 0/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: pradera  | Hambre:  42.8 | Sed:  71.2 | Salud:  98.0 | Emo: tristeza]
+            Estima a Sofi (B): [Loc: valle    | Hambre:  43.2 | Sed:   0.0 | Salud:  64.0 | Emo: dolor]
+  👉 Nico (A) decide MOVER: se mueve a lago
+  👉 Sofi (B) decide DAR: mochila vacía, compañeros saciados o solos
+  👉 Hugo (C) decide MOVER: demasiado cansado para moverse
+
+[Tick 087] ───────────────────────────────────────────────────────
+  Mundo: Bosque: [🍖: 9.5/10.0] | Río: [🍖: 9.5/10.0, 💧: 10.0/10.0] | Lago: [💧: 10.0/10.0] | 🎯 Presa en río (8t) | 🦣 Gran Herbívoro en pradera (20t)
+  Nico (A): Loc: lago     | Hambre:  42.7 | Sed:  83.5 | Salud:  88.0 | Energía:   0.0 | Emo: tristeza | Mochila: [🍖: 1/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Sofi (B): [Loc: pradera  | Hambre:  49.2 | Sed:  46.2 | Salud:  63.0 | Emo: tristeza]
+            Estima a Hugo (c): [Loc: pradera  | Hambre:  43.6 | Sed:  74.0 | Salud:  92.8 | Emo: tristeza]
+  Sofi (B): Loc: pradera  | Hambre:  49.2 | Sed:  46.1 | Salud:  63.0 | Energía:  19.0 | Emo: tristeza | Mochila: [🍖: 1/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: pradera  | Hambre:  42.8 | Sed:  83.6 | Salud:  88.0 | Emo: tristeza]
+            Estima a Hugo (C): [Loc: valle    | Hambre:  43.7 | Sed:  74.5 | Salud:  90.8 | Emo: tristeza]
+  Hugo (C): Loc: cueva    | Hambre:  44.0 | Sed:  95.0 | Salud:  96.0 | Energía:   0.0 | Emo: tristeza | Mochila: [🍖: 0/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: pradera  | Hambre:  42.6 | Sed:  70.2 | Salud:  98.0 | Emo: tristeza]
+            Estima a Sofi (B): [Loc: valle    | Hambre:  43.0 | Sed:   0.0 | Salud:  61.5 | Emo: dolor]
+  👉 Nico (A) decide MOVER: colapsa por cansancio extremo y duerme forzosamente
+  👉 Sofi (B) decide MOVER: se mueve a bosque
+  👉 Hugo (C) decide MOVER: colapsa por cansancio extremo y duerme forzosamente
+
+[Tick 088] ───────────────────────────────────────────────────────
+  Mundo: Bosque: [🍖: 9.5/10.0] | Río: [🍖: 9.5/10.0, 💧: 10.0/10.0] | Lago: [💧: 9.0/10.0] | 🎯 Presa en río (7t) | 🦣 Gran Herbívoro en pradera (19t)
+  Nico (A): Loc: lago     | Hambre:  42.6 | Sed:  83.0 | Salud:  86.0 | Energía:   7.8 | Emo: tristeza | Mochila: [🍖: 1/1, 💧: 1/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Sofi (B): [Loc: pradera  | Hambre:  49.0 | Sed:  45.2 | Salud:  63.0 | Emo: tristeza]
+            Estima a Hugo (c): [Loc: pradera  | Hambre:  43.4 | Sed:  73.0 | Salud:  92.8 | Emo: tristeza]
+  Sofi (B): Loc: bosque   | Hambre:  49.0 | Sed:  45.0 | Salud:  63.0 | Energía:  12.8 | Emo: tristeza | Mochila: [🍖: 1/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: pradera  | Hambre:  42.6 | Sed:  82.6 | Salud:  88.0 | Emo: tristeza]
+            Estima a Hugo (C): [Loc: valle    | Hambre:  43.5 | Sed:  73.5 | Salud:  90.8 | Emo: tristeza]
+  Hugo (C): Loc: cueva    | Hambre:  43.9 | Sed:  94.5 | Salud:  94.0 | Energía:   8.0 | Emo: tristeza | Mochila: [🍖: 0/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: pradera  | Hambre:  42.4 | Sed:  69.2 | Salud:  98.0 | Emo: tristeza]
+            Estima a Sofi (B): [Loc: valle    | Hambre:  42.8 | Sed:   0.0 | Salud:  59.0 | Emo: dolor]
+  👉 Nico (A) decide BEBER: bebe agua (suelo)
+  👉 Sofi (B) decide MOVER: se mueve a ruinas
+  👉 Hugo (C) decide MOVER: se mueve a lago
+
+[Tick 089] ───────────────────────────────────────────────────────
+  Mundo: Bosque: [🍖: 9.5/10.0] | Río: [🍖: 9.5/10.0, 💧: 10.0/10.0] | Lago: [💧: 8.5/10.0] | 🎯 Presa en río (6t) | 🦣 Gran Herbívoro en pradera (18t)
+  Nico (A): Loc: lago     | Hambre:  42.4 | Sed: 100.0 | Salud:  89.0 | Energía:   5.4 | Emo: tristeza | Mochila: [🍖: 1/1, 💧: 1/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Sofi (B): [Loc: pradera  | Hambre:  48.8 | Sed:  44.2 | Salud:  63.0 | Emo: tristeza]
+            Estima a Hugo (c): [Loc: lago     | Hambre:  43.7 | Sed:  93.5 | Salud:  94.0 | Emo: tristeza]
+  Sofi (B): Loc: ruinas   | Hambre:  48.8 | Sed:  43.9 | Salud:  63.0 | Energía:   6.6 | Emo: tristeza | Mochila: [🍖: 1/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: pradera  | Hambre:  42.4 | Sed:  81.6 | Salud:  88.0 | Emo: tristeza]
+            Estima a Hugo (C): [Loc: valle    | Hambre:  43.3 | Sed:  72.5 | Salud:  90.8 | Emo: tristeza]
+  Hugo (C): Loc: lago     | Hambre:  43.7 | Sed:  93.5 | Salud:  94.0 | Energía:   2.0 | Emo: tristeza | Mochila: [🍖: 0/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: lago     | Hambre:  42.4 | Sed: 100.0 | Salud:  89.0 | Emo: tristeza]
+            Estima a Sofi (B): [Loc: valle    | Hambre:  42.6 | Sed:   0.0 | Salud:  56.5 | Emo: dolor]
+  👉 Nico (A) decide BEBER: bebe agua (suelo)
+  👉 Sofi (B) decide MOVER: se mueve a bosque
+  👉 Hugo (C) decide BEBER: bebe agua (suelo)
+
+[Tick 090] ───────────────────────────────────────────────────────
+  Mundo: Bosque: [🍖: 9.5/10.0] | Río: [🍖: 9.5/10.0, 💧: 10.0/10.0] | Lago: [💧: 6.0/10.0] | 🎯 Presa en río (5t) | 🦣 Gran Herbívoro en bosque (17t)
+  Nico (A): Loc: lago     | Hambre:  42.2 | Sed: 100.0 | Salud:  92.0 | Energía:   3.0 | Emo: tristeza | Mochila: [🍖: 1/1, 💧: 1/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Sofi (B): [Loc: pradera  | Hambre:  48.6 | Sed:  43.2 | Salud:  63.0 | Emo: tristeza]
+            Estima a Hugo (c): [Loc: lago     | Hambre:  43.5 | Sed: 100.0 | Salud:  97.0 | Emo: tristeza]
+  Sofi (B): Loc: bosque   | Hambre:  48.6 | Sed:  42.8 | Salud:  63.0 | Energía:   0.4 | Emo: tristeza | Mochila: [🍖: 1/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: pradera  | Hambre:  42.2 | Sed:  80.6 | Salud:  88.0 | Emo: tristeza]
+            Estima a Hugo (C): [Loc: valle    | Hambre:  43.1 | Sed:  71.5 | Salud:  90.8 | Emo: tristeza]
+  Hugo (C): Loc: lago     | Hambre:  43.5 | Sed: 100.0 | Salud:  97.0 | Energía:   0.0 | Emo: tristeza | Mochila: [🍖: 0/1, 💧: 1/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: lago     | Hambre:  42.2 | Sed: 100.0 | Salud:  92.0 | Emo: tristeza]
+            Estima a Sofi (B): [Loc: valle    | Hambre:  42.4 | Sed:   0.0 | Salud:  54.0 | Emo: dolor]
+  👉 Nico (A) decide BEBER: bebe agua (suelo)
+  👉 Sofi (B) decide MOVER: demasiado cansado para moverse
+  👉 Hugo (C) decide BEBER: colapsa por cansancio extremo y duerme forzosamente
+
+[Tick 091] ───────────────────────────────────────────────────────
+  Mundo: Bosque: [🍖: 9.5/10.0] | Río: [🍖: 9.5/10.0, 💧: 10.0/10.0] | Lago: [💧: 5.5/10.0] | 🎯 Presa en río (4t) | 🦣 Gran Herbívoro en bosque (16t)
+  Nico (A): Loc: lago     | Hambre:  41.9 | Sed: 100.0 | Salud:  95.0 | Energía:   0.6 | Emo: tristeza | Mochila: [🍖: 1/1, 💧: 1/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Sofi (B): [Loc: pradera  | Hambre:  48.4 | Sed:  42.2 | Salud:  63.0 | Emo: tristeza]
+            Estima a Hugo (c): [Loc: lago     | Hambre:  43.4 | Sed:  99.5 | Salud:  95.0 | Emo: tristeza]
+  Sofi (B): Loc: bosque   | Hambre:  48.4 | Sed:  41.7 | Salud:  63.0 | Energía:   0.0 | Emo: tristeza | Mochila: [🍖: 1/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: pradera  | Hambre:  42.0 | Sed:  79.6 | Salud:  88.0 | Emo: tristeza]
+            Estima a Hugo (C): [Loc: valle    | Hambre:  42.9 | Sed:  70.5 | Salud:  90.8 | Emo: tristeza]
+  Hugo (C): Loc: lago     | Hambre:  43.4 | Sed:  99.5 | Salud:  95.0 | Energía:   7.8 | Emo: tristeza | Mochila: [🍖: 0/1, 💧: 1/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: lago     | Hambre:  41.9 | Sed: 100.0 | Salud:  95.0 | Emo: tristeza]
+            Estima a Sofi (B): [Loc: valle    | Hambre:  42.2 | Sed:   0.0 | Salud:  51.5 | Emo: dolor]
+  👉 Nico (A) decide DAR: intenta dar comida a C pero no ha sido solicitada
+  👉 Sofi (B) decide MOVER: colapsa por cansancio extremo y duerme forzosamente
+  👉 Hugo (C) decide DAR: mochila vacía, compañeros saciados o solos
+
+[Tick 092] ───────────────────────────────────────────────────────
+  Mundo: Bosque: [🍖: 9.5/10.0] | Río: [🍖: 9.5/10.0, 💧: 10.0/10.0] | Lago: [💧: 6.0/10.0] | 🎯 Presa en río (3t) | 🦣 Gran Herbívoro en bosque (15t)
+  Nico (A): Loc: lago     | Hambre:  41.7 | Sed:  98.8 | Salud:  95.0 | Energía:   0.0 | Emo: tristeza | Mochila: [🍖: 1/1, 💧: 1/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Sofi (B): [Loc: pradera  | Hambre:  48.2 | Sed:  41.2 | Salud:  63.0 | Emo: tristeza]
+            Estima a Hugo (c): [Loc: lago     | Hambre:  43.2 | Sed:  98.4 | Salud:  95.0 | Emo: tristeza]
+  Sofi (B): Loc: bosque   | Hambre:  48.2 | Sed:  41.2 | Salud:  61.0 | Energía:   7.8 | Emo: tristeza | Mochila: [🍖: 1/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: pradera  | Hambre:  41.8 | Sed:  78.6 | Salud:  88.0 | Emo: tristeza]
+            Estima a Hugo (C): [Loc: valle    | Hambre:  42.7 | Sed:  69.5 | Salud:  90.8 | Emo: tristeza]
+  Hugo (C): Loc: lago     | Hambre:  43.2 | Sed:  98.4 | Salud:  95.0 | Energía:   5.6 | Emo: tristeza | Mochila: [🍖: 0/1, 💧: 1/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: lago     | Hambre:  41.7 | Sed:  98.8 | Salud:  95.0 | Emo: tristeza]
+            Estima a Sofi (B): [Loc: valle    | Hambre:  42.0 | Sed:   0.0 | Salud:  49.0 | Emo: dolor]
+  👉 Nico (A) decide MOVER: colapsa por cansancio extremo y duerme forzosamente
+  👉 Sofi (B) decide MOVER: se mueve a río
+  👉 Hugo (C) decide DAR: mochila vacía, compañeros saciados o solos
+
+[Tick 093] ───────────────────────────────────────────────────────
+  Mundo: Bosque: [🍖: 9.5/10.0] | Río: [🍖: 9.5/10.0, 💧: 10.0/10.0] | Lago: [💧: 6.5/10.0] | 🎯 Presa en río (2t) | 🦣 Gran Herbívoro en bosque (14t)
+  Nico (A): Loc: lago     | Hambre:  41.6 | Sed:  98.2 | Salud:  93.0 | Energía:   7.6 | Emo: tristeza | Mochila: [🍖: 1/1, 💧: 1/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Sofi (B): [Loc: pradera  | Hambre:  48.0 | Sed:  40.2 | Salud:  63.0 | Emo: tristeza]
+            Estima a Hugo (c): [Loc: lago     | Hambre:  43.0 | Sed:  97.3 | Salud:  95.0 | Emo: tristeza]
+  Sofi (B): Loc: río      | Hambre:  48.0 | Sed:  40.1 | Salud:  61.0 | Energía:   1.6 | Emo: tristeza | Mochila: [🍖: 1/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: pradera  | Hambre:  41.6 | Sed:  77.6 | Salud:  88.0 | Emo: tristeza]
+            Estima a Hugo (C): [Loc: valle    | Hambre:  42.5 | Sed:  68.5 | Salud:  90.8 | Emo: tristeza]
+  Hugo (C): Loc: lago     | Hambre:  43.0 | Sed:  97.3 | Salud:  95.0 | Energía:   3.4 | Emo: tristeza | Mochila: [🍖: 0/1, 💧: 1/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: lago     | Hambre:  41.6 | Sed:  98.2 | Salud:  93.0 | Emo: tristeza]
+            Estima a Sofi (B): [Loc: valle    | Hambre:  41.8 | Sed:   0.0 | Salud:  46.5 | Emo: dolor]
+  👉 Nico (A) decide DAR: intenta dar comida a C pero no ha sido solicitada
+  👉 Sofi (B) decide MOVER: demasiado cansado para moverse
+  👉 Hugo (C) decide BEBER: bebe agua (suelo)
+
+[Tick 094] ───────────────────────────────────────────────────────
+  Mundo: Bosque: [🍖: 9.5/10.0] | Río: [🍖: 9.5/10.0, 💧: 10.0/10.0] | Lago: [💧: 6.0/10.0] | 🎯 Presa en río (1t) | 🦣 Gran Herbívoro en ruinas (13t)
+  Nico (A): Loc: lago     | Hambre:  41.3 | Sed:  97.0 | Salud:  93.0 | Energía:   5.2 | Emo: tristeza | Mochila: [🍖: 1/1, 💧: 1/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Sofi (B): [Loc: pradera  | Hambre:  47.8 | Sed:  39.2 | Salud:  63.0 | Emo: tristeza]
+            Estima a Hugo (c): [Loc: lago     | Hambre:  42.8 | Sed: 100.0 | Salud:  98.0 | Emo: tristeza]
+  Sofi (B): Loc: río      | Hambre:  47.8 | Sed:  39.0 | Salud:  61.0 | Energía:   0.0 | Emo: tristeza | Mochila: [🍖: 1/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: pradera  | Hambre:  41.4 | Sed:  76.6 | Salud:  88.0 | Emo: tristeza]
+            Estima a Hugo (C): [Loc: valle    | Hambre:  42.3 | Sed:  67.5 | Salud:  90.8 | Emo: tristeza]
+  Hugo (C): Loc: lago     | Hambre:  42.8 | Sed: 100.0 | Salud:  98.0 | Energía:   1.2 | Emo: tristeza | Mochila: [🍖: 0/1, 💧: 1/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: lago     | Hambre:  41.3 | Sed:  97.0 | Salud:  93.0 | Emo: tristeza]
+            Estima a Sofi (B): [Loc: valle    | Hambre:  41.6 | Sed:   0.0 | Salud:  44.0 | Emo: dolor]
+  👉 Nico (A) decide DAR: intenta dar comida a C pero no ha sido solicitada
+  👉 Sofi (B) decide MOVER: colapsa por cansancio extremo y duerme forzosamente
+  👉 Hugo (C) decide DAR: mochila vacía, compañeros saciados o solos
+
+[Tick 095] ───────────────────────────────────────────────────────
+  Mundo: Bosque: [🍖: 9.5/10.0] | Río: [🍖: 9.5/10.0, 💧: 10.0/10.0] | Lago: [💧: 6.5/10.0] | 🎯 Sin presa | 🦣 Gran Herbívoro en ruinas (12t)
+  Nico (A): Loc: lago     | Hambre:  41.1 | Sed:  95.8 | Salud:  93.0 | Energía:   2.8 | Emo: tristeza | Mochila: [🍖: 1/1, 💧: 1/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Sofi (B): [Loc: pradera  | Hambre:  47.6 | Sed:  38.2 | Salud:  63.0 | Emo: tristeza]
+            Estima a Hugo (c): [Loc: lago     | Hambre:  42.5 | Sed:  98.9 | Salud:  98.0 | Emo: tristeza]
+  Sofi (B): Loc: río      | Hambre:  47.7 | Sed:  38.4 | Salud:  59.0 | Energía:   7.8 | Emo: tristeza | Mochila: [🍖: 1/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: pradera  | Hambre:  41.2 | Sed:  75.6 | Salud:  88.0 | Emo: tristeza]
+            Estima a Hugo (C): [Loc: valle    | Hambre:  42.1 | Sed:  66.5 | Salud:  90.8 | Emo: tristeza]
+  Hugo (C): Loc: lago     | Hambre:  42.5 | Sed:  98.9 | Salud:  98.0 | Energía:   0.0 | Emo: tristeza | Mochila: [🍖: 0/1, 💧: 1/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: lago     | Hambre:  41.1 | Sed:  95.8 | Salud:  93.0 | Emo: tristeza]
+            Estima a Sofi (B): [Loc: valle    | Hambre:  41.4 | Sed:   0.0 | Salud:  41.5 | Emo: dolor]
+  👉 Nico (A) decide BEBER: bebe agua (suelo)
+  👉 Sofi (B) decide MOVER: se mueve a valle
+  👉 Hugo (C) decide DAR: colapsa por cansancio extremo y duerme forzosamente
+
+[Tick 096] ───────────────────────────────────────────────────────
+  Mundo: Bosque: [🍖: 9.5/10.0] | Río: [🍖: 9.5/10.0, 💧: 10.0/10.0] | Lago: [💧: 6.0/10.0] | 🎯 Sin presa | 🦣 Gran Herbívoro en ruinas (11t)
+  Nico (A): Loc: lago     | Hambre:  40.8 | Sed: 100.0 | Salud:  96.0 | Energía:   0.4 | Emo: tristeza | Mochila: [🍖: 1/1, 💧: 1/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Sofi (B): [Loc: pradera  | Hambre:  47.4 | Sed:  37.2 | Salud:  63.0 | Emo: tristeza]
+            Estima a Hugo (c): [Loc: lago     | Hambre:  42.4 | Sed:  98.4 | Salud:  96.0 | Emo: tristeza]
+  Sofi (B): Loc: valle    | Hambre:  47.5 | Sed:  37.3 | Salud:  59.0 | Energía:   1.6 | Emo: tristeza | Mochila: [🍖: 1/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: pradera  | Hambre:  41.0 | Sed:  74.6 | Salud:  88.0 | Emo: tristeza]
+            Estima a Hugo (C): [Loc: valle    | Hambre:  41.9 | Sed:  65.5 | Salud:  90.8 | Emo: tristeza]
+  Hugo (C): Loc: lago     | Hambre:  42.4 | Sed:  98.4 | Salud:  96.0 | Energía:   7.8 | Emo: tristeza | Mochila: [🍖: 0/1, 💧: 1/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: lago     | Hambre:  40.8 | Sed: 100.0 | Salud:  96.0 | Emo: tristeza]
+            Estima a Sofi (B): [Loc: valle    | Hambre:  41.2 | Sed:   0.0 | Salud:  39.0 | Emo: dolor]
+  👉 Nico (A) decide DAR: intenta dar comida a C pero no ha sido solicitada
+  👉 Sofi (B) decide MOVER: demasiado cansado para moverse
+  👉 Hugo (C) decide DAR: mochila vacía, compañeros saciados o solos
+
+[Tick 097] ───────────────────────────────────────────────────────
+  Mundo: Bosque: [🍖: 9.5/10.0] | Río: [🍖: 9.5/10.0, 💧: 10.0/10.0] | Lago: [💧: 6.5/10.0] | 🎯 Sin presa | 🦣 Gran Herbívoro en pantano (10t)
+  Nico (A): Loc: lago     | Hambre:  40.6 | Sed:  98.8 | Salud:  96.0 | Energía:   0.0 | Emo: tristeza | Mochila: [🍖: 1/1, 💧: 1/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Sofi (B): [Loc: pradera  | Hambre:  47.2 | Sed:  36.2 | Salud:  63.0 | Emo: tristeza]
+            Estima a Hugo (c): [Loc: lago     | Hambre:  42.2 | Sed:  97.3 | Salud:  96.0 | Emo: tristeza]
+  Sofi (B): Loc: valle    | Hambre:  47.3 | Sed:  36.2 | Salud:  59.0 | Energía:   0.0 | Emo: tristeza | Mochila: [🍖: 1/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: pradera  | Hambre:  40.8 | Sed:  73.6 | Salud:  88.0 | Emo: tristeza]
+            Estima a Hugo (C): [Loc: valle    | Hambre:  41.7 | Sed:  64.5 | Salud:  90.8 | Emo: tristeza]
+  Hugo (C): Loc: lago     | Hambre:  42.2 | Sed:  97.3 | Salud:  96.0 | Energía:   5.6 | Emo: tristeza | Mochila: [🍖: 0/1, 💧: 1/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: lago     | Hambre:  40.6 | Sed:  98.8 | Salud:  96.0 | Emo: tristeza]
+            Estima a Sofi (B): [Loc: valle    | Hambre:  41.0 | Sed:   0.0 | Salud:  36.5 | Emo: dolor]
+  👉 Nico (A) decide DAR: colapsa por cansancio extremo y duerme forzosamente
+  👉 Sofi (B) decide MOVER: colapsa por cansancio extremo y duerme forzosamente
+  👉 Hugo (C) decide MOVER: se mueve a cueva (→valle)
+
+[Tick 098] ───────────────────────────────────────────────────────
+  Mundo: Bosque: [🍖: 9.5/10.0] | Río: [🍖: 9.5/10.0, 💧: 10.0/10.0] | Lago: [💧: 7.0/10.0] | 🎯 Sin presa | 🦣 Gran Herbívoro en pantano (9t)
+  Nico (A): Loc: lago     | Hambre:  40.5 | Sed:  98.2 | Salud:  94.0 | Energía:   7.6 | Emo: tristeza | Mochila: [🍖: 1/1, 💧: 1/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Sofi (B): [Loc: pradera  | Hambre:  47.0 | Sed:  35.2 | Salud:  63.0 | Emo: tristeza]
+            Estima a Hugo (c): [Loc: lago     | Hambre:  42.0 | Sed:  96.3 | Salud:  96.0 | Emo: tristeza]
+  Sofi (B): Loc: valle    | Hambre:  47.1 | Sed:  35.7 | Salud:  57.0 | Energía:   7.8 | Emo: tristeza | Mochila: [🍖: 1/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: pradera  | Hambre:  40.6 | Sed:  72.6 | Salud:  88.0 | Emo: tristeza]
+            Estima a Hugo (C): [Loc: valle    | Hambre:  41.5 | Sed:  63.5 | Salud:  90.8 | Emo: tristeza]
+  Hugo (C): Loc: cueva    | Hambre:  42.0 | Sed:  96.2 | Salud:  96.0 | Energía:   0.0 | Emo: tristeza | Mochila: [🍖: 0/1, 💧: 1/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: lago     | Hambre:  40.4 | Sed:  97.8 | Salud:  96.0 | Emo: tristeza]
+            Estima a Sofi (B): [Loc: valle    | Hambre:  40.8 | Sed:   0.0 | Salud:  34.0 | Emo: dolor]
+  👉 Nico (A) decide BEBER: bebe agua (suelo)
+  👉 Sofi (B) decide MOVER: se mueve a pradera
+  👉 Hugo (C) decide MOVER: colapsa por cansancio extremo y duerme forzosamente
+
+[Tick 099] ───────────────────────────────────────────────────────
+  Mundo: Bosque: [🍖: 9.5/10.0] | Río: [🍖: 9.5/10.0, 💧: 10.0/10.0] | Lago: [💧: 6.5/10.0] | 🎯 Sin presa | 🦣 Gran Herbívoro en pantano (8t)
+  Nico (A): Loc: lago     | Hambre:  40.2 | Sed: 100.0 | Salud:  97.0 | Energía:   5.2 | Emo: tristeza | Mochila: [🍖: 1/1, 💧: 1/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Sofi (B): [Loc: pradera  | Hambre:  46.8 | Sed:  34.2 | Salud:  63.0 | Emo: tristeza]
+            Estima a Hugo (c): [Loc: lago     | Hambre:  41.8 | Sed:  95.3 | Salud:  96.0 | Emo: tristeza]
+  Sofi (B): Loc: pradera  | Hambre:  46.9 | Sed:  34.6 | Salud:  57.0 | Energía:   1.6 | Emo: tristeza | Mochila: [🍖: 1/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: pradera  | Hambre:  40.4 | Sed:  71.6 | Salud:  88.0 | Emo: tristeza]
+            Estima a Hugo (C): [Loc: valle    | Hambre:  41.3 | Sed:  62.5 | Salud:  90.8 | Emo: tristeza]
+  Hugo (C): Loc: cueva    | Hambre:  41.9 | Sed:  95.6 | Salud:  94.0 | Energía:   7.8 | Emo: tristeza | Mochila: [🍖: 0/1, 💧: 1/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: lago     | Hambre:  40.2 | Sed:  96.8 | Salud:  96.0 | Emo: tristeza]
+            Estima a Sofi (B): [Loc: valle    | Hambre:  40.6 | Sed:   0.0 | Salud:  31.5 | Emo: dolor]
+  👉 Nico (A) decide BEBER: bebe agua (suelo)
+  👉 Sofi (B) decide MOVER: demasiado cansado para moverse
+  👉 Hugo (C) decide BEBER: bebe agua de su mochila
+
+[Tick 100] ───────────────────────────────────────────────────────
+  Mundo: Bosque: [🍖: 9.5/10.0] | Río: [🍖: 9.5/10.0, 💧: 10.0/10.0] | Lago: [💧: 6.0/10.0] | 🎯 Sin presa | 🦣 Gran Herbívoro en pantano (7t)
+  Nico (A): Loc: lago     | Hambre:  40.0 | Sed: 100.0 | Salud: 100.0 | Energía:   2.8 | Emo: tristeza | Mochila: [🍖: 1/1, 💧: 1/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Sofi (B): [Loc: pradera  | Hambre:  46.6 | Sed:  33.2 | Salud:  63.0 | Emo: tristeza]
+            Estima a Hugo (c): [Loc: lago     | Hambre:  41.6 | Sed:  94.3 | Salud:  96.0 | Emo: tristeza]
+  Sofi (B): Loc: pradera  | Hambre:  46.7 | Sed:  33.5 | Salud:  57.0 | Energía:   0.0 | Emo: tristeza | Mochila: [🍖: 1/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: pradera  | Hambre:  40.2 | Sed:  70.6 | Salud:  88.0 | Emo: tristeza]
+            Estima a Hugo (C): [Loc: valle    | Hambre:  41.1 | Sed:  61.5 | Salud:  90.8 | Emo: tristeza]
+  Hugo (C): Loc: cueva    | Hambre:  41.7 | Sed: 100.0 | Salud:  97.0 | Energía:   5.6 | Emo: tristeza | Mochila: [🍖: 0/1, 💧: 0/1, 🌿: 0/3, 🪨: 0/3] | Lanza: ❌
+            Estima a Nico (A): [Loc: lago     | Hambre:  40.0 | Sed:  95.8 | Salud:  96.0 | Emo: tristeza]
+            Estima a Sofi (B): [Loc: valle    | Hambre:  40.4 | Sed:   0.0 | Salud:  29.0 | Emo: dolor]
+  👉 Nico (A) decide MOVER: demasiado cansado para moverse
+  👉 Sofi (B) decide MOVER: colapsa por cansancio extremo y duerme forzosamente
+  👉 Hugo (C) decide MOVER: se mueve a valle (→valle)
+
+══════════════════════════════════════════════════════════════════════
+📊 RESULTADOS FINALES DE LA SIMULACIÓN
+  Duración: 100 ticks
+  Nico vivo: True (Salud: 100.0)
+  Sofi viva: True (Salud: 55.0)
+  Hugo vivo: True (Salud: 97.0)
+══════════════════════════════════════════════════════════════════════

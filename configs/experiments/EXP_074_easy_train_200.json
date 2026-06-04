@@ -1,7 +1,7 @@
 {
-	"experiment_id": "EXP_073_easy_train",
+	"experiment_id": "EXP_074_easy_train_200",
 	"seed": 42,
-	"pretrained_from": "storage/experiments/EXP_036_pretrained/best_agent.pt",
+	"pretrained_from": "storage/experiments/EXP_073_easy_train",
 	"model": {
 		"hidden_dim": 256,
 		"num_layers": 3,
@@ -47,6 +47,6 @@
 		"enabled": true
 	},
 	"meta": {
-		"description": "Training PPO cooperativo en un entorno Facil (metabolismo 1.5, baja amenaza) con ToM y 14 acciones"
+		"description": "Training PPO cooperativo en un entorno Facil con ToM, 14 acciones, cargando de EXP_073 y con meta de 200 ticks saludables"
 	}
 }

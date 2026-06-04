@@ -55,8 +55,8 @@ def grow_value_head(model: nn.Module, growth_factor: float = 1.5, noise_std: flo
 	model.value_head[2] = new_layer_out.to(device)
 
 
-def get_masked_probs(logits: torch.Tensor, episode: int, n_episodes: int, communicate: bool) -> torch.Tensor:
-	"""Enmascarar acciones no permitidas progresivamente para guiar el aprendizaje en early epochs."""
+def get_masked_probs(logits: torch.Tensor, episode: int, n_episodes: int, communicate: bool, state_mask = None) -> torch.Tensor:
+	"""Enmascarar acciones no permitidas progresivamente (curriculum de tutorial) y dinámicamente (contexto)."""
 	probs = F.softmax(logits, dim=-1)
 	
 	# Clonar para evitar modificar in-place
@@ -69,23 +69,137 @@ def get_masked_probs(logits: torch.Tensor, episode: int, n_episodes: int, commun
 	if not communicate:
 		mask[..., 6] = 0.0
 		
-	# Desenmascaramiento progresivo:
-	# - Primer 35% de los episodios: permitir acciones básicas + enseñar (8) y aprender (9)
-	#   (enmascaramos reproducir=10, fabricar=11, construir=12, encender=13)
-	# - De 35% a 60% de los episodios: habilitar fabricar (11) y encender (13)
-	# - A partir del 60%: habilitar reproducir (10) y construir (12)
+	# Desenmascaramiento progresivo (Tutorial de Juego):
 	progress = episode / n_episodes
-	if progress < 0.35:
+	if progress < 0.20:
+		# Fase 0: Supervivencia y Cooperación Básica (Comer, Beber, Dormir, Mover, Ver, Dar, Enseñar, Aprender)
+		# Bloquear: Luchar (5), Gritar (6), Reproducir (10), Fabricar (11), Construir (12), Encender (13)
+		mask[..., 5] = 0.0
+		mask[..., 6] = 0.0
 		mask[..., 10:14] = 0.0
-	elif progress < 0.60:
-		# Enmascarar reproducir (10) y construir (12)
+	elif progress < 0.45:
+		# Fase 1: Defensa y Herramientas (Luchar, Fabricar, Encender)
+		# Bloquear: Gritar (6), Reproducir (10), Construir (12)
+		mask[..., 6] = 0.0
 		mask[..., 10] = 0.0
 		mask[..., 12] = 0.0
+	elif progress < 0.70:
+		# Fase 2: Comunicación y Coordinación (Gritar)
+		# Bloquear: Reproducir (10), Construir (12)
+		mask[..., 10] = 0.0
+		mask[..., 12] = 0.0
+	elif progress < 0.85:
+		# Fase 3: Asentamientos y Construcción (Construir)
+		# Bloquear: Reproducir (10)
+		mask[..., 10] = 0.0
+	# Fase 4 (progress >= 0.85): Reproducción y Evolución (Todo desbloqueado)
+		
+	# Enmascaramiento contextual dinámico:
+	if state_mask is not None:
+		if not isinstance(state_mask, torch.Tensor):
+			state_mask = torch.tensor(state_mask, dtype=torch.float, device=logits.device)
+		mask = mask * state_mask
 		
 	masked_probs = probs * mask
 	sum_probs = masked_probs.sum(dim=-1, keepdim=True)
 	masked_probs = masked_probs / torch.clamp(sum_probs, min=1e-8)
 	return masked_probs
+
+
+def run_eval_episode(world, agent_a, agent_b, agent_c, agent_d, device, communicate, n_think=2) -> bool:
+	"""Ejecuta un episodio de evaluación determinista (greedy) para verificar maestría."""
+	state_a, state_b, state_c = world.reset(seed=999)
+	state_d = world.agent_d
+	consecutive_healthy = 0
+	
+	agent_a.eval()
+	agent_b.eval()
+	agent_c.eval()
+	if agent_d is not None:
+		agent_d.eval()
+
+	for tick in range(1, 501):
+		if not state_a.alive and not state_b.alive and not state_c.alive:
+			break
+			
+		action_a = "ver"
+		if state_a.alive:
+			perc_a = world.perceive(state_a)
+			if not communicate:
+				perc_a[4] = SILENCE_GLYPH
+				perc_a[5] = SILENCE_GLYPH
+			inp_a = perception_to_input_coop(perc_a, device)
+			emo_a = torch.tensor([state_a.emotion_id], device=device)
+			with torch.no_grad():
+				_, meta_a = agent_a.forward_resonance(inp_a, n_steps=n_think, pos_mode="clock", emotion_ids=emo_a)
+				hidden_a = meta_a["hidden"][:, 2, :].clone()
+				logits_a = agent_a.action_head(hidden_a)
+				mask_a = world.get_valid_actions_mask(state_a)
+				probs_a = get_masked_probs(logits_a, 1, 1, communicate, mask_a)
+				action_a = COOP_ACTIONS[torch.argmax(probs_a, dim=-1).item()]
+
+		action_b = "ver"
+		if state_b.alive:
+			perc_b = world.perceive(state_b)
+			if not communicate:
+				perc_b[4] = SILENCE_GLYPH
+				perc_b[5] = SILENCE_GLYPH
+			inp_b = perception_to_input_coop(perc_b, device)
+			emo_b = torch.tensor([state_b.emotion_id], device=device)
+			with torch.no_grad():
+				_, meta_b = agent_b.forward_resonance(inp_b, n_steps=n_think, pos_mode="clock", emotion_ids=emo_b)
+				hidden_b = meta_b["hidden"][:, 2, :].clone()
+				logits_b = agent_b.action_head(hidden_b)
+				mask_b = world.get_valid_actions_mask(state_b)
+				probs_b = get_masked_probs(logits_b, 1, 1, communicate, mask_b)
+				action_b = COOP_ACTIONS[torch.argmax(probs_b, dim=-1).item()]
+
+		action_c = "ver"
+		if state_c.alive:
+			perc_c = world.perceive(state_c)
+			if not communicate:
+				perc_c[4] = SILENCE_GLYPH
+				perc_c[5] = SILENCE_GLYPH
+			inp_c = perception_to_input_coop(perc_c, device)
+			emo_c = torch.tensor([state_c.emotion_id], device=device)
+			with torch.no_grad():
+				_, meta_c = agent_c.forward_resonance(inp_c, n_steps=n_think, pos_mode="clock", emotion_ids=emo_c)
+				hidden_c = meta_c["hidden"][:, 2, :].clone()
+				logits_c = agent_c.action_head(hidden_c)
+				mask_c = world.get_valid_actions_mask(state_c)
+				probs_c = get_masked_probs(logits_c, 1, 1, communicate, mask_c)
+				action_c = COOP_ACTIONS[torch.argmax(probs_c, dim=-1).item()]
+
+		action_d = "ver"
+		if state_d.alive and agent_d is not None:
+			perc_d = world.perceive(state_d)
+			if not communicate:
+				perc_d[4] = SILENCE_GLYPH
+				perc_d[5] = SILENCE_GLYPH
+			inp_d = perception_to_input_coop(perc_d, device)
+			emo_d = torch.tensor([state_d.emotion_id], device=device)
+			with torch.no_grad():
+				_, meta_d = agent_d.forward_resonance(inp_d, n_steps=n_think, pos_mode="clock", emotion_ids=emo_d)
+				hidden_d = meta_d["hidden"][:, 2, :].clone()
+				logits_d = agent_d.action_head(hidden_d)
+				mask_d = world.get_valid_actions_mask(state_d)
+				probs_d = get_masked_probs(logits_d, 1, 1, communicate, mask_d)
+				action_d = COOP_ACTIONS[torch.argmax(probs_d, dim=-1).item()]
+
+		_, _, _, world_info = world.step(action_a, action_b, action_c, action_d)
+
+		is_any_ko = (
+			getattr(state_a, "debuff_inconsciente_ticks", 0) > 0 or
+			getattr(state_b, "debuff_inconsciente_ticks", 0) > 0 or
+			getattr(state_c, "debuff_inconsciente_ticks", 0) > 0
+		)
+		if is_any_ko:
+			consecutive_healthy = 0
+		else:
+			consecutive_healthy += 1
+			if consecutive_healthy >= 200:
+				return True
+	return False
 
 
 def run_arena_ppo_training():
@@ -128,17 +242,21 @@ def run_arena_ppo_training():
 
 		# Determinar pesos pre-entrenados a cargar
 		p = None
-		load_label = "a" if agent_label == "c" else agent_label
+		load_label = agent_label
 		pretrained_from = config.get("pretrained_from")
 		if pretrained_from:
 			p_base = pretrained_from if os.path.isabs(pretrained_from) else os.path.join(base_dir, pretrained_from)
 			if os.path.isdir(p_base):
 				p = os.path.join(p_base, f"best_agent_{load_label}.pt")
+				if agent_label == "c" and not os.path.exists(p):
+					p = os.path.join(p_base, "best_agent_a.pt")
 			else:
 				p_dir = os.path.dirname(p_base)
 				p_spec = os.path.join(p_dir, f"best_agent_{load_label}.pt")
 				if os.path.exists(p_spec):
 					p = p_spec
+				elif agent_label == "c" and os.path.exists(os.path.join(p_dir, "best_agent_a.pt")):
+					p = os.path.join(p_dir, "best_agent_a.pt")
 				elif os.path.exists(p_base):
 					p = p_base
 
@@ -245,6 +363,7 @@ def run_arena_ppo_training():
 	storm_chance_multiplier = world_cfg.get("storm_chance_multiplier", 1.0)
 	storm_damage_multiplier = world_cfg.get("storm_damage_multiplier", 1.0)
 	prey_spawn_interval = world_cfg.get("prey_spawn_interval", 15)
+	replenish_cooldown_ticks = world_cfg.get("replenish_cooldown_ticks", 0)
 
 	# Growth config
 	growth_cfg = config.get("growth", {})
@@ -308,6 +427,7 @@ def run_arena_ppo_training():
 
 	best_combined = 0.0
 	survival_hist = []
+	success_mastery = False
 	total_growths_a = 0
 	total_growths_b = 0
 	total_growths_c = 0
@@ -329,17 +449,36 @@ def run_arena_ppo_training():
 		storm_chance_multiplier=storm_chance_multiplier,
 		storm_damage_multiplier=storm_damage_multiplier,
 		prey_spawn_interval=prey_spawn_interval,
+		replenish_cooldown_ticks=replenish_cooldown_ticks,
 	)
 
+	# ── 0. DOJO PRE-TRAINING (Bootstrapping) ──
+	dojo_pretrain_steps = config.get("dojo", {}).get("pretrain_steps", 50)
+	dojo_pretrain_epochs = config.get("dojo", {}).get("pretrain_epochs", 10)
+	if dojo_pretrain_steps > 0:
+		print(f"\n🎓 [DOJO] Iniciando pre-entrenamiento del Manual de Instrucciones en el Dojo...")
+		agents_dict = {"a": agent_a, "b": agent_b, "c": agent_c}
+		if agent_d is not None:
+			agents_dict["d"] = agent_d
+		
+		from src.bitnet.dojo_populora import train_dojo_step
+		for step in range(dojo_pretrain_steps):
+			losses = train_dojo_step(agents_dict, device, batch_size=256, lr=1e-4, epochs=dojo_pretrain_epochs, n_think=n_think)
+			if (step + 1) % 10 == 0 or step == 0:
+				loss_str = ", ".join(f"{k.upper()}:{v:.4f}" for k, v in losses.items())
+				print(f"  [Dojo Pretrain Step {step+1}/{dojo_pretrain_steps}] Pérdidas: {loss_str}")
+		print("🎓 [DOJO] Pre-entrenamiento completado con éxito. Pesos iniciales alineados con las reglas expertas.\n")
+
 	for episode in range(n_episodes):
-		state_a, state_b, state_c = world.reset(seed=seed + episode)
+		state_a, state_b, state_c = world.reset(seed=seed)
 		state_d = world.agent_d
+		consecutive_healthy_ticks = 0
 
 		# Trajectory buffers
-		buf_a = {"inputs": [], "emotions": [], "actions": [], "shout_concepts": [], "log_probs": [], "values": [], "rewards": []}
-		buf_b = {"inputs": [], "emotions": [], "actions": [], "shout_concepts": [], "log_probs": [], "values": [], "rewards": []}
-		buf_c = {"inputs": [], "emotions": [], "actions": [], "shout_concepts": [], "log_probs": [], "values": [], "rewards": []}
-		buf_d = {"inputs": [], "emotions": [], "actions": [], "shout_concepts": [], "log_probs": [], "values": [], "rewards": []}
+		buf_a = {"inputs": [], "emotions": [], "actions": [], "shout_concepts": [], "state_masks": [], "log_probs": [], "values": [], "rewards": []}
+		buf_b = {"inputs": [], "emotions": [], "actions": [], "shout_concepts": [], "state_masks": [], "log_probs": [], "values": [], "rewards": []}
+		buf_c = {"inputs": [], "emotions": [], "actions": [], "shout_concepts": [], "state_masks": [], "log_probs": [], "values": [], "rewards": []}
+		buf_d = {"inputs": [], "emotions": [], "actions": [], "shout_concepts": [], "state_masks": [], "log_probs": [], "values": [], "rewards": []}
 
 		agent_a.eval()
 		agent_b.eval()
@@ -355,172 +494,186 @@ def run_arena_ppo_training():
 		agent_d_episode = agent_d
 
 		for tick in range(max_ticks):
-			if not state_a.alive or not state_b.alive or not state_c.alive:
+			# Terminar solo si todos los fundadores activos están muertos
+			if not state_a.alive and not state_b.alive and not state_c.alive:
 				break
 
-			# ── 1. PERCIBIR (fog of war) ──
-			perc_a = world.perceive(state_a)
-			perc_b = world.perceive(state_b)
-			perc_c = world.perceive(state_c)
-			perc_d = None
-			if state_d.alive:
-				perc_d = world.perceive(state_d)
-
-			if not communicate:
-				perc_a[4] = SILENCE_GLYPH
-				perc_a[5] = SILENCE_GLYPH
-				perc_b[4] = SILENCE_GLYPH
-				perc_b[5] = SILENCE_GLYPH
-				perc_c[4] = SILENCE_GLYPH
-				perc_c[5] = SILENCE_GLYPH
-				if perc_d is not None:
-					perc_d[4] = SILENCE_GLYPH
-					perc_d[5] = SILENCE_GLYPH
-
-			input_a = perception_to_input_coop(perc_a, device)
-			input_b = perception_to_input_coop(perc_b, device)
-			input_c = perception_to_input_coop(perc_c, device)
-			input_d = None
-			if perc_d is not None:
-				input_d = perception_to_input_coop(perc_d, device)
-
-			emo_a = torch.tensor([state_a.emotion_id], device=device)
-			emo_b = torch.tensor([state_b.emotion_id], device=device)
-			emo_c = torch.tensor([state_c.emotion_id], device=device)
-			emo_d = None
-			if state_d.alive:
-				emo_d = torch.tensor([state_d.emotion_id], device=device)
-
-			# ── 2. PENSAR (forward resonance) ──
-			with torch.no_grad():
-				_, meta_a = agent_a.forward_resonance(
-					input_a, n_steps=n_think, pos_mode="clock", emotion_ids=emo_a
-				)
-				_, meta_b = agent_b.forward_resonance(
-					input_b, n_steps=n_think, pos_mode="clock", emotion_ids=emo_b
-				)
-				_, meta_c = agent_c.forward_resonance(
-					input_c, n_steps=n_think, pos_mode="clock", emotion_ids=emo_c
-				)
-				meta_d = None
-				if state_d.alive and agent_d_episode is not None:
-					_, meta_d = agent_d_episode.forward_resonance(
-						input_d, n_steps=n_think, pos_mode="clock", emotion_ids=emo_d
-					)
-
-				hidden_a = meta_a["hidden"][:, 2, :].clone()
-				hidden_b = meta_b["hidden"][:, 2, :].clone()
-				hidden_c = meta_c["hidden"][:, 2, :].clone()
-				hidden_d = None
-				if meta_d is not None:
-					hidden_d = meta_d["hidden"][:, 2, :].clone()
-
-				# Predicciones de política y valor
-				action_logits_a = agent_a.action_head(hidden_a)
-				action_logits_b = agent_b.action_head(hidden_b)
-				action_logits_c = agent_c.action_head(hidden_c)
-				action_logits_d = None
-				if hidden_d is not None:
-					action_logits_d = agent_d_episode.action_head(hidden_d)
-
-				shout_logits_a = agent_a._decode_hidden(hidden_a)
-				shout_logits_b = agent_b._decode_hidden(hidden_b)
-				shout_logits_c = agent_c._decode_hidden(hidden_c)
-				shout_logits_d = None
-				if hidden_d is not None:
-					shout_logits_d = agent_d_episode._decode_hidden(hidden_d)
-
-				val_a = agent_a.value_head(hidden_a).item()
-				val_b = agent_b.value_head(hidden_b).item()
-				val_c = agent_c.value_head(hidden_c).item()
-				val_d = None
-				if hidden_d is not None:
-					val_d = agent_d_episode.value_head(hidden_d).item()
-
-			probs_a = get_masked_probs(action_logits_a, episode, n_episodes, communicate)
-			probs_b = get_masked_probs(action_logits_b, episode, n_episodes, communicate)
-			probs_c = get_masked_probs(action_logits_c, episode, n_episodes, communicate)
-
-			shout_probs_a = F.softmax(shout_logits_a, dim=-1)
-			shout_probs_b = F.softmax(shout_logits_b, dim=-1)
-			shout_probs_c = F.softmax(shout_logits_c, dim=-1)
+			# Capturar estado de vida al inicio del tick
+			state_a_alive_at_start = state_a.alive
+			state_b_alive_at_start = state_b.alive
+			state_c_alive_at_start = state_c.alive
+			state_d_alive_at_start = state_d.alive
 
 			# Muestreo con exploración decreciente
 			explore_rate = max(0.02, 1.0 - episode / (n_episodes * 0.40))
 
-			# Decidir acciones y conceptos (A)
-			dist_shout_a = torch.distributions.Categorical(shout_probs_a)
-			if np.random.rand() < explore_rate:
-				shout_concept_a_val = np.random.randint(0, shout_probs_a.shape[-1])
-				lp_shout_a = torch.log(shout_probs_a[0, shout_concept_a_val] + 1e-8).item()
-			else:
-				shout_concept_a_val = dist_shout_a.sample().item()
-				lp_shout_a = dist_shout_a.log_prob(torch.tensor(shout_concept_a_val, device=device)).item()
+			# Inicializar variables por defecto para evitar NameError
+			input_a, input_b, input_c, input_d = None, None, None, None
+			hidden_a, hidden_b, hidden_c, hidden_d = None, None, None, None
+			idx_a, idx_b, idx_c, idx_d = 4, 4, 4, 4
+			shout_concept_a_val, shout_concept_b_val, shout_concept_c_val, shout_concept_d_val = SILENCE_GLYPH, SILENCE_GLYPH, SILENCE_GLYPH, SILENCE_GLYPH
+			lp_a, lp_b, lp_c, lp_d = 0.0, 0.0, 0.0, 0.0
+			val_a, val_b, val_c, val_d = 0.0, 0.0, 0.0, 0.0
+			action_a, action_b, action_c, action_d = "ver", "ver", "ver", "ver"
+			shout_concept_a, shout_concept_b, shout_concept_c, shout_concept_d = None, None, None, None
+			state_mask_a, state_mask_b, state_mask_c, state_mask_d = None, None, None, None
 
-			# Obtenemos los índices de las acciones permitidas (con prob > 0)
-			allowed_indices_a = torch.where(probs_a[0] > 0.0)[0].cpu().numpy()
+			# ── Nico (A) ──
+			if state_a_alive_at_start:
+				perc_a = world.perceive(state_a)
+				if not communicate:
+					perc_a[4] = SILENCE_GLYPH
+					perc_a[5] = SILENCE_GLYPH
+				input_a = perception_to_input_coop(perc_a, device)
+				emo_a_id = state_a.emotion_id
+				emo_a = torch.tensor([emo_a_id], device=device)
 
-			if np.random.rand() < explore_rate:
-				idx_a = np.random.choice(allowed_indices_a)
-				lp_a = torch.log(probs_a[0, idx_a] + 1e-8).item()
-			else:
-				dist_a = torch.distributions.Categorical(probs_a)
-				idx_a = dist_a.sample().item()
-				lp_a = dist_a.log_prob(torch.tensor(idx_a, device=device)).item()
+				with torch.no_grad():
+					_, meta_a = agent_a.forward_resonance(
+						input_a, n_steps=n_think, pos_mode="clock", emotion_ids=emo_a
+					)
+					hidden_a = meta_a["hidden"][:, 2, :].clone()
+					action_logits_a = agent_a.action_head(hidden_a)
+					shout_logits_a = agent_a._decode_hidden(hidden_a)
+					val_a = agent_a.value_head(hidden_a).item()
 
-			if idx_a == 6:
-				lp_a = lp_a + lp_shout_a
+				state_mask_a = world.get_valid_actions_mask(state_a)
+				probs_a = get_masked_probs(action_logits_a, episode, n_episodes, communicate, state_mask_a)
+				shout_probs_a = F.softmax(shout_logits_a, dim=-1)
 
-			# Decidir acciones y conceptos (B)
-			dist_shout_b = torch.distributions.Categorical(shout_probs_b)
-			if np.random.rand() < explore_rate:
-				shout_concept_b_val = np.random.randint(0, shout_probs_b.shape[-1])
-				lp_shout_b = torch.log(shout_probs_b[0, shout_concept_b_val] + 1e-8).item()
-			else:
-				shout_concept_b_val = dist_shout_b.sample().item()
-				lp_shout_b = dist_shout_b.log_prob(torch.tensor(shout_concept_b_val, device=device)).item()
+				dist_shout_a = torch.distributions.Categorical(shout_probs_a)
+				if np.random.rand() < explore_rate:
+					shout_concept_a_val = np.random.randint(0, shout_probs_a.shape[-1])
+					lp_shout_a = torch.log(shout_probs_a[0, shout_concept_a_val] + 1e-8).item()
+				else:
+					shout_concept_a_val = dist_shout_a.sample().item()
+					lp_shout_a = dist_shout_a.log_prob(torch.tensor(shout_concept_a_val, device=device)).item()
 
-			allowed_indices_b = torch.where(probs_b[0] > 0.0)[0].cpu().numpy()
+				allowed_indices_a = torch.where(probs_a[0] > 0.0)[0].cpu().numpy()
+				if np.random.rand() < explore_rate:
+					idx_a = np.random.choice(allowed_indices_a)
+					lp_a = torch.log(probs_a[0, idx_a] + 1e-8).item()
+				else:
+					dist_a = torch.distributions.Categorical(probs_a)
+					idx_a = dist_a.sample().item()
+					lp_a = dist_a.log_prob(torch.tensor(idx_a, device=device)).item()
 
-			if np.random.rand() < explore_rate:
-				idx_b = np.random.choice(allowed_indices_b)
-				lp_b = torch.log(probs_b[0, idx_b] + 1e-8).item()
-			else:
-				dist_b = torch.distributions.Categorical(probs_b)
-				idx_b = dist_b.sample().item()
-				lp_b = dist_b.log_prob(torch.tensor(idx_b, device=device)).item()
+				if idx_a == 6:
+					lp_a = lp_a + lp_shout_a
+				action_a = COOP_ACTIONS[idx_a]
+				shout_concept_a = shout_concept_a_val if idx_a == 6 else None
 
-			if idx_b == 6:
-				lp_b = lp_b + lp_shout_b
+			# ── Sofy (B) ──
+			if state_b_alive_at_start:
+				perc_b = world.perceive(state_b)
+				if not communicate:
+					perc_b[4] = SILENCE_GLYPH
+					perc_b[5] = SILENCE_GLYPH
+				input_b = perception_to_input_coop(perc_b, device)
+				emo_b_id = state_b.emotion_id
+				emo_b = torch.tensor([emo_b_id], device=device)
 
-			# Decidir acciones y conceptos (C)
-			dist_shout_c = torch.distributions.Categorical(shout_probs_c)
-			if np.random.rand() < explore_rate:
-				shout_concept_c_val = np.random.randint(0, shout_probs_c.shape[-1])
-				lp_shout_c = torch.log(shout_probs_c[0, shout_concept_c_val] + 1e-8).item()
-			else:
-				shout_concept_c_val = dist_shout_c.sample().item()
-				lp_shout_c = dist_shout_c.log_prob(torch.tensor(shout_concept_c_val, device=device)).item()
+				with torch.no_grad():
+					_, meta_b = agent_b.forward_resonance(
+						input_b, n_steps=n_think, pos_mode="clock", emotion_ids=emo_b
+					)
+					hidden_b = meta_b["hidden"][:, 2, :].clone()
+					action_logits_b = agent_b.action_head(hidden_b)
+					shout_logits_b = agent_b._decode_hidden(hidden_b)
+					val_b = agent_b.value_head(hidden_b).item()
 
-			allowed_indices_c = torch.where(probs_c[0] > 0.0)[0].cpu().numpy()
+				state_mask_b = world.get_valid_actions_mask(state_b)
+				probs_b = get_masked_probs(action_logits_b, episode, n_episodes, communicate, state_mask_b)
+				shout_probs_b = F.softmax(shout_logits_b, dim=-1)
 
-			if np.random.rand() < explore_rate:
-				idx_c = np.random.choice(allowed_indices_c)
-				lp_c = torch.log(probs_c[0, idx_c] + 1e-8).item()
-			else:
-				dist_c = torch.distributions.Categorical(probs_c)
-				idx_c = dist_c.sample().item()
-				lp_c = dist_c.log_prob(torch.tensor(idx_c, device=device)).item()
+				dist_shout_b = torch.distributions.Categorical(shout_probs_b)
+				if np.random.rand() < explore_rate:
+					shout_concept_b_val = np.random.randint(0, shout_probs_b.shape[-1])
+					lp_shout_b = torch.log(shout_probs_b[0, shout_concept_b_val] + 1e-8).item()
+				else:
+					shout_concept_b_val = dist_shout_b.sample().item()
+					lp_shout_b = dist_shout_b.log_prob(torch.tensor(shout_concept_b_val, device=device)).item()
 
-			if idx_c == 6:
-				lp_c = lp_c + lp_shout_c
+				allowed_indices_b = torch.where(probs_b[0] > 0.0)[0].cpu().numpy()
+				if np.random.rand() < explore_rate:
+					idx_b = np.random.choice(allowed_indices_b)
+					lp_b = torch.log(probs_b[0, idx_b] + 1e-8).item()
+				else:
+					dist_b = torch.distributions.Categorical(probs_b)
+					idx_b = dist_b.sample().item()
+					lp_b = dist_b.log_prob(torch.tensor(idx_b, device=device)).item()
 
-			# Decidir acciones y conceptos (D)
-			idx_d = 4 # ver por defecto
-			shout_concept_d_val = SILENCE_GLYPH
-			lp_d = 0.0
-			if state_d.alive and agent_d_episode is not None:
-				probs_d = get_masked_probs(action_logits_d, episode, n_episodes, communicate)
+				if idx_b == 6:
+					lp_b = lp_b + lp_shout_b
+				action_b = COOP_ACTIONS[idx_b]
+				shout_concept_b = shout_concept_b_val if idx_b == 6 else None
+
+			# ── Hugo (C) ──
+			if state_c_alive_at_start:
+				perc_c = world.perceive(state_c)
+				if not communicate:
+					perc_c[4] = SILENCE_GLYPH
+					perc_c[5] = SILENCE_GLYPH
+				input_c = perception_to_input_coop(perc_c, device)
+				emo_c_id = state_c.emotion_id
+				emo_c = torch.tensor([emo_c_id], device=device)
+
+				with torch.no_grad():
+					_, meta_c = agent_c.forward_resonance(
+						input_c, n_steps=n_think, pos_mode="clock", emotion_ids=emo_c
+					)
+					hidden_c = meta_c["hidden"][:, 2, :].clone()
+					action_logits_c = agent_c.action_head(hidden_c)
+					shout_logits_c = agent_c._decode_hidden(hidden_c)
+					val_c = agent_c.value_head(hidden_c).item()
+
+				state_mask_c = world.get_valid_actions_mask(state_c)
+				probs_c = get_masked_probs(action_logits_c, episode, n_episodes, communicate, state_mask_c)
+				shout_probs_c = F.softmax(shout_logits_c, dim=-1)
+
+				dist_shout_c = torch.distributions.Categorical(shout_probs_c)
+				if np.random.rand() < explore_rate:
+					shout_concept_c_val = np.random.randint(0, shout_probs_c.shape[-1])
+					lp_shout_c = torch.log(shout_probs_c[0, shout_concept_c_val] + 1e-8).item()
+				else:
+					shout_concept_c_val = dist_shout_c.sample().item()
+					lp_shout_c = dist_shout_c.log_prob(torch.tensor(shout_concept_c_val, device=device)).item()
+
+				allowed_indices_c = torch.where(probs_c[0] > 0.0)[0].cpu().numpy()
+				if np.random.rand() < explore_rate:
+					idx_c = np.random.choice(allowed_indices_c)
+					lp_c = torch.log(probs_c[0, idx_c] + 1e-8).item()
+				else:
+					dist_c = torch.distributions.Categorical(probs_c)
+					idx_c = dist_c.sample().item()
+					lp_c = dist_c.log_prob(torch.tensor(idx_c, device=device)).item()
+
+				if idx_c == 6:
+					lp_c = lp_c + lp_shout_c
+				action_c = COOP_ACTIONS[idx_c]
+				shout_concept_c = shout_concept_c_val if idx_c == 6 else None
+
+			# ── Domi (D) ──
+			if state_d_alive_at_start and agent_d_episode is not None:
+				perc_d = world.perceive(state_d)
+				if not communicate:
+					perc_d[4] = SILENCE_GLYPH
+					perc_d[5] = SILENCE_GLYPH
+				input_d = perception_to_input_coop(perc_d, device)
+				emo_d_id = state_d.emotion_id
+				emo_d = torch.tensor([emo_d_id], device=device)
+
+				with torch.no_grad():
+					_, meta_d = agent_d_episode.forward_resonance(
+						input_d, n_steps=n_think, pos_mode="clock", emotion_ids=emo_d
+					)
+					hidden_d = meta_d["hidden"][:, 2, :].clone()
+					action_logits_d = agent_d_episode.action_head(hidden_d)
+					shout_logits_d = agent_d_episode._decode_hidden(hidden_d)
+					val_d = agent_d_episode.value_head(hidden_d).item()
+
+				state_mask_d = world.get_valid_actions_mask(state_d)
+				probs_d = get_masked_probs(action_logits_d, episode, n_episodes, communicate, state_mask_d)
 				shout_probs_d = F.softmax(shout_logits_d, dim=-1)
 
 				dist_shout_d = torch.distributions.Categorical(shout_probs_d)
@@ -532,7 +685,6 @@ def run_arena_ppo_training():
 					lp_shout_d = dist_shout_d.log_prob(torch.tensor(shout_concept_d_val, device=device)).item()
 
 				allowed_indices_d = torch.where(probs_d[0] > 0.0)[0].cpu().numpy()
-
 				if np.random.rand() < explore_rate:
 					idx_d = np.random.choice(allowed_indices_d)
 					lp_d = torch.log(probs_d[0, idx_d] + 1e-8).item()
@@ -543,6 +695,8 @@ def run_arena_ppo_training():
 
 				if idx_d == 6:
 					lp_d = lp_d + lp_shout_d
+				action_d = COOP_ACTIONS[idx_d]
+				shout_concept_d = shout_concept_d_val if idx_d == 6 else None
 
 			# ── 3. ACTUAR ──
 			action_a = COOP_ACTIONS[idx_a]
@@ -589,12 +743,14 @@ def run_arena_ppo_training():
 				agent_d_episode = agent_d
 
 			# Registrar en el teaching_buffer para destilación latente (Fase 6)
-			agents_to_check = [
-				("a", result_a, state_a, input_a),
-				("b", result_b, state_b, input_b),
-				("c", result_c, state_c, input_c)
-			]
-			if world.agent_d_was_alive and result_d is not None:
+			agents_to_check = []
+			if state_a_alive_at_start:
+				agents_to_check.append(("a", result_a, state_a, input_a))
+			if state_b_alive_at_start:
+				agents_to_check.append(("b", result_b, state_b, input_b))
+			if state_c_alive_at_start:
+				agents_to_check.append(("c", result_c, state_c, input_c))
+			if world.agent_d_was_alive and result_d is not None and state_d_alive_at_start:
 				agents_to_check.append(("d", result_d, state_d, input_d))
 
 			for label, result_x, state_x, input_x in agents_to_check:
@@ -620,13 +776,13 @@ def run_arena_ppo_training():
 							"teacher_id": teacher_id
 						})
 
-			if result_a.get("shouted"):
+			if state_a_alive_at_start and result_a.get("shouted"):
 				ep_shouts_a += 1
-			if result_b.get("shouted"):
+			if state_b_alive_at_start and result_b.get("shouted"):
 				ep_shouts_b += 1
-			if result_c.get("shouted"):
+			if state_c_alive_at_start and result_c.get("shouted"):
 				ep_shouts_c += 1
-			if result_d is not None and result_d.get("shouted"):
+			if state_d_alive_at_start and result_d is not None and result_d.get("shouted"):
 				ep_shouts_d += 1
 
 			reward_a = world.get_reward(state_a, result_a)
@@ -640,42 +796,60 @@ def run_arena_ppo_training():
 				reward_c += world_info.get("coop_bonus_c", 0.0)
 
 			# Almacenar en buffers
-			buf_a["inputs"].append(input_a.squeeze(0).cpu())
-			buf_a["emotions"].append(state_a.emotion_id)
-			buf_a["actions"].append(idx_a)
-			buf_a["shout_concepts"].append(shout_concept_a_val)
-			buf_a["log_probs"].append(lp_a)
-			buf_a["values"].append(val_a)
-			buf_a["rewards"].append(reward_a)
+			if state_a_alive_at_start:
+				buf_a["inputs"].append(input_a.squeeze(0).cpu())
+				buf_a["emotions"].append(emo_a_id)
+				buf_a["actions"].append(idx_a)
+				buf_a["shout_concepts"].append(shout_concept_a_val)
+				buf_a["state_masks"].append(state_mask_a if state_mask_a is not None else [1.0]*COOP_N_ACTIONS)
+				buf_a["log_probs"].append(lp_a)
+				buf_a["values"].append(val_a)
+				buf_a["rewards"].append(reward_a)
 
-			buf_b["inputs"].append(input_b.squeeze(0).cpu())
-			buf_b["emotions"].append(state_b.emotion_id)
-			buf_b["actions"].append(idx_b)
-			buf_b["shout_concepts"].append(shout_concept_b_val)
-			buf_b["log_probs"].append(lp_b)
-			buf_b["values"].append(val_b)
-			buf_b["rewards"].append(reward_b)
+			if state_b_alive_at_start:
+				buf_b["inputs"].append(input_b.squeeze(0).cpu())
+				buf_b["emotions"].append(emo_b_id)
+				buf_b["actions"].append(idx_b)
+				buf_b["shout_concepts"].append(shout_concept_b_val)
+				buf_b["state_masks"].append(state_mask_b if state_mask_b is not None else [1.0]*COOP_N_ACTIONS)
+				buf_b["log_probs"].append(lp_b)
+				buf_b["values"].append(val_b)
+				buf_b["rewards"].append(reward_b)
 
-			buf_c["inputs"].append(input_c.squeeze(0).cpu())
-			buf_c["emotions"].append(state_c.emotion_id)
-			buf_c["actions"].append(idx_c)
-			buf_c["shout_concepts"].append(shout_concept_c_val)
-			buf_c["log_probs"].append(lp_c)
-			buf_c["values"].append(val_c)
-			buf_c["rewards"].append(reward_c)
+			if state_c_alive_at_start:
+				buf_c["inputs"].append(input_c.squeeze(0).cpu())
+				buf_c["emotions"].append(emo_c_id)
+				buf_c["actions"].append(idx_c)
+				buf_c["shout_concepts"].append(shout_concept_c_val)
+				buf_c["state_masks"].append(state_mask_c if state_mask_c is not None else [1.0]*COOP_N_ACTIONS)
+				buf_c["log_probs"].append(lp_c)
+				buf_c["values"].append(val_c)
+				buf_c["rewards"].append(reward_c)
 
-			if world.agent_d_was_alive and result_d is not None and agent_d_episode is not None:
+			if world.agent_d_was_alive and result_d is not None and agent_d_episode is not None and state_d_alive_at_start:
 				reward_d = world.get_reward(state_d, result_d)
 				if communicate:
 					reward_d += world_info.get("coop_bonus_d", 0.0)
 
 				buf_d["inputs"].append(input_d.squeeze(0).cpu())
-				buf_d["emotions"].append(state_d.emotion_id)
+				buf_d["emotions"].append(emo_d_id)
 				buf_d["actions"].append(idx_d)
 				buf_d["shout_concepts"].append(shout_concept_d_val)
+				buf_d["state_masks"].append(state_mask_d if state_mask_d is not None else [1.0]*COOP_N_ACTIONS)
 				buf_d["log_probs"].append(lp_d)
 				buf_d["values"].append(val_d)
 				buf_d["rewards"].append(reward_d)
+
+			# Verificar si alguno de los tres fundadores activos está en K.O. en este tick
+			is_any_ko = (
+				getattr(state_a, "debuff_inconsciente_ticks", 0) > 0 or
+				getattr(state_b, "debuff_inconsciente_ticks", 0) > 0 or
+				getattr(state_c, "debuff_inconsciente_ticks", 0) > 0
+			)
+			if is_any_ko:
+				consecutive_healthy_ticks = 0
+			else:
+				consecutive_healthy_ticks += 1
 
 		# ── Sueño y Destilación de Resonancia Latente (Fase 6) ──
 		from src.bitnet.consolidate_sleep import consolidate_latent_resonance
@@ -717,6 +891,20 @@ def run_arena_ppo_training():
 
 				# Limpiar buffer de aprendizaje una vez procesado el sueño
 				state.teaching_buffer = []
+
+		# ── Dojo de PopuLoRA (Fase 6 - Curriculum) ──
+		dojo_interval = config.get("dojo", {}).get("interval", 1)
+		dojo_sleep_epochs = config.get("dojo", {}).get("sleep_epochs", 5)
+		if dojo_sleep_epochs > 0 and (episode + 1) % dojo_interval == 0:
+			print(f"  💤 [Dojo] Nico, Sofy y Hugo visitan el Dojo de PopuLoRA con el profesor...")
+			agents_dict = {"a": agent_a, "b": agent_b, "c": agent_c}
+			if agent_d_episode is not None:
+				agents_dict["d"] = agent_d_episode
+			
+			from src.bitnet.dojo_populora import train_dojo_step
+			dojo_losses = train_dojo_step(agents_dict, device, batch_size=256, lr=1e-4, epochs=dojo_sleep_epochs, n_think=n_think)
+			loss_str = ", ".join(f"{k.upper()}:{v:.4f}" for k, v in dojo_losses.items())
+			print(f"    [Dojo] Pérdidas consolidadas: {loss_str}")
 
 		# ── 4. ACTUALIZACIÓN PPO ──
 		loss_a_val, loss_b_val, loss_c_val, loss_d_val = 0.0, 0.0, 0.0, 0.0
@@ -771,10 +959,18 @@ def run_arena_ppo_training():
 			emotions_tensor = torch.tensor(buf["emotions"], dtype=torch.long, device=device) # (T,)
 			actions_tensor = torch.tensor(buf["actions"], dtype=torch.long, device=device) # (T,)
 			shout_concepts_tensor = torch.tensor(buf["shout_concepts"], dtype=torch.long, device=device) # (T,)
+			state_masks_tensor = torch.tensor(buf["state_masks"], dtype=torch.float32, device=device) # (T, 14)
 			old_log_probs_tensor = torch.tensor(buf["log_probs"], dtype=torch.float32, device=device) # (T,)
 
 			# Optimizar en K épocas locales
 			losses = []
+			
+			# Congelar temporalmente el backbone para estabilidad de PPO
+			orig_grads = {name: param.requires_grad for name, param in agent.named_parameters()}
+			for name, param in agent.named_parameters():
+				if "action_head" not in name and "value_head" not in name:
+					param.requires_grad = False
+					
 			for _ in range(ppo_epochs):
 				# Forward pass
 				_, m_epoch = agent.forward_resonance(
@@ -785,7 +981,7 @@ def run_arena_ppo_training():
 				new_action_logits = agent.action_head(h_epoch)
 				new_values = agent.value_head(h_epoch).squeeze(-1)
 
-				new_probs = get_masked_probs(new_action_logits, episode, n_episodes, communicate)
+				new_probs = get_masked_probs(new_action_logits, episode, n_episodes, communicate, state_mask=state_masks_tensor)
 
 				dist = torch.distributions.Categorical(new_probs)
 				new_log_probs = dist.log_prob(actions_tensor)
@@ -804,16 +1000,16 @@ def run_arena_ppo_training():
 				new_log_probs = new_log_probs + shout_mask.float() * new_log_probs_shout
 				entropy = entropy + shout_mask.float() * entropy_shout
 
-				# Ratio r_t
-				ratios = torch.exp(new_log_probs - old_log_probs_tensor)
+				# Ratio r_t (clamped to prevent exponential explosion on divergence)
+				ratios = torch.exp(new_log_probs - old_log_probs_tensor).clamp(max=10.0)
 
 				# Surrogate objectives
 				surr1 = ratios * advantages_tensor
 				surr2 = torch.clamp(ratios, 1.0 - clip_eps, 1.0 + clip_eps) * advantages_tensor
 				policy_loss = -torch.min(surr1, surr2).mean()
 
-				# Value Loss
-				value_loss = F.mse_loss(new_values, returns_tensor)
+				# Value Loss (using Huber loss to prevent quadratic gradient explosions on high errors)
+				value_loss = F.huber_loss(new_values, returns_tensor, delta=5.0)
 
 				# Total loss
 				loss = policy_loss + c1 * value_loss - entropy_bonus * entropy.mean()
@@ -826,6 +1022,10 @@ def run_arena_ppo_training():
 				)
 				opt.step()
 				losses.append(loss.item())
+
+			# Restaurar estado original de requires_grad
+			for name, param in agent.named_parameters():
+				param.requires_grad = orig_grads[name]
 
 			if label == "a":
 				loss_a_val = np.mean(losses)
@@ -915,8 +1115,21 @@ def run_arena_ppo_training():
 				worst_agent=0,
 				parent_a=-1,
 				parent_b=-1,
-				acc_homeostasis=np.mean(buf_a["rewards"] + buf_b["rewards"] + buf_c["rewards"] + (buf_d["rewards"] if state_d.alive else [])) if buf_a["rewards"] else 0,
 			)
+
+		# Evaluar maestría determinista
+		eval_success = run_eval_episode(world, agent_a, agent_b, agent_c, agent_d_episode, device, communicate, n_think=n_think)
+		if eval_success:
+			print(f"\n{'🏆'*30}")
+			print(f"🥇 ¡DOMINIO ALCANZADO! Los 3 agentes han sobrevivido 200 ticks deterministas consecutivos sin entrar en K.O.")
+			print(f"🥇 Deteniendo simulación de entrenamiento con éxito en el episodio {episode+1}.")
+			print(f"{'🏆'*30}\n")
+			torch.save(agent_a.state_dict(), os.path.join(exp_dir, "best_agent_a.pt"))
+			torch.save(agent_b.state_dict(), os.path.join(exp_dir, "best_agent_b.pt"))
+			torch.save(agent_c.state_dict(), os.path.join(exp_dir, "best_agent_c.pt"))
+			if agent_d_episode is not None:
+				torch.save(agent_d_episode.state_dict(), os.path.join(exp_dir, "best_agent_d.pt"))
+			break
 
 	# Guardar checkpoints finales
 	torch.save(agent_a.state_dict(), os.path.join(exp_dir, "final_agent_a.pt"))

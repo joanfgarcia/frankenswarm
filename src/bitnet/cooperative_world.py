@@ -243,7 +243,7 @@ def _bfs_distance(start: str, target: str) -> int:
 
 # ── Acciones (14) ───────────────────────────────────────────────────────────
 
-COOP_ACTIONS = ["comer", "beber", "dormir", "mover", "ver", "luchar", "gritar", "dar", "enseñar", "aprender", "reproducir", "fabricar", "construir", "encender"]
+COOP_ACTIONS = ["comer", "beber", "dormir", "mover", "ver", "luchar", "gritar", "dar", "enseñar", "aprender", "reproducir", "fabricar", "construir", "encender", "reanimar"]
 COOP_N_ACTIONS = len(COOP_ACTIONS)
 
 SILENCE_GLYPH = WORD_INDEX.get("noche", 0)  # "silence" proxy
@@ -295,6 +295,9 @@ class CoopAgentState:
 	learned_skills: list = None
 	teaching_buffer: list = None
 	aburrimiento: float = 0.0
+	debuff_tristeza_ticks: int = 0
+	debuff_inconsciente_ticks: int = 0
+	just_fell_unconscious: bool = False
 
 	def __post_init__(self):
 		if self.map_knowledge is None:
@@ -338,7 +341,9 @@ class CoopAgentState:
 
 	@property
 	def emotion_name(self) -> str:
-		if self.hambre < 20:
+		if self.debuff_tristeza_ticks > 0:
+			return "tristeza"
+		elif self.hambre < 20:
 			return "hambre"
 		elif self.salud < 30 or self.sed < 20:
 			return "dolor"
@@ -361,8 +366,21 @@ class CoopAgentState:
 		self.salud = max(0.0, min(100.0, self.salud))
 		self.energia = max(0.0, min(100.0, self.energia))
 		self.aburrimiento = max(0.0, min(100.0, self.aburrimiento))
-		if self.salud <= 0 or self.hambre <= 0 or self.sed <= 0:
-			self.alive = False
+		
+		# K.O. / Incapacitation Mode: falls unconscious instead of instant death
+		if self.alive and getattr(self, "debuff_inconsciente_ticks", 0) == 0:
+			if self.salud <= 0.0 or self.hambre <= 0.0 or self.sed <= 0.0:
+				self.debuff_inconsciente_ticks = 12
+				self.salud = 10.0
+				self.hambre = 10.0
+				self.sed = 10.0
+				self.just_fell_unconscious = True
+		
+		# If unconscious and health drops to 0, they die permanently
+		if self.alive and getattr(self, "debuff_inconsciente_ticks", 0) > 0:
+			if self.salud <= 0.0:
+				self.alive = False
+				self.debuff_inconsciente_ticks = 0
 
 
 # ── Mundo Cooperativo ───────────────────────────────────────────────────────
@@ -380,7 +398,7 @@ class CooperativeWorld:
 				resource_capacity: float = 5.0, resource_recovery: float = 0.2,
 				predator_chance_multiplier: float = 1.0, predator_damage_multiplier: float = 1.0,
 				storm_chance_multiplier: float = 1.0, storm_damage_multiplier: float = 1.0,
-				prey_spawn_interval: int = 15):
+				prey_spawn_interval: int = 15, replenish_cooldown_ticks: int = 0):
 		self.rng = random.Random(seed)
 		self.food_interval = food_interval    # ticks entre spawns de comida
 		self.food_duration = food_duration    # cuánto dura la comida
@@ -391,15 +409,26 @@ class CooperativeWorld:
 		self.predator_damage_multiplier = predator_damage_multiplier
 		self.storm_chance_multiplier = storm_chance_multiplier
 		self.storm_damage_multiplier = storm_damage_multiplier
+		self.replenish_cooldown_ticks = replenish_cooldown_ticks
 
 		# Estado compartido del mundo
 		self.world_tick: int = 0
+		self.last_shout_tick = {}
+		self.resource_cooldowns = {
+			loc: {"food": 0, "water": 0, "branches": 0, "stones": 0}
+			for loc in COOP_LOCATION_NAMES
+		}
 
 		# Mecánica de la presa (caza cooperativa)
 		self.prey_spawn_interval = prey_spawn_interval
 		self.prey_location = None
 		self.prey_timer = 0
 		self.prey_cooldown = self.rng.randint(5, self.prey_spawn_interval)
+
+		# Mecánica del Gran Herbívoro (Stag Hunt)
+		self.megaherbivore_location = None
+		self.megaherbivore_timer = 0
+		self.megaherbivore_cooldown = self.rng.randint(15, 30)
 
 		# Capacidades dinámicas de recursos agotables
 		self.resource_capacities = {
@@ -464,6 +493,11 @@ class CooperativeWorld:
 		self.agent_c = CoopAgentState(agent_id="c")
 		self.agent_d = CoopAgentState(agent_id="d", alive=False)
 		self.agents = [self.agent_a, self.agent_b, self.agent_c, self.agent_d]
+		self.last_shout_tick = {}
+		self.resource_cooldowns = {
+			loc: {"food": 0, "water": 0, "branches": 0, "stones": 0}
+			for loc in COOP_LOCATION_NAMES
+		}
 
 		# Restaurar y aplicar peaje metabólico de neurogénesis
 		for prev, curr in [(prev_a, self.agent_a), (prev_b, self.agent_b), (prev_c, self.agent_c), (prev_d, self.agent_d)]:
@@ -505,6 +539,9 @@ class CooperativeWorld:
 		self.prey_location = None
 		self.prey_timer = 0
 		self.prey_cooldown = self.rng.randint(5, self.prey_spawn_interval)
+		self.megaherbivore_location = None
+		self.megaherbivore_timer = 0
+		self.megaherbivore_cooldown = self.rng.randint(15, 30)
 		self.world_tick = 0
 		self._spawn_agents()
 
@@ -523,18 +560,45 @@ class CooperativeWorld:
 		# Recuperación de recursos: configurable
 		for loc, caps in self.resource_capacities.items():
 			if COOP_LOCATIONS[loc]["food_eligible"] or COOP_LOCATIONS[loc].get("fish_eligible"):
-				caps["food"] = min(self.resource_capacity, caps["food"] + self.resource_recovery)
+				if self.resource_cooldowns[loc]["food"] > 0:
+					self.resource_cooldowns[loc]["food"] -= 1
+					if self.resource_cooldowns[loc]["food"] == 0:
+						caps["food"] = self.resource_capacity
+				else:
+					caps["food"] = min(self.resource_capacity, caps["food"] + self.resource_recovery)
 			if COOP_LOCATIONS[loc]["water_available"]:
-				caps["water"] = min(self.resource_capacity, caps["water"] + self.resource_recovery)
+				if self.resource_cooldowns[loc]["water"] > 0:
+					self.resource_cooldowns[loc]["water"] -= 1
+					if self.resource_cooldowns[loc]["water"] == 0:
+						caps["water"] = self.resource_capacity
+				else:
+					caps["water"] = min(self.resource_capacity, caps["water"] + self.resource_recovery)
 			if COOP_LOCATIONS[loc].get("branches_eligible"):
-				caps["branches"] = min(self.resource_capacity, caps["branches"] + self.resource_recovery)
+				if self.resource_cooldowns[loc]["branches"] > 0:
+					self.resource_cooldowns[loc]["branches"] -= 1
+					if self.resource_cooldowns[loc]["branches"] == 0:
+						caps["branches"] = self.resource_capacity
+				else:
+					caps["branches"] = min(self.resource_capacity, caps["branches"] + self.resource_recovery)
 			if COOP_LOCATIONS[loc].get("stones_eligible"):
-				caps["stones"] = min(self.resource_capacity, caps["stones"] + self.resource_recovery)
+				if self.resource_cooldowns[loc]["stones"] > 0:
+					self.resource_cooldowns[loc]["stones"] -= 1
+					if self.resource_cooldowns[loc]["stones"] == 0:
+						caps["stones"] = self.resource_capacity
+				else:
+					caps["stones"] = min(self.resource_capacity, caps["stones"] + self.resource_recovery)
 
 		# Decaer hogueras activas
 		for loc in self.fire_locations:
 			if self.fire_locations[loc] > 0:
 				self.fire_locations[loc] -= 1
+
+		# Decaimiento (podrido) de la comida en el suelo si no hay hoguera
+		for loc, caps in self.resource_capacities.items():
+			if caps["food"] > 0.0 and self.fire_locations.get(loc, 0) == 0:
+				caps["food"] = max(0.0, caps["food"] - 0.5)
+				if caps["food"] <= 0.0 and self.replenish_cooldown_ticks > 0:
+					self.resource_cooldowns[loc]["food"] = self.replenish_cooldown_ticks
 
 		# Mantenimiento de la presa
 		if self.prey_location is not None:
@@ -549,6 +613,24 @@ class CooperativeWorld:
 				self.prey_location = self.rng.choice(eligible)
 				self.prey_timer = 10  # dura 10 ticks
 				self.prey_cooldown = self.prey_spawn_interval
+
+		# Mantenimiento del Gran Herbívoro
+		if self.megaherbivore_location is not None:
+			self.megaherbivore_timer -= 1
+			if self.megaherbivore_timer <= 0:
+				self.megaherbivore_location = None
+			else:
+				# 20% de probabilidad de moverse a una localización adyacente
+				if self.rng.random() < 0.20:
+					adjacent = COOP_ADJACENCY[self.megaherbivore_location]
+					self.megaherbivore_location = self.rng.choice(adjacent)
+		else:
+			self.megaherbivore_cooldown -= 1
+			if self.megaherbivore_cooldown <= 0:
+				# Spawn de Gran Herbívoro en pradera o valle
+				self.megaherbivore_location = self.rng.choice(["pradera", "valle"])
+				self.megaherbivore_timer = 25  # dura 25 ticks
+				self.megaherbivore_cooldown = 40  # reaparece cada 40 ticks
 
 	def perceive(self, agent: CoopAgentState) -> list[int]:
 		"""
@@ -573,8 +655,10 @@ class CooperativeWorld:
 			"last_updated": self.world_tick
 		}
 
-		# ¿Qué hay aquí? (Presa override: grupo)
-		if self.prey_location == loc:
+		# ¿Qué hay aquí? (Megaherbívoro/Presa override)
+		if self.megaherbivore_location == loc:
+			what_glyph = WORD_INDEX.get("árbol", 0)  # "árbol" como proxy para el Gran Herbívoro
+		elif self.prey_location == loc:
 			what_glyph = WORD_INDEX.get("grupo", 0)
 		elif self.fire_locations.get(loc, 0) > 0:
 			what_glyph = WORD_INDEX.get("fuego", 0)
@@ -646,6 +730,52 @@ class CooperativeWorld:
 
 	def act(self, agent: CoopAgentState, action: str, shout_concept_idx: int = None) -> dict:
 		"""Ejecutar acción para un agente."""
+		if not agent.alive:
+			return {
+				"success": False,
+				"delta_hambre": 0.0,
+				"delta_sed": 0.0,
+				"delta_salud": 0.0,
+				"delta_energia": 0.0,
+				"event": "muerto",
+				"moved_to": None,
+				"shouted": False,
+				"shout_content": None,
+				"shared_resource": None,
+			}
+
+		# Si está en K.O., forzamos inactividad y decremento del timer
+		if getattr(agent, "debuff_inconsciente_ticks", 0) > 0:
+			agent.debuff_inconsciente_ticks -= 1
+			# Si expira el desmayo sin reanimación, muere
+			if agent.debuff_inconsciente_ticks == 0:
+				agent.alive = False
+				agent.salud = 0.0
+			agent.previous_location = agent.location
+			agent.last_action = "dormir"
+			agent.tick += 1
+			# Durante el desmayo recupera un poco de energía sin perder salud
+			agent.energia = min(100.0, agent.energia + 5.0)
+			# Metabolismo basal leve durante el desmayo
+			agent.hambre = max(0.0, agent.hambre - 0.1)
+			agent.sed = max(0.0, agent.sed - 0.2)
+			agent.clamp()
+			
+			event_str = f"INCONSCIENTE: El agente está fuera de combate y recuperándose ({agent.debuff_inconsciente_ticks}t restantes)" if agent.alive else "MUERTO: Expiró el tiempo de inconsciencia sin rescate"
+			
+			return {
+				"success": False,
+				"delta_hambre": -0.1,
+				"delta_sed": -0.2,
+				"delta_salud": 0.0,
+				"delta_energia": 5.0,
+				"event": event_str,
+				"moved_to": None,
+				"shouted": False,
+				"shout_content": None,
+				"shared_resource": None,
+			}
+
 		forced_sleep = False
 		original_action = action
 		if agent.energia <= 0.0 and action != "dormir":
@@ -661,8 +791,8 @@ class CooperativeWorld:
 
 		result = {
 			"success": False,
-			"delta_hambre": -0.2 * peso_multiplicador,
-			"delta_sed": -1.0 * peso_multiplicador,
+			"delta_hambre": -0.2 * self.hunger_rate * peso_multiplicador,
+			"delta_sed": -1.0 * self.hunger_rate * peso_multiplicador,
 			"delta_salud": 0,
 			"delta_energia": -2.0 * peso_multiplicador,
 			"event": "",
@@ -677,23 +807,33 @@ class CooperativeWorld:
 		if caps["food"] >= 1.0 and agent.mochila_comida == 0:
 			if "comida" in agent.learned_skills and loc_data["food_eligible"]:
 				agent.mochila_comida = 1
-				caps["food"] -= 1.0
+				caps["food"] = max(0.0, caps["food"] - 1.0)
+				if caps["food"] <= 0.0 and self.replenish_cooldown_ticks > 0:
+					self.resource_cooldowns[agent.location]["food"] = self.replenish_cooldown_ticks
 			elif "pesca" in agent.learned_skills and loc_data.get("fish_eligible"):
 				agent.mochila_comida = 1
-				caps["food"] -= 1.0
+				caps["food"] = max(0.0, caps["food"] - 1.0)
+				if caps["food"] <= 0.0 and self.replenish_cooldown_ticks > 0:
+					self.resource_cooldowns[agent.location]["food"] = self.replenish_cooldown_ticks
 		
 		if caps["water"] >= 1.0 and agent.mochila_agua == 0:
 			if "agua" in agent.learned_skills and loc_data["water_available"]:
 				agent.mochila_agua = 1
-				caps["water"] -= 1.0
+				caps["water"] = max(0.0, caps["water"] - 1.0)
+				if caps["water"] <= 0.0 and self.replenish_cooldown_ticks > 0:
+					self.resource_cooldowns[agent.location]["water"] = self.replenish_cooldown_ticks
 
 		if "artesanía" in agent.learned_skills:
 			if loc_data.get("branches_eligible") and caps["branches"] >= 1.0 and agent.mochila_ramas < 3:
 				agent.mochila_ramas += 1
-				caps["branches"] -= 1.0
+				caps["branches"] = max(0.0, caps["branches"] - 1.0)
+				if caps["branches"] <= 0.0 and self.replenish_cooldown_ticks > 0:
+					self.resource_cooldowns[agent.location]["branches"] = self.replenish_cooldown_ticks
 			if loc_data.get("stones_eligible") and caps["stones"] >= 1.0 and agent.mochila_piedras < 3:
 				agent.mochila_piedras += 1
-				caps["stones"] -= 1.0
+				caps["stones"] = max(0.0, caps["stones"] - 1.0)
+				if caps["stones"] <= 0.0 and self.replenish_cooldown_ticks > 0:
+					self.resource_cooldowns[agent.location]["stones"] = self.replenish_cooldown_ticks
 
 		if action == "comer":
 			fire_active = 1 if self.fire_locations.get(agent.location, 0) > 0 else 0
@@ -712,7 +852,9 @@ class CooperativeWorld:
 			
 			agent.mochila_comida = res["NewComida"]
 			agent.mochila_agua = res["NewAgua"]
-			caps["food"] = res["NewGround"]
+			caps["food"] = max(0.0, res["NewGround"])
+			if caps["food"] <= 0.0 and self.replenish_cooldown_ticks > 0:
+				self.resource_cooldowns[agent.location]["food"] = self.replenish_cooldown_ticks
 			result["success"] = bool(res["Success"])
 			if result["success"]:
 				if res["Event"] == 'consume guiso caliente (comida++)':
@@ -726,6 +868,9 @@ class CooperativeWorld:
 				result["delta_sed"] += res["AddSed"]
 				result["delta_salud"] += res["AddSalud"]
 			result["event"] = res["Event"]
+			
+			if not result["success"] and agent.mochila_comida == 0 and (loc_data["food_eligible"] or loc_data.get("fish_eligible")) and caps["food"] < 1.0:
+				result["event"] = f"intenta recolectar/comer comida de {agent.location} agotado (penalización)"
 
 		elif action == "beber":
 			# Beber del suelo requiere la habilidad "agua"
@@ -734,7 +879,9 @@ class CooperativeWorld:
 				result["delta_sed"] += 75.0
 				result["delta_salud"] += 3.0
 				result["event"] = "bebe agua (suelo)"
-				caps["water"] -= 1.0
+				caps["water"] = max(0.0, caps["water"] - 1.0)
+				if caps["water"] <= 0.0 and self.replenish_cooldown_ticks > 0:
+					self.resource_cooldowns[agent.location]["water"] = self.replenish_cooldown_ticks
 			elif agent.mochila_agua > 0:
 				agent.mochila_agua = 0
 				result["success"] = True
@@ -743,13 +890,15 @@ class CooperativeWorld:
 				result["event"] = "bebe agua de su mochila"
 			else:
 				result["event"] = "no hay agua aquí ni en mochila"
-				if agent.agent_id == "b" and caps["water"] >= 1.0:
+				if loc_data["water_available"] and caps["water"] < 1.0:
+					result["event"] = f"intenta beber agua de {agent.location} agotado (penalización)"
+				elif agent.agent_id == "b" and caps["water"] >= 1.0:
 					result["event"] = "Sofy no sabe extraer agua del suelo"
 
 		elif action == "dormir":
 			# Tasa metabólica basal: desgaste a la mitad durante el sueño
-			result["delta_hambre"] = -0.2 * 0.5 * peso_multiplicador
-			result["delta_sed"] = -1.0 * 0.5 * peso_multiplicador
+			result["delta_hambre"] = -0.2 * self.hunger_rate * 0.5 * peso_multiplicador
+			result["delta_sed"] = -1.0 * self.hunger_rate * 0.5 * peso_multiplicador
 			
 			is_fishing_spot = loc_data.get("fish_eligible") or agent.location in ["río", "lago", "pantano"]
 			
@@ -845,7 +994,9 @@ class CooperativeWorld:
 				what_glyph = shout_concept_idx
 			else:
 				caps = self.resource_capacities[agent.location]
-				if caps["food"] >= 1.0:
+				if self.megaherbivore_location == agent.location:
+					what_glyph = WORD_INDEX.get("árbol", 0)  # Grita sobre el Gran Herbívoro
+				elif caps["food"] >= 1.0:
 					what_glyph = WORD_INDEX.get("comida", 0)
 				elif agent.danger_nearby:
 					what_glyph = WORD_INDEX.get("depredador", 0)
@@ -867,6 +1018,9 @@ class CooperativeWorld:
 
 			result["shout_content"] = (loc_glyph, what_glyph)
 			result["event"] = f"grita: [{COOP_LOCATION_GLYPHS[agent.location]}, {self._what_name(what_glyph)}]"
+			concept_name = self._what_name(what_glyph)
+			if concept_name in ["agua", "comida"]:
+				self.last_shout_tick[(agent.agent_id, concept_name)] = self.world_tick
 
 		elif action == "dar":
 			# Compartir recursos de la mochila con cualquier compañero si están juntos
@@ -876,26 +1030,32 @@ class CooperativeWorld:
 				if other_agent.location == agent.location:
 					# 1. Dar agua si el otro tiene la mochila vacía y la necesita (sed < 80)
 					if other_agent.mochila_agua == 0 and other_agent.sed < 80 and agent.mochila_agua > 0:
-						agent.mochila_agua = 0
-						other_agent.mochila_agua = 1
-						result["success"] = True
-						result["event"] = f"comparte agua de su mochila con {other_agent.agent_id.upper()} (llena mochila)"
-						result["shared_resource"] = "agua"
-						result["shared_with"] = other_agent.agent_id
-						transferred = True
-						break
+						if self.world_tick - self.last_shout_tick.get((other_agent.agent_id, "agua"), -999) <= 15:
+							agent.mochila_agua = 0
+							other_agent.mochila_agua = 1
+							result["success"] = True
+							result["event"] = f"comparte agua de su mochila con {other_agent.agent_id.upper()} (llena mochila)"
+							result["shared_resource"] = "agua"
+							result["shared_with"] = other_agent.agent_id
+							transferred = True
+							break
+						else:
+							result["event"] = f"intenta dar agua a {other_agent.agent_id.upper()} pero no ha sido solicitada"
 					# 2. Dar comida si el otro tiene la mochila vacía y la necesita (hambre < 80)
 					elif other_agent.mochila_comida == 0 and other_agent.hambre < 80 and agent.mochila_comida > 0:
-						agent.mochila_comida = 0
-						other_agent.mochila_comida = 1
-						result["success"] = True
-						result["event"] = f"comparte comida de su mochila con {other_agent.agent_id.upper()} (llena mochila)"
-						result["shared_resource"] = "comida"
-						result["shared_with"] = other_agent.agent_id
-						transferred = True
-						break
+						if self.world_tick - self.last_shout_tick.get((other_agent.agent_id, "comida"), -999) <= 15:
+							agent.mochila_comida = 0
+							other_agent.mochila_comida = 1
+							result["success"] = True
+							result["event"] = f"comparte comida de su mochila con {other_agent.agent_id.upper()} (llena mochila)"
+							result["shared_resource"] = "comida"
+							result["shared_with"] = other_agent.agent_id
+							transferred = True
+							break
+						else:
+							result["event"] = f"intenta dar comida a {other_agent.agent_id.upper()} pero no ha sido solicitada"
 
-			if not transferred:
+			if not transferred and not result.get("event"):
 				result["event"] = "mochila vacía, compañeros saciados o solos"
 
 		elif action == "enseñar":
@@ -1037,6 +1197,25 @@ class CooperativeWorld:
 			result["success"] = bool(res["Success"])
 			result["event"] = res["Event"]
 
+		elif action == "reanimar":
+			companions_here = [
+				other for other in self.agents
+				if other.agent_id != agent.agent_id and other.alive and other.location == agent.location
+				and getattr(other, "debuff_inconsciente_ticks", 0) > 0
+			]
+			if companions_here:
+				target = companions_here[0]
+				target.debuff_inconsciente_ticks = 0
+				target.salud = 60.0
+				target.hambre = 30.0
+				target.sed = 30.0
+				result["success"] = True
+				result["event"] = f"¡REANIMACIÓN! Despertó a {target.agent_id.upper()}"
+				result["reanimated_companion"] = True
+			else:
+				result["success"] = False
+				result["event"] = "intentó reanimar pero nadie lo necesita aquí"
+
 		# ── Consecuencias pasivas: Depredador via Prolog ──
 		danger_val = 1 if agent.danger_nearby else 0
 		lanza_val = 1 if getattr(agent, "tiene_lanza", False) else 0
@@ -1063,6 +1242,16 @@ class CooperativeWorld:
 			result["delta_salud"] -= 25.0
 			result["event"] += " | deshidratación"
 
+		# Si tiene debuff de tristeza, aplicar las reducciones (20% más rápido metabolismo, 50% menos energía al dormir)
+		if agent.debuff_tristeza_ticks > 0:
+			if result["delta_hambre"] < 0:
+				result["delta_hambre"] *= 1.2
+			if result.get("delta_sed", 0.0) < 0:
+				result["delta_sed"] *= 1.2
+			if action == "dormir":
+				if result.get("delta_energia", 0) > 0:
+					result["delta_energia"] *= 0.5
+
 		# ── Aplicar deltas ──
 		agent.hambre += result["delta_hambre"]
 		agent.sed += result.get("delta_sed", 0.0)
@@ -1085,6 +1274,9 @@ class CooperativeWorld:
 		else:
 			agent.aburrimiento += 2.0
 			
+		if agent.debuff_tristeza_ticks > 0:
+			agent.debuff_tristeza_ticks -= 1
+
 		agent.clamp()
 
 		return result
@@ -1125,7 +1317,8 @@ class CooperativeWorld:
 				"hambre": agent.hambre,
 				"sed": agent.sed,
 				"salud": agent.salud,
-				"location": agent.location
+				"location": agent.location,
+				"alive": agent.alive
 			}
 			for agent in self.agents
 		}
@@ -1250,6 +1443,56 @@ class CooperativeWorld:
 					self.prey_location = self.rng.choice(adjacent)
 					res["event"] += " La presa se asusta y huye."
 
+		# --- Resolución de la Caza del Gran Herbívoro (Stag Hunt) ---
+		mega_hunted = False
+		if self.megaherbivore_location:
+			# Agentes con habilidad "caza", con lanza, vivos, en la misma casilla y decidiendo LUCHAR
+			mega_hunters = [
+				agent for agent in self.agents
+				if agent.alive and agent.location == self.megaherbivore_location and "caza" in agent.learned_skills and getattr(agent, "tiene_lanza", False) and (
+					(agent.agent_id == "a" and action_a == "luchar") or
+					(agent.agent_id == "b" and action_b == "luchar") or
+					(agent.agent_id == "c" and action_c == "luchar") or
+					(agent.agent_id == "d" and action_d == "luchar")
+				)
+			]
+
+			# Si hay al menos 3 cazadores con lanzas equipadas, éxito!
+			if len(mega_hunters) >= 3:
+				mega_hunted = True
+				loc = self.megaherbivore_location
+				self.megaherbivore_location = None
+				
+				# Da 9.0 unidades de comida al suelo
+				self.resource_capacities[loc]["food"] = min(self.resource_capacity * 3.0, self.resource_capacities[loc]["food"] + 9.0)
+				
+				# Quitar lanzas y aplicar cansancio / bonos cooperativos
+				for hunter in mega_hunters:
+					hunter.tiene_lanza = False
+					hunter.energia = max(0.0, hunter.energia - 15.0)
+					coop_bonuses[hunter.agent_id] += 40.0
+					res = results[hunter.agent_id]
+					res["success"] = True
+					res["event"] = "¡CAZA ÉPICA EXITOSA! Abate al Gran Herbívoro junto a sus compañeros usando lanza. 9.0 unidades de carne en el suelo."
+					res["delta_energia"] -= 15.0
+			elif len(mega_hunters) > 0:
+				# Si intentan atacarlo pero son menos de 3, el animal se defiende (contraataque agresivo)
+				for hunter in mega_hunters:
+					hunter.tiene_lanza = False
+					hunter.energia = max(0.0, hunter.energia - 25.0)
+					hunter.salud = max(0.0, hunter.salud - 45.0)
+					res = results[hunter.agent_id]
+					res["success"] = False
+					res["event"] = "¡FALLO EN CAZA ÉPICA! El Gran Herbívoro contraataca furiosamente. Lanza rota, salud y energía diezmadas."
+					res["delta_salud"] = -45.0
+					res["delta_energia"] -= 25.0
+					hunter.clamp()
+				
+				# El animal tiene un 30% de chance de migrar tras ser atacado
+				if self.rng.random() < 0.30:
+					adjacent = COOP_ADJACENCY[self.megaherbivore_location]
+					self.megaherbivore_location = self.rng.choice(adjacent)
+
 		# --- Broadcast de gritos (Half-Duplex) ---
 		shouters = []
 		for agent in self.agents:
@@ -1309,6 +1552,13 @@ class CooperativeWorld:
 						model["emotion_name"] = "grupo"
 					elif what_name == "enseñar":
 						model["emotion_name"] = "enseñar"
+					elif what_name == "árbol":
+						# Señal de caza del Gran Herbívoro (Megafauna)
+						# Si el receptor tiene lanza y tiene la habilidad caza, acude a ayudar.
+						# Si no, ignora (no acude al nav_target).
+						model["emotion_name"] = "árbol"
+						if not (getattr(receiver, "tiene_lanza", False) and "caza" in receiver.learned_skills):
+							receiver.nav_target = None
 					break
 
 		# ── Teoría de la Mente: Decaimiento Metabólico Pesimista ──
@@ -1409,9 +1659,22 @@ class CooperativeWorld:
 			res = results[agent.agent_id]
 			if res["success"] and res.get("shared_resource"):
 				receiver_id = res.get("shared_with")
-				if receiver_id:
-					coop_bonuses[agent.agent_id] += 10.0
-					coop_bonuses[receiver_id] += 10.0
+				receiver = next((r for r in self.agents if r.agent_id == receiver_id), None)
+				if receiver_id and receiver:
+					# Evitar exploitation de trading inútil entre agentes saciados
+					receiver_need = False
+					if res["shared_resource"] == "agua" and receiver.sed < 60.0:
+						receiver_need = True
+					elif res["shared_resource"] == "comida" and receiver.hambre < 60.0:
+						receiver_need = True
+					
+					if receiver_need:
+						coop_bonuses[agent.agent_id] += 10.0
+						coop_bonuses[receiver_id] += 10.0
+					else:
+						# Recompensa minúscula para evitar farming
+						coop_bonuses[agent.agent_id] += 0.1
+						coop_bonuses[receiver_id] += 0.1
 
 		# ── Reaccionar a la señal (Guía cooperativo) ──
 		for receiver in self.agents:
@@ -1434,19 +1697,17 @@ class CooperativeWorld:
 					if not has_food and not has_water:
 						coop_bonuses[sender_id] += -1.0 * R
 
-		# Shared fate: si uno muere (de los fundadores, o el hijo si ya había nacido), la tribu entera muere
-		any_dead = False
+		# Decoupled fate: si un agente muere, los otros supervivientes sufren un debuff de tristeza por 72 ticks
+		just_died_any = False
 		for agent in self.agents:
-			if agent.agent_id == "d":
-				if self.agent_d_was_alive and not agent.alive:
-					any_dead = True
-			else:
-				if not agent.alive:
-					any_dead = True
-		
-		if any_dead:
-			for agent in self.agents:
-				agent.alive = False
+			was_alive = self.start_of_tick_stats.get(agent.agent_id, {}).get("alive", False)
+			if was_alive and not agent.alive:
+				just_died_any = True
+				
+		if just_died_any:
+			for other_agent in self.agents:
+				if other_agent.alive:
+					other_agent.debuff_tristeza_ticks = 72
 
 		# food location as the eligible location with highest capacity
 		food_locs_sorted = sorted(FOOD_ELIGIBLE, key=lambda l: self.resource_capacities[l]["food"], reverse=True)
@@ -1470,8 +1731,29 @@ class CooperativeWorld:
 
 	def get_reward(self, agent: CoopAgentState, result: dict) -> float:
 		"""Reward para un agente individual."""
+		# Si está muerto, el reward es 0
+		if not agent.alive:
+			return 0.0
+
 		# Bono básico de supervivencia por cada tick vivo (evita que prefieran morir temprano)
 		reward = 1.0
+
+		# Penalización por K.O. / Desmayo (caída en homeostasis)
+		if getattr(agent, "just_fell_unconscious", False):
+			reward -= 50.0
+			agent.just_fell_unconscious = False
+
+		# Penalización por inactividad prolongada en K.O.
+		if getattr(agent, "debuff_inconsciente_ticks", 0) > 0:
+			reward -= 2.0
+
+		# Bono por reanimar a un compañero inconsciente
+		if result.get("reanimated_companion", False):
+			reward += 20.0
+
+		# Penalización por tristeza (debuff al morir un compañero)
+		if agent.debuff_tristeza_ticks > 0:
+			reward -= 0.5
 
 		# Pain: necesidades no cubiertas
 		if agent.hambre < 30:
@@ -1502,6 +1784,26 @@ class CooperativeWorld:
 		if not result.get("success", False):
 			if agent.last_action in ["comer", "beber", "luchar", "dar", "enseñar", "aprender", "reproducir", "fabricar", "construir", "encender"]:
 				reward -= 0.3
+				
+				# Penalización específica por intentar consumir recursos de fuentes agotadas
+				loc_data = COOP_LOCATIONS[agent.location]
+				caps = self.resource_capacities[agent.location]
+				if agent.last_action == "comer" and agent.mochila_comida == 0:
+					if (loc_data["food_eligible"] or loc_data.get("fish_eligible")) and caps["food"] < 1.0:
+						reward -= 2.0
+				elif agent.last_action == "beber" and agent.mochila_agua == 0:
+					if loc_data["water_available"] and caps["water"] < 1.0:
+						reward -= 2.0
+
+		# Penalización por comer/beber inútilmente cuando se está saciado (evita loops estáticos en recursos)
+		if result.get("success", False) and agent.last_action in ["comer", "beber"]:
+			start_stats = self.start_of_tick_stats.get(agent.agent_id) if hasattr(self, "start_of_tick_stats") else None
+			hambre_before = start_stats["hambre"] if start_stats else agent.hambre
+			sed_before = start_stats["sed"] if start_stats else agent.sed
+			if agent.last_action == "beber" and sed_before >= 90.0:
+				reward -= 1.5
+			if agent.last_action == "comer" and hambre_before >= 90.0:
+				reward -= 1.5
 
 		# Progress: Recompensas basadas en recursos recuperados efectivamente (evita farming al estar lleno)
 		if result.get("success", False):
@@ -1586,3 +1888,102 @@ class CooperativeWorld:
 			if idx == glyph_idx:
 				return name
 		return "?"
+
+	def get_valid_actions_mask(self, agent: CoopAgentState) -> list[float]:
+		"""Retorna una máscara binaria (1.0 = válida, 0.0 = inválida) para las 15 acciones."""
+		if not agent.alive:
+			return [0.0] * COOP_N_ACTIONS
+
+		# Si está en K.O., sólo puede "dormir" (inactivo recuperando energía)
+		if getattr(agent, "debuff_inconsciente_ticks", 0) > 0:
+			m = [0.0] * COOP_N_ACTIONS
+			m[2] = 1.0
+			return m
+
+		mask = [1.0] * COOP_N_ACTIONS
+		loc = agent.location
+		loc_data = COOP_LOCATIONS[loc]
+		caps = self.resource_capacities[loc]
+
+		# 0. Comer: válido si hay comida en mochila o comida/peces elegibles en el suelo y posee la habilidad
+		has_food_in_backpack = (agent.mochila_comida > 0)
+		has_food_on_ground = (caps["food"] >= 1.0 and (
+			("comida" in agent.learned_skills and loc_data["food_eligible"]) or
+			("pesca" in agent.learned_skills and loc_data.get("fish_eligible"))
+		))
+		if not (has_food_in_backpack or has_food_on_ground):
+			mask[0] = 0.0
+
+		# 1. Beber: válido si hay agua en mochila o agua elegible en el suelo y posee la habilidad
+		has_water_in_backpack = (agent.mochila_agua > 0)
+		has_water_on_ground = (caps["water"] >= 1.0 and "agua" in agent.learned_skills)
+		if not (has_water_in_backpack or has_water_on_ground):
+			mask[1] = 0.0
+
+		# 2. Dormir: siempre válido (descanso basal)
+		mask[2] = 1.0
+
+		# 3. Mover: siempre válido
+		mask[3] = 1.0
+
+		# 4. Ver: siempre válido
+		mask[4] = 1.0
+
+		# 5. Luchar: válido si hay depredador/amenaza o si está el Gran Herbívoro o la presa estándar
+		has_prey = (self.prey_location == loc and "caza" in agent.learned_skills)
+		has_mega = (self.megaherbivore_location == loc and "caza" in agent.learned_skills and getattr(agent, "tiene_lanza", False))
+		if not (agent.danger_nearby or has_prey or has_mega):
+			mask[5] = 0.0
+
+		# 6. Gritar: siempre válido si comunicación está habilitada
+		mask[6] = 1.0
+
+		# 7. Dar: válido si mochila comida > 0 o mochila agua > 0, y hay otro agente vivo en la misma localización
+		others_here = [other for other in self.agents if other.agent_id != agent.agent_id and other.alive and other.location == loc]
+		has_shareables = (agent.mochila_comida > 0 or agent.mochila_agua > 0)
+		if not (has_shareables and others_here):
+			mask[7] = 0.0
+
+		# 8. Enseñar: válido si posee habilidades y hay otro agente vivo en la misma loc con slots libres
+		has_skills_to_teach = len(agent.learned_skills) > 0
+		has_student = any(len(other.learned_skills) < other.max_slots for other in others_here)
+		if not (has_skills_to_teach and has_student):
+			mask[8] = 0.0
+
+		# 9. Aprender: válido si hay otro agente vivo enseñando en la misma loc y el agente tiene slots libres
+		# (Nota: durante el muestreo simultáneo, asumimos válido si hay compañeros presentes y el agente tiene slots libres)
+		has_slots = len(agent.learned_skills) < agent.max_slots
+		if not (has_slots and others_here):
+			mask[9] = 0.0
+
+		# 10. Reproducir: válido si está en refugio (cueva/ruinas), ambos con comida/sed >= 40, compañeros presentes
+		is_shelter = loc_data.get("storm_shelter", False) or loc in ["cueva", "ruinas"]
+		if not (is_shelter and others_here and agent.hambre >= 40.0 and agent.sed >= 40.0):
+			mask[10] = 0.0
+
+		# 11. Fabricar: válido si tiene habilidad artesanía, tiene materiales (1 rama, 1 piedra) y no tiene lanza
+		has_art_skill = "artesanía" in agent.learned_skills
+		has_materials = (agent.mochila_ramas >= 1 and agent.mochila_piedras >= 1)
+		if not (has_art_skill and has_materials and not getattr(agent, "tiene_lanza", False)):
+			mask[11] = 0.0
+
+		# 12. Construir: válido si tiene habilidad construcción, tiene materiales (2 ramas, 1 piedra) y la loc no es refugio
+		has_const_skill = "construcción" in agent.learned_skills
+		has_const_materials = (agent.mochila_ramas >= 2 and agent.mochila_piedras >= 1)
+		is_already_shelter = loc_data.get("storm_shelter", False)
+		if not (has_const_skill and has_const_materials and not is_already_shelter):
+			mask[12] = 0.0
+
+		# 13. Encender: válido si tiene habilidad fuego, tiene 2 ramas y no hay fuego activo aquí
+		has_fire_skill = "fuego" in agent.learned_skills
+		has_fire_materials = (agent.mochila_ramas >= 2)
+		has_active_fire = (self.fire_locations.get(loc, 0) > 0)
+		if not (has_fire_skill and has_fire_materials and not has_active_fire):
+			mask[13] = 0.0
+
+		# 14. Reanimar: válido si hay algún compañero inconsciente (K.O.) en la misma localización
+		has_catatonic_companion = any(other for other in others_here if getattr(other, "debuff_inconsciente_ticks", 0) > 0)
+		if not has_catatonic_companion:
+			mask[14] = 0.0
+
+		return mask
