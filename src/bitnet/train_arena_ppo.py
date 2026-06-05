@@ -103,7 +103,11 @@ def get_masked_probs(logits: torch.Tensor, episode: int, n_episodes: int, commun
 		
 	masked_probs = probs * mask
 	sum_probs = masked_probs.sum(dim=-1, keepdim=True)
-	masked_probs = masked_probs / torch.clamp(sum_probs, min=1e-8)
+	
+	# Protección numérica contra underflow: si la suma es casi cero, fallback a uniforme sobre la máscara
+	mask_sum = mask.sum(dim=-1, keepdim=True).clamp(min=1e-8)
+	uniform_valid = mask / mask_sum
+	masked_probs = torch.where(sum_probs < 1e-7, uniform_valid, masked_probs / torch.clamp(sum_probs, min=1e-8))
 	return masked_probs
 
 
@@ -190,9 +194,9 @@ def run_eval_episode(world, agent_a, agent_b, agent_c, agent_d, device, communic
 		_, _, _, world_info = world.step(action_a, action_b, action_c, action_d)
 
 		is_any_ko = (
-			getattr(state_a, "debuff_inconsciente_ticks", 0) > 0 or
-			getattr(state_b, "debuff_inconsciente_ticks", 0) > 0 or
-			getattr(state_c, "debuff_inconsciente_ticks", 0) > 0
+			not state_a.alive or getattr(state_a, "debuff_inconsciente_ticks", 0) > 0 or
+			not state_b.alive or getattr(state_b, "debuff_inconsciente_ticks", 0) > 0 or
+			not state_c.alive or getattr(state_c, "debuff_inconsciente_ticks", 0) > 0
 		)
 		if is_any_ko:
 			consecutive_healthy = 0
@@ -365,6 +369,7 @@ def run_arena_ppo_training():
 	storm_damage_multiplier = world_cfg.get("storm_damage_multiplier", 1.0)
 	prey_spawn_interval = world_cfg.get("prey_spawn_interval", 15)
 	replenish_cooldown_ticks = world_cfg.get("replenish_cooldown_ticks", 0)
+	map_path = world_cfg.get("map_path", None)
 
 	# Growth config
 	growth_cfg = config.get("growth", {})
@@ -448,6 +453,7 @@ def run_arena_ppo_training():
 		storm_damage_multiplier=storm_damage_multiplier,
 		prey_spawn_interval=prey_spawn_interval,
 		replenish_cooldown_ticks=replenish_cooldown_ticks,
+		map_path=map_path,
 	)
 
 	# ── 0. DOJO PRE-TRAINING (Bootstrapping) ──
@@ -472,11 +478,17 @@ def run_arena_ppo_training():
 		state_d = world.agent_d
 		consecutive_healthy_ticks = 0
 
+		hidden_dim = model_cfg.get("hidden_dim", 256)
+		h_state_a = torch.zeros((1, 6, hidden_dim), device=device)
+		h_state_b = torch.zeros((1, 6, hidden_dim), device=device)
+		h_state_c = torch.zeros((1, 6, hidden_dim), device=device)
+		h_state_d = torch.zeros((1, 6, hidden_dim), device=device)
+
 		# Trajectory buffers
-		buf_a = {"inputs": [], "emotions": [], "actions": [], "shout_concepts": [], "state_masks": [], "log_probs": [], "values": [], "rewards": []}
-		buf_b = {"inputs": [], "emotions": [], "actions": [], "shout_concepts": [], "state_masks": [], "log_probs": [], "values": [], "rewards": []}
-		buf_c = {"inputs": [], "emotions": [], "actions": [], "shout_concepts": [], "state_masks": [], "log_probs": [], "values": [], "rewards": []}
-		buf_d = {"inputs": [], "emotions": [], "actions": [], "shout_concepts": [], "state_masks": [], "log_probs": [], "values": [], "rewards": []}
+		buf_a = {"inputs": [], "emotions": [], "actions": [], "shout_concepts": [], "state_masks": [], "log_probs": [], "values": [], "rewards": [], "h_prevs": []}
+		buf_b = {"inputs": [], "emotions": [], "actions": [], "shout_concepts": [], "state_masks": [], "log_probs": [], "values": [], "rewards": [], "h_prevs": []}
+		buf_c = {"inputs": [], "emotions": [], "actions": [], "shout_concepts": [], "state_masks": [], "log_probs": [], "values": [], "rewards": [], "h_prevs": []}
+		buf_d = {"inputs": [], "emotions": [], "actions": [], "shout_concepts": [], "state_masks": [], "log_probs": [], "values": [], "rewards": [], "h_prevs": []}
 
 		agent_a.eval()
 		agent_b.eval()
@@ -526,10 +538,12 @@ def run_arena_ppo_training():
 				emo_a_id = state_a.emotion_id
 				emo_a = torch.tensor([emo_a_id], device=device)
 
+				buf_a["h_prevs"].append(h_state_a.squeeze(0).cpu())
 				with torch.no_grad():
 					_, meta_a = agent_a.forward_resonance(
-						input_a, n_steps=n_think, pos_mode="clock", emotion_ids=emo_a
+						input_a, n_steps=n_think, pos_mode="clock", emotion_ids=emo_a, h_prev=h_state_a
 					)
+					h_state_a = meta_a["final_hidden"]
 					hidden_a = meta_a["hidden"][:, 2, :].clone()
 					action_logits_a = agent_a.action_head(hidden_a)
 					shout_logits_a = agent_a._decode_hidden(hidden_a)
@@ -571,10 +585,12 @@ def run_arena_ppo_training():
 				emo_b_id = state_b.emotion_id
 				emo_b = torch.tensor([emo_b_id], device=device)
 
+				buf_b["h_prevs"].append(h_state_b.squeeze(0).cpu())
 				with torch.no_grad():
 					_, meta_b = agent_b.forward_resonance(
-						input_b, n_steps=n_think, pos_mode="clock", emotion_ids=emo_b
+						input_b, n_steps=n_think, pos_mode="clock", emotion_ids=emo_b, h_prev=h_state_b
 					)
+					h_state_b = meta_b["final_hidden"]
 					hidden_b = meta_b["hidden"][:, 2, :].clone()
 					action_logits_b = agent_b.action_head(hidden_b)
 					shout_logits_b = agent_b._decode_hidden(hidden_b)
@@ -616,10 +632,12 @@ def run_arena_ppo_training():
 				emo_c_id = state_c.emotion_id
 				emo_c = torch.tensor([emo_c_id], device=device)
 
+				buf_c["h_prevs"].append(h_state_c.squeeze(0).cpu())
 				with torch.no_grad():
 					_, meta_c = agent_c.forward_resonance(
-						input_c, n_steps=n_think, pos_mode="clock", emotion_ids=emo_c
+						input_c, n_steps=n_think, pos_mode="clock", emotion_ids=emo_c, h_prev=h_state_c
 					)
+					h_state_c = meta_c["final_hidden"]
 					hidden_c = meta_c["hidden"][:, 2, :].clone()
 					action_logits_c = agent_c.action_head(hidden_c)
 					shout_logits_c = agent_c._decode_hidden(hidden_c)
@@ -661,10 +679,12 @@ def run_arena_ppo_training():
 				emo_d_id = state_d.emotion_id
 				emo_d = torch.tensor([emo_d_id], device=device)
 
+				buf_d["h_prevs"].append(h_state_d.squeeze(0).cpu())
 				with torch.no_grad():
 					_, meta_d = agent_d_episode.forward_resonance(
-						input_d, n_steps=n_think, pos_mode="clock", emotion_ids=emo_d
+						input_d, n_steps=n_think, pos_mode="clock", emotion_ids=emo_d, h_prev=h_state_d
 					)
+					h_state_d = meta_d["final_hidden"]
 					hidden_d = meta_d["hidden"][:, 2, :].clone()
 					action_logits_d = agent_d_episode.action_head(hidden_d)
 					shout_logits_d = agent_d_episode._decode_hidden(hidden_d)
@@ -736,7 +756,8 @@ def run_arena_ppo_training():
 				recombine_parents(parent_model_a, parent_model_b, agent_d, child_width, device)
 
 				opt_d = make_optimizer(agent_d)
-				buf_d = {"inputs": [], "emotions": [], "actions": [], "shout_concepts": [], "log_probs": [], "values": [], "rewards": []}
+				h_state_d = torch.zeros((1, 6, hidden_dim), device=device)
+				buf_d = {"inputs": [], "emotions": [], "actions": [], "shout_concepts": [], "state_masks": [], "log_probs": [], "values": [], "rewards": [], "h_prevs": []}
 				agent_d.eval()
 				agent_d_episode = agent_d
 
@@ -840,9 +861,9 @@ def run_arena_ppo_training():
 
 			# Verificar si alguno de los tres fundadores activos está en K.O. en este tick
 			is_any_ko = (
-				getattr(state_a, "debuff_inconsciente_ticks", 0) > 0 or
-				getattr(state_b, "debuff_inconsciente_ticks", 0) > 0 or
-				getattr(state_c, "debuff_inconsciente_ticks", 0) > 0
+				not state_a.alive or getattr(state_a, "debuff_inconsciente_ticks", 0) > 0 or
+				not state_b.alive or getattr(state_b, "debuff_inconsciente_ticks", 0) > 0 or
+				not state_c.alive or getattr(state_c, "debuff_inconsciente_ticks", 0) > 0
 			)
 			if is_any_ko:
 				consecutive_healthy_ticks = 0
@@ -931,8 +952,17 @@ def run_arena_ppo_training():
 						perc[5] = SILENCE_GLYPH
 					inp = perception_to_input_coop(perc, device)
 					emo = torch.tensor([state.emotion_id], device=device)
+					h_state_current = None
+					if label == "a":
+						h_state_current = h_state_a
+					elif label == "b":
+						h_state_current = h_state_b
+					elif label == "c":
+						h_state_current = h_state_c
+					elif label == "d":
+						h_state_current = h_state_d
 					_, m_next = agent.forward_resonance(
-						inp, n_steps=n_think, pos_mode="clock", emotion_ids=emo
+						inp, h_prev=h_state_current, n_steps=n_think, pos_mode="clock", emotion_ids=emo
 					)
 					h_next = m_next["hidden"][:, 2, :]
 					next_val = agent.value_head(h_next).item()
@@ -959,6 +989,7 @@ def run_arena_ppo_training():
 			shout_concepts_tensor = torch.tensor(buf["shout_concepts"], dtype=torch.long, device=device) # (T,)
 			state_masks_tensor = torch.tensor(buf["state_masks"], dtype=torch.float32, device=device) # (T, 14)
 			old_log_probs_tensor = torch.tensor(buf["log_probs"], dtype=torch.float32, device=device) # (T,)
+			h_prevs_tensor = torch.stack(buf["h_prevs"], dim=0).to(device) # (T, 6, hidden_dim)
 
 			# Optimizar en K épocas locales
 			losses = []
@@ -972,7 +1003,7 @@ def run_arena_ppo_training():
 			for _ in range(ppo_epochs):
 				# Forward pass
 				_, m_epoch = agent.forward_resonance(
-					inputs_tensor, n_steps=n_think, pos_mode="clock", emotion_ids=emotions_tensor
+					inputs_tensor, n_steps=n_think, pos_mode="clock", emotion_ids=emotions_tensor, h_prev=h_prevs_tensor
 				)
 				h_epoch = m_epoch["hidden"][:, 2, :]
 

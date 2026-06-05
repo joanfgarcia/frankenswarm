@@ -370,6 +370,7 @@ class BitNet4LayerModel(nn.Module):
 		collect_watcher: bool = False,
 		logit_mask: torch.Tensor = None,
 		emotion_ids: torch.Tensor = None,
+		h_prev: torch.Tensor = None,
 	) -> tuple[torch.Tensor, dict]:
 		"""
 		Bucle latente cerrado: el hidden state itera N veces por el core
@@ -395,12 +396,15 @@ class BitNet4LayerModel(nn.Module):
 				- 'clock': Resonance clock re-sumado en cada iteración del bucle.
 			collect_watcher: Si True, muestrea tokens en cada paso (sin gradiente).
 			logit_mask: Máscara de logits para el paso final.
+			h_prev: Estado latente de la iteración temporal anterior (Resonancia Temporal).
 
 		Returns:
 			(logits, metadata) donde metadata contiene métricas de estabilidad y watcher.
 		"""
 		# ── Entrada: Capas 1→2 (una sola vez) ──
 		h = self._embed_input(x)
+		if h_prev is not None:
+			h = h + 0.5 * h_prev
 		h0_norm = h.norm(dim=-1).mean().item()
 
 		# ── EXP_033: Preparar vector emocional ──
@@ -473,6 +477,7 @@ class BitNet4LayerModel(nn.Module):
 		intermediate_targets: dict[int, torch.Tensor] | None = None,
 		logit_mask: torch.Tensor = None,
 		emotion_ids: torch.Tensor = None,
+		h_prev: torch.Tensor = None,
 	) -> tuple[torch.Tensor, list[tuple[int, torch.Tensor]]]:
 		"""
 		Variante de forward_resonance para entrenamiento con BPTT.
@@ -486,12 +491,15 @@ class BitNet4LayerModel(nn.Module):
 				Si se proporciona, se computan logits intermedios en esos pasos
 				para calcular loss parcial. None = solo loss al final.
 			logit_mask: Máscara de logits.
+			h_prev: Estado latente de la iteración temporal anterior (Resonancia Temporal).
 
 		Returns:
 			(final_logits, intermediate_logits) donde intermediate_logits es
 			lista de (step, logits) para los pasos con supervisión.
 		"""
 		h = self._embed_input(x)
+		if h_prev is not None:
+			h = h + 0.5 * h_prev
 
 		# ── EXP_033: Preparar vector emocional ──
 		emo_vec = None

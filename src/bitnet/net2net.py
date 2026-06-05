@@ -303,11 +303,23 @@ def net2wider_model(old_model: nn.Module, new_hidden_dim: int, noise_std: float 
 			new_block.attn_norm.weight.copy_(old_block.attn_norm.weight.data[g])
 
 			# Attention: q_proj, k_proj, v_proj
+			old_head_dim = old_hidden_dim // num_heads
+			new_head_dim = new_hidden_dim // num_heads
+			scale_factor = np.sqrt(new_head_dim / old_head_dim)
+
 			for proj_name in ["q_proj", "k_proj", "v_proj"]:
 				old_proj = getattr(old_block.attn, proj_name)
 				new_proj = getattr(new_block.attn, proj_name)
 				old_w = old_proj.weight.data
 				new_w = old_w[g][:, g] / copy_count[g].unsqueeze(0)
+
+				if proj_name == "q_proj":
+					scale_vector = scale_factor / torch.sqrt(copy_count[g])
+					new_w = new_w * scale_vector.unsqueeze(1)
+				elif proj_name == "k_proj":
+					scale_vector = 1.0 / torch.sqrt(copy_count[g])
+					new_w = new_w * scale_vector.unsqueeze(1)
+
 				noise = torch.randn_like(new_w) * noise_std
 				clone_mask = is_clone.unsqueeze(0) | is_clone.unsqueeze(1)
 				new_w = new_w + noise * clone_mask

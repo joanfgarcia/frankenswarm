@@ -29,6 +29,7 @@ from src.bitnet.cooperative_world import (
 	SILENCE_GLYPH,
 	COOP_LOCATION_GLYPHS,
 	CooperativeWorld,
+	COOP_LOCATION_NAMES,
 )
 from src.bitnet.glyph_vocabulary import (
 	N_EMOTIONS,
@@ -37,6 +38,36 @@ from src.bitnet.glyph_vocabulary import (
 )
 from src.bitnet.modeling_bitnet import BitNet4LayerModel
 from src.bitnet.train_arena_ppo import get_masked_probs
+
+
+# ANSI escape codes for coloring agents
+COLOR_NICO = "\033[96m"      # Cyan
+COLOR_SOFI = "\033[95m"      # Magenta/Pink
+COLOR_HUGO = "\033[93m"      # Yellow
+COLOR_RESET = "\033[0m"
+
+
+def color_nico(text: str) -> str:
+	return f"{COLOR_NICO}{text}{COLOR_RESET}"
+
+
+def color_sofi(text: str) -> str:
+	return f"{COLOR_SOFI}{text}{COLOR_RESET}"
+
+
+def color_hugo(text: str) -> str:
+	return f"{COLOR_HUGO}{text}{COLOR_RESET}"
+
+
+def color_agent_symbol(symbol: str) -> str:
+	sym = symbol.strip().upper()
+	if sym == "A" or "NICO" in sym:
+		return f"{COLOR_NICO}{symbol}{COLOR_RESET}"
+	if sym == "B" or "SOFI" in sym:
+		return f"{COLOR_SOFI}{symbol}{COLOR_RESET}"
+	if sym == "C" or "HUGO" in sym:
+		return f"{COLOR_HUGO}{symbol}{COLOR_RESET}"
+	return symbol
 
 
 def perception_to_input_coop(perception: list[int], device: torch.device) -> torch.Tensor:
@@ -146,7 +177,13 @@ def run_simulation():
 	parser.add_argument("--ticks", type=int, default=100)
 	parser.add_argument("--greedy", action="store_true", help="Use argmax action selection instead of sampling")
 	parser.add_argument("--seed", type=int, default=1337)
+	parser.add_argument("--spawn-a", type=str, default=None, help="Initial location for Nico (Agent A)")
+	parser.add_argument("--spawn-b", type=str, default=None, help="Initial location for Sofi (Agent B)")
+	parser.add_argument("--spawn-c", type=str, default=None, help="Initial location for Hugo (Agent C)")
+	parser.add_argument("--json-out", type=str, default=None, help="Path to save simulation trajectory JSON")
+	parser.add_argument("--map", type=str, default=None, help="Path to custom map JSON file")
 	args = parser.parse_args()
+
 
 	base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 	config_path = args.config if os.path.isabs(args.config) else os.path.join(base_dir, args.config)
@@ -211,24 +248,41 @@ def run_simulation():
 		storm_damage_multiplier=storm_damage_multiplier,
 		prey_spawn_interval=prey_spawn_interval,
 		replenish_cooldown_ticks=replenish_cooldown_ticks,
+		map_path=args.map,
 	)
 
 	state_a, state_b, state_c = world.reset()
 
+	if args.spawn_a:
+		state_a.location = args.spawn_a
+	if args.spawn_b:
+		state_b.location = args.spawn_b
+	if args.spawn_c:
+		state_c.location = args.spawn_c
+
+	# Update cross-mental models with the new positions
+	for agent in world.agents:
+		for other in world.agents:
+			if other.agent_id != agent.agent_id:
+				agent.companion_model[other.agent_id]["location"] = other.location
+
+
 	print("\n" + "═"*70)
 	print("🏟️  SIMULACIÓN EN LA ARENA COOPERATIVA (3 AGENTES)")
-	print(f"  Nico (Agente A) en {state_a.location}")
-	print(f"  Sofi (Agente B) en {state_b.location}")
-	print(f"  Hugo (Agente C) en {state_c.location}")
+	print(f"  {color_nico('Nico (Agente A)')} en {state_a.location}")
+	print(f"  {color_sofi('Sofi (Agente B)')} en {state_b.location}")
+	print(f"  {color_hugo('Hugo (Agente C)')} en {state_c.location}")
 	print(f"  Configuración: {args.config}")
 	print(f"  Metabolismo (Hambre): {hunger_rate:.2f}/tick")
 	print(f"  Capacidad de recursos: {resource_capacity:.1f} | Recuperación: +{resource_recovery:.2f}/tick")
 	print(f"  Multiplicadores Depredador: chance={predator_chance_multiplier:.2f}, daño={predator_damage_multiplier:.2f}")
 	print(f"  Multiplicadores Clima: chance={storm_chance_multiplier:.2f}, daño={storm_damage_multiplier:.2f}")
-	print(f"  Frecuencia Presa: cada {prey_spawn_interval} ticks")
-	print(f"  Samantha disponible: {samantha_available}")
-	print("═"*70)
+	hidden_dim = model_cfg.get("hidden_dim", 256)
+	h_state_a = torch.zeros((1, 6, hidden_dim), device=device)
+	h_state_b = torch.zeros((1, 6, hidden_dim), device=device)
+	h_state_c = torch.zeros((1, 6, hidden_dim), device=device)
 
+	trajectory_ticks = []
 	for tick in range(1, args.ticks + 1):
 		if not state_a.alive and not state_b.alive and not state_c.alive:
 			print(f"\n☠️  La simulación ha terminado en el tick {tick} porque todos los agentes han muerto.")
@@ -251,29 +305,29 @@ def run_simulation():
 		# Mostrar estado de Nico (A) y su ToM
 		if state_a.alive:
 			debuff_str = f" [💔 TRISTEZA:{state_a.debuff_tristeza_ticks:2d}t]" if state_a.debuff_tristeza_ticks > 0 else ""
-			print(f"  Nico (A): Loc: {state_a.location:8s} | Hambre: {state_a.hambre:5.1f} | Sed: {state_a.sed:5.1f} | Salud: {state_a.salud:5.1f} | Energía: {state_a.energia:5.1f} | Emo: {state_a.emotion_name}{debuff_str} | Mochila: [🍖: {state_a.mochila_comida}/1, 💧: {state_a.mochila_agua}/1, 🌿: {getattr(state_a, 'mochila_ramas', 0)}/3, 🪨: {getattr(state_a, 'mochila_piedras', 0)}/3] | Lanza: {'🗡️' if getattr(state_a, 'tiene_lanza', False) else '❌'}")
-			print(f"            Estima a Sofi (B): [Loc: {state_a.companion_model.get('b', {}).get('location', 'cueva'):8s} | Hambre: {state_a.companion_model.get('b', {}).get('hambre', 60.0):5.1f} | Sed: {state_a.companion_model.get('b', {}).get('sed', 80.0):5.1f} | Salud: {state_a.companion_model.get('b', {}).get('salud', 100.0):5.1f} | Emo: {state_a.companion_model.get('b', {}).get('emotion_name', 'alegría')}]")
-			print(f"            Estima a Hugo (c): [Loc: {state_a.companion_model.get('c', {}).get('location', 'cueva'):8s} | Hambre: {state_a.companion_model.get('c', {}).get('hambre', 60.0):5.1f} | Sed: {state_a.companion_model.get('c', {}).get('sed', 80.0):5.1f} | Salud: {state_a.companion_model.get('c', {}).get('salud', 100.0):5.1f} | Emo: {state_a.companion_model.get('c', {}).get('emotion_name', 'alegría')}]")
+			print(f"  {color_nico('Nico (A)')}: Loc: {state_a.location:8s} | Hambre: {state_a.hambre:5.1f} | Sed: {state_a.sed:5.1f} | Salud: {state_a.salud:5.1f} | Energía: {state_a.energia:5.1f} | Emo: {state_a.emotion_name}{debuff_str} | Mochila: [🍖: {state_a.mochila_comida}/1, 💧: {state_a.mochila_agua}/1, 🌿: {getattr(state_a, 'mochila_ramas', 0)}/3, 🪨: {getattr(state_a, 'mochila_piedras', 0)}/3] | Lanza: {'🗡️' if getattr(state_a, 'tiene_lanza', False) else '❌'}")
+			print(f"            Estima a {color_sofi('Sofi (B)')}: [Loc: {state_a.companion_model.get('b', {}).get('location', 'cueva'):8s} | Hambre: {state_a.companion_model.get('b', {}).get('hambre', 60.0):5.1f} | Sed: {state_a.companion_model.get('b', {}).get('sed', 80.0):5.1f} | Salud: {state_a.companion_model.get('b', {}).get('salud', 100.0):5.1f} | Emo: {state_a.companion_model.get('b', {}).get('emotion_name', 'alegría')}]")
+			print(f"            Estima a {color_hugo('Hugo (C)')}: [Loc: {state_a.companion_model.get('c', {}).get('location', 'cueva'):8s} | Hambre: {state_a.companion_model.get('c', {}).get('hambre', 60.0):5.1f} | Sed: {state_a.companion_model.get('c', {}).get('sed', 80.0):5.1f} | Salud: {state_a.companion_model.get('c', {}).get('salud', 100.0):5.1f} | Emo: {state_a.companion_model.get('c', {}).get('emotion_name', 'alegría')}]")
 		else:
-			print(f"  💀 Nico (A) está MUERTO")
+			print(f"  💀 {color_nico('Nico (A)')} está MUERTO")
 
 		# Mostrar estado de Sofi (B) y su ToM
 		if state_b.alive:
 			debuff_str = f" [💔 TRISTEZA:{state_b.debuff_tristeza_ticks:2d}t]" if state_b.debuff_tristeza_ticks > 0 else ""
-			print(f"  Sofi (B): Loc: {state_b.location:8s} | Hambre: {state_b.hambre:5.1f} | Sed: {state_b.sed:5.1f} | Salud: {state_b.salud:5.1f} | Energía: {state_b.energia:5.1f} | Emo: {state_b.emotion_name}{debuff_str} | Mochila: [🍖: {state_b.mochila_comida}/1, 💧: {state_b.mochila_agua}/1, 🌿: {getattr(state_b, 'mochila_ramas', 0)}/3, 🪨: {getattr(state_b, 'mochila_piedras', 0)}/3] | Lanza: {'🗡️' if getattr(state_b, 'tiene_lanza', False) else '❌'}")
-			print(f"            Estima a Nico (A): [Loc: {state_b.companion_model.get('a', {}).get('location', 'cueva'):8s} | Hambre: {state_b.companion_model.get('a', {}).get('hambre', 60.0):5.1f} | Sed: {state_b.companion_model.get('a', {}).get('sed', 80.0):5.1f} | Salud: {state_b.companion_model.get('a', {}).get('salud', 100.0):5.1f} | Emo: {state_b.companion_model.get('a', {}).get('emotion_name', 'alegría')}]")
-			print(f"            Estima a Hugo (C): [Loc: {state_b.companion_model.get('c', {}).get('location', 'cueva'):8s} | Hambre: {state_b.companion_model.get('c', {}).get('hambre', 60.0):5.1f} | Sed: {state_b.companion_model.get('c', {}).get('sed', 80.0):5.1f} | Salud: {state_b.companion_model.get('c', {}).get('salud', 100.0):5.1f} | Emo: {state_b.companion_model.get('c', {}).get('emotion_name', 'alegría')}]")
+			print(f"  {color_sofi('Sofi (B)')}: Loc: {state_b.location:8s} | Hambre: {state_b.hambre:5.1f} | Sed: {state_b.sed:5.1f} | Salud: {state_b.salud:5.1f} | Energía: {state_b.energia:5.1f} | Emo: {state_b.emotion_name}{debuff_str} | Mochila: [🍖: {state_b.mochila_comida}/1, 💧: {state_b.mochila_agua}/1, 🌿: {getattr(state_b, 'mochila_ramas', 0)}/3, 🪨: {getattr(state_b, 'mochila_piedras', 0)}/3] | Lanza: {'🗡️' if getattr(state_b, 'tiene_lanza', False) else '❌'}")
+			print(f"            Estima a {color_nico('Nico (A)')}: [Loc: {state_b.companion_model.get('a', {}).get('location', 'cueva'):8s} | Hambre: {state_b.companion_model.get('a', {}).get('hambre', 60.0):5.1f} | Sed: {state_b.companion_model.get('a', {}).get('sed', 80.0):5.1f} | Salud: {state_b.companion_model.get('a', {}).get('salud', 100.0):5.1f} | Emo: {state_b.companion_model.get('a', {}).get('emotion_name', 'alegría')}]")
+			print(f"            Estima a {color_hugo('Hugo (C)')}: [Loc: {state_b.companion_model.get('c', {}).get('location', 'cueva'):8s} | Hambre: {state_b.companion_model.get('c', {}).get('hambre', 60.0):5.1f} | Sed: {state_b.companion_model.get('c', {}).get('sed', 80.0):5.1f} | Salud: {state_b.companion_model.get('c', {}).get('salud', 100.0):5.1f} | Emo: {state_b.companion_model.get('c', {}).get('emotion_name', 'alegría')}]")
 		else:
-			print(f"  💀 Sofi (B) está MUERTO")
+			print(f"  💀 {color_sofi('Sofi (B)')} está MUERTO")
 
 		# Mostrar estado de Hugo (C) y su ToM
 		if state_c.alive:
 			debuff_str = f" [💔 TRISTEZA:{state_c.debuff_tristeza_ticks:2d}t]" if state_c.debuff_tristeza_ticks > 0 else ""
-			print(f"  Hugo (C): Loc: {state_c.location:8s} | Hambre: {state_c.hambre:5.1f} | Sed: {state_c.sed:5.1f} | Salud: {state_c.salud:5.1f} | Energía: {state_c.energia:5.1f} | Emo: {state_c.emotion_name}{debuff_str} | Mochila: [🍖: {state_c.mochila_comida}/1, 💧: {state_c.mochila_agua}/1, 🌿: {getattr(state_c, 'mochila_ramas', 0)}/3, 🪨: {getattr(state_c, 'mochila_piedras', 0)}/3] | Lanza: {'🗡️' if getattr(state_c, 'tiene_lanza', False) else '❌'}")
-			print(f"            Estima a Nico (A): [Loc: {state_c.companion_model.get('a', {}).get('location', 'cueva'):8s} | Hambre: {state_c.companion_model.get('a', {}).get('hambre', 60.0):5.1f} | Sed: {state_c.companion_model.get('a', {}).get('sed', 80.0):5.1f} | Salud: {state_c.companion_model.get('a', {}).get('salud', 100.0):5.1f} | Emo: {state_c.companion_model.get('a', {}).get('emotion_name', 'alegría')}]")
-			print(f"            Estima a Sofi (B): [Loc: {state_c.companion_model.get('b', {}).get('location', 'cueva'):8s} | Hambre: {state_c.companion_model.get('b', {}).get('hambre', 60.0):5.1f} | Sed: {state_c.companion_model.get('b', {}).get('sed', 80.0):5.1f} | Salud: {state_c.companion_model.get('b', {}).get('salud', 100.0):5.1f} | Emo: {state_c.companion_model.get('b', {}).get('emotion_name', 'alegría')}]")
+			print(f"  {color_hugo('Hugo (C)')}: Loc: {state_c.location:8s} | Hambre: {state_c.hambre:5.1f} | Sed: {state_c.sed:5.1f} | Salud: {state_c.salud:5.1f} | Energía: {state_c.energia:5.1f} | Emo: {state_c.emotion_name}{debuff_str} | Mochila: [🍖: {state_c.mochila_comida}/1, 💧: {state_c.mochila_agua}/1, 🌿: {getattr(state_c, 'mochila_ramas', 0)}/3, 🪨: {getattr(state_c, 'mochila_piedras', 0)}/3] | Lanza: {'🗡️' if getattr(state_c, 'tiene_lanza', False) else '❌'}")
+			print(f"            Estima a {color_nico('Nico (A)')}: [Loc: {state_c.companion_model.get('a', {}).get('location', 'cueva'):8s} | Hambre: {state_c.companion_model.get('a', {}).get('hambre', 60.0):5.1f} | Sed: {state_c.companion_model.get('a', {}).get('sed', 80.0):5.1f} | Salud: {state_c.companion_model.get('a', {}).get('salud', 100.0):5.1f} | Emo: {state_c.companion_model.get('a', {}).get('emotion_name', 'alegría')}]")
+			print(f"            Estima a {color_sofi('Sofi (B)')}: [Loc: {state_c.companion_model.get('b', {}).get('location', 'cueva'):8s} | Hambre: {state_c.companion_model.get('b', {}).get('hambre', 60.0):5.1f} | Sed: {state_c.companion_model.get('b', {}).get('sed', 80.0):5.1f} | Salud: {state_c.companion_model.get('b', {}).get('salud', 100.0):5.1f} | Emo: {state_c.companion_model.get('b', {}).get('emotion_name', 'alegría')}]")
 		else:
-			print(f"  💀 Hugo (C) está MUERTO")
+			print(f"  💀 {color_hugo('Hugo (C)')} está MUERTO")
 
 		# Initialize default values
 		action_a, action_b, action_c = "ver", "ver", "ver"
@@ -288,8 +342,9 @@ def run_simulation():
 			emo_a = torch.tensor([state_a.emotion_id], device=device)
 			with torch.no_grad():
 				_, meta_a = agent_a.forward_resonance(
-					input_a, n_steps=n_think, pos_mode="clock", emotion_ids=emo_a
+					input_a, n_steps=n_think, pos_mode="clock", emotion_ids=emo_a, h_prev=h_state_a
 				)
+				h_state_a = meta_a["final_hidden"]
 				hidden_a = meta_a["hidden"][:, 2, :].clone()
 				action_logits_a = agent_a.action_head(hidden_a)
 				shout_logits_a = agent_a._decode_hidden(hidden_a)
@@ -317,8 +372,9 @@ def run_simulation():
 			emo_b = torch.tensor([state_b.emotion_id], device=device)
 			with torch.no_grad():
 				_, meta_b = agent_b.forward_resonance(
-					input_b, n_steps=n_think, pos_mode="clock", emotion_ids=emo_b
+					input_b, n_steps=n_think, pos_mode="clock", emotion_ids=emo_b, h_prev=h_state_b
 				)
+				h_state_b = meta_b["final_hidden"]
 				hidden_b = meta_b["hidden"][:, 2, :].clone()
 				action_logits_b = agent_b.action_head(hidden_b)
 				shout_logits_b = agent_b._decode_hidden(hidden_b)
@@ -346,8 +402,9 @@ def run_simulation():
 			emo_c = torch.tensor([state_c.emotion_id], device=device)
 			with torch.no_grad():
 				_, meta_c = agent_c.forward_resonance(
-					input_c, n_steps=n_think, pos_mode="clock", emotion_ids=emo_c
+					input_c, n_steps=n_think, pos_mode="clock", emotion_ids=emo_c, h_prev=h_state_c
 				)
+				h_state_c = meta_c["final_hidden"]
 				hidden_c = meta_c["hidden"][:, 2, :].clone()
 				action_logits_c = agent_c.action_head(hidden_c)
 				shout_logits_c = agent_c._decode_hidden(hidden_c)
@@ -375,62 +432,158 @@ def run_simulation():
 		)
 
 		# Imprimir acciones y sucesos (Nico)
+		shout_a = None
 		if state_a_was_alive:
-			print(f"  👉 Nico (A) decide {action_a.upper()}: {res_a['event']}")
+			print(f"  👉 {color_nico('Nico (A)')} decide {action_a.upper()}: {res_a['event']}")
 			if res_a.get("shouted"):
 				loc_name = get_glyph_name(res_a["shout_content"][0])
 				what_name = get_glyph_name(res_a["shout_content"][1])
 				translation = translate_shout("Nico", loc_name, what_name)
-				print(f"     📢 Nico grita: [{loc_name}, {what_name}]")
+				print(f"     📢 {color_nico('Nico')} grita: [{loc_name}, {what_name}]")
 				print(f"     💬 Traducción Samantha: \"{translation}\"")
+				shout_a = {"location_glyph": loc_name, "what_glyph": what_name, "translation": translation}
 			if action_a == "dar" and res_a.get("success") and "shared_with" in res_a:
-				print(f"     🎁 Nico comparte {res_a['shared_resource']} con {res_a['shared_with'].upper()}!")
+				shared_with_colored = color_agent_symbol(res_a['shared_with'].upper())
+				print(f"     🎁 {color_nico('Nico')} comparte {res_a['shared_resource']} con {shared_with_colored}!")
 		if state_a_was_alive and not state_a.alive:
-			print(f"     ☠️  ¡Nico (A) ha MUERTO en este tick! Los supervivientes entran en estado de TRISTEZA.")
+			print(f"     ☠️  ¡{color_nico('Nico (A)')} ha MUERTO en este tick! Los supervivientes entran en estado de TRISTEZA.")
 
 		# Imprimir acciones y sucesos (Sofi)
+		shout_b = None
 		if state_b_was_alive:
-			print(f"  👉 Sofi (B) decide {action_b.upper()}: {res_b['event']}")
+			print(f"  👉 {color_sofi('Sofi (B)')} decide {action_b.upper()}: {res_b['event']}")
 			if res_b.get("shouted"):
 				loc_name = get_glyph_name(res_b["shout_content"][0])
 				what_name = get_glyph_name(res_b["shout_content"][1])
 				translation = translate_shout("Sofi", loc_name, what_name)
-				print(f"     📢 Sofi grita: [{loc_name}, {what_name}]")
+				print(f"     📢 {color_sofi('Sofi')} grita: [{loc_name}, {what_name}]")
 				print(f"     💬 Traducción Samantha: \"{translation}\"")
+				shout_b = {"location_glyph": loc_name, "what_glyph": what_name, "translation": translation}
 			if action_b == "dar" and res_b.get("success") and "shared_with" in res_b:
-				print(f"     🎁 Sofi comparte {res_b['shared_resource']} con {res_b['shared_with'].upper()}!")
+				shared_with_colored = color_agent_symbol(res_b['shared_with'].upper())
+				print(f"     🎁 {color_sofi('Sofi')} comparte {res_b['shared_resource']} con {shared_with_colored}!")
 		if state_b_was_alive and not state_b.alive:
-			print(f"     ☠️  ¡Sofi (B) ha MUERTO en este tick! Los supervivientes entran en estado de TRISTEZA.")
+			print(f"     ☠️  ¡{color_sofi('Sofi (B)')} ha MUERTO en este tick! Los supervivientes entran en estado de TRISTEZA.")
 
 		# Imprimir acciones y sucesos (Hugo)
+		shout_c = None
 		if state_c_was_alive:
-			print(f"  👉 Hugo (C) decide {action_c.upper()}: {res_c['event']}")
+			print(f"  👉 {color_hugo('Hugo (C)')} decide {action_c.upper()}: {res_c['event']}")
 			if res_c.get("shouted"):
 				loc_name = get_glyph_name(res_c["shout_content"][0])
 				what_name = get_glyph_name(res_c["shout_content"][1])
 				translation = translate_shout("Hugo", loc_name, what_name)
-				print(f"     📢 Hugo grita: [{loc_name}, {what_name}]")
+				print(f"     📢 {color_hugo('Hugo')} grita: [{loc_name}, {what_name}]")
 				print(f"     💬 Traducción Samantha: \"{translation}\"")
+				shout_c = {"location_glyph": loc_name, "what_glyph": what_name, "translation": translation}
 			if action_c == "dar" and res_c.get("success") and "shared_with" in res_c:
-				print(f"     🎁 Hugo comparte {res_c['shared_resource']} con {res_c['shared_with'].upper()}!")
+				shared_with_colored = color_agent_symbol(res_c['shared_with'].upper())
+				print(f"     🎁 {color_hugo('Hugo')} comparte {res_c['shared_resource']} con {shared_with_colored}!")
 		if state_c_was_alive and not state_c.alive:
-			print(f"     ☠️  ¡Hugo (C) ha MUERTO en este tick! Los supervivientes entran en estado de TRISTEZA.")
+			print(f"     ☠️  ¡{color_hugo('Hugo (C)')} ha MUERTO en este tick! Los supervivientes entran en estado de TRISTEZA.")
 
 		# Bonos de cooperación
 		if state_a_was_alive and world_info.get("coop_bonus_a", 0.0) > 0:
-			print(f"     🤝 Nico recibe coop_bonus: {world_info['coop_bonus_a']:.3f}")
+			print(f"     🤝 {color_nico('Nico')} recibe coop_bonus: {world_info['coop_bonus_a']:.3f}")
 		if state_b_was_alive and world_info.get("coop_bonus_b", 0.0) > 0:
-			print(f"     🤝 Sofi recibe coop_bonus: {world_info['coop_bonus_b']:.3f}")
+			print(f"     🤝 {color_sofi('Sofi')} recibe coop_bonus: {world_info['coop_bonus_b']:.3f}")
 		if state_c_was_alive and world_info.get("coop_bonus_c", 0.0) > 0:
-			print(f"     🤝 Hugo recibe coop_bonus: {world_info['coop_bonus_c']:.3f}")
+			print(f"     🤝 {color_hugo('Hugo')} recibe coop_bonus: {world_info['coop_bonus_c']:.3f}")
+
+		# Registrar trayectoria JSON
+		if args.json_out:
+			trajectory_ticks.append({
+				"tick": tick,
+				"world": {
+					"prey_location": world.prey_location,
+					"prey_timer": world.prey_timer,
+					"megaherbivore_location": world.megaherbivore_location,
+					"megaherbivore_timer": world.megaherbivore_timer,
+					"resources": {
+						loc: {
+							"food": world.resource_capacities[loc]["food"],
+							"water": world.resource_capacities[loc]["water"],
+							"branches": world.resource_capacities[loc]["branches"],
+							"stones": world.resource_capacities[loc]["stones"]
+						}
+						for loc in COOP_LOCATION_NAMES
+					}
+				},
+				"agents": {
+					"a": {
+						"name": "Nico",
+						"alive": state_a_was_alive,
+						"location": state_a.location if state_a_was_alive else None,
+						"hambre": state_a.hambre if state_a_was_alive else 0.0,
+						"sed": state_a.sed if state_a_was_alive else 0.0,
+						"salud": state_a.salud if state_a_was_alive else 0.0,
+						"energia": state_a.energia if state_a_was_alive else 0.0,
+						"emotion": state_a.emotion_name if state_a_was_alive else None,
+						"mochila_comida": state_a.mochila_comida if state_a_was_alive else 0,
+						"mochila_agua": state_a.mochila_agua if state_a_was_alive else 0,
+						"mochila_ramas": getattr(state_a, "mochila_ramas", 0) if state_a_was_alive else 0,
+						"mochila_piedras": getattr(state_a, "mochila_piedras", 0) if state_a_was_alive else 0,
+						"tiene_lanza": getattr(state_a, "tiene_lanza", False) if state_a_was_alive else False,
+						"action": action_a if state_a_was_alive else "muerto",
+						"shout": shout_a,
+						"is_ko": getattr(state_a, "debuff_inconsciente_ticks", 0) > 0 if state_a_was_alive else False
+					},
+					"b": {
+						"name": "Sofi",
+						"alive": state_b_was_alive,
+						"location": state_b.location if state_b_was_alive else None,
+						"hambre": state_b.hambre if state_b_was_alive else 0.0,
+						"sed": state_b.sed if state_b_was_alive else 0.0,
+						"salud": state_b.salud if state_b_was_alive else 0.0,
+						"energia": state_b.energia if state_b_was_alive else 0.0,
+						"emotion": state_b.emotion_name if state_b_was_alive else None,
+						"mochila_comida": state_b.mochila_comida if state_b_was_alive else 0,
+						"mochila_agua": state_b.mochila_agua if state_b_was_alive else 0,
+						"mochila_ramas": getattr(state_b, "mochila_ramas", 0) if state_b_was_alive else 0,
+						"mochila_piedras": getattr(state_b, "mochila_piedras", 0) if state_b_was_alive else 0,
+						"tiene_lanza": getattr(state_b, "tiene_lanza", False) if state_b_was_alive else False,
+						"action": action_b if state_b_was_alive else "muerto",
+						"shout": shout_b,
+						"is_ko": getattr(state_b, "debuff_inconsciente_ticks", 0) > 0 if state_b_was_alive else False
+					},
+					"c": {
+						"name": "Hugo",
+						"alive": state_c_was_alive,
+						"location": state_c.location if state_c_was_alive else None,
+						"hambre": state_c.hambre if state_c_was_alive else 0.0,
+						"sed": state_c.sed if state_c_was_alive else 0.0,
+						"salud": state_c.salud if state_c_was_alive else 0.0,
+						"energia": state_c.energia if state_c_was_alive else 0.0,
+						"emotion": state_c.emotion_name if state_c_was_alive else None,
+						"mochila_comida": state_c.mochila_comida if state_c_was_alive else 0,
+						"mochila_agua": state_c.mochila_agua if state_c_was_alive else 0,
+						"mochila_ramas": getattr(state_c, "mochila_ramas", 0) if state_c_was_alive else 0,
+						"mochila_piedras": getattr(state_c, "mochila_piedras", 0) if state_c_was_alive else 0,
+						"tiene_lanza": getattr(state_c, "tiene_lanza", False) if state_c_was_alive else False,
+						"action": action_c if state_c_was_alive else "muerto",
+						"shout": shout_c,
+						"is_ko": getattr(state_c, "debuff_inconsciente_ticks", 0) > 0 if state_c_was_alive else False
+					}
+				}
+			})
 
 	print("\n" + "═"*70)
 	print("📊 RESULTADOS FINALES DE LA SIMULACIÓN")
 	print(f"  Duración: {world.world_tick} ticks")
-	print(f"  Nico vivo: {state_a.alive} (Salud: {state_a.salud:.1f})")
-	print(f"  Sofi viva: {state_b.alive} (Salud: {state_b.salud:.1f})")
-	print(f"  Hugo vivo: {state_c.alive} (Salud: {state_c.salud:.1f})")
+	print(f"  {color_nico('Nico vivo')}: {state_a.alive} (Salud: {state_a.salud:.1f})")
+	print(f"  {color_sofi('Sofi viva')}: {state_b.alive} (Salud: {state_b.salud:.1f})")
+	print(f"  {color_hugo('Hugo vivo')}: {state_c.alive} (Salud: {state_c.salud:.1f})")
 	print("═"*70)
+
+	if args.json_out:
+		with open(args.json_out, "w", encoding="utf-8") as f:
+			json.dump({
+				"experiment_id": experiment_id,
+				"seed": args.seed,
+				"ticks": trajectory_ticks
+			}, f, ensure_ascii=False, indent=2)
+		print(f"\n📁 Trajectory JSON saved to: {args.json_out}")
+
 
 
 if __name__ == "__main__":
