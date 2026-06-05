@@ -236,3 +236,164 @@ enseñar_elegible(Location, TeacherSkills, StudentSkills, _, FireActive, 1, 'coc
 	(Location = 'cueva' ; Location = 'valle' ; Location = 'río' ; FireActive =:= 1),
 	!.
 enseñar_elegible(_, _, _, _, _, 0, 'ninguno').
+
+% ── Árbol Tecnológico ────────────────────────────────────────────────────────
+prerrequisito('comida', []).
+prerrequisito('agua', []).
+prerrequisito('artesanía', []).
+prerrequisito('caza', ['artesanía']).
+prerrequisito('pesca', ['artesanía']).
+prerrequisito('construcción', ['artesanía']).
+prerrequisito('fuego', ['artesanía']).
+prerrequisito('cocina', ['comida', 'agua', 'fuego']).
+
+% Verifica si se cumplen los prerrequisitos
+cumple_prereqs([], _) :- !.
+cumple_prereqs([H|T], Skills) :-
+	member(H, Skills),
+	cumple_prereqs(T, Skills).
+
+prerrequisitos_satisfechos(Habilidad, AgentSkills) :-
+	prerrequisito(Habilidad, Prereqs),
+	cumple_prereqs(Prereqs, AgentSkills).
+
+% ── Consulta de Observación ─────────────────────────────────────────────────
+% que_observar(AgentSkills, Location, FireActive, GroundFood, FoodEligible, FishEligible, GroundWater, WaterAvailable, PreyLocation, GroundBranches, BranchesEligible, GroundStones, StonesEligible, Habilidad)
+que_observar(Skills, _, FireActive, _, _, _, _, _, _, _, _, _, _, 'fuego') :-
+	\+ member('fuego', Skills),
+	prerrequisitos_satisfechos('fuego', Skills),
+	FireActive =:= 1.
+
+que_observar(Skills, _, _, GroundFood, FoodEligible, _, _, _, _, _, _, _, _, 'comida') :-
+	\+ member('comida', Skills),
+	prerrequisitos_satisfechos('comida', Skills),
+	GroundFood >= 1.0,
+	FoodEligible =:= 1.
+
+que_observar(Skills, _, _, GroundFood, _, FishEligible, _, _, _, _, _, _, _, 'pesca') :-
+	\+ member('pesca', Skills),
+	prerrequisitos_satisfechos('pesca', Skills),
+	GroundFood >= 1.0,
+	FishEligible =:= 1.
+
+que_observar(Skills, _, _, _, _, _, GroundWater, WaterAvailable, _, _, _, _, _, 'agua') :-
+	\+ member('agua', Skills),
+	prerrequisitos_satisfechos('agua', Skills),
+	GroundWater >= 1.0,
+	WaterAvailable =:= 1.
+
+que_observar(Skills, Location, _, _, _, _, _, _, PreyLocation, _, _, _, _, 'caza') :-
+	\+ member('caza', Skills),
+	prerrequisitos_satisfechos('caza', Skills),
+	Location = PreyLocation.
+
+que_observar(Skills, _, _, _, _, _, _, _, _, GroundBranches, BranchesEligible, GroundStones, StonesEligible, 'artesanía') :-
+	\+ member('artesanía', Skills),
+	prerrequisitos_satisfechos('artesanía', Skills),
+	GroundBranches >= 1.0, BranchesEligible =:= 1,
+	GroundStones >= 1.0, StonesEligible =:= 1.
+
+que_observar(Skills, _, _, _, _, _, _, _, _, GroundBranches, BranchesEligible, GroundStones, StonesEligible, 'construcción') :-
+	\+ member('construcción', Skills),
+	prerrequisitos_satisfechos('construcción', Skills),
+	GroundBranches >= 1.0, BranchesEligible =:= 1,
+	GroundStones >= 1.0, StonesEligible =:= 1.
+
+% ── Evaluación de Decisiones de Acción ──────────────────────────────────────
+% evaluar_intento(Action, AgentSkills, MochilaComida, MochilaAgua, MochilaRamas, MochilaPiedras, TieneLanza, Location, GroundFood, GroundWater, GroundBranches, GroundStones, FireActive, PreyLocation, ResultType, Event)
+% ResultType: 'exito', 'intento_valido', 'error_requisito', 'error_fisico', 'basal'
+
+evaluar_intento('comer', Skills, MochilaComida, MochilaAgua, _, _, _, _, GroundFood, _, _, _, FireActive, _, ResultType, Event) :-
+	( (MochilaComida > 0, MochilaAgua > 0, member('cocina', Skills), FireActive =:= 1) ->
+		ResultType = 'exito', Event = 'cocina guiso caliente exitosamente'
+	; (MochilaComida > 0) ->
+		ResultType = 'exito', Event = 'come de la mochila exitosamente'
+	; (GroundFood >= 1.0, (member('comida', Skills) ; member('pesca', Skills))) ->
+		ResultType = 'exito', Event = 'come del suelo exitosamente'
+	; (GroundFood >= 1.0, \+ member('comida', Skills), \+ member('pesca', Skills)) ->
+		( prerrequisitos_satisfechos('comida', Skills) ->
+			ResultType = 'intento_valido', Event = 'intenta comer/recolectar comida para aprender'
+		;
+			ResultType = 'error_requisito', Event = 'intenta comer sin prerrequisito'
+		)
+	;
+		ResultType = 'error_fisico', Event = 'intenta comer de suelo agotado'
+	),
+	!.
+
+evaluar_intento('beber', Skills, _, MochilaAgua, _, _, _, _, _, GroundWater, _, _, _, _, ResultType, Event) :-
+	( (MochilaAgua > 0) ->
+		ResultType = 'exito', Event = 'bebe de la mochila exitosamente'
+	; (GroundWater >= 1.0, member('agua', Skills)) ->
+		ResultType = 'exito', Event = 'bebe del suelo exitosamente'
+	; (GroundWater >= 1.0, \+ member('agua', Skills)) ->
+		( prerrequisitos_satisfechos('agua', Skills) ->
+			ResultType = 'intento_valido', Event = 'intenta beber para aprender'
+		;
+			ResultType = 'error_requisito', Event = 'intenta beber sin prerrequisito'
+		)
+	;
+		ResultType = 'error_fisico', Event = 'intenta beber de zona seca'
+	),
+	!.
+
+evaluar_intento('fabricar', Skills, _, _, MochilaRamas, MochilaPiedras, TieneLanza, _, _, _, _, _, _, _, ResultType, Event) :-
+	( (\+ member('artesanía', Skills)) ->
+		( prerrequisitos_satisfechos('artesanía', Skills) ->
+			( (MochilaRamas >= 1, MochilaPiedras >= 1) ->
+				ResultType = 'intento_valido', Event = 'intenta fabricar para aprender artesania'
+			;
+				ResultType = 'error_fisico', Event = 'intenta fabricar pero no tiene materiales'
+			)
+		;
+			ResultType = 'error_requisito', Event = 'intenta fabricar sin prerrequisito'
+		)
+	; (TieneLanza =:= 1) ->
+		ResultType = 'error_fisico', Event = 'ya tiene una lanza'
+	; (MochilaRamas < 1 ; MochilaPiedras < 1) ->
+		ResultType = 'error_fisico', Event = 'faltan materiales para fabricar'
+	;
+		ResultType = 'exito', Event = 'fabrica una lanza exitosamente'
+	),
+	!.
+
+evaluar_intento('construir', Skills, _, _, MochilaRamas, MochilaPiedras, _, _, _, _, _, _, _, _, ResultType, Event) :-
+	( (\+ member('construcción', Skills)) ->
+		( prerrequisitos_satisfechos('construcción', Skills) ->
+			( (MochilaRamas >= 2, MochilaPiedras >= 1) ->
+				ResultType = 'intento_valido', Event = 'intenta construir para aprender construccion'
+			;
+				ResultType = 'error_fisico', Event = 'intenta construir pero no tiene materiales'
+			)
+		;
+			ResultType = 'error_requisito', Event = 'intenta construir sin prerrequisito'
+		)
+	; (MochilaRamas < 2 ; MochilaPiedras < 1) ->
+		ResultType = 'error_fisico', Event = 'faltan materiales para construir'
+	;
+		ResultType = 'exito', Event = 'construye un refugio exitosamente'
+	),
+	!.
+
+evaluar_intento('encender', Skills, _, _, MochilaRamas, _, _, _, _, _, _, _, FireActive, _, ResultType, Event) :-
+	( (\+ member('fuego', Skills)) ->
+		( prerrequisitos_satisfechos('fuego', Skills) ->
+			( (MochilaRamas >= 2) ->
+				ResultType = 'intento_valido', Event = 'intenta encender para aprender fuego'
+			;
+				ResultType = 'error_fisico', Event = 'intenta encender pero no tiene ramas'
+			)
+		;
+			ResultType = 'error_requisito', Event = 'intenta encender sin prerrequisito'
+		)
+	; (FireActive =:= 1) ->
+		ResultType = 'error_fisico', Event = 'ya hay una hoguera activa'
+	; (MochilaRamas < 2) ->
+		ResultType = 'error_fisico', Event = 'faltan ramas para encender'
+	;
+		ResultType = 'exito', Event = 'enciende una hoguera exitosamente'
+	),
+	!.
+
+evaluar_intento(_, _, _, _, _, _, _, _, _, _, _, _, _, _, 'basal', 'accion basal o comunicativa').
+

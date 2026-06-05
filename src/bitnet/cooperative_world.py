@@ -295,10 +295,12 @@ class CoopAgentState:
 	pending_growth_penalty: bool = False
 	learned_skills: list = None
 	teaching_buffer: list = None
+	skill_experience: dict = None
 	aburrimiento: float = 0.0
 	debuff_tristeza_ticks: int = 0
 	debuff_inconsciente_ticks: int = 0
 	just_fell_unconscious: bool = False
+	shout_cooldown_ticks: int = 0
 
 	def __post_init__(self):
 		if self.map_knowledge is None:
@@ -323,15 +325,17 @@ class CoopAgentState:
 				self.learned_skills = []
 		if self.teaching_buffer is None:
 			self.teaching_buffer = []
+		if self.skill_experience is None:
+			self.skill_experience = {}
 
 	@property
 	def max_slots(self) -> int:
 		if self.network_width < 192:
-			return 2
-		elif self.network_width < 288:
 			return 3
-		else:
+		elif self.network_width < 288:
 			return 4
+		else:
+			return 5
 
 	@property
 	def signal_retrievability(self) -> float:
@@ -344,15 +348,15 @@ class CoopAgentState:
 	def emotion_name(self) -> str:
 		if self.debuff_tristeza_ticks > 0:
 			return "tristeza"
-		elif self.hambre < 20:
+		elif self.hambre < 25:
 			return "hambre"
-		elif self.salud < 30 or self.sed < 20:
+		elif self.sed < 25 or self.salud < 35:
 			return "dolor"
-		elif self.energia < 20:
+		elif self.energia < 25:
 			return "tristeza"
 		elif self.danger_nearby:
 			return "miedo"
-		elif self.hambre > 70 and self.salud > 70 and self.sed > 60 and self.energia > 50:
+		elif self.hambre >= 45 and self.sed >= 50 and self.salud >= 60 and self.energia >= 45:
 			return "alegría"
 		else:
 			return "ira"
@@ -397,8 +401,83 @@ class CooperativeWorld:
 				resource_capacity: float = 5.0, resource_recovery: float = 0.2,
 				predator_chance_multiplier: float = 1.0, predator_damage_multiplier: float = 1.0,
 				storm_chance_multiplier: float = 1.0, storm_damage_multiplier: float = 1.0,
-				prey_spawn_interval: int = 15, replenish_cooldown_ticks: int = 0):
+				prey_spawn_interval: int = 15, replenish_cooldown_ticks: int = 0,
+				map_path: str | None = None, food_decay_rate: float = 0.5,
+				permanent_fire_location: str | None = None):
 		self.rng = random.Random(seed)
+		self.food_decay_rate = food_decay_rate
+		self.permanent_fire_location = permanent_fire_location
+
+		# Cargar mapa personalizado si se especifica
+		if map_path is not None:
+			import json
+			with open(map_path, encoding="utf-8") as f:
+				map_data = json.load(f)
+
+			custom_locations = {}
+			for node in map_data["nodes"]:
+				nid = node["id"]
+				custom_locations[nid] = {
+					"description": node.get("description", "zona de la arena"),
+					"predator_chance": node.get("predator_chance", 0.1),
+					"storm_shelter": node.get("storm_shelter", False),
+					"food_eligible": node.get("food_eligible", False),
+					"water_available": node.get("water_available", False),
+					"branches_eligible": node.get("branches_eligible", False),
+					"stones_eligible": node.get("stones_eligible", False),
+					"fish_eligible": node.get("fish_eligible", False),
+				}
+
+			custom_adjacency = {node["id"]: [] for node in map_data["nodes"]}
+			for edge in map_data["edges"]:
+				frm, to = edge["from"], edge["to"]
+				if frm in custom_adjacency and to in custom_adjacency:
+					if to not in custom_adjacency[frm]:
+						custom_adjacency[frm].append(to)
+					if frm not in custom_adjacency[to]:
+						custom_adjacency[to].append(frm)
+
+			custom_glyphs = {}
+			def get_glyph_for_location_name(name: str) -> str:
+				name_lower = name.lower()
+				if "cueva" in name_lower or "ruina" in name_lower or "casa" in name_lower or "refugio" in name_lower:
+					return "cueva"
+				if "bosque" in name_lower or "selva" in name_lower or "arbol" in name_lower:
+					return "bosque"
+				if "rio" in name_lower or "río" in name_lower or "arroyo" in name_lower:
+					return "río"
+				if "lago" in name_lower or "pantano" in name_lower or "agua" in name_lower or "charca" in name_lower:
+					return "agua"
+				if "montaña" in name_lower or "montana" in name_lower or "piedra" in name_lower or "pico" in name_lower or "roca" in name_lower:
+					return "piedra"
+				return "tierra"
+
+			for node in map_data["nodes"]:
+				nid = node["id"]
+				custom_glyphs[nid] = get_glyph_for_location_name(nid)
+
+			global COOP_LOCATIONS, COOP_ADJACENCY, COOP_LOCATION_NAMES, COOP_LOCATION_GLYPHS, _GLYPH_TO_LOCATIONS, FOOD_ELIGIBLE
+			COOP_LOCATIONS.clear()
+			COOP_LOCATIONS.update(custom_locations)
+
+			COOP_ADJACENCY.clear()
+			COOP_ADJACENCY.update(custom_adjacency)
+
+			COOP_LOCATION_NAMES.clear()
+			COOP_LOCATION_NAMES.extend(list(COOP_LOCATIONS.keys()))
+
+			COOP_LOCATION_GLYPHS.clear()
+			COOP_LOCATION_GLYPHS.update(custom_glyphs)
+
+			_GLYPH_TO_LOCATIONS.clear()
+			for _loc, _glyph_name in COOP_LOCATION_GLYPHS.items():
+				_idx = WORD_INDEX.get(_glyph_name, -1)
+				if _idx >= 0:
+					_GLYPH_TO_LOCATIONS.setdefault(_idx, []).append(_loc)
+
+			FOOD_ELIGIBLE.clear()
+			FOOD_ELIGIBLE.extend([loc for loc, data in COOP_LOCATIONS.items() if data["food_eligible"]])
+
 		self.food_interval = food_interval    # ticks entre spawns de comida
 		self.food_duration = food_duration    # cuánto dura la comida
 		self.hunger_rate = hunger_rate        # hambre perdida por tick
@@ -441,6 +520,8 @@ class CooperativeWorld:
 		}
 
 		self.fire_locations = dict.fromkeys(COOP_LOCATION_NAMES, 0)
+		if self.permanent_fire_location is not None:
+			self.fire_locations[self.permanent_fire_location] = 999999
 
 		# Agentes
 		self.agent_a = CoopAgentState(agent_id="a")
@@ -535,6 +616,8 @@ class CooperativeWorld:
 			for loc, loc_data in COOP_LOCATIONS.items()
 		}
 		self.fire_locations = dict.fromkeys(COOP_LOCATION_NAMES, 0)
+		if self.permanent_fire_location is not None:
+			self.fire_locations[self.permanent_fire_location] = 999999
 		self.prey_location = None
 		self.prey_timer = 0
 		self.prey_cooldown = self.rng.randint(5, self.prey_spawn_interval)
@@ -589,13 +672,13 @@ class CooperativeWorld:
 
 		# Decaer hogueras activas
 		for loc in self.fire_locations:
-			if self.fire_locations[loc] > 0:
+			if self.fire_locations[loc] > 0 and loc != self.permanent_fire_location:
 				self.fire_locations[loc] -= 1
 
 		# Decaimiento (podrido) de la comida en el suelo si no hay hoguera
 		for loc, caps in self.resource_capacities.items():
 			if caps["food"] > 0.0 and self.fire_locations.get(loc, 0) == 0:
-				caps["food"] = max(0.0, caps["food"] - 0.5)
+				caps["food"] = max(0.0, caps["food"] - self.food_decay_rate)
 				if caps["food"] <= 0.0 and self.replenish_cooldown_ticks > 0:
 					self.resource_cooldowns[loc]["food"] = self.replenish_cooldown_ticks
 
@@ -828,364 +911,453 @@ class CooperativeWorld:
 				if caps["stones"] <= 0.0 and self.replenish_cooldown_ticks > 0:
 					self.resource_cooldowns[agent.location]["stones"] = self.replenish_cooldown_ticks
 
-		if action == "comer":
+		# Evaluador de Intentos Lógicos por Prolog
+		learning_action = action in ["comer", "beber", "fabricar", "construir", "encender"]
+		result_type = "basal"
+		res_event = ""
+		if learning_action:
 			fire_active = 1 if self.fire_locations.get(agent.location, 0) > 0 else 0
-			skills_str = format_skills(agent.learned_skills)
-			food_eligible = 1 if loc_data["food_eligible"] else 0
-			fish_eligible = 1 if loc_data.get("fish_eligible") else 0
-			rng_val = self.rng.random()
-			agent_id = f"'{agent.agent_id.upper()}'"
-			
-			q_comer = (
-				f"comer({fire_active}, {skills_str}, {agent.mochila_comida}, {agent.mochila_agua}, "
-				f"{caps['food']}, {food_eligible}, {fish_eligible}, {rng_val}, {agent_id}, "
-				f"NewComida, NewAgua, NewGround, Success, AddHambre, AddSed, AddSalud, Event, Intoxicated)"
+			has_lanza = 1 if getattr(agent, "tiene_lanza", False) else 0
+			q_eval = (
+				f"evaluar_intento('{action}', {format_skills(agent.learned_skills)}, "
+				f"{agent.mochila_comida}, {agent.mochila_agua}, {agent.mochila_ramas}, "
+				f"{agent.mochila_piedras}, {has_lanza}, '{agent.location}', "
+				f"{caps.get('food', 0.0)}, {caps.get('water', 0.0)}, {caps.get('branches', 0.0)}, "
+				f"{caps.get('stones', 0.0)}, {fire_active}, '{self.prey_location or 'ninguno'}', "
+				f"ResultType, Event)"
 			)
-			res = query_prolog(q_comer)[0]
-			
-			agent.mochila_comida = res["NewComida"]
-			agent.mochila_agua = res["NewAgua"]
-			caps["food"] = max(0.0, res["NewGround"])
-			if caps["food"] <= 0.0 and self.replenish_cooldown_ticks > 0:
-				self.resource_cooldowns[agent.location]["food"] = self.replenish_cooldown_ticks
-			result["success"] = bool(res["Success"])
-			if result["success"]:
-				if res["Event"] == 'consume guiso caliente (comida++)':
-					result["delta_hambre"] += 85.0
-					result["delta_sed"] += 50.0
+			res_eval = query_prolog(q_eval)[0]
+			result_type = res_eval["ResultType"]
+			res_event = res_eval["Event"]
+
+		# Calcular multiplicador emocional para el aprendizaje
+		emotion = agent.emotion_name
+		if emotion == "alegría":
+			emotion_mult = 1.0
+		elif emotion in ["ira", "miedo", "hambre"]:
+			emotion_mult = 0.2
+		else:  # tristeza, dolor
+			emotion_mult = 0.0
+
+		if result_type == "intento_valido":
+			# Determinar la habilidad según la acción
+			skill = None
+			if action == "comer":
+				skill = "pesca" if loc_data.get("fish_eligible") else "comida"
+			elif action == "beber":
+				skill = "agua"
+			elif action == "fabricar":
+				skill = "artesanía"
+				agent.mochila_ramas = max(0, agent.mochila_ramas - 1)
+				agent.mochila_piedras = max(0, agent.mochila_piedras - 1)
+			elif action == "construir":
+				skill = "construcción"
+				agent.mochila_ramas = max(0, agent.mochila_ramas - 2)
+				agent.mochila_piedras = max(0, agent.mochila_piedras - 1)
+			elif action == "encender":
+				skill = "fuego"
+				agent.mochila_ramas = max(0, agent.mochila_ramas - 2)
+
+			if skill:
+				result["tried_skill"] = skill
+				if len(agent.learned_skills) < agent.max_slots:
+					# Confirmar prerrequisitos
+					q_tree = f"prerrequisitos_satisfechos('{skill}', {format_skills(agent.learned_skills)})"
+					if query_prolog(q_tree):
+						exp_gain = 1.0 * emotion_mult
+						agent.skill_experience[skill] = agent.skill_experience.get(skill, 0.0) + exp_gain
+						if agent.skill_experience[skill] >= 10.0:
+							agent.learned_skills.append(skill)
+							agent.skill_experience[skill] = 0.0
+							print(f"  🎓 ¡{agent.agent_id.upper()} ({agent.emotion_name}) ha DESCUBIERTO/INVENTADO la habilidad '{skill}'!")
+
+			result["success"] = False
+			result["event"] = res_event
+
+		elif result_type == "error_requisito":
+			result["success"] = False
+			result["tech_error"] = True
+			result["event"] = res_event
+
+		elif result_type == "error_fisico":
+			result["success"] = False
+			result["physical_error"] = True
+			result["event"] = res_event
+
+		elif result_type in ["exito", "basal"]:
+			if action == "comer":
+				fire_active = 1 if self.fire_locations.get(agent.location, 0) > 0 else 0
+				skills_str = format_skills(agent.learned_skills)
+				food_eligible = 1 if loc_data["food_eligible"] else 0
+				fish_eligible = 1 if loc_data.get("fish_eligible") else 0
+				rng_val = self.rng.random()
+				agent_id = f"'{agent.agent_id.upper()}'"
+				
+				q_comer = (
+					f"comer({fire_active}, {skills_str}, {agent.mochila_comida}, {agent.mochila_agua}, "
+					f"{caps['food']}, {food_eligible}, {fish_eligible}, {rng_val}, {agent_id}, "
+					f"NewComida, NewAgua, NewGround, Success, AddHambre, AddSed, AddSalud, Event, Intoxicated)"
+				)
+				res = query_prolog(q_comer)[0]
+				
+				agent.mochila_comida = res["NewComida"]
+				agent.mochila_agua = res["NewAgua"]
+				caps["food"] = max(0.0, res["NewGround"])
+				if caps["food"] <= 0.0 and self.replenish_cooldown_ticks > 0:
+					self.resource_cooldowns[agent.location]["food"] = self.replenish_cooldown_ticks
+				result["success"] = bool(res["Success"])
+				if result["success"]:
+					if res["Event"] == 'consume guiso caliente (comida++)':
+						result["delta_hambre"] += 85.0
+						result["delta_sed"] += 50.0
+					else:
+						result["delta_hambre"] += 75.0
+					result["delta_salud"] += res["AddSalud"]
 				else:
-					result["delta_hambre"] += 75.0
-				result["delta_salud"] += res["AddSalud"]
-			else:
-				result["delta_hambre"] += res["AddHambre"]
-				result["delta_sed"] += res["AddSed"]
-				result["delta_salud"] += res["AddSalud"]
-			result["event"] = res["Event"]
-			
-			if not result["success"] and agent.mochila_comida == 0 and (loc_data["food_eligible"] or loc_data.get("fish_eligible")) and caps["food"] < 1.0:
-				result["event"] = f"intenta recolectar/comer comida de {agent.location} agotado (penalización)"
+					result["delta_hambre"] += res["AddHambre"]
+					result["delta_sed"] += res["AddSed"]
+					result["delta_salud"] += res["AddSalud"]
+				result["event"] = res["Event"]
+				
+				if not result["success"] and agent.mochila_comida == 0 and (loc_data["food_eligible"] or loc_data.get("fish_eligible")) and caps["food"] < 1.0:
+					result["event"] = f"intenta recolectar/comer comida de {agent.location} agotado (penalización)"
 
-		elif action == "beber":
-			# Beber del suelo requiere la habilidad "agua"
-			if caps["water"] >= 1.0 and "agua" in agent.learned_skills:
-				result["success"] = True
-				result["delta_sed"] += 75.0
-				result["delta_salud"] += 3.0
-				result["event"] = "bebe agua (suelo)"
-				caps["water"] = max(0.0, caps["water"] - 1.0)
-				if caps["water"] <= 0.0 and self.replenish_cooldown_ticks > 0:
-					self.resource_cooldowns[agent.location]["water"] = self.replenish_cooldown_ticks
-			elif agent.mochila_agua > 0:
-				agent.mochila_agua = 0
-				result["success"] = True
-				result["delta_sed"] += 75.0
-				result["delta_salud"] += 3.0
-				result["event"] = "bebe agua de su mochila"
-			else:
-				result["event"] = "no hay agua aquí ni en mochila"
-				if loc_data["water_available"] and caps["water"] < 1.0:
-					result["event"] = f"intenta beber agua de {agent.location} agotado (penalización)"
-				elif agent.agent_id == "b" and caps["water"] >= 1.0:
-					result["event"] = "Sofy no sabe extraer agua del suelo"
-
-		elif action == "dormir":
-			# Tasa metabólica basal: desgaste a la mitad durante el sueño
-			result["delta_hambre"] = -0.2 * self.hunger_rate * 0.5 * peso_multiplicador
-			result["delta_sed"] = -1.0 * self.hunger_rate * 0.5 * peso_multiplicador
-			
-			is_fishing_spot = loc_data.get("fish_eligible") or agent.location in ["río", "lago", "pantano"]
-			
-			if forced_sleep and original_action == "luchar":
-				result["delta_salud"] = -100.0
-				result["delta_energia"] = 0.0
-				result["success"] = False
-				result["event"] = "se desmaya de cansancio en medio del combate y es devorado"
-			elif forced_sleep and original_action == "comer" and is_fishing_spot:
-				result["delta_salud"] = -100.0
-				result["delta_energia"] = 0.0
-				result["success"] = False
-				result["event"] = "se desmaya de cansancio pescando y se ahoga en el agua"
-			elif agent.danger_nearby:
-				if getattr(agent, "tiene_lanza", False):
-					agent.tiene_lanza = False
-					result["delta_energia"] += 10.0
+			elif action == "beber":
+				if caps["water"] >= 1.0 and "agua" in agent.learned_skills:
+					result["success"] = True
+					result["delta_sed"] += 75.0
 					result["delta_salud"] += 3.0
-					result["event"] = "duerme y el depredador es repelido por la lanza (se rompe)"
-				else:
-					result["delta_salud"] -= 35.0 * self.predator_damage_multiplier
-					result["delta_energia"] += 10.0
-					result["event"] = "duerme pero depredador ataca!"
-			else:
-				result["success"] = True
-				if forced_sleep:
-					result["delta_energia"] += 10.0  # Menor recuperación por desmayo
-					result["delta_salud"] -= 2.0     # Penalización física leve por colapso
-					result["event"] = "colapsa por cansancio extremo y duerme forzosamente"
-				else:
-					result["delta_energia"] += 20.0
+					result["event"] = "bebe agua (suelo)"
+					caps["water"] = max(0.0, caps["water"] - 1.0)
+					if caps["water"] <= 0.0 and self.replenish_cooldown_ticks > 0:
+						self.resource_cooldowns[agent.location]["water"] = self.replenish_cooldown_ticks
+				elif agent.mochila_agua > 0:
+					agent.mochila_agua = 0
+					result["success"] = True
+					result["delta_sed"] += 75.0
 					result["delta_salud"] += 3.0
-					result["event"] = "duerme y descansa"
-
-		elif action == "mover":
-			if agent.energia < 5:
-				result["event"] = "demasiado cansado para moverse"
-			else:
-				adjacent = COOP_ADJACENCY[agent.location]
-
-				# Movimiento dirigido: si tiene destino, camina hacia él
-				if agent.nav_target and agent.nav_target != agent.location:
-					next_step = _bfs_next_step(agent.location, agent.nav_target)
-					new_loc = next_step if next_step and next_step in adjacent else self.rng.choice(adjacent)
+					result["event"] = "bebe agua de su mochila"
 				else:
-					# Sin destino: exploración aleatoria
-					new_loc = self.rng.choice(adjacent)
+					result["event"] = "no hay agua aquí ni en mochila"
+					if loc_data["water_available"] and caps["water"] < 1.0:
+						result["event"] = f"intenta beber agua de {agent.location} agotado (penalización)"
+					elif agent.agent_id == "b" and caps["water"] >= 1.0:
+						result["event"] = "Sofy no sabe extraer agua del suelo"
 
-				result["success"] = True
-				result["delta_energia"] -= 4.0
-				result["moved_to"] = new_loc
-				result["event"] = f"se mueve a {new_loc}"
-				if agent.nav_target:
-					result["event"] += f" (→{agent.nav_target})"
-
-				# Si llegó al destino, limpiar navegación y señal
-				if new_loc == agent.nav_target:
-					agent.nav_target = None
-					agent.received_signal = None
-					agent.signal_from = None
-
-		elif action == "ver":
-			result["success"] = True
-			result["delta_energia"] -= 1.0
-			result["event"] = "observa el entorno"
-
-		elif action == "luchar":
-			danger_val = 1 if agent.danger_nearby else 0
-			lanza_val = 1 if getattr(agent, "tiene_lanza", False) else 0
-			rng_val = self.rng.random()
-			q_lucha = (
-				f"luchar({danger_val}, {lanza_val}, {rng_val}, {self.predator_damage_multiplier}, "
-				f"NewLanza, NewDanger, Success, SubSalud, SubEnergia, Event)"
-			)
-			res = query_prolog(q_lucha)[0]
-			agent.tiene_lanza = bool(res["NewLanza"])
-			agent.danger_nearby = bool(res["NewDanger"])
-			result["success"] = bool(res["Success"])
-			result["delta_salud"] += res["SubSalud"]
-			result["delta_energia"] += res["SubEnergia"]
-			result["event"] = res["Event"]
-
-		elif action == "gritar":
-			result["success"] = True
-			result["delta_energia"] = 0.0  # Coste de energía cero para comunicarse
-			result["shouted"] = True
-			# El contenido del grito: [mi_loc, lo_que_veo]
-			loc_glyph = WORD_INDEX.get(COOP_LOCATION_GLYPHS[agent.location], 0)
-			if shout_concept_idx is not None:
-				what_glyph = shout_concept_idx
-			else:
-				caps = self.resource_capacities[agent.location]
-				if self.megaherbivore_location == agent.location:
-					what_glyph = WORD_INDEX.get("árbol", 0)  # Grita sobre el Gran Herbívoro
-				elif caps["food"] >= 1.0:
-					what_glyph = WORD_INDEX.get("comida", 0)
+			elif action == "dormir":
+				result["delta_hambre"] = -0.2 * self.hunger_rate * 0.5 * peso_multiplicador
+				result["delta_sed"] = -1.0 * self.hunger_rate * 0.5 * peso_multiplicador
+				
+				is_fishing_spot = loc_data.get("fish_eligible") or agent.location in ["río", "lago", "pantano"]
+				
+				if forced_sleep and original_action == "luchar":
+					result["delta_salud"] = -100.0
+					result["delta_energia"] = 0.0
+					result["success"] = False
+					result["event"] = "se desmaya de cansancio en medio del combate y es devorado"
+				elif forced_sleep and original_action == "comer" and is_fishing_spot:
+					result["delta_salud"] = -100.0
+					result["delta_energia"] = 0.0
+					result["success"] = False
+					result["event"] = "se desmaya de cansancio pescando y se ahoga en el agua"
 				elif agent.danger_nearby:
-					what_glyph = WORD_INDEX.get("depredador", 0)
-				elif caps["water"] >= 1.0:
-					what_glyph = WORD_INDEX.get("agua", 0)
+					if getattr(agent, "tiene_lanza", False):
+						agent.tiene_lanza = False
+						result["delta_energia"] += 10.0
+						result["delta_salud"] += 3.0
+						result["event"] = "duerme y el depredador es repelido por la lanza (se rompe)"
+					else:
+						result["delta_salud"] -= 35.0 * self.predator_damage_multiplier
+						result["delta_energia"] += 10.0
+						result["event"] = "duerme pero depredador ataca!"
 				else:
-					what_glyph = WORD_INDEX.get("seguro", 0)
+					result["success"] = True
+					if forced_sleep:
+						result["delta_energia"] += 10.0
+						result["delta_salud"] -= 2.0
+						result["event"] = "colapsa por cansancio extremo y duerme forzosamente"
+					else:
+						result["delta_energia"] += 20.0
+						result["delta_salud"] += 3.0
+						result["event"] = "duerme y descansa"
 
-			# Verificar si el concepto es enseñar y si hay algún alumno apto
-			if self._what_name(what_glyph) == "enseñar":
-				has_eligible_student = False
-				for other_agent in self.agents:
-					if other_agent.agent_id != agent.agent_id and other_agent.alive:
+			elif action == "mover":
+				if agent.energia < 5:
+					result["event"] = "demasiado cansado para moverse"
+				else:
+					adjacent = COOP_ADJACENCY[agent.location]
+
+					if agent.nav_target and agent.nav_target != agent.location:
+						next_step = _bfs_next_step(agent.location, agent.nav_target)
+						new_loc = next_step if next_step and next_step in adjacent else self.rng.choice(adjacent)
+					else:
+						new_loc = self.rng.choice(adjacent)
+
+					result["success"] = True
+					result["delta_energia"] -= 4.0
+					result["moved_to"] = new_loc
+					result["event"] = f"se mueve a {new_loc}"
+					if agent.nav_target:
+						result["event"] += f" (→{agent.nav_target})"
+
+					if new_loc == agent.nav_target:
+						agent.nav_target = None
+						agent.received_signal = None
+						agent.signal_from = None
+
+			elif action == "ver":
+				result["success"] = True
+				result["delta_energia"] -= 1.0
+				result["event"] = "observa el entorno"
+				
+				# Consulta de Observación por Prolog
+				fire_active = 1 if self.fire_locations.get(agent.location, 0) > 0 else 0
+				food_elig = 1 if loc_data["food_eligible"] else 0
+				fish_elig = 1 if loc_data.get("fish_eligible") else 0
+				water_avail = 1 if loc_data["water_available"] else 0
+				branches_elig = 1 if loc_data.get("branches_eligible") else 0
+				stones_elig = 1 if loc_data.get("stones_eligible") else 0
+				
+				q_obs = (
+					f"que_observar({format_skills(agent.learned_skills)}, '{agent.location}', {fire_active}, "
+					f"{caps.get('food', 0.0)}, {food_elig}, {fish_elig}, {caps.get('water', 0.0)}, {water_avail}, "
+					f"'{self.prey_location or 'ninguno'}', {caps.get('branches', 0.0)}, {branches_elig}, "
+					f"{caps.get('stones', 0.0)}, {stones_elig}, Habilidad)"
+				)
+				res_obs = query_prolog(q_obs)
+				observed_skills = []
+				for r_obs in res_obs:
+					obs_skill = r_obs["Habilidad"]
+					if len(agent.learned_skills) < agent.max_slots:
+						q_tree = f"prerrequisitos_satisfechos('{obs_skill}', {format_skills(agent.learned_skills)})"
+						if query_prolog(q_tree):
+							exp_gain = 1.0 * emotion_mult
+							agent.skill_experience[obs_skill] = agent.skill_experience.get(obs_skill, 0.0) + exp_gain
+							observed_skills.append(obs_skill)
+							if agent.skill_experience[obs_skill] >= 10.0:
+								agent.learned_skills.append(obs_skill)
+								agent.skill_experience[obs_skill] = 0.0
+								print(f"  🎓 ¡{agent.agent_id.upper()} ({agent.emotion_name}) ha DESCUBIERTO/INVENTADO '{obs_skill}' mediante observación!")
+				
+				if observed_skills:
+					result["observed_skills"] = observed_skills
+					result["tried_skill"] = observed_skills[0]
+
+			elif action == "luchar":
+				danger_val = 1 if agent.danger_nearby else 0
+				lanza_val = 1 if getattr(agent, "tiene_lanza", False) else 0
+				rng_val = self.rng.random()
+				q_lucha = (
+					f"luchar({danger_val}, {lanza_val}, {rng_val}, {self.predator_damage_multiplier}, "
+					f"NewLanza, NewDanger, Success, SubSalud, SubEnergia, Event)"
+				)
+				res = query_prolog(q_lucha)[0]
+				agent.tiene_lanza = bool(res["NewLanza"])
+				agent.danger_nearby = bool(res["NewDanger"])
+				result["success"] = bool(res["Success"])
+				result["delta_salud"] += res["SubSalud"]
+				result["delta_energia"] += res["SubEnergia"]
+				result["event"] = res["Event"]
+
+			elif action == "gritar":
+				result["success"] = True
+				result["delta_energia"] = 0.0
+				result["shouted"] = True
+				agent.shout_cooldown_ticks = 3
+				loc_glyph = WORD_INDEX.get(COOP_LOCATION_GLYPHS[agent.location], 0)
+				if shout_concept_idx is not None:
+					what_glyph = shout_concept_idx
+				else:
+					caps_here = self.resource_capacities[agent.location]
+					if self.megaherbivore_location == agent.location:
+						what_glyph = WORD_INDEX.get("árbol", 0)
+					elif caps_here["food"] >= 1.0:
+						what_glyph = WORD_INDEX.get("comida", 0)
+					elif agent.danger_nearby:
+						what_glyph = WORD_INDEX.get("depredador", 0)
+					elif caps_here["water"] >= 1.0:
+						what_glyph = WORD_INDEX.get("agua", 0)
+					else:
+						what_glyph = WORD_INDEX.get("seguro", 0)
+
+				if self._what_name(what_glyph) == "enseñar":
+					has_eligible_student = False
+					for other_agent in self.agents:
+						if other_agent.agent_id != agent.agent_id and other_agent.alive:
+							if len(other_agent.learned_skills) < other_agent.max_slots:
+								has_eligible_student = True
+								break
+					if not has_eligible_student:
+						what_glyph = WORD_INDEX.get("seguro", 0)
+
+				result["shout_content"] = (loc_glyph, what_glyph)
+				result["event"] = f"grita: [{COOP_LOCATION_GLYPHS[agent.location]}, {self._what_name(what_glyph)}]"
+				concept_name = self._what_name(what_glyph)
+				if concept_name in ["agua", "comida"]:
+					self.last_shout_tick[(agent.agent_id, concept_name)] = self.world_tick
+
+			elif action == "dar":
+				others = [other for other in self.agents if other.agent_id != agent.agent_id and other.alive]
+				transferred = False
+				for other_agent in others:
+					if other_agent.location == agent.location:
+						if other_agent.mochila_agua == 0 and other_agent.sed < 80 and agent.mochila_agua > 0:
+							if self.world_tick - self.last_shout_tick.get((other_agent.agent_id, "agua"), -999) <= 15:
+								agent.mochila_agua = 0
+								other_agent.mochila_agua = 1
+								result["success"] = True
+								result["event"] = f"comparte agua de su mochila con {other_agent.agent_id.upper()} (llena mochila)"
+								result["shared_resource"] = "agua"
+								result["shared_with"] = other_agent.agent_id
+								transferred = True
+								break
+							else:
+								result["event"] = f"intenta dar agua a {other_agent.agent_id.upper()} pero no ha sido solicitada"
+						elif other_agent.mochila_comida == 0 and other_agent.hambre < 80 and agent.mochila_comida > 0:
+							if self.world_tick - self.last_shout_tick.get((other_agent.agent_id, "comida"), -999) <= 15:
+								agent.mochila_comida = 0
+								other_agent.mochila_comida = 1
+								result["success"] = True
+								result["event"] = f"comparte comida de su mochila con {other_agent.agent_id.upper()} (llena mochila)"
+								result["shared_resource"] = "comida"
+								result["shared_with"] = other_agent.agent_id
+								transferred = True
+								break
+							else:
+								result["event"] = f"intenta dar comida a {other_agent.agent_id.upper()} pero no ha sido solicitada"
+
+				if not transferred and not result.get("event"):
+					result["event"] = "mochila vacía, compañeros saciados o solos"
+
+			elif action == "enseñar":
+				others = [other for other in self.agents if other.agent_id != agent.agent_id and other.alive]
+				taught = False
+				for other_agent in others:
+					if other_agent.location == agent.location:
 						if len(other_agent.learned_skills) < other_agent.max_slots:
-							has_eligible_student = True
-							break
-				if not has_eligible_student:
-					what_glyph = WORD_INDEX.get("seguro", 0)
-
-			result["shout_content"] = (loc_glyph, what_glyph)
-			result["event"] = f"grita: [{COOP_LOCATION_GLYPHS[agent.location]}, {self._what_name(what_glyph)}]"
-			concept_name = self._what_name(what_glyph)
-			if concept_name in ["agua", "comida"]:
-				self.last_shout_tick[(agent.agent_id, concept_name)] = self.world_tick
-
-		elif action == "dar":
-			# Compartir recursos de la mochila con cualquier compañero si están juntos
-			others = [other for other in self.agents if other.agent_id != agent.agent_id and other.alive]
-			transferred = False
-			for other_agent in others:
-				if other_agent.location == agent.location:
-					# 1. Dar agua si el otro tiene la mochila vacía y la necesita (sed < 80)
-					if other_agent.mochila_agua == 0 and other_agent.sed < 80 and agent.mochila_agua > 0:
-						if self.world_tick - self.last_shout_tick.get((other_agent.agent_id, "agua"), -999) <= 15:
-							agent.mochila_agua = 0
-							other_agent.mochila_agua = 1
-							result["success"] = True
-							result["event"] = f"comparte agua de su mochila con {other_agent.agent_id.upper()} (llena mochila)"
-							result["shared_resource"] = "agua"
-							result["shared_with"] = other_agent.agent_id
-							transferred = True
-							break
-						else:
-							result["event"] = f"intenta dar agua a {other_agent.agent_id.upper()} pero no ha sido solicitada"
-					# 2. Dar comida si el otro tiene la mochila vacía y la necesita (hambre < 80)
-					elif other_agent.mochila_comida == 0 and other_agent.hambre < 80 and agent.mochila_comida > 0:
-						if self.world_tick - self.last_shout_tick.get((other_agent.agent_id, "comida"), -999) <= 15:
-							agent.mochila_comida = 0
-							other_agent.mochila_comida = 1
-							result["success"] = True
-							result["event"] = f"comparte comida de su mochila con {other_agent.agent_id.upper()} (llena mochila)"
-							result["shared_resource"] = "comida"
-							result["shared_with"] = other_agent.agent_id
-							transferred = True
-							break
-						else:
-							result["event"] = f"intenta dar comida a {other_agent.agent_id.upper()} pero no ha sido solicitada"
-
-			if not transferred and not result.get("event"):
-				result["event"] = "mochila vacía, compañeros saciados o solos"
-
-		elif action == "enseñar":
-			# El maestro busca a un alumno en la misma localización que tenga slots libres
-			others = [other for other in self.agents if other.agent_id != agent.agent_id and other.alive]
-			taught = False
-			for other_agent in others:
-				if other_agent.location == agent.location:
-					# Validar slots libres en el alumno
-					if len(other_agent.learned_skills) < other_agent.max_slots:
-						teacher_skills = format_skills(agent.learned_skills)
-						student_skills = format_skills(other_agent.learned_skills)
-						prey_loc = f"'{self.prey_location}'" if self.prey_location else "ninguno"
-						fire_act = 1 if self.fire_locations.get(agent.location, 0) > 0 else 0
-						
-						q_teach = (
-							f"enseñar_elegible('{agent.location}', {teacher_skills}, {student_skills}, "
-							f"{prey_loc}, {fire_act}, Success, Habilidad)"
-						)
-						res = query_prolog(q_teach)[0]
-						if res["Success"]:
-							habilidad = res["Habilidad"]
-							result["success"] = True
-							result["event"] = f"enseña {habilidad} a {other_agent.agent_id.upper()} en {agent.location.upper()}"
-							result["taught_skill"] = habilidad
-							result["taught_to"] = other_agent.agent_id
-							taught = True
-							break
-
-			if not taught:
-				result["event"] = "nadie a quien enseñar, sin capacidad o fuera de zona de recursos"
-
-		elif action == "aprender":
-			# El alumno busca a un maestro en la misma casilla que esté ejecutando "enseñar"
-			others = [other for other in self.agents if other.agent_id != agent.agent_id and other.alive]
-			learned = False
-			for other_agent in others:
-				if other_agent.location == agent.location:
-					# Verificar si el otro agente está ejecutando "enseñar" en este tick
-					other_action = getattr(self, "current_actions", {}).get(other_agent.agent_id)
-					if other_action == "enseñar":
-						# Validar slots libres y anclaje geográfico
-						if len(agent.learned_skills) < agent.max_slots:
-							teacher_skills = format_skills(other_agent.learned_skills)
-							student_skills = format_skills(agent.learned_skills)
+							teacher_skills = format_skills(agent.learned_skills)
+							student_skills = format_skills(other_agent.learned_skills)
 							prey_loc = f"'{self.prey_location}'" if self.prey_location else "ninguno"
 							fire_act = 1 if self.fire_locations.get(agent.location, 0) > 0 else 0
 							
-							q_learn = (
+							q_teach = (
 								f"enseñar_elegible('{agent.location}', {teacher_skills}, {student_skills}, "
 								f"{prey_loc}, {fire_act}, Success, Habilidad)"
 							)
-							res = query_prolog(q_learn)[0]
+							res = query_prolog(q_teach)[0]
 							if res["Success"]:
 								habilidad = res["Habilidad"]
 								result["success"] = True
-								result["event"] = f"aprende {habilidad} de {other_agent.agent_id.upper()} en {agent.location.upper()}"
-								result["learning_skill"] = habilidad
-								result["learned_from"] = other_agent.agent_id
-								result["delta_energia"] -= 1.0  # coste cognitivo leve
-								learned = True
+								result["event"] = f"enseña {habilidad} a {other_agent.agent_id.upper()} en {agent.location.upper()}"
+								result["taught_skill"] = habilidad
+								result["taught_to"] = other_agent.agent_id
+								taught = True
 								break
 
-			if not learned:
-				result["event"] = "nadie enseñando en esta zona, o capacidad cerebral llena"
+				if not taught:
+					result["event"] = "nadie a quien enseñar, sin capacidad o fuera de zona de recursos"
 
-		elif action == "reproducir":
-			# Solo se puede reproducir en la cueva o ruinas (refugios)
-			loc_data = COOP_LOCATIONS[agent.location]
-			
-			start_stats = getattr(self, "start_of_tick_stats", {})
-			agent_start = start_stats.get(agent.agent_id, {"hambre": agent.hambre, "sed": agent.sed, "location": agent.location})
-
-			if not loc_data.get("storm_shelter", False):
-				result["event"] = "no se puede reproducir fuera de un refugio"
-			elif agent_start["hambre"] < 40.0 or agent_start["sed"] < 40.0:
-				result["event"] = "demasiado hambriento o sediento para reproducirse"
-			else:
-				# Buscar a un compañero de apareamiento vivo en la misma casilla que también ejecute "reproducir"
+			elif action == "aprender":
 				others = [other for other in self.agents if other.agent_id != agent.agent_id and other.alive]
-				reproduced = False
+				learned = False
 				for other_agent in others:
-					other_start = start_stats.get(other_agent.agent_id, {"hambre": other_agent.hambre, "sed": other_agent.sed, "location": other_agent.location})
-					if other_start["location"] == agent_start["location"]:
+					if other_agent.location == agent.location:
 						other_action = getattr(self, "current_actions", {}).get(other_agent.agent_id)
-						if other_action == "reproducir" and other_start["hambre"] >= 40.0 and other_start["sed"] >= 40.0:
-							# Validar que Domi esté inactivo (sólo un hijo a la vez)
-							if not self.agent_d_was_alive:
-								result["success"] = True
-								result["delta_hambre"] -= 35.0  # coste metabólico masivo
-								result["delta_sed"] -= 35.0
-								result["event"] = f"se reproduce con {other_agent.agent_id.upper()} en {agent.location.upper()}"
-								result["reproduction_event"] = {
-									"parent_a": agent.agent_id,
-									"parent_b": other_agent.agent_id
-								}
-								reproduced = True
-								break
-				if not reproduced:
-					result["event"] = "ningún compañero ejecutando reproducir o Domi ya está vivo"
+						if other_action == "enseñar":
+							if len(agent.learned_skills) < agent.max_slots:
+								teacher_skills = format_skills(other_agent.learned_skills)
+								student_skills = format_skills(agent.learned_skills)
+								prey_loc = f"'{self.prey_location}'" if self.prey_location else "ninguno"
+								fire_act = 1 if self.fire_locations.get(agent.location, 0) > 0 else 0
+								
+								q_learn = (
+									f"enseñar_elegible('{agent.location}', {teacher_skills}, {student_skills}, "
+									f"{prey_loc}, {fire_act}, Success, Habilidad)"
+								)
+								res = query_prolog(q_learn)[0]
+								if res["Success"]:
+									habilidad = res["Habilidad"]
+									result["success"] = True
+									result["event"] = f"aprende {habilidad} de {other_agent.agent_id.upper()} en {agent.location.upper()}"
+									result["learning_skill"] = habilidad
+									result["learned_from"] = other_agent.agent_id
+									result["delta_energia"] -= 1.0
+									learned = True
+									break
 
-		elif action == "fabricar":
-			skills_str = format_skills(agent.learned_skills)
-			lanza_val = 1 if getattr(agent, "tiene_lanza", False) else 0
-			q_fab = (
-				f"fabricar({skills_str}, {agent.mochila_ramas}, {agent.mochila_piedras}, {lanza_val}, "
-				f"NewRamas, NewPiedras, NewLanza, Success, Event)"
-			)
-			res = query_prolog(q_fab)[0]
-			agent.mochila_ramas = res["NewRamas"]
-			agent.mochila_piedras = res["NewPiedras"]
-			agent.tiene_lanza = bool(res["NewLanza"])
-			result["success"] = bool(res["Success"])
-			result["event"] = res["Event"]
+				if not learned:
+					result["event"] = "nadie enseñando en esta zona, o capacidad cerebral llena"
 
-		elif action == "construir":
-			skills_str = format_skills(agent.learned_skills)
-			shelter_val = 1 if loc_data.get("storm_shelter", False) else 0
-			q_const = (
-				f"construir({skills_str}, {agent.mochila_ramas}, {agent.mochila_piedras}, {shelter_val}, "
-				f"'{agent.location}', NewRamas, NewPiedras, NewShelter, Success, Event)"
-			)
-			res = query_prolog(q_const)[0]
-			agent.mochila_ramas = res["NewRamas"]
-			agent.mochila_piedras = res["NewPiedras"]
-			loc_data["storm_shelter"] = bool(res["NewShelter"])
-			result["success"] = bool(res["Success"])
-			result["event"] = res["Event"]
+			elif action == "reproducir":
+				loc_data = COOP_LOCATIONS[agent.location]
+				start_stats = getattr(self, "start_of_tick_stats", {})
+				agent_start = start_stats.get(agent.agent_id, {"hambre": agent.hambre, "sed": agent.sed, "location": agent.location})
 
-		elif action == "encender":
-			skills_str = format_skills(agent.learned_skills)
-			q_enc = (
-				f"encender({skills_str}, {agent.mochila_ramas}, '{agent.location}', "
-				f"NewRamas, FireDuration, Success, Event)"
-			)
-			res = query_prolog(q_enc)[0]
-			agent.mochila_ramas = res["NewRamas"]
-			self.fire_locations[agent.location] = res["FireDuration"]
-			result["success"] = bool(res["Success"])
-			result["event"] = res["Event"]
+				if not loc_data.get("storm_shelter", False):
+					result["event"] = "no se puede reproducir fuera de un refugio"
+				elif agent_start["hambre"] < 40.0 or agent_start["sed"] < 40.0:
+					result["event"] = "demasiado hambriento o sediento para reproducirse"
+				else:
+					others = [other for other in self.agents if other.agent_id != agent.agent_id and other.alive]
+					reproduced = False
+					for other_agent in others:
+						other_start = start_stats.get(other_agent.agent_id, {"hambre": other_agent.hambre, "sed": other_agent.sed, "location": other_agent.location})
+						if other_start["location"] == agent_start["location"]:
+							other_action = getattr(self, "current_actions", {}).get(other_agent.agent_id)
+							if other_action == "reproducir" and other_start["hambre"] >= 40.0 and other_start["sed"] >= 40.0:
+								if not self.agent_d_was_alive:
+									result["success"] = True
+									result["delta_hambre"] -= 35.0
+									result["delta_sed"] -= 35.0
+									result["event"] = f"se reproduce con {other_agent.agent_id.upper()} en {agent.location.upper()}"
+									result["reproduction_event"] = {
+										"parent_a": agent.agent_id,
+										"parent_b": other_agent.agent_id
+									}
+									reproduced = True
+									break
+					if not reproduced:
+						result["event"] = "ningún compañero ejecutando reproducir o Domi ya está vivo"
+
+			elif action == "fabricar":
+				skills_str = format_skills(agent.learned_skills)
+				lanza_val = 1 if getattr(agent, "tiene_lanza", False) else 0
+				q_fab = (
+					f"fabricar({skills_str}, {agent.mochila_ramas}, {agent.mochila_piedras}, {lanza_val}, "
+					f"NewRamas, NewPiedras, NewLanza, Success, Event)"
+				)
+				res = query_prolog(q_fab)[0]
+				agent.mochila_ramas = res["NewRamas"]
+				agent.mochila_piedras = res["NewPiedras"]
+				agent.tiene_lanza = bool(res["NewLanza"])
+				result["success"] = bool(res["Success"])
+				result["event"] = res["Event"]
+
+			elif action == "construir":
+				skills_str = format_skills(agent.learned_skills)
+				shelter_val = 1 if loc_data.get("storm_shelter", False) else 0
+				q_const = (
+					f"construir({skills_str}, {agent.mochila_ramas}, {agent.mochila_piedras}, {shelter_val}, "
+					f"'{agent.location}', NewRamas, NewPiedras, NewShelter, Success, Event)"
+				)
+				res = query_prolog(q_const)[0]
+				agent.mochila_ramas = res["NewRamas"]
+				agent.mochila_piedras = res["NewPiedras"]
+				loc_data["storm_shelter"] = bool(res["NewShelter"])
+				result["success"] = bool(res["Success"])
+				result["event"] = res["Event"]
+
+			elif action == "encender":
+				skills_str = format_skills(agent.learned_skills)
+				q_enc = (
+					f"encender({skills_str}, {agent.mochila_ramas}, '{agent.location}', "
+					f"NewRamas, FireDuration, Success, Event)"
+				)
+				res = query_prolog(q_enc)[0]
+				agent.mochila_ramas = res["NewRamas"]
+				self.fire_locations[agent.location] = res["FireDuration"]
+				result["success"] = bool(res["Success"])
+				result["event"] = res["Event"]
 
 		elif action == "reanimar":
 			companions_here = [
@@ -1265,6 +1437,9 @@ class CooperativeWorld:
 			
 		if agent.debuff_tristeza_ticks > 0:
 			agent.debuff_tristeza_ticks -= 1
+
+		if agent.shout_cooldown_ticks > 0:
+			agent.shout_cooldown_ticks -= 1
 
 		agent.clamp()
 
@@ -1676,7 +1851,7 @@ class CooperativeWorld:
 					has_food = (caps["food"] >= 1.0)
 					has_water = (caps["water"] >= 1.0)
 					if not has_food and not has_water:
-						coop_bonuses[sender_id] += -1.0 * R
+						coop_bonuses[sender_id] += -5.0 * R
 
 		# Decoupled fate: si un agente muere, los otros supervivientes sufren un debuff de tristeza por 72 ticks
 		just_died_any = False
@@ -1763,7 +1938,14 @@ class CooperativeWorld:
 
 		# Penalizaciones por intentar acciones de forma fallida o inútil (gastar ticks sin éxito)
 		if not result.get("success", False):
-			if agent.last_action in ["comer", "beber", "luchar", "dar", "enseñar", "aprender", "reproducir", "fabricar", "construir", "encender"]:
+			if result.get("tech_error"):
+				reward -= 0.5
+			elif result.get("physical_error"):
+				reward -= 0.3
+			elif result.get("tried_skill"):
+				exp_acum = agent.skill_experience.get(result["tried_skill"], 0.0)
+				reward += 0.2 * max(0.0, 1.0 - exp_acum / 10.0)
+			elif agent.last_action in ["comer", "beber", "luchar", "dar", "enseñar", "aprender", "reproducir", "fabricar", "construir", "encender"]:
 				reward -= 0.3
 				
 				# Penalización específica por intentar consumir recursos de fuentes agotadas
@@ -1820,6 +2002,14 @@ class CooperativeWorld:
 		if result.get("delta_salud", 0) < -10:
 			reward -= 0.5
 
+		# Reset cognitivo (curiosidad) para localizaciones desactualizadas
+		for l, info in agent.map_knowledge.items():
+			if self.world_tick - info.get("last_updated", 0) > 35:
+				if COOP_LOCATIONS[l]["food_eligible"] or COOP_LOCATIONS[l].get("fish_eligible"):
+					info["food"] = 5.0
+				if COOP_LOCATIONS[l]["water_available"]:
+					info["water"] = 5.0
+
 		# ── Potential-Based Reward Shaping (PBRS) Cognitivo ──
 		# Solo se aplica si el agente cambió de posición en este tick
 		if agent.previous_location and agent.location != agent.previous_location:
@@ -1830,7 +2020,6 @@ class CooperativeWorld:
 				d_curr = _bfs_distance(agent.location, agent.nav_target)
 				d_prev = _bfs_distance(agent.previous_location, agent.nav_target)
 				shaping_reward += (d_prev - d_curr) * 0.4  # +0.4 por acercarse, -0.4 por alejarse
-				
 			else:
 				# 2. Si no hay target de navegación, guiar hacia recursos conocidos en su mapa cognitivo
 				# Guiar hacia comida si tiene hambre
@@ -1876,18 +2065,17 @@ class CooperativeWorld:
 		loc_data = COOP_LOCATIONS[loc]
 		caps = self.resource_capacities[loc]
 
-		# 0. Comer: válido si hay comida en mochila o comida/peces elegibles en el suelo y posee la habilidad
+		# 0. Comer: válido si hay comida en mochila o comida/peces elegibles en el suelo
 		has_food_in_backpack = (agent.mochila_comida > 0)
 		has_food_on_ground = (caps["food"] >= 1.0 and (
-			("comida" in agent.learned_skills and loc_data["food_eligible"]) or
-			("pesca" in agent.learned_skills and loc_data.get("fish_eligible"))
+			loc_data["food_eligible"] or loc_data.get("fish_eligible")
 		))
 		if not (has_food_in_backpack or has_food_on_ground):
 			mask[0] = 0.0
 
-		# 1. Beber: válido si hay agua en mochila o agua elegible en el suelo y posee la habilidad
+		# 1. Beber: válido si hay agua en mochila o agua elegible en el suelo
 		has_water_in_backpack = (agent.mochila_agua > 0)
-		has_water_on_ground = (caps["water"] >= 1.0 and "agua" in agent.learned_skills)
+		has_water_on_ground = (caps["water"] >= 1.0 and loc_data["water_available"])
 		if not (has_water_in_backpack or has_water_on_ground):
 			mask[1] = 0.0
 
@@ -1901,18 +2089,30 @@ class CooperativeWorld:
 		mask[4] = 1.0
 
 		# 5. Luchar: válido si hay depredador/amenaza o si está el Gran Herbívoro o la presa estándar
-		has_prey = (self.prey_location == loc and "caza" in agent.learned_skills)
-		has_mega = (self.megaherbivore_location == loc and "caza" in agent.learned_skills and getattr(agent, "tiene_lanza", False))
+		has_prey = (self.prey_location == loc)
+		has_mega = (self.megaherbivore_location == loc and getattr(agent, "tiene_lanza", False))
 		if not (agent.danger_nearby or has_prey or has_mega):
 			mask[5] = 0.0
 
-		# 6. Gritar: siempre válido si comunicación está habilitada
-		mask[6] = 1.0
+		# 6. Gritar: siempre válido si comunicación está habilitada, respetando enfriamiento
+		if getattr(agent, "shout_cooldown_ticks", 0) > 0:
+			mask[6] = 0.0
+		else:
+			mask[6] = 1.0
 
-		# 7. Dar: válido si mochila comida > 0 o mochila agua > 0, y hay otro agente vivo en la misma localización
+		# 7. Dar: válido si mochila comida > 0 (y la han pedido en los últimos 15t) o mochila agua > 0 (y la han pedido en los últimos 15t), y hay otro agente vivo en la misma localización
 		others_here = [other for other in self.agents if other.agent_id != agent.agent_id and other.alive and other.location == loc]
-		has_shareables = (agent.mochila_comida > 0 or agent.mochila_agua > 0)
-		if not (has_shareables and others_here):
+		has_requested_food = any(
+			self.world_tick - self.last_shout_tick.get((other.agent_id, "comida"), -999) <= 15
+			for other in others_here
+		)
+		has_requested_water = any(
+			self.world_tick - self.last_shout_tick.get((other.agent_id, "agua"), -999) <= 15
+			for other in others_here
+		)
+		can_give_food = agent.mochila_comida > 0 and has_requested_food
+		can_give_water = agent.mochila_agua > 0 and has_requested_water
+		if not ((can_give_food or can_give_water) and others_here):
 			mask[7] = 0.0
 
 		# 8. Enseñar: válido si posee habilidades y hay otro agente vivo en la misma loc con slots libres
@@ -1932,24 +2132,21 @@ class CooperativeWorld:
 		if not (is_shelter and others_here and agent.hambre >= 40.0 and agent.sed >= 40.0):
 			mask[10] = 0.0
 
-		# 11. Fabricar: válido si tiene habilidad artesanía, tiene materiales (1 rama, 1 piedra) y no tiene lanza
-		has_art_skill = "artesanía" in agent.learned_skills
+		# 11. Fabricar: válido si tiene materiales (1 rama, 1 piedra) y no tiene lanza
 		has_materials = (agent.mochila_ramas >= 1 and agent.mochila_piedras >= 1)
-		if not (has_art_skill and has_materials and not getattr(agent, "tiene_lanza", False)):
+		if not (has_materials and not getattr(agent, "tiene_lanza", False)):
 			mask[11] = 0.0
 
-		# 12. Construir: válido si tiene habilidad construcción, tiene materiales (2 ramas, 1 piedra) y la loc no es refugio
-		has_const_skill = "construcción" in agent.learned_skills
+		# 12. Construir: válido si tiene materiales (2 ramas, 1 piedra) y la loc no es refugio
 		has_const_materials = (agent.mochila_ramas >= 2 and agent.mochila_piedras >= 1)
 		is_already_shelter = loc_data.get("storm_shelter", False)
-		if not (has_const_skill and has_const_materials and not is_already_shelter):
+		if not (has_const_materials and not is_already_shelter):
 			mask[12] = 0.0
 
-		# 13. Encender: válido si tiene habilidad fuego, tiene 2 ramas y no hay fuego activo aquí
-		has_fire_skill = "fuego" in agent.learned_skills
+		# 13. Encender: válido si tiene 2 ramas y no hay fuego activo aquí
 		has_fire_materials = (agent.mochila_ramas >= 2)
 		has_active_fire = (self.fire_locations.get(loc, 0) > 0)
-		if not (has_fire_skill and has_fire_materials and not has_active_fire):
+		if not (has_fire_materials and not has_active_fire):
 			mask[13] = 0.0
 
 		# 14. Reanimar: válido si hay algún compañero inconsciente (K.O.) en la misma localización

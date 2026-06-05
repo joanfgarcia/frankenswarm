@@ -28,7 +28,9 @@ def generate_dojo_batch(batch_size=1024, device="cpu"):
 		"eat_ground", "drink_ground", "eat_backpack", "drink_backpack",
 		"fight_predator", "run_predator", "sleep_shelter",
 		"shout_hunger", "shout_thirst", "give_food", "give_water",
-		"move_to_signal", "explore", "reanimate_companion"
+		"move_to_signal", "explore", "reanimate_companion",
+		"explore_hungry", "explore_thirsty", "consume_mild_food", "consume_mild_water",
+		"observe_fire", "attempt_fire", "attempt_craft"
 	]
 
 	for _ in range(batch_size):
@@ -51,14 +53,14 @@ def generate_dojo_batch(batch_size=1024, device="cpu"):
 		if scen_type == "eat_ground":
 			loc = random.choice(["bosque", "río", "pantano", "valle"])
 			what = "comida"
-			emotion = "hambre"
+			emotion = random.choice(["hambre", "ira"])
 			backpack = random.choice(["noche", "comida"])
 			action = "comer"
 			
 		elif scen_type == "drink_ground":
 			loc = random.choice(["lago", "río", "pantano"])
 			what = "agua"
-			emotion = "hambre" if random.random() < 0.5 else "alegría"
+			emotion = random.choice(["dolor", "ira", "alegría"])
 			backpack = "noche"
 			# Nico y Hugo saben extraer agua del suelo, Sofy no
 			action = "beber" if agent_id in ["a", "c"] else "mover"
@@ -66,14 +68,14 @@ def generate_dojo_batch(batch_size=1024, device="cpu"):
 		elif scen_type == "eat_backpack":
 			loc = random.choice(["cueva", "montaña", "lago"])
 			what = "noche"
-			emotion = "hambre"
+			emotion = random.choice(["hambre", "ira", "alegría"])
 			backpack = "comida"
 			action = "comer"
 			
 		elif scen_type == "drink_backpack":
 			loc = random.choice(["cueva", "pradera", "bosque"])
 			what = "noche"
-			emotion = "alegría"
+			emotion = random.choice(["dolor", "ira", "alegría"])
 			backpack = "agua"
 			action = "beber"
 			
@@ -108,7 +110,7 @@ def generate_dojo_batch(batch_size=1024, device="cpu"):
 		elif scen_type == "shout_thirst":
 			loc = random.choice(["cueva", "bosque", "montaña"])
 			what = "noche"
-			emotion = "hambre"
+			emotion = "dolor"
 			backpack = "noche"
 			action = "gritar"
 			shout_concept = "agua"
@@ -146,6 +148,48 @@ def generate_dojo_batch(batch_size=1024, device="cpu"):
 			emotion = "alegría"
 			backpack = "noche"
 			action = "mover"
+
+		elif scen_type == "explore_hungry":
+			loc = random.choice(locations)
+			what = "noche"
+			emotion = "ira"
+			backpack = "noche"
+			action = "mover"
+
+		elif scen_type == "explore_thirsty":
+			loc = random.choice(locations)
+			what = "noche"
+			emotion = "ira"
+			backpack = "noche"
+			action = "mover"
+
+		elif scen_type == "consume_mild_food":
+			loc = random.choice(locations)
+			in_backpack = random.random() < 0.5
+			emotion = "ira"
+			if in_backpack:
+				what = "noche"
+				backpack = "comida"
+				action = "comer"
+			else:
+				loc = random.choice(["bosque", "río", "pantano", "valle"])
+				what = "comida"
+				backpack = "noche"
+				action = "comer"
+
+		elif scen_type == "consume_mild_water":
+			loc = random.choice(locations)
+			in_backpack = random.random() < 0.5
+			emotion = "ira"
+			if in_backpack:
+				what = "noche"
+				backpack = "agua"
+				action = "beber"
+			else:
+				loc = random.choice(["lago", "río", "pantano"])
+				what = "agua"
+				backpack = "noche"
+				action = "beber" if agent_id in ["a", "c"] else "mover"
 			
 		elif scen_type == "reanimate_companion":
 			loc = "cueva"
@@ -155,6 +199,27 @@ def generate_dojo_batch(batch_size=1024, device="cpu"):
 			sig_loc = "cueva"
 			sig_what = "dolor"
 			action = "reanimar"
+
+		elif scen_type == "observe_fire":
+			loc = "cueva"
+			what = "seguro"
+			emotion = "alegría"
+			backpack = "noche"
+			action = "ver"
+
+		elif scen_type == "attempt_fire":
+			loc = "cueva"
+			what = "noche"
+			emotion = "alegría"
+			backpack = "noche"
+			action = "encender"
+
+		elif scen_type == "attempt_craft":
+			loc = "bosque"
+			what = "noche"
+			emotion = "alegría"
+			backpack = "noche"
+			action = "fabricar"
 
 		# Convertir a tokens del vocabulario
 		l_t = location_glyphs[loc]
