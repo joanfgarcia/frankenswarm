@@ -11,6 +11,7 @@ import argparse
 import json
 import os
 import sys
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -25,20 +26,17 @@ except ImportError:
 
 from src.bitnet.cooperative_world import (
 	COOP_ACTIONS,
+	COOP_LOCATION_NAMES,
 	COOP_N_ACTIONS,
 	SILENCE_GLYPH,
-	COOP_LOCATION_GLYPHS,
 	CooperativeWorld,
-	COOP_LOCATION_NAMES,
 )
 from src.bitnet.glyph_vocabulary import (
 	N_EMOTIONS,
-	WORD_INDEX,
 	WORD_NAMES,
 )
 from src.bitnet.modeling_bitnet import BitNet4LayerModel
 from src.bitnet.train_arena_ppo import get_masked_probs
-
 
 # ANSI escape codes for coloring agents
 COLOR_NICO = "\033[96m"      # Cyan
@@ -92,7 +90,7 @@ def translate_shout(agent_name: str, location_glyph: str, what_glyph: str) -> st
 		translation = samantha_on_demand.invoke(prompt, system_prompt=system_prompt, max_tokens=100, temperature=0.7)
 		if translation:
 			return translation.strip()
-	except Exception as e:
+	except Exception:
 		pass
 	return f"[{location_glyph}, {what_glyph}]"
 
@@ -158,7 +156,7 @@ def load_agent(checkpoint_path: str, model_cfg: dict, emotion_cfg: dict, max_res
 			copy_limit = min(old_out, COOP_N_ACTIONS)
 			new_linear.weight[:copy_limit] = old_linear.weight[:copy_limit].clone()
 			new_linear.bias[:copy_limit] = old_linear.bias[:copy_limit].clone()
-			if COOP_N_ACTIONS > old_out:
+			if old_out < COOP_N_ACTIONS:
 				new_linear.weight[old_out:] = torch.randn(COOP_N_ACTIONS - old_out, old_width) * 0.01
 				new_linear.bias[old_out:] = 0.0
 		m.action_head = nn.Sequential(

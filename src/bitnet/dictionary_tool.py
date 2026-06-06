@@ -1,9 +1,11 @@
-import subprocess
-import os
 import json
+import os
 import re
+import subprocess
+
 import numpy as np
 from fastembed import TextEmbedding
+
 
 class SovereignDictionary:
 	"""
@@ -18,7 +20,7 @@ class SovereignDictionary:
 			expanded_glyphs_path = os.path.join(base_dir, "configs", "expanded_glyphs.json")
 
 		# Cargar el vocabulario base
-		with open(expanded_glyphs_path, "r", encoding="utf-8") as f:
+		with open(expanded_glyphs_path, encoding="utf-8") as f:
 			data = json.load(f)
 			self.base_vocab = data["words"]
 

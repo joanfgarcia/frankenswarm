@@ -150,10 +150,7 @@ def inspect_linguistics(model: torch.nn.Module, translator: SovereignTranslator)
 		if has_pos:
 			# Si tiene pos embedding pero no hay config, decidimos por codificación de relaciones
 			tids_gt = translator.encode(">")
-			if tids_gt:
-				specimen_type = "relational_logic"
-			else:
-				specimen_type = "arithmetic"
+			specimen_type = "relational_logic" if tids_gt else "arithmetic"
 
 	device = next(model.parameters()).device
 	model.eval()

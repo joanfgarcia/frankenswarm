@@ -1,12 +1,12 @@
 import unittest
+
 import torch
-import torch.nn as nn
-import torch.nn.functional as F
-import numpy as np
-from src.bitnet.cooperative_world import CooperativeWorld, CoopAgentState, COOP_ACTIONS
+
 from src.bitnet.consolidate_sleep import consolidate_latent_resonance
+from src.bitnet.cooperative_world import CoopAgentState, CooperativeWorld
+from src.bitnet.glyph_vocabulary import N_EMOTIONS, WORD_INDEX
 from src.bitnet.modeling_bitnet import BitNet4LayerModel
-from src.bitnet.glyph_vocabulary import WORD_INDEX, N_EMOTIONS
+
 
 class TestDistillation(unittest.TestCase):
 	def setUp(self):
@@ -52,7 +52,7 @@ class TestDistillation(unittest.TestCase):
 		
 		# Enseñar at "bosque" (which does not have water)
 		self.world.current_actions = {"a": "enseñar", "b": "ver", "c": "aprender"}
-		res_a = self.world.act(self.world.agent_a, "enseñar")
+		self.world.act(self.world.agent_a, "enseñar")
 		res_c = self.world.act(self.world.agent_c, "aprender")
 		# Should not succeed for "agua" at bosque
 		self.assertFalse(res_c.get("success", False))
@@ -61,7 +61,7 @@ class TestDistillation(unittest.TestCase):
 		self.world.agent_a.location = "lago"
 		self.world.agent_c.location = "lago"
 		self.world.current_actions = {"a": "enseñar", "b": "ver", "c": "aprender"}
-		res_a = self.world.act(self.world.agent_a, "enseñar")
+		self.world.act(self.world.agent_a, "enseñar")
 		res_c = self.world.act(self.world.agent_c, "aprender")
 		# Should succeed for "agua" at lago
 		self.assertTrue(res_c.get("success", False))

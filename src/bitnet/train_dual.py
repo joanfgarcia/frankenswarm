@@ -223,7 +223,7 @@ def run_dual_agent():
 	growth_cfg = config.get("growth", {})
 	growth_factor = growth_cfg.get("factor", 1.5)
 	max_width = growth_cfg.get("max_width", 512)
-	growth_patience = growth_cfg.get("patience", 50)
+	growth_cfg.get("patience", 50)
 
 	# Track
 	best_combined = 0.0
@@ -386,7 +386,7 @@ def run_dual_agent():
 			torch.save(agent_b.state_dict(), os.path.join(exp_dir, "best_agent_b.pt"))
 
 		# ── Post-episode growth ──
-		for label, model, opt_ref, hist, growths in [
+		for label, model, _opt_ref, hist, _growths in [
 			("A", agent_a, "opt_a", survival_a_hist, "total_growths_a"),
 			("B", agent_b, "opt_b", survival_b_hist, "total_growths_b"),
 		]:

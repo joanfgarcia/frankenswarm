@@ -365,7 +365,7 @@ def run_loop_training():
 				pred_final = torch.argmax(listener_logits_2[:, 2, :], dim=-1)
 
 				intermediate_ok = (pred_intermediate == intermediate_target).sum().item()
-				final_ok = (pred_final == end_tids).sum().item()
+				(pred_final == end_tids).sum().item()
 				# Joint: ambos pasos correctos
 				joint_ok = ((pred_intermediate == intermediate_target) & (pred_final == end_tids)).sum().item()
 

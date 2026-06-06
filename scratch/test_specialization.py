@@ -1,5 +1,7 @@
 import unittest
-from src.bitnet.cooperative_world import CooperativeWorld, COOP_LOCATION_GLYPHS, WORD_INDEX
+
+from src.bitnet.cooperative_world import CooperativeWorld
+
 
 class TestSkillSpecialization(unittest.TestCase):
 	def test_nico_cannot_hunt(self):

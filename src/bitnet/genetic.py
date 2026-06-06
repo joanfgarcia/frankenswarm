@@ -1,7 +1,10 @@
 import copy
+
 import torch
 import torch.nn as nn
+
 from src.bitnet.net2net import net2wider_linear
+
 
 def project_model_to_width(parent_model, target_width, device):
 	"""
@@ -66,13 +69,10 @@ def align_tensor(src_tensor, target_shape, default_tensor=None):
 	"""
 	if src_tensor.shape == target_shape:
 		return src_tensor
-	if default_tensor is not None:
-		out = default_tensor.clone()
-	else:
-		out = torch.zeros(target_shape, device=src_tensor.device, dtype=src_tensor.dtype)
+	out = default_tensor.clone() if default_tensor is not None else torch.zeros(target_shape, device=src_tensor.device, dtype=src_tensor.dtype)
 	slices_src = []
 	slices_out = []
-	for dim_src, dim_out in zip(src_tensor.shape, target_shape):
+	for dim_src, dim_out in zip(src_tensor.shape, target_shape, strict=False):
 		m = min(dim_src, dim_out)
 		slices_src.append(slice(0, m))
 		slices_out.append(slice(0, m))

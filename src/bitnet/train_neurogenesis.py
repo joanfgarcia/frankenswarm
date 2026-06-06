@@ -188,10 +188,7 @@ def run_neurogenesis_training():
 	survival_history = []
 
 	for episode in range(n_episodes):
-		if world_type == "complex":
-			world = ComplexWorld(seed=seed + episode)
-		else:
-			world = MinimalWorld(seed=seed + episode)
+		world = ComplexWorld(seed=seed + episode) if world_type == "complex" else MinimalWorld(seed=seed + episode)
 		state = world.reset()
 
 		# Buffers para online update
@@ -207,10 +204,7 @@ def run_neurogenesis_training():
 
 		# ═══ Dynamic lifespan: more brain = longer life ═══
 		current_width = model.action_head[0].out_features
-		if lifespan_scaling:
-			max_ticks = int(base_max_ticks * (current_width / base_width) ** 0.5)
-		else:
-			max_ticks = base_max_ticks
+		max_ticks = int(base_max_ticks * (current_width / base_width) ** 0.5) if lifespan_scaling else base_max_ticks
 
 		for tick in range(max_ticks):
 			if not state.alive:

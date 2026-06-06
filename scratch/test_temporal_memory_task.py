@@ -1,10 +1,12 @@
+import random
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import random
 
-from src.bitnet.modeling_bitnet import BitNet4LayerModel
 from src.bitnet.glyph_vocabulary import N_EMOTIONS
+from src.bitnet.modeling_bitnet import BitNet4LayerModel
+
 
 class RecurrentBitNetModel(BitNet4LayerModel):
 	"""

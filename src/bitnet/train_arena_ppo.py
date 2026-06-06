@@ -920,8 +920,11 @@ def run_arena_ppo_training():
 			if agent_d_episode is not None:
 				agents_dict["d"] = agent_d_episode
 			
-			from src.bitnet.dojo_populora import train_dojo_step
-			dojo_losses = train_dojo_step(agents_dict, device, batch_size=256, lr=1e-4, epochs=dojo_sleep_epochs, n_think=n_think)
+			from src.bitnet.dojo_populora import train_sequential_dojo_step
+			dojo_seq_len = config.get("dojo", {}).get("seq_len", 4)
+			dojo_losses = train_sequential_dojo_step(
+				agents_dict, device, batch_size=64, seq_len=dojo_seq_len, lr=1e-4, epochs=dojo_sleep_epochs, n_think=n_think
+			)
 			loss_str = ", ".join(f"{k.upper()}:{v:.4f}" for k, v in dojo_losses.items())
 			print(f"    [Dojo] Pérdidas consolidadas: {loss_str}")
 

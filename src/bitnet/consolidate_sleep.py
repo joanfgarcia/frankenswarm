@@ -1,10 +1,13 @@
-import os
 import json
+import os
 import re
+
 import numpy as np
 import torch
 import torch.nn.functional as F
+
 from src.bitnet.modeling_bitnet import BitNet4LayerModel
+
 
 def tokenize(text: str, word_to_idx: dict) -> list[int]:
 	words = re.findall(r'[a-zA-ZáéíóúüñÁÉÍÓÚÜÑ_<>\-]+', text.lower())
@@ -41,7 +44,7 @@ def run_sleep_cycle():
 		print("💤 [Sueño] No hay palabras nuevas en la sesión para consolidar.")
 		return
 		
-	with open(session_words_path, "r", encoding="utf-8") as f:
+	with open(session_words_path, encoding="utf-8") as f:
 		session_data = json.load(f)
 		
 	if not session_data:
@@ -51,7 +54,7 @@ def run_sleep_cycle():
 	print(f"\n💤 [Sueño] Iniciando ciclo de consolidación para {len(session_data)} palabras nuevas...")
 	
 	# Cargar vocabulario base actual
-	with open(expanded_glyphs_path, "r", encoding="utf-8") as f:
+	with open(expanded_glyphs_path, encoding="utf-8") as f:
 		vocab_data = json.load(f)
 		words = vocab_data["words"]
 		glyphs = list(vocab_data["glyphs"])
@@ -108,10 +111,7 @@ def run_sleep_cycle():
 	seq_len = 5
 	padded_data = []
 	for seq in consolidation_data:
-		if len(seq) < seq_len:
-			seq = seq + [word_to_idx["<pad>"]] * (seq_len - len(seq))
-		else:
-			seq = seq[:seq_len]
+		seq = seq + [word_to_idx["<pad>"]] * (seq_len - len(seq)) if len(seq) < seq_len else seq[:seq_len]
 		padded_data.append(seq)
 		
 	# Ajustar tamaño de lote mínimo
@@ -128,7 +128,7 @@ def run_sleep_cycle():
 	epochs = 10
 	batch_size = 16
 	print("  [Sueño] Ajustando pesos neuronales para asimilar los nuevos conceptos...")
-	for epoch in range(epochs):
+	for _epoch in range(epochs):
 		epoch_loss = 0.0
 		permutation = torch.randperm(x_train.size(0))
 		for i in range(0, x_train.size(0), batch_size):
@@ -168,7 +168,7 @@ def consolidate_latent_resonance(student_model, teaching_buffer, device, lr=1e-4
 			param.requires_grad = True
 
 	# Agrupar muestras por habilidad
-	skills_in_buffer = set(sample["skill"] for sample in teaching_buffer)
+	skills_in_buffer = {sample["skill"] for sample in teaching_buffer}
 	graduated_skills = []
 
 	# Entrenar para cada habilidad en el buffer

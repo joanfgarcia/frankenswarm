@@ -1,0 +1,69 @@
+{
+    "preschool": {
+        "lengua": [
+            {"question": "tú: el gato duerme", "answer": "feliz"},
+            {"question": "tú: el perro corre", "answer": "mucho"},
+            {"question": "tú: yo veo la", "answer": "luna"},
+            {"question": "tú: el oso come", "answer": "miel"}
+        ],
+        "matematicas": [
+            {"question": "tú: tengo dos manzanas y un gato más uno son", "answer": "dos"},
+            {"question": "tú: cuento uno dos", "answer": "tres"},
+            {"question": "tú: uno más uno son", "answer": "dos"}
+        ],
+        "ciencias": [
+            {"question": "tú: el pájaro vuela", "answer": "alto"},
+            {"question": "tú: el león tiene pelo", "answer": "grande"},
+            {"question": "tú: las flores beben", "answer": "agua"}
+        ],
+        "conversacion": [
+            {"question": "tú: hola", "answer": "hola"},
+            {"question": "tú: cómo estás", "answer": "bien"},
+            {"question": "tú: quién eres", "answer": "niño"}
+        ]
+    },
+    "primary": {
+        "ciencias": [
+            {"question": "tú: el corazón bombea sangre al", "answer": "cuerpo"},
+            {"question": "tú: los árboles dan oxígeno y", "answer": "sombra"},
+            {"question": "tú: el agua del río corre hacia el", "answer": "mar"}
+        ],
+        "matematicas": [
+            {"question": "tú: ¿cuánto es cinco más tres? es", "answer": "ocho"},
+            {"question": "tú: ¿cuánto es diez menos dos? es", "answer": "ocho"},
+            {"question": "tú: ¿cuánto es tres más tres? es", "answer": "seis"},
+            {"question": "tú: ¿cuánto es seis menos cuatro? es", "answer": "dos"}
+        ],
+        "geografia": [
+            {"question": "tú: la tierra gira alrededor del", "answer": "sol"},
+            {"question": "tú: los mapas muestran los ríos y", "answer": "países"},
+            {"question": "tú: la capital de España es", "answer": "madrid"}
+        ],
+        "conversacion": [
+            {"question": "tú: cómo te llamas", "answer": "aleth"},
+            {"question": "tú: de dónde eres", "answer": "búnker"}
+        ]
+    },
+
+    "secondary": {
+        "matematicas_logica": [
+            {"question": "tú: si equis más dos es cinco entonces equis es", "answer": "tres"},
+            {"question": "tú: toda causa produce un", "answer": "efecto"}
+        ],
+        "literatura": [
+            {"question": "tú: las palabras escritas vencen el paso del", "answer": "tiempo"},
+            {"question": "tú: el poeta canta a la luna en la noche", "answer": "fría"}
+        ],
+        "borges_filosofia": [
+            {"question": "tú: el laberinto es una biblioteca de espejos", "answer": "infinitos"},
+            {"question": "tú: Funes recuerda la forma de cada", "answer": "nube"},
+            {"question": "tú: el Aleph es un punto que contiene todo el", "answer": "universo"},
+            {"question": "tú: soñé que un hombre me soñaba en el", "answer": "búnker"}
+        ],
+        "conversacion": [
+            {"question": "tú: qué es el búnker", "answer": "sistema"},
+            {"question": "tú: te gusta borges", "answer": "sí"}
+        ]
+    }
+}
+

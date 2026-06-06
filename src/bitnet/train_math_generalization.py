@@ -171,7 +171,7 @@ def run_math_generalization_arena():
 		for model in population:
 			model.train()
 
-		for step in range(steps_per_epoch):
+		for _step in range(steps_per_epoch):
 			tau = max(tau_min, tau_start * (1.0 - current_step / total_steps))
 
 			# Lote aritmético del conjunto de entrenamiento: (A, op, B, R)

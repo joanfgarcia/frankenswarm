@@ -1,8 +1,9 @@
-import sys
 import os
+import sys
+
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from src.bitnet.cooperative_world import CooperativeWorld, COOP_ACTIONS
+from src.bitnet.cooperative_world import CooperativeWorld
 
 world = CooperativeWorld(seed=42)
 state_a, state_b, state_c = world.reset(seed=42)

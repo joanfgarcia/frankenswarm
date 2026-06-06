@@ -1,7 +1,8 @@
-import os
 import json
+import os
 import re
 import subprocess
+
 from src.bitnet.dictionary_tool import SovereignDictionary
 
 CORE_GRAMMAR_WORDS = [
@@ -27,7 +28,7 @@ def run_curriculum_generation():
 	
 	# Extraer palabras de contenido (excluyendo las gramaticales básicas)
 	grammar_set = set(CORE_GRAMMAR_WORDS)
-	content_words = [w for w in base_vocab if w not in grammar_set and w not in ["<unk>", "<pad>"]]
+	[w for w in base_vocab if w not in grammar_set and w not in ["<unk>", "<pad>"]]
 	
 	# Definir temas variados para los 6 lotes
 	topics = [
@@ -126,5 +127,4 @@ print(res)
 
 if __name__ == "__main__":
 	# Importar numpy localmente para evitar dependencias pesadas si no se requiere
-	import numpy as np
 	run_curriculum_generation()

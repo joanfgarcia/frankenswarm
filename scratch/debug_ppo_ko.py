@@ -1,12 +1,12 @@
-import sys
-import os
 import json
+import os
 import random
-import numpy as np
+import sys
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from src.bitnet.cooperative_world import CooperativeWorld, COOP_ACTIONS
+from src.bitnet.cooperative_world import COOP_ACTIONS, CooperativeWorld
+
 
 def run_debug():
 	with open("configs/experiments/EXP_073_easy_train.json") as f:
@@ -84,7 +84,7 @@ def run_debug():
 			if consecutive_healthy_ticks >= 100:
 				success_mastery = True
 
-	print(f"\nSimulation finished.")
+	print("\nSimulation finished.")
 	print(f"Total KOs: A (Nico)={ko_count_a}, B (Sofy)={ko_count_b}, C (Hugo)={ko_count_c}")
 	print(f"Final skills: A: {state_a.learned_skills} | B: {state_b.learned_skills} | C: {state_c.learned_skills}")
 	print(f"Mastery success: {success_mastery}")

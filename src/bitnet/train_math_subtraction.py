@@ -185,15 +185,12 @@ def run_math_subtraction_arena():
 		for model in population:
 			model.train()
 
-		for step in range(steps_per_epoch):
+		for _step in range(steps_per_epoch):
 			tau = max(tau_min, tau_start * (1.0 - current_step / total_steps))
 
 			# Lote aritmético del conjunto de entrenamiento: (A, op, B, R)
 			current_eqs = None
-			if curriculum_mode == "stage_restas" and epoch < 25:
-				current_eqs = train_eqs_stage1
-			else:
-				current_eqs = breeder.train_equations
+			current_eqs = train_eqs_stage1 if curriculum_mode == "stage_restas" and epoch < 25 else breeder.train_equations
 
 			op_a_targets, op_a_token_ids, operator_targets, operator_token_ids, op_b_targets, op_b_token_ids, result_targets, result_token_ids = (
 				breeder.generate_batch(batch_size, mode="train", custom_eqs=current_eqs)

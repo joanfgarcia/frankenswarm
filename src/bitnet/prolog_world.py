@@ -9,9 +9,11 @@ para verificar su seguridad antes de consumirlos.
 import os
 import random
 from dataclasses import dataclass
+
 from pyswip import Prolog
 
-from src.bitnet.minimal_world import MinimalWorld, AgentState, LOCATIONS, ADJACENCY
+from src.bitnet.minimal_world import ADJACENCY, LOCATIONS, AgentState, MinimalWorld
+
 
 @dataclass
 class PrologAgentState(AgentState):
@@ -183,10 +185,9 @@ class PrologSurvivalWorld(MinimalWorld):
 				result["event"] = "coge una piedra del suelo"
 
 		# Consecuencias pasivas
-		if s.danger_nearby and action not in ("mover", "piedra"):
-			if action != "dormir":
-				result["delta_salud"] -= 20.0
-				result["event"] += " | ⚠️ depredador ataca"
+		if s.danger_nearby and action not in ("mover", "piedra") and action != "dormir":
+			result["delta_salud"] -= 20.0
+			result["event"] += " | ⚠️ depredador ataca"
 
 		if s.storm_active and not LOCATIONS[s.location].get("storm_shelter", False):
 			result["delta_salud"] -= 15.0

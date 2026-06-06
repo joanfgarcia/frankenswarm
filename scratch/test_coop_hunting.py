@@ -1,5 +1,7 @@
 import unittest
-from src.bitnet.cooperative_world import CooperativeWorld, COOP_LOCATION_GLYPHS, WORD_INDEX
+
+from src.bitnet.cooperative_world import COOP_LOCATION_GLYPHS, WORD_INDEX, CooperativeWorld
+
 
 class TestCooperativeHunting(unittest.TestCase):
 	def test_tribal_expansion(self):

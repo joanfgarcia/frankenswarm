@@ -53,10 +53,7 @@ class DiagnosticListener(nn.Module):
 		self.emotion_head = nn.Linear(self.hidden_dim, num_emotions)
 
 	def forward(self, x: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
-		if x.ndim == 2:
-			embeds = F.embedding(x, self.base.vocab_embeddings)
-		else:
-			embeds = torch.matmul(x, self.base.vocab_embeddings)
+		embeds = F.embedding(x, self.base.vocab_embeddings) if x.ndim == 2 else torch.matmul(x, self.base.vocab_embeddings)
 
 		h = self.base.inbound_proj(embeds)
 		positions = torch.arange(3, device=h.device)

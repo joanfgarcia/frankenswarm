@@ -187,10 +187,7 @@ class ExperimentLogger:
 
 		base = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 		new_path = os.path.join(base, "storage", "experiments", experiment_id, "telemetry.jsonl")
-		if os.path.exists(new_path):
-			path = new_path
-		else:
-			path = os.path.join(_get_telemetry_dir(), f"EXP_{experiment_id}.jsonl")
+		path = new_path if os.path.exists(new_path) else os.path.join(_get_telemetry_dir(), f"EXP_{experiment_id}.jsonl")
 
 		records = []
 		with open(path, encoding="utf-8") as f:

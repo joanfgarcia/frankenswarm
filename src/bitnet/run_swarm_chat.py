@@ -1,10 +1,13 @@
-import os
 import json
+import os
 import re
+
 import numpy as np
 import torch
 import torch.nn.functional as F
+
 from src.bitnet.modeling_bitnet import BitNet4LayerModel
+
 
 def generate_step(model, context_tokens, device, word_to_idx, idx_to_word, max_len=12, temperature=0.7, penalty_val=1.2):
 	model.eval()
@@ -55,13 +58,13 @@ def run_chat_simulation(temp=0.7, penalty=1.2, turns=12, max_len=12):
 		return
 		
 	# Cargar vocabulario
-	with open(expanded_glyphs_path, "r", encoding="utf-8") as f:
+	with open(expanded_glyphs_path, encoding="utf-8") as f:
 		vocab_data = json.load(f)
 		words = vocab_data["words"]
 		glyphs = np.array(vocab_data["glyphs"], dtype=np.float32)
 		
 	word_to_idx = {w: i for i, w in enumerate(words)}
-	idx_to_word = {i: w for i, w in enumerate(words)}
+	idx_to_word = dict(enumerate(words))
 	
 	# Inicializar modelo
 	model = BitNet4LayerModel(
@@ -83,12 +86,12 @@ def run_chat_simulation(temp=0.7, penalty=1.2, turns=12, max_len=12):
 	
 	nico_story_str = "yo tengo perro"
 	if os.path.exists(story_a_path):
-		with open(story_a_path, "r", encoding="utf-8") as f:
+		with open(story_a_path, encoding="utf-8") as f:
 			nico_story_str = f.read().strip()
 			
 	sofi_story_str = "yo tengo gato"
 	if os.path.exists(story_b_path):
-		with open(story_b_path, "r", encoding="utf-8") as f:
+		with open(story_b_path, encoding="utf-8") as f:
 			sofi_story_str = f.read().strip()
 	
 	# Tokenizar historias
@@ -114,7 +117,7 @@ def run_chat_simulation(temp=0.7, penalty=1.2, turns=12, max_len=12):
 	
 	print("\n💬 Inicio del Diálogo Autónomo:\n")
 	
-	for turn_idx in range(turns): # turnos de conversación
+	for _turn_idx in range(turns): # turnos de conversación
 		if current_speaker == 'A':
 			# Nico está hablando
 			# Construir contexto para Nico:

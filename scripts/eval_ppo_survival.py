@@ -5,15 +5,16 @@ Script para evaluar y comparar determinísticamente el agente PPO (EXP_050)
 frente al baseline REINFORCE (EXP_039) en 100 episodios.
 """
 
-import json
 import os
-import torch
+
 import numpy as np
+import torch
 import torch.nn.functional as F
 
 from src.bitnet.glyph_vocabulary import N_EMOTIONS, WORD_INDEX
-from src.bitnet.minimal_world import MinimalWorld, LOCATION_GLYPHS
+from src.bitnet.minimal_world import LOCATION_GLYPHS, MinimalWorld
 from src.bitnet.modeling_bitnet import BitNet4LayerModel
+
 
 def perception_to_input(perception: list[str], location: str, device: torch.device) -> torch.Tensor:
 	loc_glyph = LOCATION_GLYPHS.get(location, "tierra")
@@ -58,7 +59,7 @@ def evaluate_agent(checkpoint_path: str, device: torch.device, use_value_head: b
 		state = world.reset()
 		episode_reward = 0.0
 
-		for tick in range(max_ticks):
+		for _tick in range(max_ticks):
 			if not state.alive:
 				break
 

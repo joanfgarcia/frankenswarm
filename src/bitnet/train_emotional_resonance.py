@@ -226,7 +226,7 @@ def run_emotional_resonance_training():
 
 		epoch_losses = []
 		epoch_correct, epoch_total = 0, 0
-		epoch_bifurcation_correct, epoch_bifurcation_total = 0, 0
+		_epoch_bifurcation_correct, _epoch_bifurcation_total = 0, 0
 		interactions = np.zeros((pop_size, pop_size))
 		successes = np.zeros((pop_size, pop_size))
 
@@ -296,11 +296,10 @@ def run_emotional_resonance_training():
 				total_loss = torch.tensor(0.0, device=device)
 
 				weight = 1.0 if loss_mode == "every" else intermediate_loss_weight
-				for step_idx, logits_mid in intermediate_logits:
+				for _step_idx, logits_mid in intermediate_logits:
 					loss_mid = F.cross_entropy(logits_mid[:, 2, :], end_tids, reduction="none")
 					total_loss = total_loss + (loss_mid * fears * weight).mean()
 
-				meta = None
 
 			# Listener
 			speaker_msg = F.gumbel_softmax(speaker_logits, tau=tau, hard=False, dim=-1)
@@ -334,7 +333,7 @@ def run_emotional_resonance_training():
 			# Métricas
 			with torch.no_grad():
 				pred_final = torch.argmax(listener_logits[:, 2, :], dim=-1)
-				pred_speaker = torch.argmax(speaker_logits[:, 2, :], dim=-1)
+				torch.argmax(speaker_logits[:, 2, :], dim=-1)
 				final_ok = (pred_final == end_tids).sum().item()
 
 			epoch_correct += final_ok
@@ -438,7 +437,6 @@ def run_emotional_resonance_training():
 		# adaptarse al nuevo régimen sin teacher forcing)
 		if epoch == transition_end:
 			epochs_without_improvement = 0
-			best_acc_autonomy = acc_joint
 			print(f"🦅 Entrando en autonomía — reset early stopping (best={best_acc_joint:.2f}%)")
 
 		# Solo aplicar early stopping después de al menos 10 epochs en autonomía

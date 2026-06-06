@@ -213,11 +213,11 @@ class MinimalWorld:
 		loc_data = LOCATIONS[loc]
 
 		# Seleccionar percepción base por probabilidad
-		perceptions, probs = zip(*loc_data["perceptions"])
+		perceptions, probs = zip(*loc_data["perceptions"], strict=False)
 		r = self.rng.random()
 		cumulative = 0.0
 		selected = list(perceptions[0])
-		for p, prob in zip(perceptions, probs):
+		for p, prob in zip(perceptions, probs, strict=False):
 			cumulative += prob
 			if r <= cumulative:
 				selected = list(p)
@@ -342,10 +342,9 @@ class MinimalWorld:
 		# ── Consecuencias pasivas ──
 
 		# Depredador no confrontado
-		if s.danger_nearby and action not in ("mover", "piedra"):
-			if action != "dormir":  # dormir ya penalizado arriba
-				result["delta_salud"] -= 20.0
-				result["event"] += " | ⚠️ depredador ataca"
+		if s.danger_nearby and action not in ("mover", "piedra") and action != "dormir":  # dormir ya penalizado arriba
+			result["delta_salud"] -= 20.0
+			result["event"] += " | ⚠️ depredador ataca"
 
 		# Tormenta sin refugio
 		if s.storm_active and not loc_data.get("storm_shelter", False):

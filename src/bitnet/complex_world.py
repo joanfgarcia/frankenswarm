@@ -411,10 +411,9 @@ class ComplexWorld:
 
 		# ── Tormenta ──
 		s.storm_active = self.rng.random() < 0.10
-		if s.storm_active:
-			if not loc_data["storm_shelter"] and not self.has_shelter.get(loc):
-				s.salud -= 15.0
-				result["delta_salud"] -= 15
+		if s.storm_active and not loc_data["storm_shelter"] and not self.has_shelter.get(loc):
+			s.salud -= 15.0
+			result["delta_salud"] -= 15
 
 		# ── Depredador ──
 		s.danger_nearby = self.rng.random() < loc_data["predator_chance"]

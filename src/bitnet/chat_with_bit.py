@@ -1,10 +1,13 @@
-import os
 import json
+import os
 import re
-import torch
+
 import numpy as np
-from src.bitnet.modeling_bitnet import BitNet4LayerModel
+import torch
+
 from src.bitnet.dictionary_tool import SovereignDictionary
+from src.bitnet.modeling_bitnet import BitNet4LayerModel
+
 
 def tokenize(text: str, word_to_idx: dict) -> list[int]:
 	words = re.findall(r'[a-zA-ZáéíóúüñÁÉÍÓÚÜÑ_<>\-]+', text.lower())
@@ -21,7 +24,7 @@ def run_chat():
 		return
 
 	# Cargar vocabulario base
-	with open(expanded_glyphs_path, "r", encoding="utf-8") as f:
+	with open(expanded_glyphs_path, encoding="utf-8") as f:
 		vocab_data = json.load(f)
 		words = vocab_data["words"]
 		glyphs = np.array(vocab_data["glyphs"], dtype=np.float32)

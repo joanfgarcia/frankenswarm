@@ -256,7 +256,7 @@ def run_glyph_training():
 				total_loss = torch.tensor(0.0, device=device)
 
 				weight = 1.0 if loss_mode == "every" else intermediate_loss_weight
-				for step_idx, logits_mid in intermediate_logits:
+				for _step_idx, logits_mid in intermediate_logits:
 					loss_mid = F.cross_entropy(logits_mid[:, 2, :], end_ids, reduction="none")
 					total_loss = total_loss + (loss_mid * fears * weight).mean()
 

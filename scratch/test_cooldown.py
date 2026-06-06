@@ -1,8 +1,10 @@
-import sys
 import os
+import sys
+
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from src.bitnet.cooperative_world import CooperativeWorld, CoopAgentState
+from src.bitnet.cooperative_world import CooperativeWorld
+
 
 def test_cooldown_and_penalty():
 	print("--- Running Cooldown & Penalty Verification Test ---")

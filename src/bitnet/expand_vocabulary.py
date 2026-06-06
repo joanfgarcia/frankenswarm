@@ -1,9 +1,10 @@
-import os
 import json
+import os
+
 import numpy as np
-import torch
 from fastembed import TextEmbedding
-from src.bitnet.glyph_vocabulary import VOCABULARY, N_PRIMES, SEMANTIC_PRIMES
+
+from src.bitnet.glyph_vocabulary import SEMANTIC_PRIMES, VOCABULARY
 
 # Mapeo de claves internas a palabras naturales en español para fastembed
 VOCAB_MAP = {
@@ -40,6 +41,9 @@ BASE_WORDS = [
 	"búnker", "agente", "código", "sistema", "máquina", "red", "córtex", "datos", "número",
 	"cero", "uno", "dos", "tres", "cuatro", "cinco", "seis", "siete", "ocho", "nueve", "diez",
 	"cien", "mil", "lógica", "ciencia", "historia", "lenguaje", "palabra", "frase", "carta",
+	"vuela", "beben", "bombea", "oxigeno", "oxígeno", "capital", "españa", "madrid", "equis",
+	"produce", "laberinto", "biblioteca", "infinito", "infinitos", "funes", "aleph", "contiene",
+
 
 	# --- Verbos (Verbs) ---
 	"ser", "estar", "tener", "haber", "hacer", "decir", "ir", "venir", "ver", "oír", "tocar",
@@ -98,7 +102,7 @@ word_set = set(BASE_WORDS)
 for p in SEMANTIC_PRIMES:
 	word_set.add(VOCAB_MAP.get(p, p))
 
-for cat, list_words in categories.items():
+for _cat, list_words in categories.items():
 	for w in list_words:
 		word_set.add(w)
 
@@ -107,7 +111,7 @@ freq_words_path = "/home/joan/.gemini/antigravity/scratch/spanish_words.txt"
 if os.path.exists(freq_words_path):
 	print(f"Cargando frecuencias de español desde {freq_words_path}...")
 	import re
-	with open(freq_words_path, "r", encoding="utf-8") as f:
+	with open(freq_words_path, encoding="utf-8") as f:
 		for line in f:
 			parts = line.strip().split()
 			if parts:
@@ -125,11 +129,11 @@ while len(word_set) < 3000:
 	i += 1
 
 # Asegurar que las 26 palabras de referencia están incluidas EXACTAMENTE con sus nombres clave de glyph_vocabulary
-for k in VOCABULARY.keys():
+for k in VOCABULARY:
 	word_set.add(k)
 
 # Convertir a lista y ordenar
-FINAL_VOCAB = sorted(list(word_set))
+FINAL_VOCAB = sorted(word_set)
 print(f"Total palabras en el vocabulario base: {len(FINAL_VOCAB)}")
 
 def calibrate_and_project():
@@ -198,8 +202,57 @@ def calibrate_and_project():
 		if w in VOCABULARY:
 			all_glyphs[idx] = VOCABULARY[w]
 
+	# ── DESEMPATADOR DE GLIFOS DUPLICADOS (Asegura unicidad semántica) ──
+	print("Resolviendo duplicados de glifos mediante desempate determinista iterativo...")
+	iteration = 0
+	while iteration < 10:
+		glyph_to_indices = {}
+		for idx, g in enumerate(all_glyphs):
+			g_tuple = tuple(g.tolist())
+			if g_tuple not in glyph_to_indices:
+				glyph_to_indices[g_tuple] = []
+			glyph_to_indices[g_tuple].append(idx)
+
+		duplicates = {g: idxs for g, idxs in glyph_to_indices.items() if len(idxs) > 1}
+		if not duplicates:
+			break
+
+		print(f"  [Iteración {iteration+1}] Resolviendo {len(duplicates)} grupos de duplicados ({sum(len(v) for v in duplicates.values())} palabras)...")
+
+		for g_tuple, indices in duplicates.items():
+			ref_indices = [idx for idx in indices if FINAL_VOCAB[idx] in VOCABULARY]
+			non_ref_indices = [idx for idx in indices if FINAL_VOCAB[idx] not in VOCABULARY]
+
+			g_arr = np.array(g_tuple)
+			zero_dims = np.where(g_arr == 0)[0]
+
+			n_to_resolve = len(non_ref_indices)
+			start_counter = 1 if len(ref_indices) > 0 else 0
+			n_bits = int(np.ceil(np.log2(n_to_resolve + start_counter)))
+
+			if len(zero_dims) < n_bits:
+				n_bits = len(zero_dims)
+
+			for i, word_idx in enumerate(non_ref_indices):
+				counter = i + start_counter + iteration * 13  # Desplazar el contador por iteración para evitar colisiones repetidas
+				for j in range(min(n_bits, len(zero_dims))):
+					val = 1 if (counter & (1 << j)) else -1
+					all_glyphs[word_idx, zero_dims[j]] = val
+		iteration += 1
+
+	# Verificar resultado final
+	final_glyph_to_indices = {}
+	for idx, g in enumerate(all_glyphs):
+		g_tuple = tuple(g.tolist())
+		if g_tuple not in final_glyph_to_indices:
+			final_glyph_to_indices[g_tuple] = []
+		final_glyph_to_indices[g_tuple].append(idx)
+	print(f"✓ Post-procesamiento completado: {len(final_glyph_to_indices)} glifos únicos para {len(FINAL_VOCAB)} palabras en {iteration} iteraciones.")
+
+
 	# Guardar en configs/expanded_glyphs.json
 	output_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "configs")
+
 	os.makedirs(output_dir, exist_ok=True)
 	
 	output_dict = {

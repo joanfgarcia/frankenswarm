@@ -8,14 +8,16 @@ Bit aprende a planificar, navegar y usar la llave para abrir la puerta.
 import argparse
 import json
 import os
+
 import numpy as np
 import torch
 import torch.nn.functional as F
 
 from src.bitnet.glyph_vocabulary import N_EMOTIONS, WORD_INDEX
-from src.bitnet.puzzle_world import PuzzleWorld
 from src.bitnet.modeling_bitnet import BitNet4LayerModel
+from src.bitnet.puzzle_world import PuzzleWorld
 from src.bitnet.telemetry import ExperimentLogger
+
 
 def perception_to_input(perception: list[str], device: torch.device) -> torch.Tensor:
 	indices = []
@@ -143,7 +145,7 @@ def run_puzzle_training():
 
 		model.eval()
 
-		for tick in range(max_ticks):
+		for _tick in range(max_ticks):
 			if not state.alive:
 				break
 
@@ -240,54 +242,53 @@ def run_puzzle_training():
 			batch_returns.append(episode_returns)
 			batch_advantages.append(episode_advantages)
 
-		if len(batch_h_actions) >= update_every or episode == n_episodes - 1:
-			if batch_h_actions:
-				model.train()
-				h_action_batch = torch.cat(batch_h_actions, dim=0)
-				action_idx_batch = torch.cat(batch_action_idxs, dim=0)
-				old_log_probs_batch = torch.cat(batch_log_probs, dim=0)
-				returns_batch = torch.cat(batch_returns, dim=0)
-				advantages_batch = torch.cat(batch_advantages, dim=0)
+		if (len(batch_h_actions) >= update_every or episode == n_episodes - 1) and batch_h_actions:
+			model.train()
+			h_action_batch = torch.cat(batch_h_actions, dim=0)
+			action_idx_batch = torch.cat(batch_action_idxs, dim=0)
+			old_log_probs_batch = torch.cat(batch_log_probs, dim=0)
+			returns_batch = torch.cat(batch_returns, dim=0)
+			advantages_batch = torch.cat(batch_advantages, dim=0)
 
-				if len(advantages_batch) > 1:
-					advantages_batch = (advantages_batch - advantages_batch.mean()) / (advantages_batch.std() + 1e-8)
+			if len(advantages_batch) > 1:
+				advantages_batch = (advantages_batch - advantages_batch.mean()) / (advantages_batch.std() + 1e-8)
 
-				epoch_losses = []
-				for _ in range(ppo_epochs):
-					new_action_logits = model.action_head(h_action_batch)
-					new_values = model.value_head(h_action_batch).squeeze(-1)
+			epoch_losses = []
+			for _ in range(ppo_epochs):
+				new_action_logits = model.action_head(h_action_batch)
+				new_values = model.value_head(h_action_batch).squeeze(-1)
 
-					new_probs = F.softmax(new_action_logits, dim=-1)
-					dist = torch.distributions.Categorical(new_probs)
-					new_log_probs = dist.log_prob(action_idx_batch)
-					entropy = dist.entropy()
+				new_probs = F.softmax(new_action_logits, dim=-1)
+				dist = torch.distributions.Categorical(new_probs)
+				new_log_probs = dist.log_prob(action_idx_batch)
+				entropy = dist.entropy()
 
-					ratios = torch.exp(new_log_probs - old_log_probs_batch)
+				ratios = torch.exp(new_log_probs - old_log_probs_batch)
 
-					surr1 = ratios * advantages_batch
-					surr2 = torch.clamp(ratios, 1.0 - clip_eps, 1.0 + clip_eps) * advantages_batch
-					policy_loss = -torch.min(surr1, surr2).mean()
+				surr1 = ratios * advantages_batch
+				surr2 = torch.clamp(ratios, 1.0 - clip_eps, 1.0 + clip_eps) * advantages_batch
+				policy_loss = -torch.min(surr1, surr2).mean()
 
-					value_loss = F.mse_loss(new_values, returns_batch)
-					loss = policy_loss + c1 * value_loss - entropy_bonus * entropy.mean()
+				value_loss = F.mse_loss(new_values, returns_batch)
+				loss = policy_loss + c1 * value_loss - entropy_bonus * entropy.mean()
 
-					optimizer.zero_grad()
-					loss.backward()
-					torch.nn.utils.clip_grad_norm_(
-						list(model.action_head.parameters()) + list(model.value_head.parameters()),
-						max_norm=grad_clip
-					)
-					optimizer.step()
-					epoch_losses.append(loss.item())
+				optimizer.zero_grad()
+				loss.backward()
+				torch.nn.utils.clip_grad_norm_(
+					list(model.action_head.parameters()) + list(model.value_head.parameters()),
+					max_norm=grad_clip
+				)
+				optimizer.step()
+				epoch_losses.append(loss.item())
 
-				mean_loss = np.mean(epoch_losses)
+			mean_loss = np.mean(epoch_losses)
 
-				# Limpiar buffers
-				batch_h_actions = []
-				batch_action_idxs = []
-				batch_log_probs = []
-				batch_returns = []
-				batch_advantages = []
+			# Limpiar buffers
+			batch_h_actions = []
+			batch_action_idxs = []
+			batch_log_probs = []
+			batch_returns = []
+			batch_advantages = []
 
 		# Métricas
 		ticks_survived = state.tick

@@ -1,0 +1,37 @@
+{
+	"experiment_id": "EXP_077_dojo_shout_levels",
+	"seed": 1337,
+	"model": {
+		"hidden_dim": 256,
+		"num_layers": 3,
+		"use_pos_embedding": true
+	},
+	"resonance": {
+		"max_resonance_steps": 5,
+		"n_think": 2,
+		"n_verify": 2
+	},
+	"emotion": {
+		"mode": "first_only",
+		"dim": 64
+	},
+	"world": {
+		"max_ticks": 200,
+		"food_interval": 10,
+		"food_duration": 6,
+		"hunger_rate": 2.2,
+		"resource_capacity": 7.0,
+		"resource_recovery": 0.3,
+		"predator_chance_multiplier": 0.4,
+		"predator_damage_multiplier": 0.5,
+		"storm_chance_multiplier": 0.5,
+		"storm_damage_multiplier": 0.5,
+		"prey_spawn_interval": 15
+	},
+	"communication": {
+		"enabled": true
+	},
+	"meta": {
+		"description": "Arena simulation with MEDIUM settings using EXP_077 weights"
+	}
+}

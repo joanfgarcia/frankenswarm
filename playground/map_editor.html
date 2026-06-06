@@ -1,0 +1,1558 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+	<meta charset="UTF-8">
+	<title>FrankenSwarm Construct — Map Editor & Simulation Visualizer</title>
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+	<style>
+		:root {
+			--bg-base: #08090c;
+			--bg-card: rgba(13, 16, 23, 0.75);
+			--border-glow: rgba(0, 240, 255, 0.15);
+			--border-subtle: rgba(255, 255, 255, 0.08);
+			--text-main: #e2e8f0;
+			--text-muted: #94a3b8;
+			
+			/* Colors for Agents */
+			--color-nico: #00f0ff;    /* Cyan */
+			--color-sofi: #ff007f;    /* Magenta/Pink */
+			--color-hugo: #ffea00;    /* Yellow */
+			
+			/* UI Accents */
+			--accent-cyan: #00f0ff;
+			--accent-orange: #ff9900;
+			--accent-green: #39ff14;
+			--accent-red: #ff3131;
+		}
+
+		* {
+			box-sizing: border-box;
+			margin: 0;
+			padding: 0;
+		}
+
+		body {
+			background-color: var(--bg-base);
+			color: var(--text-main);
+			font-family: 'Outfit', sans-serif;
+			height: 100vh;
+			overflow: hidden;
+			display: flex;
+			flex-direction: column;
+		}
+
+		/* Grid & Matrix Background Lines */
+		body::before {
+			content: '';
+			position: absolute;
+			top: 0;
+			left: 0;
+			width: 100%;
+			height: 100%;
+			background-image: 
+				linear-gradient(rgba(0, 240, 255, 0.02) 1px, transparent 1px),
+				linear-gradient(90deg, rgba(0, 240, 255, 0.02) 1px, transparent 1px);
+			background-size: 40px 40px;
+			pointer-events: none;
+			z-index: -1;
+		}
+
+		header {
+			height: 60px;
+			border-bottom: 1px solid var(--border-subtle);
+			background: rgba(10, 12, 18, 0.9);
+			backdrop-filter: blur(10px);
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			padding: 0 24px;
+			z-index: 10;
+		}
+
+		.logo-container {
+			display: flex;
+			align-items: center;
+			gap: 12px;
+		}
+
+		.logo-icon {
+			width: 24px;
+			height: 24px;
+			border: 2px solid var(--accent-cyan);
+			border-radius: 6px;
+			box-shadow: 0 0 10px var(--border-glow);
+			position: relative;
+		}
+		
+		.logo-icon::after {
+			content: '';
+			position: absolute;
+			width: 8px;
+			height: 8px;
+			background: var(--accent-orange);
+			border-radius: 50%;
+			top: 6px;
+			left: 6px;
+		}
+
+		h1 {
+			font-size: 1.25rem;
+			font-weight: 800;
+			letter-spacing: 1px;
+			text-transform: uppercase;
+			background: linear-gradient(90deg, var(--accent-cyan), #ff00ff);
+			-webkit-background-clip: text;
+			-webkit-text-fill-color: transparent;
+		}
+
+		.mode-selector {
+			display: flex;
+			background: rgba(255, 255, 255, 0.05);
+			padding: 4px;
+			border-radius: 8px;
+			border: 1px solid var(--border-subtle);
+		}
+
+		.mode-btn {
+			padding: 6px 16px;
+			border: none;
+			background: transparent;
+			color: var(--text-muted);
+			font-family: inherit;
+			font-weight: 600;
+			cursor: pointer;
+			border-radius: 6px;
+			transition: all 0.2s ease;
+		}
+
+		.mode-btn.active {
+			background: var(--accent-cyan);
+			color: #000;
+			box-shadow: 0 0 10px rgba(0, 240, 255, 0.4);
+		}
+
+		/* Main Layout */
+		main {
+			flex: 1;
+			display: flex;
+			position: relative;
+			height: calc(100vh - 60px);
+		}
+
+		/* Left Sidebar (Controls & File IO) */
+		.sidebar-left {
+			width: 320px;
+			border-right: 1px solid var(--border-subtle);
+			background: var(--bg-card);
+			backdrop-filter: blur(15px);
+			display: flex;
+			flex-direction: column;
+			padding: 20px;
+			gap: 20px;
+			overflow-y: auto;
+			z-index: 5;
+		}
+
+		/* Center Sandbox Area */
+		.workspace-container {
+			flex: 1;
+			position: relative;
+			background: transparent;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			overflow: hidden;
+		}
+
+		canvas {
+			display: block;
+			cursor: crosshair;
+			border-radius: 8px;
+		}
+
+		/* Right Sidebar (Telemetry & Node Inspector) */
+		.sidebar-right {
+			width: 350px;
+			border-left: 1px solid var(--border-subtle);
+			background: var(--bg-card);
+			backdrop-filter: blur(15px);
+			display: flex;
+			flex-direction: column;
+			padding: 20px;
+			gap: 20px;
+			overflow-y: auto;
+			z-index: 5;
+		}
+
+		/* Card Styles */
+		.section-card {
+			background: rgba(255, 255, 255, 0.02);
+			border: 1px solid var(--border-subtle);
+			border-radius: 12px;
+			padding: 16px;
+			display: flex;
+			flex-direction: column;
+			gap: 12px;
+			transition: border-color 0.3s ease;
+		}
+
+		.section-card:hover {
+			border-color: rgba(0, 240, 255, 0.2);
+		}
+
+		.card-title {
+			font-size: 0.85rem;
+			font-weight: 600;
+			text-transform: uppercase;
+			color: var(--accent-orange);
+			letter-spacing: 0.5px;
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+		}
+
+		/* Button Styles */
+		.btn {
+			padding: 10px 16px;
+			border-radius: 8px;
+			border: 1px solid rgba(255, 255, 255, 0.1);
+			background: rgba(255, 255, 255, 0.05);
+			color: var(--text-main);
+			font-family: inherit;
+			font-weight: 600;
+			cursor: pointer;
+			transition: all 0.2s ease;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			gap: 8px;
+		}
+
+		.btn:hover {
+			background: rgba(255, 255, 255, 0.1);
+			border-color: rgba(255, 255, 255, 0.2);
+		}
+
+		.btn-primary {
+			background: rgba(0, 240, 255, 0.1);
+			border-color: var(--accent-cyan);
+			color: var(--accent-cyan);
+		}
+
+		.btn-primary:hover {
+			background: var(--accent-cyan);
+			color: #000;
+			box-shadow: 0 0 15px rgba(0, 240, 255, 0.3);
+		}
+
+		/* Input Form Elements */
+		.form-group {
+			display: flex;
+			flex-direction: column;
+			gap: 6px;
+		}
+
+		label {
+			font-size: 0.8rem;
+			color: var(--text-muted);
+			font-weight: 500;
+		}
+
+		input, select, textarea {
+			background: rgba(0, 0, 0, 0.4);
+			border: 1px solid var(--border-subtle);
+			border-radius: 6px;
+			padding: 8px 12px;
+			color: var(--text-main);
+			font-family: inherit;
+			font-size: 0.9rem;
+			outline: none;
+			transition: border-color 0.2s ease;
+		}
+
+		input:focus, select:focus, textarea:focus {
+			border-color: var(--accent-cyan);
+		}
+
+		/* Telemetry Agent Card */
+		.agent-telemetry {
+			border-left: 4px solid var(--agent-color);
+			background: rgba(255, 255, 255, 0.01);
+			border-radius: 0 8px 8px 0;
+			padding: 10px 14px;
+			display: flex;
+			flex-direction: column;
+			gap: 8px;
+		}
+
+		.agent-header {
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+		}
+
+		.agent-name {
+			font-weight: 600;
+			font-size: 1rem;
+		}
+
+		.agent-status-badge {
+			font-size: 0.75rem;
+			padding: 2px 6px;
+			border-radius: 4px;
+			font-weight: 600;
+			text-transform: uppercase;
+		}
+
+		.status-alive {
+			background: rgba(57, 255, 20, 0.1);
+			color: var(--accent-green);
+		}
+
+		.status-dead {
+			background: rgba(255, 49, 49, 0.1);
+			color: var(--accent-red);
+		}
+
+		.status-ko {
+			background: rgba(255, 153, 0, 0.1);
+			color: var(--accent-orange);
+		}
+
+		.stats-grid {
+			display: grid;
+			grid-template-columns: repeat(2, 1fr);
+			gap: 6px;
+			font-size: 0.8rem;
+		}
+
+		.stat-item {
+			display: flex;
+			justify-content: space-between;
+			background: rgba(0, 0, 0, 0.2);
+			padding: 4px 8px;
+			border-radius: 4px;
+		}
+
+		.stat-label {
+			color: var(--text-muted);
+		}
+
+		.stat-value {
+			font-weight: 600;
+			font-family: 'JetBrains Mono', monospace;
+		}
+
+		/* Timeline & Simulation Playback Bar */
+		.playback-bar {
+			position: absolute;
+			bottom: 20px;
+			left: 340px;
+			right: 370px;
+			background: var(--bg-card);
+			backdrop-filter: blur(15px);
+			border: 1px solid var(--border-subtle);
+			border-radius: 12px;
+			padding: 16px 24px;
+			display: flex;
+			align-items: center;
+			gap: 20px;
+			z-index: 6;
+		}
+
+		.playback-controls {
+			display: flex;
+			gap: 8px;
+		}
+
+		.timeline-slider-container {
+			flex: 1;
+			display: flex;
+			align-items: center;
+			gap: 12px;
+		}
+
+		.tick-counter {
+			font-family: 'JetBrains Mono', monospace;
+			font-size: 0.9rem;
+			font-weight: 600;
+			background: rgba(0, 0, 0, 0.3);
+			padding: 4px 10px;
+			border-radius: 6px;
+			border: 1px solid var(--border-subtle);
+			min-width: 90px;
+			text-align: center;
+		}
+
+		input[type="range"] {
+			flex: 1;
+			height: 6px;
+			background: rgba(255, 255, 255, 0.1);
+			border-radius: 3px;
+			outline: none;
+			cursor: pointer;
+			appearance: none;
+		}
+
+		input[type="range"]::-webkit-slider-thumb {
+			appearance: none;
+			width: 16px;
+			height: 16px;
+			border-radius: 50%;
+			background: var(--accent-cyan);
+			box-shadow: 0 0 10px rgba(0, 240, 255, 0.8);
+			transition: transform 0.1s ease;
+		}
+
+		input[type="range"]::-webkit-slider-thumb:hover {
+			transform: scale(1.2);
+		}
+
+		/* Helper Instructions */
+		.instructions-panel {
+			font-size: 0.8rem;
+			color: var(--text-muted);
+			line-height: 1.4;
+		}
+
+		.instructions-panel ul {
+			margin-left: 16px;
+			margin-top: 6px;
+			display: flex;
+			flex-direction: column;
+			gap: 4px;
+		}
+
+		/* Drag and Drop JSON dropzone overlay */
+		#drop-zone {
+			position: absolute;
+			top: 0;
+			left: 0;
+			width: 100%;
+			height: 100%;
+			background: rgba(8, 9, 12, 0.85);
+			border: 3px dashed var(--accent-cyan);
+			display: none;
+			align-items: center;
+			justify-content: center;
+			z-index: 20;
+			flex-direction: column;
+			gap: 16px;
+		}
+
+		#drop-zone h3 {
+			font-size: 1.5rem;
+			color: var(--accent-cyan);
+			text-transform: uppercase;
+			letter-spacing: 1px;
+		}
+
+		.toast {
+			position: absolute;
+			top: 80px;
+			left: 50%;
+			transform: translateX(-50%);
+			background: rgba(13, 16, 23, 0.9);
+			border: 1px solid var(--accent-cyan);
+			color: var(--text-main);
+			padding: 10px 20px;
+			border-radius: 8px;
+			box-shadow: 0 4px 15px rgba(0, 240, 255, 0.2);
+			z-index: 100;
+			font-size: 0.9rem;
+			pointer-events: none;
+			opacity: 0;
+			transition: opacity 0.3s ease;
+		}
+
+		.toast.show {
+			opacity: 1;
+		}
+	</style>
+</head>
+<body>
+
+	<header>
+		<div class="logo-container">
+			<div class="logo-icon"></div>
+			<h1>FrankenSwarm Construct</h1>
+		</div>
+		<div class="mode-selector">
+			<button id="btn-mode-edit" class="mode-btn active" onclick="setMode('edit')">Editor de Mapas</button>
+			<button id="btn-mode-play" class="mode-btn" onclick="setMode('play')">Visualizador</button>
+		</div>
+		<div style="width: 120px;"></div> <!-- Spacer -->
+	</header>
+
+	<main>
+		<!-- Left Sidebar -->
+		<div class="sidebar-left">
+			<!-- Graph IO Card -->
+			<div class="section-card">
+				<div class="card-title">
+					<span>Configuración de Mapa</span>
+					<span style="font-size: 0.7rem; color: var(--text-muted)">JSON / Python</span>
+				</div>
+				<button class="btn btn-primary" onclick="exportGraph()">Exportar Mapa (JSON)</button>
+				<button class="btn" onclick="document.getElementById('import-file').click()">Importar Mapa</button>
+				<input type="file" id="import-file" style="display: none" accept=".json" onchange="handleFileImport(event)">
+				
+				<button class="btn" style="border-color: var(--accent-orange); color: var(--accent-orange);" onclick="generatePythonCode()">
+					Compilar para Python
+				</button>
+			</div>
+
+			<!-- Visualizer Loader Card -->
+			<div id="play-loader-card" class="section-card" style="display: none;">
+				<div class="card-title">Cargar Simulación</div>
+				<p style="font-size: 0.8rem; color: var(--text-muted)">Arrastra o selecciona el archivo JSON de trayectoria generado por la simulación.</p>
+				<button class="btn btn-primary" onclick="document.getElementById('sim-file').click()">Cargar simulación.json</button>
+				<input type="file" id="sim-file" style="display: none" accept=".json" onchange="handleSimImport(event)">
+			</div>
+
+			<!-- Editor Tools Card -->
+			<div id="edit-tools-card" class="section-card">
+				<div class="card-title">Herramientas del Editor</div>
+				<div class="instructions-panel">
+					<p>Interactúa con el constructo:</p>
+					<ul>
+						<li><strong>Doble click:</strong> Crear una nueva localización.</li>
+						<li><strong>Click y Arrastrar:</strong> Mover una localización.</li>
+						<li><strong>Shift + Arrastrar:</strong> Conectar dos localizaciones con un camino.</li>
+						<li><strong>Click Derecho:</strong> Eliminar una localización o camino.</li>
+					</ul>
+				</div>
+			</div>
+
+			<!-- General settings -->
+			<div class="section-card">
+				<div class="card-title">Preset de Mapa</div>
+				<button class="btn" onclick="loadDefaultArena()">Restablecer Arena de 9 Zonas</button>
+			</div>
+		</div>
+
+		<!-- Central Workspace Sandbox -->
+		<div class="workspace-container" id="workspace">
+			<canvas id="construct-canvas" width="800" height="600"></canvas>
+			
+			<!-- Playback Timeline (Only visible in play mode) -->
+			<div class="playback-bar" id="playback-bar" style="display: none;">
+				<div class="playback-controls">
+					<button class="btn" style="padding: 8px 12px;" onclick="playPrevFrame()">◀</button>
+					<button class="btn btn-primary" style="padding: 8px 16px; min-width: 80px;" id="btn-play-pause" onclick="togglePlay()">Play</button>
+					<button class="btn" style="padding: 8px 12px;" onclick="playNextFrame()">▶</button>
+				</div>
+				<div class="timeline-slider-container">
+					<span class="tick-counter" id="tick-display">Tick: 000 / 000</span>
+					<input type="range" id="timeline-slider" min="1" max="100" value="1" oninput="onTimelineChange(event)">
+				</div>
+				<div class="form-group" style="flex-direction: row; align-items: center; gap: 8px;">
+					<label for="speed-select">Velocidad:</label>
+					<select id="speed-select" style="padding: 4px 8px; font-size: 0.8rem;" onchange="changeSpeed(event)">
+						<option value="1000">Lento (1s)</option>
+						<option value="500" selected>Normal (0.5s)</option>
+						<option value="200">Rápido (0.2s)</option>
+					</select>
+				</div>
+			</div>
+
+			<!-- Toast alert -->
+			<div class="toast" id="toast-alert">Copiado al portapapeles</div>
+		</div>
+
+		<!-- Right Sidebar -->
+		<div class="sidebar-right">
+			<!-- Node Inspector Panel -->
+			<div id="node-inspector" class="section-card">
+				<div class="card-title">Inspector de Zonas</div>
+				<p style="font-size: 0.8rem; color: var(--text-muted); font-style: italic;" id="inspector-placeholder">Selecciona una zona del mapa para editar sus recursos y propiedades.</p>
+				
+				<div id="inspector-form" style="display: none; flex-direction: column; gap: 12px;">
+					<div class="form-group">
+						<label for="node-name">Nombre de la Zona</label>
+						<input type="text" id="node-name" oninput="updateSelectedNode('name', this.value)">
+					</div>
+					<div class="form-group">
+						<label for="node-desc">Descripción</label>
+						<textarea id="node-desc" rows="2" style="resize: none;" oninput="updateSelectedNode('description', this.value)"></textarea>
+					</div>
+					<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+						<div class="form-group" style="flex-direction: row; gap: 8px; align-items: center; margin-top: 6px;">
+							<input type="checkbox" id="node-food" onchange="updateSelectedNode('food_eligible', this.checked)">
+							<label for="node-food">Tiene Comida</label>
+						</div>
+						<div class="form-group" style="flex-direction: row; gap: 8px; align-items: center; margin-top: 6px;">
+							<input type="checkbox" id="node-water" onchange="updateSelectedNode('water_available', this.checked)">
+							<label for="node-water">Tiene Agua</label>
+						</div>
+					</div>
+					<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+						<div class="form-group" style="flex-direction: row; gap: 8px; align-items: center; margin-top: 6px;">
+							<input type="checkbox" id="node-branches" onchange="updateSelectedNode('branches_eligible', this.checked)">
+							<label for="node-branches">Tiene Ramas</label>
+						</div>
+						<div class="form-group" style="flex-direction: row; gap: 8px; align-items: center; margin-top: 6px;">
+							<input type="checkbox" id="node-stones" onchange="updateSelectedNode('stones_eligible', this.checked)">
+							<label for="node-stones">Tiene Piedras</label>
+						</div>
+					</div>
+					<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+						<div class="form-group" style="flex-direction: row; gap: 8px; align-items: center; margin-top: 6px;">
+							<input type="checkbox" id="node-fish" onchange="updateSelectedNode('fish_eligible', this.checked)">
+							<label for="node-fish">Tiene Peces</label>
+						</div>
+						<div class="form-group" style="flex-direction: row; gap: 8px; align-items: center; margin-top: 6px;">
+							<input type="checkbox" id="node-shelter" onchange="updateSelectedNode('storm_shelter', this.checked)">
+							<label for="node-shelter">Refugio Tormenta</label>
+						</div>
+					</div>
+					<div class="form-group">
+						<label for="node-predator">Probabilidad Depredador (0.0 - 1.0)</label>
+						<input type="number" id="node-predator" min="0" max="1" step="0.05" oninput="updateSelectedNode('predator_chance', parseFloat(this.value) || 0.0)">
+					</div>
+				</div>
+			</div>
+
+			<!-- Telemetry Panel (Only active in Playback Mode) -->
+			<div id="play-telemetry" class="section-card" style="display: none;">
+				<div class="card-title">Telemetría de Agentes</div>
+				<p style="font-size: 0.8rem; color: var(--text-muted); font-style: italic;" id="telemetry-placeholder">Carga una simulación para monitorizar a los monitos.</p>
+				
+				<div id="telemetry-list" style="display: none; flex-direction: column; gap: 12px;">
+					<!-- Nico (Agent A) -->
+					<div class="agent-telemetry" style="--agent-color: var(--color-nico)" id="tel-agent-a">
+						<div class="agent-header">
+							<span class="agent-name" style="color: var(--color-nico);">Nico (Agente A)</span>
+							<span class="agent-status-badge status-alive" id="tel-state-a">Vivo</span>
+						</div>
+						<div class="stats-grid">
+							<div class="stat-item"><span class="stat-label">Zona</span><span class="stat-value" id="tel-loc-a">-</span></div>
+							<div class="stat-item"><span class="stat-label">Emoción</span><span class="stat-value" id="tel-emo-a">-</span></div>
+							<div class="stat-item"><span class="stat-label">Hambre</span><span class="stat-value" id="tel-hunger-a">-</span></div>
+							<div class="stat-item"><span class="stat-label">Sed</span><span class="stat-value" id="tel-sed-a">-</span></div>
+							<div class="stat-item"><span class="stat-label">Salud</span><span class="stat-value" id="tel-health-a">-</span></div>
+							<div class="stat-item"><span class="stat-label">Mochila</span><span class="stat-value" id="tel-bag-a">-</span></div>
+						</div>
+						<div style="font-size: 0.8rem; display: flex; gap: 6px; background: rgba(0,0,0,0.3); padding: 4px 8px; border-radius: 4px;">
+							<span style="color: var(--text-muted)">Decisión:</span>
+							<span id="tel-act-a" style="font-weight: 600; text-transform: uppercase;">-</span>
+						</div>
+					</div>
+
+					<!-- Sofi (Agent B) -->
+					<div class="agent-telemetry" style="--agent-color: var(--color-sofi)" id="tel-agent-b">
+						<div class="agent-header">
+							<span class="agent-name" style="color: var(--color-sofi);">Sofi (Agente B)</span>
+							<span class="agent-status-badge status-alive" id="tel-state-b">Vivo</span>
+						</div>
+						<div class="stats-grid">
+							<div class="stat-item"><span class="stat-label">Zona</span><span class="stat-value" id="tel-loc-b">-</span></div>
+							<div class="stat-item"><span class="stat-label">Emoción</span><span class="stat-value" id="tel-emo-b">-</span></div>
+							<div class="stat-item"><span class="stat-label">Hambre</span><span class="stat-value" id="tel-hunger-b">-</span></div>
+							<div class="stat-item"><span class="stat-label">Sed</span><span class="stat-value" id="tel-sed-b">-</span></div>
+							<div class="stat-item"><span class="stat-label">Salud</span><span class="stat-value" id="tel-health-b">-</span></div>
+							<div class="stat-item"><span class="stat-label">Mochila</span><span class="stat-value" id="tel-bag-b">-</span></div>
+						</div>
+						<div style="font-size: 0.8rem; display: flex; gap: 6px; background: rgba(0,0,0,0.3); padding: 4px 8px; border-radius: 4px;">
+							<span style="color: var(--text-muted)">Decisión:</span>
+							<span id="tel-act-b" style="font-weight: 600; text-transform: uppercase;">-</span>
+						</div>
+					</div>
+
+					<!-- Hugo (Agent C) -->
+					<div class="agent-telemetry" style="--agent-color: var(--color-hugo)" id="tel-agent-c">
+						<div class="agent-header">
+							<span class="agent-name" style="color: var(--color-hugo);">Hugo (Agente C)</span>
+							<span class="agent-status-badge status-alive" id="tel-state-c">Vivo</span>
+						</div>
+						<div class="stats-grid">
+							<div class="stat-item"><span class="stat-label">Zona</span><span class="stat-value" id="tel-loc-c">-</span></div>
+							<div class="stat-item"><span class="stat-label">Emoción</span><span class="stat-value" id="tel-emo-c">-</span></div>
+							<div class="stat-item"><span class="stat-label">Hambre</span><span class="stat-value" id="tel-hunger-c">-</span></div>
+							<div class="stat-item"><span class="stat-label">Sed</span><span class="stat-value" id="tel-sed-c">-</span></div>
+							<div class="stat-item"><span class="stat-label">Salud</span><span class="stat-value" id="tel-health-c">-</span></div>
+							<div class="stat-item"><span class="stat-label">Mochila</span><span class="stat-value" id="tel-bag-c">-</span></div>
+						</div>
+						<div style="font-size: 0.8rem; display: flex; gap: 6px; background: rgba(0,0,0,0.3); padding: 4px 8px; border-radius: 4px;">
+							<span style="color: var(--text-muted)">Decisión:</span>
+							<span id="tel-act-c" style="font-weight: 600; text-transform: uppercase;">-</span>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</main>
+
+	<!-- Drag & Drop Overlay -->
+	<div id="drop-zone">
+		<h3>Soltar archivo JSON de Constructo</h3>
+		<p style="color: var(--text-muted);">Importa el mapa o la simulación arrastrándolos aquí.</p>
+	</div>
+
+	<!-- Modal for Copy-Paste Python Code -->
+	<div id="code-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 500; align-items: center; justify-content: center; backdrop-filter: blur(10px);">
+		<div class="section-card" style="width: 700px; max-height: 90vh; background: #0c0d12; border: 1px solid var(--accent-cyan); overflow: hidden; padding: 24px;">
+			<div class="card-title">
+				<span>Código de Configuración Generado</span>
+				<button class="btn" style="padding: 4px 10px;" onclick="closeModal()">Cerrar</button>
+			</div>
+			<p style="font-size: 0.85rem; color: var(--text-muted)">Copia e inserta este código en <code>cooperative_world.py</code> para sustituir la estructura de zonas y adyacencia:</p>
+			<textarea id="python-code-box" style="flex: 1; min-height: 400px; font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; background: #000; padding: 12px; margin-top: 10px; resize: none; overflow-y: auto;" readonly></textarea>
+			<div style="display: flex; gap: 12px; margin-top: 14px;">
+				<button class="btn btn-primary" style="flex: 1" onclick="copyPythonCode()">Copiar al Portapapeles</button>
+			</div>
+		</div>
+	</div>
+
+	<script>
+		// Colors resolved for HTML5 Canvas (since Canvas context does not natively support CSS variables)
+		const colors = {
+			nico: '#00f0ff',    // Cyan
+			sofi: '#ff007f',    // Magenta/Pink
+			hugo: '#ffea00',    // Yellow
+			cyan: '#00f0ff',    // Cyan Accent
+			orange: '#ff9900',  // Orange Accent
+			green: '#39ff14',   // Green Accent
+			red: '#ff3131'      // Red Accent
+		};
+
+		// --- State Variables ---
+		let mode = 'edit'; // 'edit' or 'play'
+		let nodes = [];
+		let edges = [];
+		
+		// Canvas Management
+		const canvas = document.getElementById('construct-canvas');
+		const ctx = canvas.getContext('2d');
+		const nodeRadius = 32;
+		
+		// Interaction State
+		let selectedNode = null;
+		let draggingNode = null;
+		let connectingNode = null;
+		let connectCoords = { x: 0, y: 0 };
+		
+		// Simulation Visualizer State
+		let simData = null; // Parsed simulation JSON
+		let currentTickIndex = 0;
+		let isPlaying = false;
+		let playInterval = null;
+		let playSpeed = 500; // ms per tick
+		
+		// Agent visual animation properties
+		let agentPositions = {
+			a: { x: 0, y: 0, targetX: 0, targetY: 0, interp: 1.0 },
+			b: { x: 0, y: 0, targetX: 0, targetY: 0, interp: 1.0 },
+			c: { x: 0, y: 0, targetX: 0, targetY: 0, interp: 1.0 }
+		};
+		
+		// Shouts display timer
+		let activeShouts = {
+			a: null, // { text: "...", duration: 0 }
+			b: null,
+			c: null
+		};
+
+		// --- Default 9-Zone Map ---
+		const defaultNodes = [
+			{ id: "cueva", name: "cueva", description: "refugio seguro, sin comida", x: 150, y: 120, food_eligible: false, water_available: false, branches_eligible: false, stones_eligible: false, fish_eligible: false, storm_shelter: true, predator_chance: 0.02 },
+			{ id: "lago", name: "lago", description: "agua abundante, tranquilo", x: 400, y: 120, food_eligible: false, water_available: true, branches_eligible: false, stones_eligible: false, fish_eligible: true, storm_shelter: false, predator_chance: 0.08 },
+			{ id: "montaña", name: "montaña", description: "alto, frío, vista lejana", x: 650, y: 120, food_eligible: false, water_available: false, branches_eligible: false, stones_eligible: true, fish_eligible: false, storm_shelter: false, predator_chance: 0.05 },
+			{ id: "bosque", name: "bosque", description: "denso, comida posible, peligroso", x: 150, y: 300, food_eligible: true, water_available: false, branches_eligible: true, stones_eligible: false, fish_eligible: false, storm_shelter: false, predator_chance: 0.20 },
+			{ id: "pradera", name: "pradera", description: "centro del mapa, expuesto", x: 400, y: 300, food_eligible: false, water_available: false, branches_eligible: false, stones_eligible: false, fish_eligible: false, storm_shelter: false, predator_chance: 0.15 },
+			{ id: "valle", name: "valle", description: "protegido, fértil", x: 650, y: 300, food_eligible: true, water_available: false, branches_eligible: true, stones_eligible: false, fish_eligible: false, storm_shelter: false, predator_chance: 0.10 },
+			{ id: "río", name: "río", description: "agua y peces, inundaciones", x: 150, y: 480, food_eligible: true, water_available: true, branches_eligible: true, stones_eligible: false, fish_eligible: true, storm_shelter: false, predator_chance: 0.12 },
+			{ id: "pantano", name: "pantano", description: "húmedo, peligroso, rico", x: 400, y: 480, food_eligible: true, water_available: true, branches_eligible: false, stones_eligible: false, fish_eligible: true, storm_shelter: false, predator_chance: 0.25 },
+			{ id: "ruinas", name: "ruinas", description: "antiguo refugio, depredadores", x: 650, y: 480, food_eligible: true, water_available: false, branches_eligible: false, stones_eligible: true, fish_eligible: false, storm_shelter: true, predator_chance: 0.30 }
+		];
+
+		const defaultEdges = [
+			{ from: "cueva", to: "lago" }, { from: "cueva", to: "valle" }, { from: "cueva", to: "pradera" },
+			{ from: "lago", to: "cueva" }, { from: "lago", to: "pradera" }, { from: "lago", to: "montaña" },
+			{ from: "pradera", to: "cueva" }, { from: "pradera", to: "lago" }, { from: "pradera", to: "bosque" }, { from: "pradera", to: "valle" }, { from: "pradera", to: "montaña" },
+			{ from: "bosque", to: "pradera" }, { from: "bosque", to: "río" }, { from: "bosque", to: "ruinas" },
+			{ from: "montaña", to: "lago" }, { from: "montaña", to: "pradera" }, { from: "montaña", to: "pantano" },
+			{ from: "valle", to: "cueva" }, { from: "valle", to: "pradera" }, { from: "valle", to: "río" },
+			{ from: "río", to: "valle" }, { from: "río", to: "bosque" }, { from: "río", to: "pantano" },
+			{ from: "pantano", to: "montaña" }, { from: "pantano", to: "río" }, { from: "pantano", to: "ruinas" },
+			{ from: "ruinas", to: "bosque" }, { from: "ruinas", to: "pantano" }
+		];
+
+		// Initialize default map
+		function loadDefaultArena() {
+			nodes = JSON.parse(JSON.stringify(defaultNodes));
+			edges = JSON.parse(JSON.stringify(defaultEdges));
+			selectedNode = null;
+			showInspector();
+			showToast("Mapa base de la Arena restaurado");
+			requestDraw();
+		}
+
+		// --- Mode Switcher ---
+		function setMode(newMode) {
+			mode = newMode;
+			document.getElementById('btn-mode-edit').classList.toggle('active', mode === 'edit');
+			document.getElementById('btn-mode-play').classList.toggle('active', mode === 'play');
+			
+			// Show/hide UI cards accordingly
+			document.getElementById('edit-tools-card').style.display = mode === 'edit' ? 'flex' : 'none';
+			document.getElementById('node-inspector').style.display = mode === 'edit' ? 'flex' : 'none';
+			
+			document.getElementById('play-loader-card').style.display = mode === 'play' ? 'flex' : 'none';
+			document.getElementById('play-telemetry').style.display = mode === 'play' ? 'flex' : 'none';
+			document.getElementById('playback-bar').style.display = mode === 'play' ? 'flex' : 'none';
+			
+			selectedNode = null;
+			showInspector();
+			requestDraw();
+		}
+
+		// --- Drawing Loop ---
+		function draw() {
+			ctx.clearRect(0, 0, canvas.width, canvas.height);
+			
+			// 1. Draw Paths (Edges)
+			ctx.lineWidth = 4;
+			edges.forEach(edge => {
+				const fromNode = nodes.find(n => n.id === edge.from);
+				const toNode = nodes.find(n => n.id === edge.to);
+				if (fromNode && toNode) {
+					// Draw line with gradient glow
+					const grad = ctx.createLinearGradient(fromNode.x, fromNode.y, toNode.x, toNode.y);
+					grad.addColorStop(0, 'rgba(0, 240, 255, 0.4)');
+					grad.addColorStop(1, 'rgba(255, 0, 255, 0.4)');
+					ctx.strokeStyle = grad;
+					ctx.beginPath();
+					ctx.moveTo(fromNode.x, fromNode.y);
+					ctx.lineTo(toNode.x, toNode.y);
+					ctx.stroke();
+				}
+			});
+
+			// Draw connection draft if active
+			if (connectingNode && mode === 'edit') {
+				ctx.lineWidth = 2;
+				ctx.strokeStyle = '#ff9900';
+				ctx.setLineDash([6, 4]);
+				ctx.beginPath();
+				ctx.moveTo(connectingNode.x, connectingNode.y);
+				ctx.lineTo(connectCoords.x, connectCoords.y);
+				ctx.stroke();
+				ctx.setLineDash([]);
+			}
+
+			// 2. Draw Zones (Nodes)
+			nodes.forEach(node => {
+				const isSelected = selectedNode && selectedNode.id === node.id;
+				
+				// Outer glow ring
+				ctx.beginPath();
+				ctx.arc(node.x, node.y, nodeRadius + 6, 0, Math.PI * 2);
+				if (isSelected) {
+					ctx.fillStyle = 'rgba(0, 240, 255, 0.15)';
+					ctx.strokeStyle = colors.cyan;
+					ctx.lineWidth = 2;
+				} else {
+					ctx.fillStyle = 'rgba(255, 255, 255, 0.01)';
+					ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
+					ctx.lineWidth = 1;
+				}
+				ctx.fill();
+				ctx.stroke();
+
+				// Inner Zone Circle
+				ctx.beginPath();
+				ctx.arc(node.x, node.y, nodeRadius, 0, Math.PI * 2);
+				
+				// Color scheme depending on resources
+				let nodeBg = 'rgba(13, 16, 23, 0.85)';
+				if (node.water_available && node.food_eligible) {
+					nodeBg = 'rgba(0, 150, 100, 0.2)'; // Mixed
+				} else if (node.water_available) {
+					nodeBg = 'rgba(0, 100, 200, 0.2)'; // Water rich
+				} else if (node.food_eligible) {
+					nodeBg = 'rgba(100, 150, 0, 0.2)'; // Food rich
+				}
+				ctx.fillStyle = nodeBg;
+				ctx.strokeStyle = isSelected ? colors.cyan : 'rgba(255, 255, 255, 0.2)';
+				ctx.lineWidth = isSelected ? 3 : 2.5;
+				ctx.fill();
+				ctx.stroke();
+
+				// Draw Zone Name
+				ctx.fillStyle = '#fff';
+				ctx.font = 'bold 0.85rem "Outfit", sans-serif';
+				ctx.textAlign = 'center';
+				ctx.textBaseline = 'middle';
+				ctx.fillText(node.name.toUpperCase(), node.x, node.y);
+
+				// Draw Resource Indicators (Small pips)
+				let pipX = node.x - 20;
+				let pipY = node.y + 16;
+				if (node.food_eligible) {
+					ctx.fillStyle = colors.green;
+					ctx.beginPath();
+					ctx.arc(pipX, pipY, 4, 0, Math.PI*2);
+					ctx.fill();
+					pipX += 12;
+				}
+				if (node.water_available) {
+					ctx.fillStyle = colors.cyan;
+					ctx.beginPath();
+					ctx.arc(pipX, pipY, 4, 0, Math.PI*2);
+					ctx.fill();
+					pipX += 12;
+				}
+				if (node.predator_chance > 0.15) {
+					ctx.fillStyle = colors.red;
+					ctx.beginPath();
+					ctx.arc(pipX, pipY, 4, 0, Math.PI*2);
+					ctx.fill();
+				}
+			});
+
+			// 3. Draw Agents (If playing simulation)
+			if (mode === 'play' && simData && simData.ticks && simData.ticks.length > 0) {
+				const tick = simData.ticks[currentTickIndex];
+				
+				// Interpolate positions
+				['a', 'b', 'c'].forEach(agentId => {
+					const agent = tick.agents[agentId];
+					const anim = agentPositions[agentId];
+					
+					if (!agent.alive) return;
+					
+					// Smoothly interpolate position
+					if (anim.interp < 1.0) {
+						anim.interp += 0.05; // speed factor
+						if (anim.interp > 1.0) anim.interp = 1.0;
+					}
+					
+					const currentX = anim.x + (anim.targetX - anim.x) * anim.interp;
+					const currentY = anim.y + (anim.targetY - anim.y) * anim.interp;
+					
+					// Get color
+					let agentColor = colors.nico;
+					if (agentId === 'b') agentColor = colors.sofi;
+					if (agentId === 'c') agentColor = colors.hugo;
+					
+					// Draw agent dot
+					ctx.beginPath();
+					ctx.arc(currentX, currentY, 10, 0, Math.PI * 2);
+					ctx.fillStyle = agentColor;
+					ctx.strokeStyle = '#000';
+					ctx.lineWidth = 1.5;
+					ctx.fill();
+					ctx.stroke();
+
+					// Health ring around agent dot
+					ctx.beginPath();
+					ctx.arc(currentX, currentY, 13, 0, Math.PI * 2);
+					ctx.strokeStyle = agent.is_ko ? colors.orange : colors.green;
+					ctx.lineWidth = 2.5;
+					ctx.stroke();
+
+					// Name tag
+					ctx.fillStyle = '#fff';
+					ctx.font = 'bold 0.7rem "Outfit", sans-serif';
+					ctx.textAlign = 'center';
+					ctx.fillText(agent.name[0], currentX, currentY + 1);
+
+					// Draw shout bubble if active
+					if (activeShouts[agentId]) {
+						ctx.fillStyle = 'rgba(10, 12, 18, 0.95)';
+						ctx.strokeStyle = agentColor;
+						ctx.lineWidth = 1.5;
+						
+						const bubbleW = 180;
+						const bubbleH = 50;
+						const bubbleX = currentX - bubbleW / 2;
+						const bubbleY = currentY - 70;
+						
+						// Draw bubble card
+						ctx.beginPath();
+						ctx.roundRect(bubbleX, bubbleY, bubbleW, bubbleH, 6);
+						ctx.fill();
+						ctx.stroke();
+						
+						// Triangle tip
+						ctx.beginPath();
+						ctx.moveTo(currentX, currentY - 20);
+						ctx.lineTo(currentX - 6, currentY - 20 - 10);
+						ctx.lineTo(currentX + 6, currentY - 20 - 10);
+						ctx.closePath();
+						ctx.fillStyle = 'rgba(10, 12, 18, 0.95)';
+						ctx.fill();
+						
+						// Text contents
+						ctx.fillStyle = '#fff';
+						ctx.font = '600 0.75rem "Outfit", sans-serif';
+						ctx.textAlign = 'center';
+						ctx.fillText(`📢 [${activeShouts[agentId].location}, ${activeShouts[agentId].concept}]`, currentX, bubbleY + 16);
+						
+						ctx.fillStyle = 'var(--text-muted)';
+						ctx.font = 'italic 0.7rem "Outfit", sans-serif';
+						ctx.fillText(`"${activeShouts[agentId].translation}"`, currentX, bubbleY + 34);
+					}
+				});
+			}
+		}
+
+		// Request animation frame helper
+		function requestDraw() {
+			window.requestAnimationFrame(draw);
+		}
+
+		// --- Physics & Agent Offset Calculation ---
+		function getAgentOffsetTarget(locationId, agentId) {
+			const node = nodes.find(n => n.id === locationId);
+			if (!node) return { x: 0, y: 0 };
+			
+			// Position offset in triangle configuration so they don't overlap inside the node
+			let angle = 0;
+			if (agentId === 'b') angle = (2 * Math.PI) / 3;
+			if (agentId === 'c') angle = (4 * Math.PI) / 3;
+			
+			const radiusOffset = 18;
+			return {
+				x: node.x + Math.cos(angle) * radiusOffset,
+				y: node.y + Math.sin(angle) * radiusOffset
+			};
+		}
+
+		// --- Map Editor Logic ---
+		canvas.addEventListener('mousedown', (e) => {
+			const rect = canvas.getBoundingClientRect();
+			const mX = e.clientX - rect.left;
+			const mY = e.clientY - rect.top;
+
+			// Find clicked node
+			let clickedNode = nodes.find(node => {
+				const dist = Math.hypot(node.x - mX, node.y - mY);
+				return dist <= nodeRadius + 5;
+			});
+
+			if (e.button === 0) { // Left click
+				if (clickedNode) {
+					selectedNode = clickedNode;
+					showInspector();
+					if (e.shiftKey) { // Connecting start
+						connectingNode = clickedNode;
+						connectCoords = { x: mX, y: mY };
+					} else { // Dragging start
+						draggingNode = clickedNode;
+					}
+				} else if (mode === 'edit') { // Clear selection
+					selectedNode = null;
+					showInspector();
+				}
+			} else if (e.button === 2 && mode === 'edit') { // Right click delete
+				e.preventDefault();
+				if (clickedNode) {
+					// Delete node
+					nodes = nodes.filter(n => n.id !== clickedNode.id);
+					// Delete attached edges
+					edges = edges.filter(edge => edge.from !== clickedNode.id && edge.to !== clickedNode.id);
+					selectedNode = null;
+					showInspector();
+				} else {
+					// Check if clicked near an edge to delete it
+					for (let i = 0; i < edges.length; i++) {
+						const edge = edges[i];
+						const from = nodes.find(n => n.id === edge.from);
+						const to = nodes.find(n => n.id === edge.to);
+						if (from && to) {
+							// Distance from point to line segment
+							const dist = distToSegment({ x: mX, y: mY }, from, to);
+							if (dist < 8) {
+								edges.splice(i, 1);
+								break;
+							}
+						}
+					}
+				}
+			}
+			requestDraw();
+		});
+
+		canvas.addEventListener('mousemove', (e) => {
+			const rect = canvas.getBoundingClientRect();
+			const mX = e.clientX - rect.left;
+			const mY = e.clientY - rect.top;
+
+			if (draggingNode && mode === 'edit') {
+				draggingNode.x = mX;
+				draggingNode.y = mY;
+			} else if (connectingNode && mode === 'edit') {
+				connectCoords = { x: mX, y: mY };
+			}
+			requestDraw();
+		});
+
+		canvas.addEventListener('mouseup', (e) => {
+			const rect = canvas.getBoundingClientRect();
+			const mX = e.clientX - rect.left;
+			const mY = e.clientY - rect.top;
+
+			if (connectingNode && mode === 'edit') {
+				// Find target node under coordinates
+				let targetNode = nodes.find(node => {
+					const dist = Math.hypot(node.x - mX, node.y - mY);
+					return dist <= nodeRadius + 5;
+				});
+
+				if (targetNode && targetNode.id !== connectingNode.id) {
+					// Verify edge doesn't already exist
+					const exists = edges.some(edge => 
+						(edge.from === connectingNode.id && edge.to === targetNode.id) ||
+						(edge.from === targetNode.id && edge.to === connectingNode.id)
+					);
+					if (!exists) {
+						edges.push({ from: connectingNode.id, to: targetNode.id });
+						edges.push({ from: targetNode.id, to: connectingNode.id }); // Bidirectional
+					}
+				}
+				connectingNode = null;
+			}
+			draggingNode = null;
+			requestDraw();
+		});
+
+		canvas.addEventListener('dblclick', (e) => {
+			if (mode !== 'edit') return;
+			const rect = canvas.getBoundingClientRect();
+			const mX = e.clientX - rect.left;
+			const mY = e.clientY - rect.top;
+
+			// Verify we are not clicking on an existing node
+			let clickedNode = nodes.find(node => {
+				const dist = Math.hypot(node.x - mX, node.y - mY);
+				return dist <= nodeRadius + 10;
+			});
+
+			if (!clickedNode) {
+				// Create new node
+				const newId = `zona_${nodes.length + 1}`;
+				const newNode = {
+					id: newId,
+					name: newId,
+					description: "nueva localización",
+					x: mX,
+					y: mY,
+					food_eligible: false,
+					water_available: false,
+					branches_eligible: false,
+					stones_eligible: false,
+					fish_eligible: false,
+					storm_shelter: false,
+					predator_chance: 0.1
+				};
+				nodes.push(newNode);
+				selectedNode = newNode;
+				showInspector();
+				requestDraw();
+			}
+		});
+
+		// Prevent right click menu on canvas
+		canvas.addEventListener('contextmenu', e => e.preventDefault());
+
+		// Point to line segment distance helpers
+		function dist2(v, w) { return (v.x - w.x)**2 + (v.y - w.y)**2; }
+		function distToSegmentSquared(p, v, w) {
+			const l2 = dist2(v, w);
+			if (l2 === 0) return dist2(p, v);
+			let t = ((p.x - v.x) * (w.x - v.x) + (p.y - v.y) * (w.y - v.y)) / l2;
+			t = Math.max(0, Math.min(1, t));
+			return dist2(p, { x: v.x + t * (w.x - v.x), y: v.y + t * (w.y - v.y) });
+		}
+		function distToSegment(p, v, w) { return Math.sqrt(distToSegmentSquared(p, v, w)); }
+
+		// --- Node Inspector Actions ---
+		function showInspector() {
+			const placeholder = document.getElementById('inspector-placeholder');
+			const form = document.getElementById('inspector-form');
+			
+			if (selectedNode && mode === 'edit') {
+				placeholder.style.display = 'none';
+				form.style.display = 'flex';
+				
+				document.getElementById('node-name').value = selectedNode.name;
+				document.getElementById('node-desc').value = selectedNode.description;
+				document.getElementById('node-food').checked = selectedNode.food_eligible;
+				document.getElementById('node-water').checked = selectedNode.water_available;
+				document.getElementById('node-branches').checked = !!selectedNode.branches_eligible;
+				document.getElementById('node-stones').checked = !!selectedNode.stones_eligible;
+				document.getElementById('node-fish').checked = !!selectedNode.fish_eligible;
+				document.getElementById('node-shelter').checked = selectedNode.storm_shelter;
+				document.getElementById('node-predator').value = selectedNode.predator_chance;
+			} else {
+				placeholder.style.display = 'block';
+				form.style.display = 'none';
+			}
+		}
+
+		function updateSelectedNode(field, val) {
+			if (selectedNode) {
+				selectedNode[field] = val;
+				// If changing name, also change ID to match slugified name
+				if (field === 'name') {
+					const oldId = selectedNode.id;
+					const newId = val.toLowerCase().replace(/[^a-z0-9]/g, '_');
+					if (newId && newId !== oldId && !nodes.some(n => n.id === newId)) {
+						selectedNode.id = newId;
+						// Update edges matching the old ID
+						edges.forEach(edge => {
+							if (edge.from === oldId) edge.from = newId;
+							if (edge.to === oldId) edge.to = newId;
+						});
+					}
+				}
+				requestDraw();
+			}
+		}
+
+		// --- Graph JSON Import / Export ---
+		function exportGraph() {
+			const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({ nodes, edges }, null, 2));
+			const downloadAnchor = document.createElement('a');
+			downloadAnchor.setAttribute("href", dataStr);
+			downloadAnchor.setAttribute("download", "custom_world_construct.json");
+			document.body.appendChild(downloadAnchor);
+			downloadAnchor.click();
+			downloadAnchor.remove();
+		}
+
+		function handleFileImport(event) {
+			const file = event.target.files[0];
+			if (!file) return;
+			const reader = new FileReader();
+			reader.onload = function(e) {
+				try {
+					const data = JSON.parse(e.target.result);
+					if (data.nodes && data.edges) {
+						nodes = data.nodes;
+						edges = data.edges;
+						selectedNode = null;
+						showInspector();
+						requestDraw();
+						showToast("Mapa cargado con éxito");
+					} else {
+						alert("Formato de JSON inválido. Debe contener 'nodes' y 'edges'.");
+					}
+				} catch(err) {
+					alert("Error al parsear el archivo JSON.");
+				}
+			};
+			reader.readAsText(file);
+		}
+
+		// --- Python Compilation Exporter ---
+		function generatePythonCode() {
+			// Generate COOP_LOCATIONS dictionary
+			let locDict = "COOP_LOCATIONS = {\n";
+			nodes.forEach(n => {
+				locDict += `\t"${n.id}": {\n`;
+				locDict += `\t\t"description": "${n.description}",\n`;
+				locDict += `\t\t"predator_chance": ${n.predator_chance},\n`;
+				locDict += `\t\t"storm_shelter": ${n.storm_shelter ? 'True' : 'False'},\n`;
+				locDict += `\t\t"food_eligible": ${n.food_eligible ? 'True' : 'False'},\n`;
+				locDict += `\t\t"water_available": ${n.water_available ? 'True' : 'False'},\n`;
+				locDict += `\t\t"branches_eligible": ${n.branches_eligible ? 'True' : 'False'},\n`;
+				locDict += `\t\t"stones_eligible": ${n.stones_eligible ? 'True' : 'False'},\n`;
+				locDict += `\t\t"fish_eligible": ${n.fish_eligible ? 'True' : 'False'}\n`;
+				locDict += `\t},\n`;
+			});
+			locDict += "}\n\n";
+
+			// Generate COOP_ADJACENCY dictionary
+			let adjDict = "COOP_ADJACENCY = {\n";
+			nodes.forEach(n => {
+				const neighbors = edges.filter(e => e.from === n.id).map(e => `"${e.to}"`);
+				adjDict += `\t"${n.id}": [${neighbors.join(', ')}],\n`;
+			});
+			adjDict += "}\n";
+
+			document.getElementById('python-code-box').value = locDict + adjDict;
+			document.getElementById('code-modal').style.display = 'flex';
+		}
+
+		function closeModal() {
+			document.getElementById('code-modal').style.display = 'none';
+		}
+
+		function copyPythonCode() {
+			const box = document.getElementById('python-code-box');
+			box.select();
+			document.execCommand('copy');
+			showToast("¡Código copiado al portapapeles!");
+		}
+
+		// --- Toast Alert Helper ---
+		function showToast(msg) {
+			const toast = document.getElementById('toast-alert');
+			toast.textContent = msg;
+			toast.classList.add('show');
+			setTimeout(() => {
+				toast.classList.remove('show');
+			}, 2500);
+		}
+
+		// --- Drag & Drop Handler ---
+		const workspace = document.getElementById('workspace');
+		const dropZone = document.getElementById('drop-zone');
+
+		window.addEventListener('dragenter', (e) => {
+			e.preventDefault();
+			dropZone.style.display = 'flex';
+		});
+
+		dropZone.addEventListener('dragleave', (e) => {
+			e.preventDefault();
+			dropZone.style.display = 'none';
+		});
+
+		dropZone.addEventListener('dragover', (e) => {
+			e.preventDefault();
+		});
+
+		dropZone.addEventListener('drop', (e) => {
+			e.preventDefault();
+			dropZone.style.display = 'none';
+			
+			const file = e.dataTransfer.files[0];
+			if (!file) return;
+
+			const reader = new FileReader();
+			reader.onload = function(evt) {
+				try {
+					const data = JSON.parse(evt.target.result);
+					
+					// Detect if it is a graph map or simulation log
+					if (data.nodes && data.edges) {
+						nodes = data.nodes;
+						edges = data.edges;
+						selectedNode = null;
+						showInspector();
+						setMode('edit');
+						requestDraw();
+						showToast("Mapa cargado con éxito");
+					} else if (data.ticks) {
+						loadSimulationData(data);
+						setMode('play');
+					} else {
+						alert("Estructura JSON no reconocida.");
+					}
+				} catch(err) {
+					alert("Error al parsear el archivo JSON.");
+				}
+			};
+			reader.readAsText(file);
+		});
+
+		// --- Simulation Playback Visualizer Logic ---
+		function handleSimImport(event) {
+			const file = event.target.files[0];
+			if (!file) return;
+			const reader = new FileReader();
+			reader.onload = function(e) {
+				try {
+					const data = JSON.parse(e.target.result);
+					if (data.ticks) {
+						loadSimulationData(data);
+					} else {
+						alert("El JSON de simulación debe contener una lista 'ticks'.");
+					}
+				} catch(err) {
+					alert("Error al parsear el JSON de simulación.");
+				}
+			};
+			reader.readAsText(file);
+		}
+
+		function loadSimulationData(data) {
+			simData = data;
+			currentTickIndex = 0;
+			
+			// Setup timeline controls
+			const slider = document.getElementById('timeline-slider');
+			slider.max = simData.ticks.length - 1;
+			slider.value = 0;
+			
+			document.getElementById('telemetry-placeholder').style.display = 'none';
+			document.getElementById('telemetry-list').style.display = 'flex';
+			
+			// Setup initial agent positions
+			const firstTick = simData.ticks[0];
+			['a', 'b', 'c'].forEach(agentId => {
+				const agent = firstTick.agents[agentId];
+				if (agent && agent.alive) {
+					const pos = getAgentOffsetTarget(agent.location, agentId);
+					agentPositions[agentId].x = pos.x;
+					agentPositions[agentId].y = pos.y;
+					agentPositions[agentId].targetX = pos.x;
+					agentPositions[agentId].targetY = pos.y;
+					agentPositions[agentId].interp = 1.0;
+				}
+			});
+
+			showToast("Simulación cargada. Listo para reproducir.");
+			updatePlaybackFrame();
+		}
+
+		function updatePlaybackFrame() {
+			if (!simData) return;
+			
+			const tick = simData.ticks[currentTickIndex];
+			document.getElementById('tick-display').textContent = `Tick: ${String(tick.tick).padStart(3, '0')} / ${String(simData.ticks.length).padStart(3, '0')}`;
+			document.getElementById('timeline-slider').value = currentTickIndex;
+			
+			// Update Telemetry Panel
+			['a', 'b', 'c'].forEach(agentId => {
+				const agent = tick.agents[agentId];
+				const badge = document.getElementById(`tel-state-${agentId}`);
+				
+				if (!agent.alive) {
+					badge.textContent = "Muerto";
+					badge.className = "agent-status-badge status-dead";
+					document.getElementById(`tel-loc-${agentId}`).textContent = "-";
+					document.getElementById(`tel-emo-${agentId}`).textContent = "-";
+					document.getElementById(`tel-hunger-${agentId}`).textContent = "-";
+					document.getElementById(`tel-sed-${agentId}`).textContent = "-";
+					document.getElementById(`tel-health-${agentId}`).textContent = "-";
+					document.getElementById(`tel-bag-${agentId}`).textContent = "-";
+					document.getElementById(`tel-act-${agentId}`).textContent = "-";
+					return;
+				}
+
+				if (agent.is_ko) {
+					badge.textContent = "KO";
+					badge.className = "agent-status-badge status-ko";
+				} else {
+					badge.textContent = "Vivo";
+					badge.className = "agent-status-badge status-alive";
+				}
+
+				document.getElementById(`tel-loc-${agentId}`).textContent = agent.location;
+				document.getElementById(`tel-emo-${agentId}`).textContent = agent.emotion;
+				document.getElementById(`tel-hunger-${agentId}`).textContent = agent.hambre.toFixed(1);
+				document.getElementById(`tel-sed-${agentId}`).textContent = agent.sed.toFixed(1);
+				document.getElementById(`tel-health-${agentId}`).textContent = agent.salud.toFixed(0);
+				document.getElementById(`tel-bag-${agentId}`).textContent = `🍖:${agent.mochila_comida} 💧:${agent.mochila_agua} 🌿:${agent.mochila_ramas}`;
+				document.getElementById(`tel-act-${agentId}`).textContent = agent.action;
+
+				// Update positions target
+				const anim = agentPositions[agentId];
+				const target = getAgentOffsetTarget(agent.location, agentId);
+				
+				// Set source coordinate to current coordinate before establishing new target
+				if (anim.targetX !== target.x || anim.targetY !== target.y) {
+					anim.x = anim.targetX;
+					anim.y = anim.targetY;
+					anim.targetX = target.x;
+					anim.targetY = target.y;
+					anim.interp = 0.0; // trigger animation transition
+				}
+
+				// Check for active shouts
+				if (agent.shout) {
+					activeShouts[agentId] = {
+						location: agent.shout.location_glyph,
+						concept: agent.shout.what_glyph,
+						translation: agent.shout.translation
+					};
+				} else {
+					activeShouts[agentId] = null;
+				}
+			});
+
+			requestDraw();
+		}
+
+		function onTimelineChange(e) {
+			currentTickIndex = parseInt(e.target.value);
+			updatePlaybackFrame();
+		}
+
+		function playNextFrame() {
+			if (!simData) return;
+			if (currentTickIndex < simData.ticks.length - 1) {
+				currentTickIndex++;
+				updatePlaybackFrame();
+			} else {
+				pauseSimulation();
+			}
+		}
+
+		function playPrevFrame() {
+			if (!simData) return;
+			if (currentTickIndex > 0) {
+				currentTickIndex--;
+				updatePlaybackFrame();
+			}
+		}
+
+		function togglePlay() {
+			if (isPlaying) {
+				pauseSimulation();
+			} else {
+				playSimulation();
+			}
+		}
+
+		function playSimulation() {
+			if (!simData) return;
+			isPlaying = true;
+			document.getElementById('btn-play-pause').textContent = "Pause";
+			document.getElementById('btn-play-pause').classList.remove('btn-primary');
+			
+			playInterval = setInterval(() => {
+				playNextFrame();
+			}, playSpeed);
+		}
+
+		function pauseSimulation() {
+			isPlaying = false;
+			document.getElementById('btn-play-pause').textContent = "Play";
+			document.getElementById('btn-play-pause').classList.add('btn-primary');
+			clearInterval(playInterval);
+		}
+
+		function changeSpeed(e) {
+			playSpeed = parseInt(e.target.value);
+			if (isPlaying) {
+				clearInterval(playInterval);
+				playInterval = setInterval(() => {
+					playNextFrame();
+				}, playSpeed);
+			}
+		}
+
+		// Animation frame update for drawing active transitions
+		function animate() {
+			let needsRedraw = false;
+			['a', 'b', 'c'].forEach(agentId => {
+				const anim = agentPositions[agentId];
+				if (anim.interp < 1.0) {
+					needsRedraw = true;
+				}
+			});
+			
+			if (needsRedraw) {
+				draw();
+			}
+			
+			requestAnimationFrame(animate);
+		}
+
+		// --- Initialization ---
+		window.onload = function() {
+			loadDefaultArena();
+			animate();
+		};
+
+	</script>
+</body>
+</html>

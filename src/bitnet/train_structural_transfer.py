@@ -246,7 +246,7 @@ class IsomorphicBreeder:
 
 			# Cadena
 			if self.operators.get("cadena", {}).get("enabled", True):
-				for start, end, path, max_fear in self.chains:
+				for start, end, _path, max_fear in self.chains:
 					if start == a_idx:
 						end_name = ISO_CONCEPT_NAMES[end]
 						end_tid = self.concept_tids[end_name]

@@ -1,15 +1,16 @@
-import sys
-import os
-import torch
 import json
-import numpy as np
+import os
+import sys
+
+import torch
 import torch.nn as nn
+
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from src.bitnet.cooperative_world import CooperativeWorld, COOP_ACTIONS, COOP_N_ACTIONS
+from src.bitnet.cooperative_world import COOP_ACTIONS, COOP_N_ACTIONS, CooperativeWorld
+from src.bitnet.glyph_vocabulary import N_EMOTIONS
 from src.bitnet.modeling_bitnet import BitNet4LayerModel
 from src.bitnet.train_arena_ppo import get_masked_probs, perception_to_input_coop
-from src.bitnet.glyph_vocabulary import N_EMOTIONS
 
 device = torch.device("cpu")
 with open("configs/experiments/EXP_073_easy_train.json") as f:
@@ -158,6 +159,6 @@ for tick in range(1, 501):
 		if consecutive_healthy > max_consecutive_healthy:
 			max_consecutive_healthy = consecutive_healthy
 
-print(f"\nVerification finished.")
+print("\nVerification finished.")
 print(f"Total KOs: Nico={ko_count_a}, Sofy={ko_count_b}, Hugo={ko_count_c}")
 print(f"Max consecutive healthy ticks: {max_consecutive_healthy}")

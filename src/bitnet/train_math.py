@@ -114,7 +114,7 @@ def run_math_arena():
 			print(f"💾 [HOTSTART] Cargando pesos desde checkpoint {resume_checkpoint}...")
 			try:
 				state_dict = torch.load(resume_checkpoint, map_location=device)
-				for idx, model in enumerate(population):
+				for _idx, model in enumerate(population):
 					model.load_state_dict(state_dict)
 				print("✅ Inicialización de población completada con éxito.")
 			except Exception as e:

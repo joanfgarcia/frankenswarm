@@ -106,10 +106,7 @@ def analyze(experiment_id: str = "005"):
 	is_3d = "target_homeostasis" in autonomy_steps[0]
 
 	for s in autonomy_steps:
-		if is_3d:
-			key = (s["target_concept"], s["target_emotion"], s["target_homeostasis"])
-		else:
-			key = (s["target_concept"], s["target_emotion"])
+		key = (s["target_concept"], s["target_emotion"], s["target_homeostasis"]) if is_3d else (s["target_concept"], s["target_emotion"])
 		msg = tuple(s["message_tokens"])
 		target_messages[key].append(msg)
 

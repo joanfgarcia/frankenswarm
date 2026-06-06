@@ -441,7 +441,7 @@ def get_bifurcation_pairs():
 	Un par: misma fuente, dos emociones distintas → dos destinos distintos.
 	"""
 	pairs = []
-	sources = set(src for (src, _) in EMOTIONAL_RULES)
+	sources = {src for (src, _) in EMOTIONAL_RULES}
 
 	for src in sources:
 		emo_dest = {emo: dst for (s, emo), dst in EMOTIONAL_RULES.items() if s == src}

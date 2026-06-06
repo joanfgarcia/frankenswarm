@@ -89,7 +89,6 @@ def run_next_experiment():
 	last_epoch = 0
 	last_loss = "N/A"
 	last_acc_global = "N/A"
-	op_accuracies = {}
 
 	if os.path.exists(telemetry_path):
 		try:
@@ -106,7 +105,7 @@ def run_next_experiment():
 						if os.path.exists(exp_config_path):
 							with open(exp_config_path, encoding="utf-8") as cf:
 								exp_config = json.load(cf)
-								operators = list(exp_config.get("operators", {}).keys())
+								list(exp_config.get("operators", {}).keys())
 								# Para simular las claves logged_accs
 								# (buscamos en el objeto si tiene keys correspondientes a acc_suma, acc_resta, etc.)
 								# Nota: telemetry escribe acc_homeostasis, acc_concept, etc.

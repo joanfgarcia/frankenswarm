@@ -81,7 +81,7 @@ def run_grid(config_paths: list[str]):
 
 		t0 = time.time()
 		try:
-			result = subprocess.run(
+			subprocess.run(
 				[sys.executable, TRAIN_SCRIPT, "--config", path],
 				check=True, cwd=BASE_DIR,
 			)

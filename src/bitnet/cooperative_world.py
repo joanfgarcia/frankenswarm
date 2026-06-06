@@ -1233,26 +1233,25 @@ class CooperativeWorld:
 				others = [other for other in self.agents if other.agent_id != agent.agent_id and other.alive]
 				taught = False
 				for other_agent in others:
-					if other_agent.location == agent.location:
-						if len(other_agent.learned_skills) < other_agent.max_slots:
-							teacher_skills = format_skills(agent.learned_skills)
-							student_skills = format_skills(other_agent.learned_skills)
-							prey_loc = f"'{self.prey_location}'" if self.prey_location else "ninguno"
-							fire_act = 1 if self.fire_locations.get(agent.location, 0) > 0 else 0
-							
-							q_teach = (
-								f"enseñar_elegible('{agent.location}', {teacher_skills}, {student_skills}, "
-								f"{prey_loc}, {fire_act}, Success, Habilidad)"
-							)
-							res = query_prolog(q_teach)[0]
-							if res["Success"]:
-								habilidad = res["Habilidad"]
-								result["success"] = True
-								result["event"] = f"enseña {habilidad} a {other_agent.agent_id.upper()} en {agent.location.upper()}"
-								result["taught_skill"] = habilidad
-								result["taught_to"] = other_agent.agent_id
-								taught = True
-								break
+					if other_agent.location == agent.location and len(other_agent.learned_skills) < other_agent.max_slots:
+						teacher_skills = format_skills(agent.learned_skills)
+						student_skills = format_skills(other_agent.learned_skills)
+						prey_loc = f"'{self.prey_location}'" if self.prey_location else "ninguno"
+						fire_act = 1 if self.fire_locations.get(agent.location, 0) > 0 else 0
+						
+						q_teach = (
+							f"enseñar_elegible('{agent.location}', {teacher_skills}, {student_skills}, "
+							f"{prey_loc}, {fire_act}, Success, Habilidad)"
+						)
+						res = query_prolog(q_teach)[0]
+						if res["Success"]:
+							habilidad = res["Habilidad"]
+							result["success"] = True
+							result["event"] = f"enseña {habilidad} a {other_agent.agent_id.upper()} en {agent.location.upper()}"
+							result["taught_skill"] = habilidad
+							result["taught_to"] = other_agent.agent_id
+							taught = True
+							break
 
 				if not taught:
 					result["event"] = "nadie a quien enseñar, sin capacidad o fuera de zona de recursos"
@@ -1263,27 +1262,26 @@ class CooperativeWorld:
 				for other_agent in others:
 					if other_agent.location == agent.location:
 						other_action = getattr(self, "current_actions", {}).get(other_agent.agent_id)
-						if other_action == "enseñar":
-							if len(agent.learned_skills) < agent.max_slots:
-								teacher_skills = format_skills(other_agent.learned_skills)
-								student_skills = format_skills(agent.learned_skills)
-								prey_loc = f"'{self.prey_location}'" if self.prey_location else "ninguno"
-								fire_act = 1 if self.fire_locations.get(agent.location, 0) > 0 else 0
-								
-								q_learn = (
-									f"enseñar_elegible('{agent.location}', {teacher_skills}, {student_skills}, "
-									f"{prey_loc}, {fire_act}, Success, Habilidad)"
-								)
-								res = query_prolog(q_learn)[0]
-								if res["Success"]:
-									habilidad = res["Habilidad"]
-									result["success"] = True
-									result["event"] = f"aprende {habilidad} de {other_agent.agent_id.upper()} en {agent.location.upper()}"
-									result["learning_skill"] = habilidad
-									result["learned_from"] = other_agent.agent_id
-									result["delta_energia"] -= 1.0
-									learned = True
-									break
+						if other_action == "enseñar" and len(agent.learned_skills) < agent.max_slots:
+							teacher_skills = format_skills(other_agent.learned_skills)
+							student_skills = format_skills(agent.learned_skills)
+							prey_loc = f"'{self.prey_location}'" if self.prey_location else "ninguno"
+							fire_act = 1 if self.fire_locations.get(agent.location, 0) > 0 else 0
+							
+							q_learn = (
+								f"enseñar_elegible('{agent.location}', {teacher_skills}, {student_skills}, "
+								f"{prey_loc}, {fire_act}, Success, Habilidad)"
+							)
+							res = query_prolog(q_learn)[0]
+							if res["Success"]:
+								habilidad = res["Habilidad"]
+								result["success"] = True
+								result["event"] = f"aprende {habilidad} de {other_agent.agent_id.upper()} en {agent.location.upper()}"
+								result["learning_skill"] = habilidad
+								result["learned_from"] = other_agent.agent_id
+								result["delta_energia"] -= 1.0
+								learned = True
+								break
 
 				if not learned:
 					result["event"] = "nadie enseñando en esta zona, o capacidad cerebral llena"

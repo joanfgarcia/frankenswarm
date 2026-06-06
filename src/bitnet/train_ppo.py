@@ -21,9 +21,6 @@ from src.bitnet.glyph_vocabulary import (
 	WORD_INDEX,
 )
 from src.bitnet.minimal_world import (
-	ACTION_INDICES,
-	ACTION_TO_IDX,
-	ACTIONS,
 	LOCATION_GLYPHS,
 	MinimalWorld,
 )
@@ -162,7 +159,7 @@ def run_ppo_training():
 
 		model.eval()
 
-		for tick in range(max_ticks):
+		for _tick in range(max_ticks):
 			if not state.alive:
 				break
 

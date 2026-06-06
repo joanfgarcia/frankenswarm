@@ -262,7 +262,7 @@ def gen_niega(op_idx: int) -> list[tuple[int, int, int, int]]:
 			tested.add((b, a))
 
 	# Negativos: pares donde A NO implica B
-	all_causes = {a for a, _ in all_implications}
+	{a for a, _ in all_implications}
 	all_effects = {b for _, b in all_implications}
 
 	for b in all_effects:
@@ -418,8 +418,8 @@ def get_bifurcation_pairs() -> list[dict]:
 	pairs = []
 	for src, entries in by_source.items():
 		# Buscar pares con destino distinto
-		for i, (emo_a, dst_a, fear_a) in enumerate(entries):
-			for emo_b, dst_b, fear_b in entries[i + 1:]:
+		for i, (emo_a, dst_a, _fear_a) in enumerate(entries):
+			for emo_b, dst_b, _fear_b in entries[i + 1:]:
 				if dst_a != dst_b:
 					pairs.append({
 						"source": names[src],

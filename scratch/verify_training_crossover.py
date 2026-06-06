@@ -1,10 +1,12 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from src.bitnet.cooperative_world import CooperativeWorld, COOP_ACTIONS, COOP_N_ACTIONS, SILENCE_GLYPH
-from src.bitnet.modeling_bitnet import BitNet4LayerModel
-from src.bitnet.glyph_vocabulary import N_EMOTIONS
+
+from src.bitnet.cooperative_world import COOP_ACTIONS, COOP_N_ACTIONS, SILENCE_GLYPH, CooperativeWorld
 from src.bitnet.genetic import recombine_parents
+from src.bitnet.glyph_vocabulary import N_EMOTIONS
+from src.bitnet.modeling_bitnet import BitNet4LayerModel
+
 
 def test_training_pipeline_with_birth():
 	device = torch.device("cuda" if torch.cuda.is_available() else "cpu")

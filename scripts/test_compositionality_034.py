@@ -112,8 +112,8 @@ def test_zero_shot_inference(model, device, new_words, n_steps=2):
 			print(f"    {name:<15} cos={cos:.3f}")
 
 		# Crear tabla extendida temporalmente
-		extended_table = np.vstack([GLYPH_TABLE, new_glyph.reshape(1, -1)])
-		new_idx = len(WORD_NAMES)  # índice temporal
+		np.vstack([GLYPH_TABLE, new_glyph.reshape(1, -1)])
+		len(WORD_NAMES)  # índice temporal
 
 		# Construir modelo temporal con tabla extendida
 		# En vez de eso, computamos el embedding directamente
@@ -137,7 +137,7 @@ def test_zero_shot_inference(model, device, new_words, n_steps=2):
 
 			top5 = torch.topk(probs, 5)
 			print("  Predicción sin emoción (top 5):")
-			for prob, idx in zip(top5.values, top5.indices):
+			for prob, idx in zip(top5.values, top5.indices, strict=False):
 				print(f"    {WORD_NAMES[idx.item()]:<15} p={prob.item():.3f}")
 
 			# Con emociones

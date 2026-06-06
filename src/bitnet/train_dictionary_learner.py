@@ -1,12 +1,13 @@
-import os
 import json
+import os
 import re
+
 import numpy as np
 import torch
-import torch.nn as nn
 import torch.nn.functional as F
-from src.bitnet.modeling_bitnet import BitNet4LayerModel
+
 from src.bitnet.dictionary_tool import SovereignDictionary
+from src.bitnet.modeling_bitnet import BitNet4LayerModel
 
 # Definición de definiciones para entrenar el glyph_projection_head (Fase 2)
 KNOWN_DEFINITIONS = {
@@ -76,14 +77,14 @@ def generate_grammar_dataset(word_to_idx: dict, num_samples: int = 1000) -> list
 
 def run_dictionary_training():
 	device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-	print(f"═══ 📖 Entrenamiento de Aprendizaje por Diccionario (EXP_071) ═══")
+	print("═══ 📖 Entrenamiento de Aprendizaje por Diccionario (EXP_071) ═══")
 	print(f"[Device]: {device}")
 	
 	# Cargar vocabulario y glifos base
 	base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 	expanded_glyphs_path = os.path.join(base_dir, "configs", "expanded_glyphs.json")
 	
-	with open(expanded_glyphs_path, "r", encoding="utf-8") as f:
+	with open(expanded_glyphs_path, encoding="utf-8") as f:
 		vocab_data = json.load(f)
 		words = vocab_data["words"]
 		glyphs = np.array(vocab_data["glyphs"], dtype=np.float32)
@@ -112,7 +113,7 @@ def run_dictionary_training():
 	samantha_curriculum_path = os.path.join(base_dir, "configs", "samantha_curriculum.json")
 	if os.path.exists(samantha_curriculum_path):
 		print(f"📖 [Currículo] Cargando frases generadas por Samantha desde {samantha_curriculum_path}...")
-		with open(samantha_curriculum_path, "r", encoding="utf-8") as f:
+		with open(samantha_curriculum_path, encoding="utf-8") as f:
 			s_sentences = json.load(f)
 		print(f"📖 [Currículo] Mezclando {len(s_sentences)} frases de Samantha con {len(grammar_data)} frases sintéticas.")
 		for s in s_sentences:
@@ -124,10 +125,7 @@ def run_dictionary_training():
 	seq_len = 5
 	padded_data = []
 	for seq in grammar_data:
-		if len(seq) < seq_len:
-			seq = seq + [word_to_idx["<pad>"]] * (seq_len - len(seq))
-		else:
-			seq = seq[:seq_len]
+		seq = seq + [word_to_idx["<pad>"]] * (seq_len - len(seq)) if len(seq) < seq_len else seq[:seq_len]
 		padded_data.append(seq)
 		
 	x_train = torch.tensor(padded_data, dtype=torch.long, device=device)
@@ -179,10 +177,7 @@ def run_dictionary_training():
 			tokens = tokenize(def_text, word_to_idx)
 			# Pad a seq_len_def = 8
 			seq_len_def = 8
-			if len(tokens) < seq_len_def:
-				tokens = tokens + [word_to_idx["<pad>"]] * (seq_len_def - len(tokens))
-			else:
-				tokens = tokens[:seq_len_def]
+			tokens = tokens + [word_to_idx["<pad>"]] * (seq_len_def - len(tokens)) if len(tokens) < seq_len_def else tokens[:seq_len_def]
 				
 			def_inputs.append(tokens)
 			def_targets.append(model.glyph_embedding.glyph_table[word_to_idx[word_name]].cpu().numpy())
@@ -246,10 +241,7 @@ def run_dictionary_training():
 	def_tokens = tokenize(clean_definition, word_to_idx)
 	# Pad a seq_len_def = 8
 	seq_len_def = 8
-	if len(def_tokens) < seq_len_def:
-		def_tokens = def_tokens + [word_to_idx["<pad>"]] * (seq_len_def - len(def_tokens))
-	else:
-		def_tokens = def_tokens[:seq_len_def]
+	def_tokens = def_tokens + [word_to_idx["<pad>"]] * (seq_len_def - len(def_tokens)) if len(def_tokens) < seq_len_def else def_tokens[:seq_len_def]
 		
 	# 3. Pasar por el modelo para extraer el glifo proyectado
 	model.eval()

@@ -1,8 +1,8 @@
-import os
 import json
+import os
 import re
-import sys
 import subprocess
+import sys
 import time
 
 # Añadir el path de sharing para poder importar red_pill
@@ -10,6 +10,7 @@ sys.path.append('/home/joan/Documents/IA/sharing/src')
 sys.path.append('/home/joan/Documents/IA/frankenswarm')
 
 from src.bitnet.dictionary_tool import SovereignDictionary
+
 
 def run_dataset_generation():
 	import argparse
@@ -28,7 +29,7 @@ def run_dataset_generation():
 	cache_path = os.path.join(base_dir, "configs", f"word_mappings_cache{part_suffix}.json")
 	
 	dictionary = SovereignDictionary(expanded_glyphs_path)
-	base_vocab_set = set(dictionary.base_vocab)
+	set(dictionary.base_vocab)
 	
 	# Cargar caché de mapeo de palabras
 	word_cache = {}
@@ -37,7 +38,7 @@ def run_dataset_generation():
 		
 	if os.path.exists(cache_path):
 		try:
-			with open(cache_path, "r", encoding="utf-8") as f:
+			with open(cache_path, encoding="utf-8") as f:
 				loaded_cache = json.load(f)
 				word_cache.update(loaded_cache)
 			print(f"Loaded {len(loaded_cache)} mappings from cache.")
@@ -48,7 +49,7 @@ def run_dataset_generation():
 	dialogues = []
 	if os.path.exists(output_path):
 		try:
-			with open(output_path, "r", encoding="utf-8") as f:
+			with open(output_path, encoding="utf-8") as f:
 				dialogues = json.load(f)
 			print(f"Resuming generation. Loaded {len(dialogues)} existing dialogues.")
 		except Exception as e:

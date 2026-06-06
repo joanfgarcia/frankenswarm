@@ -1,5 +1,5 @@
-import pytest
 from src.bitnet.prolog_world import PrologSurvivalWorld
+
 
 def test_prolog_world_initialization():
 	"""Verifica que el entorno PrologSurvivalWorld se inicializa sin errores."""

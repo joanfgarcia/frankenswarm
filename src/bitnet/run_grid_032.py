@@ -13,6 +13,7 @@ Uso:
 """
 
 import argparse
+import contextlib
 import itertools
 import json
 import os
@@ -192,10 +193,8 @@ def run_variant(base_dir: str, variant_id: str, config: dict, python_exe: str, m
 		acc_joint = 0.0
 		for line in result.stdout.split("\n"):
 			if "Listener (joint):" in line:
-				try:
+				with contextlib.suppress(ValueError, IndexError):
 					acc_joint = float(line.split("Listener (joint):")[1].strip().rstrip("%"))
-				except (ValueError, IndexError):
-					pass
 
 		return {
 			"variant_id": variant_id,

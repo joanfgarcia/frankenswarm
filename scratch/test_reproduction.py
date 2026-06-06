@@ -1,11 +1,13 @@
 import unittest
-import copy
+
 import torch
 import torch.nn as nn
-from src.bitnet.cooperative_world import CooperativeWorld, CoopAgentState
-from src.bitnet.modeling_bitnet import BitNet4LayerModel
+
+from src.bitnet.cooperative_world import CooperativeWorld
+from src.bitnet.genetic import recombine_parents
 from src.bitnet.glyph_vocabulary import N_EMOTIONS
-from src.bitnet.genetic import project_model_to_width, svd_crossover, recombine_parents
+from src.bitnet.modeling_bitnet import BitNet4LayerModel
+
 
 class TestReproduction(unittest.TestCase):
 	def setUp(self):

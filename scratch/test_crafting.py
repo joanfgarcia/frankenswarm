@@ -1,5 +1,7 @@
 import unittest
-from src.bitnet.cooperative_world import CooperativeWorld, CoopAgentState, COOP_LOCATIONS
+
+from src.bitnet.cooperative_world import COOP_LOCATIONS, CooperativeWorld
+
 
 class TestCraftingAndSurvival(unittest.TestCase):
 	def setUp(self):

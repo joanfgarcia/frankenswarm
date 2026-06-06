@@ -134,7 +134,7 @@ def inference_loop(
 	visited = {start_concept}
 	current = start_concept
 
-	for depth in range(max_depth):
+	for _depth in range(max_depth):
 		implications = find_implications(model, current, concepts, op_tid, logit_mask, device, result_tids, threshold)
 
 		# Filtrar ya visitados

@@ -1,20 +1,20 @@
-import pytest
-from src.bitnet.cooperative_world import CooperativeWorld, CoopAgentState, query_prolog, format_skills
+from src.bitnet.cooperative_world import CooperativeWorld, query_prolog
+
 
 def test_prolog_rules():
 	# 1. Test prerequisites
 	# 'fuego' requires 'artesanía'
-	res1 = query_prolog(f"prerrequisitos_satisfechos('fuego', ['artesanía'])")
+	res1 = query_prolog("prerrequisitos_satisfechos('fuego', ['artesanía'])")
 	assert len(res1) > 0
 
-	res2 = query_prolog(f"prerrequisitos_satisfechos('fuego', [])")
+	res2 = query_prolog("prerrequisitos_satisfechos('fuego', [])")
 	assert len(res2) == 0
 
 	# 'cocina' requires 'comida', 'agua', 'fuego'
-	res3 = query_prolog(f"prerrequisitos_satisfechos('cocina', ['comida', 'agua', 'fuego'])")
+	res3 = query_prolog("prerrequisitos_satisfechos('cocina', ['comida', 'agua', 'fuego'])")
 	assert len(res3) > 0
 
-	res4 = query_prolog(f"prerrequisitos_satisfechos('cocina', ['comida', 'agua'])")
+	res4 = query_prolog("prerrequisitos_satisfechos('cocina', ['comida', 'agua'])")
 	assert len(res4) == 0
 
 	# 2. Test evaluar_intento

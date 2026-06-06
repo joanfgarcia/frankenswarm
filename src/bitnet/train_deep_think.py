@@ -179,8 +179,6 @@ def run_deep_think_training():
 	current_step = 0
 
 	# Métricas de metacognición
-	convergence_when_correct = []
-	convergence_when_wrong = []
 
 	for epoch in range(epochs):
 		if epoch < nursery_end:

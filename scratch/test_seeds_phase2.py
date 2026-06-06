@@ -1,19 +1,19 @@
 import json
 import os
 import sys
+
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 
 sys.path.append('/home/joan/Documents/IA/sharing/src')
 from src.bitnet.cooperative_world import (
 	COOP_ACTIONS,
 	COOP_N_ACTIONS,
-	SILENCE_GLYPH,
 	CooperativeWorld,
 )
 from src.bitnet.glyph_vocabulary import N_EMOTIONS, WORD_NAMES
 from src.bitnet.modeling_bitnet import BitNet4LayerModel
+
 
 def load_agent(checkpoint_path: str, model_cfg: dict, emotion_cfg: dict, max_res_steps: int, device: torch.device) -> nn.Module:
 	m = BitNet4LayerModel(
@@ -61,7 +61,7 @@ def load_agent(checkpoint_path: str, model_cfg: dict, emotion_cfg: dict, max_res
 			copy_limit = min(old_out, COOP_N_ACTIONS)
 			new_linear.weight[:copy_limit] = old_linear.weight[:copy_limit].clone()
 			new_linear.bias[:copy_limit] = old_linear.bias[:copy_limit].clone()
-			if COOP_N_ACTIONS > old_out:
+			if old_out < COOP_N_ACTIONS:
 				new_linear.weight[old_out:] = torch.randn(COOP_N_ACTIONS - old_out, old_width) * 0.01
 				new_linear.bias[old_out:] = 0.0
 		m.action_head = nn.Sequential(

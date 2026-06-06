@@ -299,7 +299,7 @@ def net2wider_model(old_model: nn.Module, new_hidden_dim: int, noise_std: float 
 			new_model.emotion_embeddings.weight.copy_(old_model.emotion_embeddings.weight.data)
 
 		# --- D. Core Layers (Transformer Blocks) ---
-		for l_idx, (old_block, new_block) in enumerate(zip(old_model.core_layers, new_model.core_layers)):
+		for _l_idx, (old_block, new_block) in enumerate(zip(old_model.core_layers, new_model.core_layers, strict=False)):
 			new_block.attn_norm.weight.copy_(old_block.attn_norm.weight.data[g])
 
 			# Attention: q_proj, k_proj, v_proj
@@ -494,8 +494,9 @@ if __name__ == "__main__":
 	# --- Test de Modelo Completo ---
 	print("\n═══ Net2Net — Test de Modelo Completo (BitNet4LayerModel) ═══\n")
 	try:
-		from src.bitnet.modeling_bitnet import BitNet4LayerModel
 		import numpy as np
+
+		from src.bitnet.modeling_bitnet import BitNet4LayerModel
 
 		# Inicializar modelo de 256 dim
 		vocab_embeddings = np.random.randn(26, 384)

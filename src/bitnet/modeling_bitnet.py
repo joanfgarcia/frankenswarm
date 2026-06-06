@@ -112,7 +112,8 @@ class BitNetAttention(nn.Module):
 		scores = torch.matmul(q, k.transpose(-2, -1)) / np.sqrt(self.head_dim)
 		if self.is_causal and seq_len > 1:
 			mask = torch.triu(torch.ones(seq_len, seq_len, device=x.device), diagonal=1).bool()
-			scores = scores.masked_fill(mask, -1e9)
+			fill_value = -65000.0 if scores.dtype == torch.float16 else -1e9
+			scores = scores.masked_fill(mask, fill_value)
 		attn = F.softmax(scores, dim=-1)
 		context = torch.matmul(attn, v).transpose(1, 2).contiguous().view(batch_size, seq_len, self.dim)
 		return self.out_proj(context)
@@ -314,10 +315,7 @@ class BitNet4LayerModel(nn.Module):
 				h = torch.matmul(x, word_embeds)  # (batch, seq, hidden_dim)
 		else:
 			# Modo clásico: fastembed lookup + inbound projection
-			if x.ndim == 2:
-				embeds = F.embedding(x, self.vocab_embeddings)
-			else:
-				embeds = torch.matmul(x, self.vocab_embeddings)
+			embeds = F.embedding(x, self.vocab_embeddings) if x.ndim == 2 else torch.matmul(x, self.vocab_embeddings)
 			h = self.inbound_proj(embeds)
 
 		if getattr(self, "pos_embedding", None) is not None:
@@ -433,9 +431,8 @@ class BitNet4LayerModel(nn.Module):
 				elif self.emotion_mode == "gated":
 					gate = torch.sigmoid(self.emotion_gate(emo_vec.squeeze(1))).unsqueeze(1)
 					h = h * gate + emo_vec  # La emoción filtra y desplaza
-				elif self.emotion_mode == "first_only":
-					if step == 0:
-						h = h + emo_vec  # Impulso emocional solo al inicio
+				elif self.emotion_mode == "first_only" and step == 0:
+					h = h + emo_vec  # Impulso emocional solo al inicio
 
 			# Paso por el core completo
 			for layer in self.core_layers:
@@ -521,9 +518,8 @@ class BitNet4LayerModel(nn.Module):
 				elif self.emotion_mode == "gated":
 					gate = torch.sigmoid(self.emotion_gate(emo_vec.squeeze(1))).unsqueeze(1)
 					h = h * gate + emo_vec
-				elif self.emotion_mode == "first_only":
-					if step == 0:
-						h = h + emo_vec
+				elif self.emotion_mode == "first_only" and step == 0:
+					h = h + emo_vec
 
 			for layer in self.core_layers:
 				h = layer(h)
@@ -690,9 +686,8 @@ class BitNet4LayerModel(nn.Module):
 		for step in range(n_think):
 			if pos_mode == "clock" and getattr(self, "resonance_clock", None) is not None:
 				h_think = h_think + self.resonance_clock[:, step, :].unsqueeze(1)
-			if emo_vec is not None:
-				if self.emotion_mode == "additive" or self.emotion_mode == "first_only" and step == 0:
-					h_think = h_think + emo_vec
+			if emo_vec is not None and (self.emotion_mode == "additive" or self.emotion_mode == "first_only" and step == 0):
+				h_think = h_think + emo_vec
 			for layer in self.core_layers:
 				h_think = layer(h_think)
 			h_think = self.norm(h_think)
@@ -703,9 +698,8 @@ class BitNet4LayerModel(nn.Module):
 
 		# ═══ FASE 2: VERIFICAR (re-inyección diferenciable) ═══
 		h_verify = self._embed_input(soft_tokens)
-		if emo_vec is not None:
-			if self.emotion_mode == "additive" or self.emotion_mode == "first_only":
-				h_verify = h_verify + emo_vec
+		if emo_vec is not None and (self.emotion_mode == "additive" or self.emotion_mode == "first_only"):
+			h_verify = h_verify + emo_vec
 		for step in range(n_verify):
 			if pos_mode == "clock" and getattr(self, "resonance_clock", None) is not None:
 				# Usar slots diferentes del clock para verificación

@@ -1,5 +1,4 @@
 import sys
-import os
 
 # Append sharing src path for Samantha
 sys.path.append('/home/joan/Documents/IA/sharing/src')

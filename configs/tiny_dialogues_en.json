@@ -1,0 +1,578 @@
+[
+    [
+        "me: what game do you want to play today",
+        "you: let's play tag",
+        "me: in tag which team will we be",
+        "you: we will be the red ones"
+    ],
+    [
+        "me: how long has it been since we went to the park",
+        "you: it was a week ago",
+        "me: one week what things did you play there",
+        "you: I would go on the swing"
+    ],
+    [
+        "me: do you like to play plum",
+        "you: yes I like it",
+        "me: you like to play plum what color will I be",
+        "you: I will be yellow"
+    ],
+    [
+        "me: what game do you want to play today",
+        "you: let's play catch the cat",
+        "me: in catch the cat which team will we be",
+        "you: we will be the blue ones"
+    ],
+    [
+        "me: what things do you have at home",
+        "you: I have a ball some clay and a toy plane",
+        "me: a plane what type of plane",
+        "you: a space plane"
+    ],
+    [
+        "me: what game do you want to play today",
+        "you: let's play futsal",
+        "me: in futsal which team will we be",
+        "you: we will be the white ones"
+    ],
+    [
+        "me: do you like to play bread",
+        "you: yes I like it",
+        "me: you like to play bread what color will I be",
+        "you: I will be black"
+    ],
+    [
+        "me: how long has it been since we went to the park",
+        "you: it was a month ago",
+        "me: one month what things would you do there",
+        "you: I would play with mud"
+    ],
+    [
+        "me: what game do you want to play today",
+        "you: let's play board games",
+        "me: in board games which team will we be",
+        "you: we will be the green ones"
+    ],
+    [
+        "me: do you like to play plum",
+        "you: yes I like it",
+        "me: you like to play plum what color will I be",
+        "you: I will be red"
+    ],
+    [
+        "me: how long has it been since we went to the park",
+        "you: it was a day ago",
+        "me: one day what things would you do there",
+        "you: I would go on the swing"
+    ],
+    [
+        "me: what game do you want to play today",
+        "you: let's play track",
+        "me: in track which team will we be",
+        "you: we will be the white ones"
+    ],
+    [
+        "me: do you like to play plum",
+        "you: yes I like it",
+        "me: you like to play witch what color will I be",
+        "you: I will be yellow"
+    ],
+    [
+        "you: hello I have a cat",
+        "me: the cat is very soft and you",
+        "you: no I have a dog",
+        "me: the dog is very messy it is very happy to see you"
+    ],
+    [
+        "you: I see a colored bird",
+        "me: it is a colored bird and you what bird do we see",
+        "you: I don't remember its name",
+        "me: it is a bird bird"
+    ],
+    [
+        "you: my favorite animal is the cat",
+        "me: cats are very lovely I love to play with you",
+        "you: and you",
+        "me: my favorite animal is the dog I love to play with you and run together"
+    ],
+    [
+        "you: my favorite pet is my dog it is very smart",
+        "me: dogs are very smart I love to play with you",
+        "you: and you",
+        "me: my favorite pet is my cat I love to play with you and sleep together"
+    ],
+    [
+        "you: I want to have a cat",
+        "me: cats are very lovely they will be happy to be with me",
+        "you: and you",
+        "me: I want to have a dog you will be my best friend"
+    ],
+    [
+        "you: the bird that wears a hat is called a silly bird",
+        "me: that's right the silly bird wears a hat to protect from the sun"
+    ],
+    [
+        "you: the snails and the lizards live in the garden",
+        "me: that's right the snails and the lizards can be seen in the garden at night"
+    ],
+    [
+        "you: the cat eats garlic",
+        "me: that is wrong cats should not have garlic it is dangerous for their health"
+    ],
+    [
+        "you: the birds have wings",
+        "me: that's right the birds have wings to fly"
+    ],
+    [
+        "you: the cat can be seen in the mountains",
+        "me: that is wrong cats are not seen in the mountains but dogs are"
+    ],
+    [
+        "you: dogs and cats have soft fur",
+        "me: that's right dogs and cats have soft fur and are known to be calm"
+    ],
+    [
+        "me: what game do you want to play today",
+        "you: let's play tag",
+        "me: in tag which team will we be",
+        "you: we will be the red ones"
+    ],
+    [
+        "me: how long has it been since we went to the park",
+        "you: it was a week ago",
+        "me: one week what things did you play there",
+        "you: I would go on the swing"
+    ],
+    [
+        "me: do you like to play plum",
+        "you: yes I like it",
+        "me: you like to play plum what color will I be",
+        "you: I will be yellow"
+    ],
+    [
+        "me: what game do you want to play today",
+        "you: let's play catch the cat",
+        "me: in catch the cat which team will we be",
+        "you: we will be the blue ones"
+    ],
+    [
+        "me: what things do you have at home",
+        "you: I have a ball some clay and a toy plane",
+        "me: a plane what type of plane",
+        "you: a space plane"
+    ],
+    [
+        "me: what game do you want to play today",
+        "you: let's play futsal",
+        "me: in futsal which team will we be",
+        "you: we will be the white ones"
+    ],
+    [
+        "me: do you like to play bread",
+        "you: yes I like it",
+        "me: you like to play bread what color will I be",
+        "you: I will be black"
+    ],
+    [
+        "me: how long has it been since we went to the park",
+        "you: it was a month ago",
+        "me: one month what things would you do there",
+        "you: I would play with mud"
+    ],
+    [
+        "me: what game do you want to play today",
+        "you: let's play board games",
+        "me: in board games which team will we be",
+        "you: we will be the green ones"
+    ],
+    [
+        "me: do you like to play plum",
+        "you: yes I like it",
+        "me: you like to play plum what color will I be",
+        "you: I will be red"
+    ],
+    [
+        "me: how long has it been since we went to the park",
+        "you: it was a day ago",
+        "me: one day what things would you do there",
+        "you: I would go on the swing"
+    ],
+    [
+        "me: what game do you want to play today",
+        "you: let's play track",
+        "me: in track which team will we be",
+        "you: we will be the white ones"
+    ],
+    [
+        "me: do you like to play plum",
+        "you: yes I like it",
+        "me: you like to play witch what color will I be",
+        "you: I will be yellow"
+    ],
+    [
+        "you: hello I have a cat",
+        "me: the cat is very soft and you",
+        "you: no I have a dog",
+        "me: the dog is very messy it is very happy to see you"
+    ],
+    [
+        "you: I see a colored bird",
+        "me: it is a colored bird and you what bird do we see",
+        "you: I don't remember its name",
+        "me: it is a bird bird"
+    ],
+    [
+        "you: my favorite animal is the cat",
+        "me: cats are very lovely I love to play with you",
+        "you: and you",
+        "me: my favorite animal is the dog I love to play with you and run together"
+    ],
+    [
+        "you: my favorite pet is my dog it is very smart",
+        "me: dogs are very smart I love to play with you",
+        "you: and you",
+        "me: my favorite pet is my cat I love to play with you and sleep together"
+    ],
+    [
+        "you: I want to have a cat",
+        "me: cats are very lovely they will be happy to be with me",
+        "you: and you",
+        "me: I want to have a dog you will be my best friend"
+    ],
+    [
+        "you: the bird that wears a hat is called a silly bird",
+        "me: that's right the silly bird wears a hat to protect from the sun"
+    ],
+    [
+        "you: the snails and the lizards live in the garden",
+        "me: that's right the snails and the lizards can be seen in the garden at night"
+    ],
+    [
+        "you: the cat eats garlic",
+        "me: that is wrong cats should not have garlic it is dangerous for their health"
+    ],
+    [
+        "you: the birds have wings",
+        "me: that's right the birds have wings to fly"
+    ],
+    [
+        "you: the cat can be seen in the mountains",
+        "me: that is wrong cats are not seen in the mountains but dogs are"
+    ],
+    [
+        "you: dogs and cats have soft fur",
+        "me: that's right dogs and cats have soft fur and are known to be calm"
+    ],
+    [
+        "me: what game do you want to play today",
+        "you: let's play tag",
+        "me: in tag which team will we be",
+        "you: we will be the red ones"
+    ],
+    [
+        "me: how long has it been since we went to the park",
+        "you: it was a week ago",
+        "me: one week what things did you play there",
+        "you: I would go on the swing"
+    ],
+    [
+        "me: do you like to play plum",
+        "you: yes I like it",
+        "me: you like to play plum what color will I be",
+        "you: I will be yellow"
+    ],
+    [
+        "me: what game do you want to play today",
+        "you: let's play catch the cat",
+        "me: in catch the cat which team will we be",
+        "you: we will be the blue ones"
+    ],
+    [
+        "me: what things do you have at home",
+        "you: I have a ball some clay and a toy plane",
+        "me: a plane what type of plane",
+        "you: a space plane"
+    ],
+    [
+        "me: what game do you want to play today",
+        "you: let's play futsal",
+        "me: in futsal which team will we be",
+        "you: we will be the white ones"
+    ],
+    [
+        "me: do you like to play bread",
+        "you: yes I like it",
+        "me: you like to play bread what color will I be",
+        "you: I will be black"
+    ],
+    [
+        "me: how long has it been since we went to the park",
+        "you: it was a month ago",
+        "me: one month what things would you do there",
+        "you: I would play with mud"
+    ],
+    [
+        "me: what game do you want to play today",
+        "you: let's play board games",
+        "me: in board games which team will we be",
+        "you: we will be the green ones"
+    ],
+    [
+        "me: do you like to play plum",
+        "you: yes I like it",
+        "me: you like to play plum what color will I be",
+        "you: I will be red"
+    ],
+    [
+        "me: how long has it been since we went to the park",
+        "you: it was a day ago",
+        "me: one day what things would you do there",
+        "you: I would go on the swing"
+    ],
+    [
+        "me: what game do you want to play today",
+        "you: let's play track",
+        "me: in track which team will we be",
+        "you: we will be the white ones"
+    ],
+    [
+        "me: do you like to play plum",
+        "you: yes I like it",
+        "me: you like to play witch what color will I be",
+        "you: I will be yellow"
+    ],
+    [
+        "you: hello I have a cat",
+        "me: the cat is very soft and you",
+        "you: no I have a dog",
+        "me: the dog is very messy it is very happy to see you"
+    ],
+    [
+        "you: I see a colored bird",
+        "me: it is a colored bird and you what bird do we see",
+        "you: I don't remember its name",
+        "me: it is a bird bird"
+    ],
+    [
+        "you: my favorite animal is the cat",
+        "me: cats are very lovely I love to play with you",
+        "you: and you",
+        "me: my favorite animal is the dog I love to play with you and run together"
+    ],
+    [
+        "you: my favorite pet is my dog it is very smart",
+        "me: dogs are very smart I love to play with you",
+        "you: and you",
+        "me: my favorite pet is my cat I love to play with you and sleep together"
+    ],
+    [
+        "you: I want to have a cat",
+        "me: cats are very lovely they will be happy to be with me",
+        "you: and you",
+        "me: I want to have a dog you will be my best friend"
+    ],
+    [
+        "you: the bird that wears a hat is called a silly bird",
+        "me: that's right the silly bird wears a hat to protect from the sun"
+    ],
+    [
+        "you: the snails and the lizards live in the garden",
+        "me: that's right the snails and the lizards can be seen in the garden at night"
+    ],
+    [
+        "you: the cat eats garlic",
+        "me: that is wrong cats should not have garlic it is dangerous for their health"
+    ],
+    [
+        "you: the birds have wings",
+        "me: that's right the birds have wings to fly"
+    ],
+    [
+        "you: the cat can be seen in the mountains",
+        "me: that is wrong cats are not seen in the mountains but dogs are"
+    ],
+    [
+        "you: dogs and cats have soft fur",
+        "me: that's right dogs and cats have soft fur and are known to be calm"
+    ],
+    [
+        "me: what food do you have today",
+        "you: I have an apple and a boiled egg",
+        "me: what food it seems"
+    ],
+    [
+        "me: what type of food do you like most",
+        "you: I love candy",
+        "me: I also love candy it is very sweet and beautiful"
+    ],
+    [
+        "me: have you tried any fruit today",
+        "you: I ate a banana",
+        "me: the banana is a very eaten fruit"
+    ],
+    [
+        "me: what color is your apple",
+        "you: it is red",
+        "me: it is beautiful and bright"
+    ],
+    [
+        "me: what type of food are we going to eat at the party",
+        "you: we are going to eat a warm soup",
+        "me: it is a very fast food to prepare and very wonderful"
+    ],
+    [
+        "me: have you tried apple with cheese",
+        "you: no what happens if I try it",
+        "me: it is quite interesting what do you think"
+    ],
+    [
+        "me: what fruit do you like most in the winter",
+        "you: I love baked pears",
+        "me: it is also very sweet and good food"
+    ],
+    [
+        "me: what type of food do you have on your birthday",
+        "you: you have a chocolate cake",
+        "me: it is a wonderful and delicious cake"
+    ],
+    [
+        "me: have you tried fruit shaped like toys",
+        "you: no what happens if I try it",
+        "me: it is very interesting it is a good fruit"
+    ],
+    [
+        "me: what color is a ripe banana",
+        "you: it is black",
+        "me: it is a bit dark but it is wonderful and ripe"
+    ],
+    [
+        "me: what type of food do you have at your party",
+        "you: we are going to eat chicken food",
+        "me: it is also a very wonderful food full of flavor"
+    ],
+    [
+        "me: have you tried apple with cheese for lunch",
+        "you: no what happens if I try it",
+        "me: it is very interesting I like it a lot"
+    ],
+    [
+        "me: what fruit do you like most in summer",
+        "you: I love watermelon",
+        "me: it is a fruit rich in water and food"
+    ],
+    [
+        "me: what type of food do you have on your birthday",
+        "you: you have a baked apple",
+        "me: it is a very soft and easy food"
+    ],
+    [
+        "me: have you tried fruit shaped like ice cream",
+        "you: no what happens if I try it",
+        "me: it is very interesting it is an ice cream fruit"
+    ],
+    [
+        "me: what color is a green banana",
+        "you: it is green",
+        "me: it is a bit light but it is fresh and good food"
+    ],
+    [
+        "me: what type of food do you have at your party",
+        "you: we are going to eat fine cheese",
+        "me: it is also a very wonderful and beautiful food"
+    ],
+    [
+        "me: have you tried apple with cheese for dessert",
+        "you: no what happens if I try it",
+        "me: it is very interesting I like it a lot"
+    ],
+    [
+        "me: what do you have with you now",
+        "you: playing outside",
+        "me: how many hits do you have"
+    ],
+    [
+        "me: what are you doing",
+        "you: I am reading a book",
+        "me: what happens in the story"
+    ],
+    [
+        "me: hello mom",
+        "you: hello brother",
+        "me: how are you"
+    ],
+    [
+        "me: what do you want to eat",
+        "you: I want cheesecake",
+        "me: we want to order pizza"
+    ],
+    [
+        "me: what is happening at home",
+        "you: we are watching a movie",
+        "me: what movie"
+    ],
+    [
+        "me: what are you doing now",
+        "you: I am painting a cat",
+        "me: what color was it"
+    ],
+    [
+        "me: what are you reading in that book",
+        "you: I am reading a history of oceans",
+        "me: what happens in the story"
+    ],
+    [
+        "me: hello dad",
+        "you: hello brother",
+        "me: how are you"
+    ],
+    [
+        "me: what do you want to eat",
+        "you: I want roast chicken",
+        "me: we want to order soup"
+    ],
+    [
+        "me: what is happening at home",
+        "you: we are watching a football game",
+        "me: what team was winning"
+    ],
+    [
+        "me: what are you doing now",
+        "you: I am building a tower of blocks",
+        "me: how many floors does it have"
+    ],
+    [
+        "me: what are you reading in that book",
+        "you: I am reading a story of heroes",
+        "me: what happens in the story"
+    ],
+    [
+        "me: hello mom",
+        "you: hello brother",
+        "me: how are you"
+    ],
+    [
+        "me: what do you want to eat",
+        "you: I want meat",
+        "me: we want to order soup"
+    ],
+    [
+        "me: what is happening at home",
+        "you: we are dancing music",
+        "me: what song are you dancing"
+    ],
+    [
+        "me: what are you doing now",
+        "you: I am playing with my fingers",
+        "me: what game are you playing"
+    ],
+    [
+        "me: what are you reading in that book",
+        "you: I am reading a story of heroes",
+        "me: what happens in the story"
+    ],
+    [
+        "me: hello dad",
+        "you: hello brother",
+        "me: how are you"
+    ]
+]

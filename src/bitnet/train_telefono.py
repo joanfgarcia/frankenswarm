@@ -332,10 +332,7 @@ def run_telefono_roto():
 
 			# Métricas
 			with torch.no_grad():
-				if mode == "loop":
-					pred_final = torch.argmax(all_intermediate_logits[-1][:, 2, :], dim=-1)
-				else:
-					pred_final = torch.argmax(logits_1[:, 2, :], dim=-1)
+				pred_final = torch.argmax(all_intermediate_logits[-1][:, 2, :], dim=-1) if mode == "loop" else torch.argmax(logits_1[:, 2, :], dim=-1)
 				final_ok = (pred_final == end_tids).sum().item()
 
 			epoch_final_correct += final_ok

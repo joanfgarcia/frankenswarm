@@ -281,10 +281,7 @@ def run_resonance_training():
 			model.train()
 
 		# Curriculum de cadenas
-		if epoch < nursery_end:
-			active_chains = chains_2 if chains_2 else chains
-		else:
-			active_chains = chains
+		active_chains = (chains_2 if chains_2 else chains) if epoch < nursery_end else chains
 
 		collect_watcher = (epoch % watcher_interval == 0)
 
@@ -328,7 +325,7 @@ def run_resonance_training():
 					intermediate_tids.append(c["intermediate_tids"][0])
 				else:
 					intermediate_tids.append(c["end_tid"])
-			intermediate_target = torch.tensor(intermediate_tids, dtype=torch.long, device=device)
+			torch.tensor(intermediate_tids, dtype=torch.long, device=device)
 
 			# ═══════════════════════════════════════════
 			# FORWARD: Speaker con resonancia
@@ -352,7 +349,7 @@ def run_resonance_training():
 				total_loss = torch.tensor(0.0, device=device)
 
 				# Loss intermedio en cada paso
-				for step_idx, logits_mid in intermediate_logits:
+				for _step_idx, logits_mid in intermediate_logits:
 					loss_mid = F.cross_entropy(logits_mid[:, 2, :], end_tids, reduction="none")
 					total_loss = total_loss + (loss_mid * fears).mean()
 
@@ -367,7 +364,7 @@ def run_resonance_training():
 				)
 				total_loss = torch.tensor(0.0, device=device)
 
-				for step_idx, logits_mid in intermediate_logits:
+				for _step_idx, logits_mid in intermediate_logits:
 					loss_mid = F.cross_entropy(logits_mid[:, 2, :], end_tids, reduction="none")
 					total_loss = total_loss + (loss_mid * fears * intermediate_loss_weight).mean()
 

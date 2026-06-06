@@ -2,6 +2,15 @@
 
 ## [Unreleased]
 
+## [0.3.1] - 2026-06-06
+
+### 🎓 Evaluador Cognitivo Conversacional de Samantha y Neurogénesis Escolar
+- **[FEAT] Evaluador de Samantha (`scripts/evaluate_samantha_age.py`)**: Diseñado e implementado el evaluador cognitivo conversacional de Samantha que interactúa con el modelo BitNet mediante preguntas de examen por hitos de edad (4 a 8 años) y lo califica mediante un prompt de evaluación en la GPU RTX 5070.
+- **[FEAT] Neurogénesis y Pausa en Hitos (`src/bitnet/train_sovereign_school.py`)**: Modificado el bucle de entrenamiento escolar para soportar la neurogénesis en caliente y la evaluación periódica o al promover el curso. El entrenamiento se pausa automáticamente para interacción humana tras superar con éxito la evaluación del hito conversacional (guardando `milestone_achieved.json` y el checkpoint de la etapa).
+- **[FIX] Duplicados de Glifos Unívocos (`src/bitnet/expand_vocabulary.py`)**: Implementado un algoritmo desempate determinista iterativo en la calibración y proyección de vocabulario que asegura que todos los glifos sean semánticamente únicos para evitar colisiones de tokens.
+- **[FIX] Estabilidad Causal en FP16 (`src/bitnet/modeling_bitnet.py`)**: Ajustada la máscara causal en `BitNetAttention` para usar `-65000.0` en modo `float16`, previniendo desbordamientos y valores NaN durante la multiplicación de matrices.
+- **[TEST] Cobertura Conversacional**: Añadido `tests/test_conversational_bitnet.py` para verificar las formas de entrada/salida, causalidad del modelo de lenguaje conversacional BitNet y la recarga correcta de pesos del modelo entrenado.
+
 ## [0.3.0] - 2026-06-04
 
 ### 🎓 Entorno de Entrenamiento Híbrido (Dojo de PopuLoRA) y Estabilización PPO

@@ -13,7 +13,7 @@ Diseñado para soportar:
 """
 
 import numpy as np
-import torch
+
 from src.bitnet.operators import OperatorRegistry
 from src.bitnet.translator import SovereignTranslator
 
@@ -173,9 +173,8 @@ class ProceduralLogicDatasetBreeder:
 		direct_pairs = {(u, v) for u, v, _ in self.causal_rules}
 
 		def dfs(start: int, current: int, depth: int, max_fear: float):
-			if depth >= 2:
-				if (start, current) not in direct_pairs:
-					chains.append((start, current, max_fear))
+			if depth >= 2 and (start, current) not in direct_pairs:
+				chains.append((start, current, max_fear))
 
 			# Continuar DFS a través de los vecinos
 			for next_node, fear in self.causal_adj[current]:

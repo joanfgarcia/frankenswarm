@@ -1,10 +1,13 @@
-import os
 import json
+import os
 import unittest
+
 import numpy as np
 import torch
+
 from src.bitnet.dictionary_tool import SovereignDictionary
 from src.bitnet.modeling_bitnet import BitNet4LayerModel
+
 
 class TestDictionaryLearning(unittest.TestCase):
 	def setUp(self):
@@ -12,7 +15,7 @@ class TestDictionaryLearning(unittest.TestCase):
 		self.expanded_glyphs_path = os.path.join(self.base_dir, "configs", "expanded_glyphs.json")
 		
 		# Cargar vocabulario base para verificar pertenencia
-		with open(self.expanded_glyphs_path, "r", encoding="utf-8") as f:
+		with open(self.expanded_glyphs_path, encoding="utf-8") as f:
 			data = json.load(f)
 			self.base_vocab = set(data["words"])
 			self.glyphs = np.array(data["glyphs"], dtype=np.float32)

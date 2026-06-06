@@ -1,6 +1,7 @@
+import os
 import re
 import sys
-import os
+
 
 def analyze_log(file_path):
 	if not os.path.exists(file_path):
@@ -20,7 +21,7 @@ def analyze_log(file_path):
 	actions_history = []  # list of dict: {tick, agent, action, loc, detail}
 	shares_history = []   # list of dict: {tick, sender, resource, receiver}
 
-	with open(file_path, "r", encoding="utf-8") as f:
+	with open(file_path, encoding="utf-8") as f:
 		for line in f:
 			# Detect tick
 			m_tick = tick_re.search(line)

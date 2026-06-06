@@ -1,11 +1,13 @@
-import sys
 import os
+import sys
+
 import pytest
 
 # Asegurar que el path del proyecto está en sys.path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from src.bitnet.cooperative_world import CooperativeWorld, CoopAgentState
+from src.bitnet.cooperative_world import CooperativeWorld
+
 
 def test_boredom_initialization():
 	world = CooperativeWorld(seed=42)
@@ -41,7 +43,7 @@ def test_boredom_relief_mover():
 	
 	# Moverse a una nueva localización (ej: bosque, que está adyacente a cueva)
 	# Forzamos que se mueva a bosque
-	res = world.act(state_a, "mover")
+	world.act(state_a, "mover")
 	# Si se movió a una nueva casilla, el aburrimiento disminuye en 20.0
 	if state_a.location != "cueva":
 		assert state_a.aburrimiento == 30.0

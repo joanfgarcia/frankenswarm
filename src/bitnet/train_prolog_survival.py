@@ -9,15 +9,17 @@ como una herramienta cognitiva para verificar si un objeto es comestible.
 import argparse
 import json
 import os
+
 import numpy as np
 import torch
 import torch.nn.functional as F
 
 from src.bitnet.glyph_vocabulary import N_EMOTIONS, WORD_INDEX
-from src.bitnet.prolog_world import PrologSurvivalWorld
 from src.bitnet.minimal_world import LOCATION_GLYPHS
 from src.bitnet.modeling_bitnet import BitNet4LayerModel
+from src.bitnet.prolog_world import PrologSurvivalWorld
 from src.bitnet.telemetry import ExperimentLogger
+
 
 def perception_to_input(perception: list[str], location: str, device: torch.device) -> torch.Tensor:
 	loc_glyph = LOCATION_GLYPHS.get(location, "tierra")
@@ -143,7 +145,7 @@ def run_prolog_training():
 
 		model.eval()
 
-		for tick in range(max_ticks):
+		for _tick in range(max_ticks):
 			if not state.alive:
 				break
 

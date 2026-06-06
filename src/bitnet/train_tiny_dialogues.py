@@ -1,12 +1,12 @@
-import os
 import json
+import os
 import re
+
 import numpy as np
 import torch
-import torch.nn as nn
 import torch.nn.functional as F
+
 from src.bitnet.modeling_bitnet import BitNet4LayerModel
-from src.bitnet.dictionary_tool import SovereignDictionary
 
 # Definición de definiciones para entrenar el glyph_projection_head (Fase 2)
 KNOWN_DEFINITIONS = {
@@ -70,20 +70,20 @@ def generate_response(model, prompt_tokens, word_to_idx, idx_to_word, device, ma
 
 def run_training():
 	device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-	print(f"═══ 🧒 Entrenamiento de Causal BitNet en Diálogos (EXP_072) ═══")
+	print("═══ 🧒 Entrenamiento de Causal BitNet en Diálogos (EXP_072) ═══")
 	print(f"[Device]: {device}")
 	
 	base_dir = "/home/joan/Documents/IA/frankenswarm"
 	expanded_glyphs_path = os.path.join(base_dir, "configs", "expanded_glyphs.json")
-	dialogues_path = os.path.join(base_dir, "configs", "tiny_dialogues.json")
+	os.path.join(base_dir, "configs", "tiny_dialogues.json")
 	
-	with open(expanded_glyphs_path, "r", encoding="utf-8") as f:
+	with open(expanded_glyphs_path, encoding="utf-8") as f:
 		vocab_data = json.load(f)
 		words = vocab_data["words"]
 		glyphs = np.array(vocab_data["glyphs"], dtype=np.float32)
 		
 	word_to_idx = {w: i for i, w in enumerate(words)}
-	idx_to_word = {i: w for i, w in enumerate(words)}
+	idx_to_word = dict(enumerate(words))
 	vocab_size = len(words)
 	print(f"Vocabulario cargado: {vocab_size} palabras.")
 	
@@ -95,7 +95,7 @@ def run_training():
 			if filename.startswith("tiny_dialogues") and filename.endswith(".json"):
 				filepath = os.path.join(config_dir, filename)
 				try:
-					with open(filepath, "r", encoding="utf-8") as f:
+					with open(filepath, encoding="utf-8") as f:
 						part_list = json.load(f)
 						dialogue_list.extend(part_list)
 						print(f"Loaded {len(part_list)} dialogues from {filename}")
@@ -145,10 +145,7 @@ def run_training():
 				
 		if len(dialogue_tokens) >= 2:
 			# Pad a seq_len = 64
-			if len(dialogue_tokens) < 64:
-				dialogue_tokens = dialogue_tokens + [0] * (64 - len(dialogue_tokens))
-			else:
-				dialogue_tokens = dialogue_tokens[:64]
+			dialogue_tokens = dialogue_tokens + [0] * (64 - len(dialogue_tokens)) if len(dialogue_tokens) < 64 else dialogue_tokens[:64]
 			tokenized_dialogues.append(dialogue_tokens)
 			
 	x_train = torch.tensor(tokenized_dialogues, dtype=torch.long, device=device)
@@ -204,10 +201,7 @@ def run_training():
 			tokens = tokenize(def_text, word_to_idx)
 			# Pad a seq_len_def = 8
 			seq_len_def = 8
-			if len(tokens) < seq_len_def:
-				tokens = tokens + [0] * (seq_len_def - len(tokens))
-			else:
-				tokens = tokens[:seq_len_def]
+			tokens = tokens + [0] * (seq_len_def - len(tokens)) if len(tokens) < seq_len_def else tokens[:seq_len_def]
 				
 			def_inputs.append(tokens)
 			def_targets.append(model.glyph_embedding.glyph_table[word_to_idx[word_name]].cpu().numpy())

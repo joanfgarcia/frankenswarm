@@ -1,5 +1,5 @@
-import pytest
 from src.bitnet.puzzle_world import PuzzleWorld
+
 
 def test_puzzle_world_initialization():
 	"""Verifica que el entorno PuzzleWorld se inicializa sin errores."""
@@ -106,7 +106,7 @@ def s_row_col(state):
 def test_puzzle_world_shaping_reward():
 	"""Verifica que la recompensa moldeada (shaping_reward) funciona correctamente."""
 	world = PuzzleWorld(seed=42)
-	state = world.reset()
+	world.reset()
 	
 	# De (0,0) a (0,1) -> se acerca a la llave (1,2) -> shaping_reward positivo (+2.0)
 	res = world.act("mover")

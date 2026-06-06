@@ -188,7 +188,7 @@ def run_survival_training():
 
 		model.train()
 
-		for tick in range(max_ticks):
+		for _tick in range(max_ticks):
 			if not state.alive:
 				break
 

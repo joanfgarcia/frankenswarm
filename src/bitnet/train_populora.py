@@ -125,7 +125,7 @@ def run_arena():
 			print(f"💾 [HOTSTART] Cargando pesos desde checkpoint {resume_checkpoint}...")
 			try:
 				state_dict = torch.load(resume_checkpoint, map_location=device)
-				for idx, model in enumerate(population):
+				for _idx, model in enumerate(population):
 					model.load_state_dict(state_dict)
 				print("✅ Inicialización de población completada con éxito.")
 			except Exception as e:
@@ -332,10 +332,7 @@ def run_arena():
 			successes[idx_speaker, idx_listener] += correct_joint
 
 			# Extraer tokens del mensaje (para el primer elemento del lote)
-			if message_input.ndim == 2:
-				token_ids = message_input[0].tolist()
-			else:
-				token_ids = torch.argmax(message_input[0], dim=-1).tolist()
+			token_ids = message_input[0].tolist() if message_input.ndim == 2 else torch.argmax(message_input[0], dim=-1).tolist()
 			message_tokens = [translator.decode([tid]) for tid in token_ids]
 
 			sample_c = breeder.get_concept_name(concept_targets[0])
