@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+## [0.3.2] - 2026-06-06
+
+### 🧠 In-Inference Backtracking & Benchmarking
+- **[FEAT] Chat with Backtracking**: Implemented `playground/chat_backtrack.py` to support interactive chat with dynamic token backtracking and rollback of model state for low-capacity models (BitNet 50M).
+- **[FEAT] Backtracking Scenario Testing**: Created `scripts/test_backtrack_scenarios.py` to benchmark baseline, confidence, entropy, and lookahead backtracking modes, outputting a comparative performance and quality report.
+
 ## [0.3.1] - 2026-06-06
 
 ### 🎓 Evaluador Cognitivo Conversacional de Samantha y Neurogénesis Escolar
