@@ -10,7 +10,7 @@ Aplicación: Neurogenésis artificial guiada por convergencia.
 Origen: Joan Garcia — "Net2Net en caliente?" — 2026-05-31
 """
 
-
+import numpy as np
 import torch
 import torch.nn as nn
 
@@ -19,18 +19,18 @@ def net2wider_linear(layer_in: nn.Linear, layer_out: nn.Linear, new_width: int, 
 	"""
 	Net2WiderNet: Ampliar una capa hidden preservando la función.
 
-	layer_in:   Linear(in_features, old_width)  → será Linear(in_features, new_width)
-	layer_out:  Linear(old_width, out_features)  → será Linear(new_width, out_features)
-	new_width:  nuevo ancho (> old_width)
+	layer_in:	Linear(in_features, old_width)  → será Linear(in_features, new_width)
+	layer_out:	Linear(old_width, out_features)  → será Linear(new_width, out_features)
+	new_width:	nuevo ancho (> old_width)
 
 	Mecanismo:
-	  1. Las neuronas originales se mantienen intactas.
-	  2. Las neuronas nuevas copian neuronas existentes (random).
-	  3. Los pesos de salida de las copias se dividen por n_copies.
-	  4. Se añade ruido pequeño para romper simetría.
+		1. Las neuronas originales se mantienen intactas.
+		2. Las neuronas nuevas copian neuronas existentes (random).
+		3. Los pesos de salida de las copias se dividen por n_copies.
+		4. Se añade ruido pequeño para romper simetría.
 
 	Returns:
-	    (new_layer_in, new_layer_out) con los mismos comportamientos funcionales.
+		(new_layer_in, new_layer_out) con los mismos comportamientos funcionales.
 	"""
 	old_width = layer_in.out_features
 	assert new_width > old_width, f"new_width ({new_width}) must be > old_width ({old_width})"
@@ -90,27 +90,25 @@ def grow_action_head(model: nn.Module, growth_factor: float = 1.5, noise_std: fl
 	Hacer crecer el action_head del modelo via Net2WiderNet.
 
 	action_head = Sequential(
-	    Linear(hidden_dim, width),     ← layer 0
-	    GELU(),                         ← layer 1
-	    Linear(width, 6),              ← layer 2
+		Linear(hidden_dim, width),     # layer 0
+		GELU(),                         # layer 1
+		Linear(width, 6),              # layer 2
 	)
 
 	Crece la capa hidden (layer 0 out / layer 2 in) por growth_factor.
 
 	Returns:
-	    dict con info del crecimiento
+		dict con info del crecimiento
 	"""
 	head = model.action_head
-	layer_in = head[0]   # Linear(hidden_dim, old_width)
+	layer_in = head[0]  # Linear(hidden_dim, old_width)
 	layer_out = head[2]  # Linear(old_width, 6)
 
 	old_width = layer_in.out_features
 	new_width = int(old_width * growth_factor)
 
 	# Hacer crecer
-	new_layer_in, new_layer_out = net2wider_linear(
-		layer_in, layer_out, new_width, noise_std=noise_std
-	)
+	new_layer_in, new_layer_out = net2wider_linear(layer_in, layer_out, new_width, noise_std=noise_std)
 
 	# Mover a mismo device
 	device = next(model.parameters()).device
@@ -208,7 +206,7 @@ def net2wider_model(old_model: nn.Module, new_hidden_dim: int, noise_std: float 
 	emotion_dim = old_model.emotion_embeddings.embedding_dim if old_model.emotion_embeddings is not None else 0
 	emotion_mode = old_model.emotion_mode
 	use_glyphs = old_model.use_glyphs
-	
+
 	device = next(old_model.parameters()).device
 
 	if use_glyphs:
@@ -235,7 +233,7 @@ def net2wider_model(old_model: nn.Module, new_hidden_dim: int, noise_std: float 
 		glyph_table=glyph_table,
 		action_head_width=new_ahw,
 		is_causal=old_model.is_causal,
-		max_seq_len=old_model.pos_embedding.shape[1] if getattr(old_model, "pos_embedding", None) is not None else 64
+		max_seq_len=old_model.pos_embedding.shape[1] if getattr(old_model, "pos_embedding", None) is not None else 64,
 	).to(device)
 
 	# 2. Generar mapeos
@@ -343,7 +341,7 @@ def net2wider_model(old_model: nn.Module, new_hidden_dim: int, noise_std: float 
 			new_up = new_block.mlp.up_proj
 			old_mlp_dim = old_up.out_features
 			new_mlp_dim = new_up.out_features
-			
+
 			g_mlp, mlp_copy_count, mlp_is_clone = get_random_mapping(old_mlp_dim, new_mlp_dim)
 			g_mlp = g_mlp.to(device)
 			mlp_copy_count = mlp_copy_count.to(device)
@@ -509,7 +507,7 @@ if __name__ == "__main__":
 			n_emotions=6,
 			emotion_dim=32,
 			emotion_mode="gated",
-			use_glyphs=False
+			use_glyphs=False,
 		)
 
 		model_256.eval()
@@ -544,4 +542,5 @@ if __name__ == "__main__":
 	except Exception as e:
 		print(f"❌ Error en test de modelo completo: {e}")
 		import traceback
+
 		traceback.print_exc()

@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+### 🎓 Currículo de Piaget y Parada Natural de Generación
+- **[FEAT] Parada Natural de Generación en Escuela (`src/bitnet/train_sovereign_school.py`)**: Reemplazado el cálculo de pérdida estándar por una **máscara dinámica por secuencia** que activa la pérdida para todos los tokens de la frase más el primer token `<pad>` (0) que la sucede. Esto entrena al modelo para predecir el token de parada y detenerse de forma natural en lugar de balbucear.
+- **[FIX] Retorno de Samantha Eval (`src/bitnet/train_sovereign_school.py`)**: Corregido el retorno y desempaquetado de `run_samantha_eval` para evitar fallos de signatura en el bucle principal.
+- **[LINT] Corrección de Linter y Formato**: Resueltos avisos de ruff (`SIM108`, `B007`) en `playground/chat_school_agent.py` y `train_sovereign_school.py`, y corregidas tabulaciones en los docstrings de `src/bitnet/net2net.py`.
+
 ## [0.3.2] - 2026-06-06
 
 ### 🧠 In-Inference Backtracking & Benchmarking
