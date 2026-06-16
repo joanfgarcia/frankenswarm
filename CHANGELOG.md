@@ -2,10 +2,15 @@
 
 ## [Unreleased]
 
-### 🎓 Currículo de Piaget y Parada Natural de Generación
-- **[FEAT] Parada Natural de Generación en Escuela (`src/bitnet/train_sovereign_school.py`)**: Reemplazado el cálculo de pérdida estándar por una **máscara dinámica por secuencia** que activa la pérdida para todos los tokens de la frase más el primer token `<pad>` (0) que la sucede. Esto entrena al modelo para predecir el token de parada y detenerse de forma natural en lugar de balbucear.
-- **[FIX] Retorno de Samantha Eval (`src/bitnet/train_sovereign_school.py`)**: Corregido el retorno y desempaquetado de `run_samantha_eval` para evitar fallos de signatura en el bucle principal.
-- **[LINT] Corrección de Linter y Formato**: Resueltos avisos de ruff (`SIM108`, `B007`) en `playground/chat_school_agent.py` y `train_sovereign_school.py`, y corregidas tabulaciones en los docstrings de `src/bitnet/net2net.py`.
+### 🎓 Vocabulary Redesign & Corpus Saneing (15,000 Words)
+- **[FIX] OOM-Shield in Hot Neurogenesis (`src/bitnet/train_sovereign_school.py`)**: Resolved the temporary VRAM spike that caused silent and permanent migration to CPU training during hot neurogenesis (weight mitosis). Implemented a temporary CPU-offloading pipeline in `trigger_neurogenesis` to perform the expansion and weight cloning of Net2WiderNet entirely on CPU, clear CUDA VRAM using `torch.cuda.empty_cache()`, and safely reload the expanded model and optimizer back to the GPU.
+- **[CONV] New Rule 7 in CONVENTIONS.md**: Documented the semantic collision failure mode (e.g., *"pajaritos"* ➔ *"cálmate"*) to enforce vocabularies of at least 15,000 words and prohibit blind vector similarity mappings for OOV tokens.
+- **[FEAT] 15k Vocabulary Scaling Plan**: Designed the implementation plan to expand the base vocabulary from 3k to 15k words, clean the CHILDES corpus (accepting lengths 3-20), and remove sentence limits on children's stories and Gutenberg books.
+
+### 🎓 Piaget Curriculum & Natural Generation Stop
+- **[FEAT] Natural Generation Stop in School (`src/bitnet/train_sovereign_school.py`)**: Replaced the standard cross-entropy loss with a **dynamic sequence mask** that enables loss for all sentence tokens plus the first trailing `<pad>` (0) token. This trains the model to predict the stop token and halt generation naturally instead of babbling.
+- **[FIX] Samantha Eval Return Value (`src/bitnet/train_sovereign_school.py`)**: Fixed the return unpacking signature for `run_samantha_eval` to prevent runtime crashes in the main training loop.
+- **[LINT] Linter & Formatting Fixes**: Resolved ruff warnings (`SIM108`, `B007`) in `playground/chat_school_agent.py` and `train_sovereign_school.py`, and fixed tab indentations in `src/bitnet/net2net.py` docstrings.
 
 ## [0.3.2] - 2026-06-06
 

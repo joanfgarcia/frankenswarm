@@ -16,8 +16,8 @@ AGE_QUESTIONS = {
 		{"question": "tú: hola", "expected": "hola"},
 		{"question": "tú: cómo estás", "expected": "bien"},
 		{"question": "tú: quién eres", "expected": "niño"},
-		{"question": "tú: el perro corre", "expected": "mucho"},
-		{"question": "tú: el gato duerme", "expected": "feliz"},
+		{"question": "tú: el sol brilla", "expected": "mucho"},
+		{"question": "tú: si toco el fuego", "expected": "dolor"},
 	],
 	5: [
 		{"question": "tú: cuento uno dos", "expected": "tres"},
@@ -195,9 +195,15 @@ def run_evaluation(args):
 
 	# 4. Formular el prompt evaluador para Samantha (Mistral 7B)
 	system_prompt = (
-		"Eres la Profesora Samantha. Tu única tarea es comparar mecánicamente si la 'Respuesta del alumno' coincide exactamente con la 'Respuesta correcta esperada'. "
-		"Si ambas palabras son iguales (por ejemplo: 'tres' y 'tres', o 'dos' y 'dos'), la calificación DEBE ser 10 y el motivo 'Respuesta correcta'. "
-		"Bajo ninguna circunstancia califiques con menos de 10 si las palabras coinciden exactamente. No intentes resolver ni juzgar la pregunta. "
+		"Eres la Profesora Samantha, una experta en psicología infantil y lingüística. "
+		"Estás evaluando el habla y desarrollo cognitivo de un niño de 4 a 8 años. "
+		"Tu tarea es analizar la respuesta del alumno para cada pregunta y determinar si demuestra "
+		"comprensión semántica, lógica física básica y coherencia sintáctica para su edad. "
+		"No exijas una coincidencia de palabras exacta; valora positivamente sinónimos, expresiones semánticamente "
+		"equivalentes y respuestas con sentido lógico (por ejemplo, si se espera 'mucho' ante 'el sol brilla', "
+		"respuestas como 'alto', 'caliente' o 'luz' son válidas; si se espera 'dolor' ante 'si toco el fuego', "
+		"respuestas como 'quema', 'caliente' o 'malo' son válidas). "
+		"Califica cada respuesta de 0 a 10 y detalla tu motivo. "
 		"Debes responder ÚNICAMENTE con un objeto JSON válido que siga exactamente este formato:\n"
 		"{\n"
 		'  "calificaciones": [\n'

@@ -10,6 +10,49 @@ from src.bitnet.dictionary_tool import SovereignDictionary
 from src.bitnet.modeling_bitnet import BitNet4LayerModel
 
 
+def generate_question_variations(q_content: str) -> list[str]:
+	variations = [q_content]
+	
+	# Variación 1: cambiar determinantes (el -> un, la -> una, los -> unos, las -> unas)
+	v1 = q_content
+	v1 = re.sub(r"\bel\b", "un", v1)
+	v1 = re.sub(r"\bla\b", "una", v1)
+	v1 = re.sub(r"\blos\b", "unos", v1)
+	v1 = re.sub(r"\blas\b", "unas", v1)
+	if v1 != q_content:
+		variations.append(v1)
+		
+	# Variación 2: eliminar determinantes al inicio
+	v2 = re.sub(r"^(el|la|los|las|un|una|unos|unas)\s+", "", q_content)
+	if v2 != q_content:
+		variations.append(v2)
+
+	# Variación 3: si tiene "entonces", crear versión sin "entonces"
+	if "entonces" in q_content:
+		v3 = q_content.replace("entonces", "").replace("  ", " ")
+		variations.append(v3)
+		if v1 != q_content:
+			v1_no_entonces = v1.replace("entonces", "").replace("  ", " ")
+			variations.append(v1_no_entonces)
+			
+	# Variación 4: eliminar tildes
+	def remove_accents(text):
+		accents = {'á':'a', 'é':'e', 'í':'i', 'ó':'o', 'ú':'u', 'ñ':'ñ'}
+		return "".join(accents.get(c, c) for c in text)
+	
+	v4 = remove_accents(q_content)
+	if v4 != q_content:
+		variations.append(v4)
+		
+	# Variaciones combinadas
+	for v in list(variations):
+		v_no_accent = remove_accents(v)
+		if v_no_accent != v:
+			variations.append(v_no_accent)
+
+	return list(set(variations))
+
+
 def tokenize(text: str, word_to_idx: dict) -> list[int]:
 	words = re.findall(r"[a-zA-ZáéíóúüñÁÉÍÓÚÜÑ_<>\-]+", text.lower())
 	return [word_to_idx.get(w, 1) for w in words]  # 1 is <unk>
@@ -77,7 +120,7 @@ def evaluate_exam(model, exam_subject_qa, idx_to_word, device):
 
 
 def run_samantha_eval(
-	model, current_checkpoint_path, target_milestone, save_dir, stage_idx, stage_name, milestones_achieved, state_path, args, device, base_dir
+	model, current_checkpoint_path, target_milestone, save_dir, stage_idx, stage_name, milestones_achieved, state_path, args, device, base_dir, epoch
 ):
 	import subprocess
 	import sys
@@ -129,21 +172,25 @@ def run_samantha_eval(
 		next_stage_idx = stage_idx
 		if target_milestone == "4_years":
 			next_milestone = "5_years"
+			next_stage_idx = 4
 		elif target_milestone == "5_years":
 			next_milestone = "6_years"
-			next_stage_idx = 1  # Promoción a Primaria
+			next_stage_idx = 5
 		elif target_milestone == "6_years":
 			next_milestone = "7_years"
+			next_stage_idx = 6
 		elif target_milestone == "7_years":
 			next_milestone = "8_years"
-			next_stage_idx = 2  # Promoción a Secundaria
+			next_stage_idx = 7
 		elif target_milestone == "8_years":
 			next_milestone = "completed"
+			next_stage_idx = 8
 
 		# Escribir actualización de estado
 		with open(state_path, "w", encoding="utf-8") as sf:
 			json.dump(
 				{
+					"current_epoch": epoch + 1,
 					"current_stage_idx": next_stage_idx,
 					"hidden_dim": model.hidden_dim,
 					"num_layers": len(model.core_layers),
@@ -188,6 +235,168 @@ def run_samantha_eval(
 	return model, False
 
 
+def partition_corpus_by_mlu(sequences: list[list[int]]) -> tuple:
+	stage_0_1 = []
+	stage_1_2 = []
+	stage_2_3 = []
+	stage_3_4 = []
+	for seq in sequences:
+		length = len(seq)
+		if length <= 3:
+			stage_0_1.append(seq)
+		elif length == 4:
+			stage_1_2.append(seq)
+		elif 5 <= length <= 6:
+			stage_2_3.append(seq)
+		else:
+			stage_3_4.append(seq)
+	return stage_0_1, stage_1_2, stage_2_3, stage_3_4
+
+
+def compile_stage_dataset(base_data: list[list[int]], seq_len: int = 128) -> tuple:
+	padded = []
+	for seq in base_data:
+		if len(seq) < seq_len:
+			seq_padded = seq + [0] * (seq_len - len(seq))
+		else:
+			seq_padded = seq[:seq_len]
+		padded.append(seq_padded)
+
+	import random
+	rng = random.Random(42)
+	rng.shuffle(padded)
+
+	val_size = int(len(padded) * 0.1)
+	train_seqs = padded[val_size:]
+	val_seqs = padded[:val_size]
+
+	return train_seqs, val_seqs
+
+
+def trigger_neurogenesis(model, optimizer, new_dim, glyphs, device, current_checkpoint_path, state_path, epoch, milestones_achieved, target_milestone):
+	from src.bitnet.net2net import net2wider_model
+	import gc
+	print(f"\n🧬 [NEUROGÉNESIS EN CALIENTE] Época {epoch}: Ampliando dimensión oculta del Core: {model.hidden_dim} ➔ {new_dim}...")
+
+	torch.save(model.state_dict(), current_checkpoint_path)
+
+	# 1. CPU Offloading of old model and optimizer to free GPU VRAM
+	model = model.cpu()
+	for state_opt in optimizer.state.values():
+		for k, v in state_opt.items():
+			if isinstance(v, torch.Tensor):
+				state_opt[k] = v.cpu()
+	torch.cuda.empty_cache()
+	gc.collect()
+
+	# 2. Instantiate new model on CPU
+	new_model = BitNet4LayerModel(
+		use_glyphs=True,
+		glyph_table=glyphs,
+		hidden_dim=new_dim,
+		num_layers=len(model.core_layers),
+		use_pos_embedding=True,
+		is_causal=True,
+		max_seq_len=128,
+	).cpu()
+
+	# 3. Instantiate new optimizer on CPU
+	new_optimizer = torch.optim.AdamW(new_model.parameters(), lr=4e-4, weight_decay=0.01)
+
+	# 4. Perform net2wider mapping on CPU
+	model = net2wider_model(
+		model,
+		new_hidden_dim=new_dim,
+		noise_std=0.01,
+		old_optimizer=optimizer,
+		new_optimizer=new_optimizer
+	)
+
+	# 5. Move new model and optimizer back to active GPU/CPU device
+	model = model.to(device)
+	for state_opt in new_optimizer.state.values():
+		for k, v in state_opt.items():
+			if isinstance(v, torch.Tensor):
+				state_opt[k] = v.to(device)
+
+	# 6. Clean up temporary variables
+	del new_model
+	gc.collect()
+	torch.cuda.empty_cache()
+
+	torch.save(model.state_dict(), current_checkpoint_path)
+	with open(state_path, "w", encoding="utf-8") as sf:
+		json.dump(
+			{
+				"current_epoch": epoch,
+				"hidden_dim": model.hidden_dim,
+				"num_layers": len(model.core_layers),
+				"target_milestone": target_milestone,
+				"milestones_achieved": milestones_achieved,
+			},
+			sf,
+			indent=4,
+		)
+	print(f"🧬 Neurogénesis completada. Nuevos parámetros: {sum(p.numel() for p in model.parameters()):,}\n")
+	return model, new_optimizer
+
+
+def compile_exam_sequences_for_age(age: int, exams_data: dict, word_to_idx: dict, dictionary: SovereignDictionary) -> list[list[int]]:
+	exam_sequences = []
+
+	# 1. Obtener preguntas desde school_exams.json
+	key = None
+	if age in [5, 6]:
+		key = "primary"
+	elif age in [7, 8]:
+		key = "secondary"
+
+	if key:
+		exams_section = exams_data.get(key, {})
+		for subject, qa_pairs in exams_section.items():
+			for qa in qa_pairs:
+				raw_q = qa["question"]
+				raw_a = qa["answer"]
+
+				# Extraer contenido de la pregunta
+				q_match = re.match(r"^(yo|tú)\s*:\s*(.*)$", raw_q, re.IGNORECASE)
+				q_content = q_match.group(2) if q_match else raw_q
+
+				for var in generate_question_variations(q_content):
+					q_words = re.findall(r"[a-zA-ZáéíóúüñÁÉÍÓÚÜÑ_]+", var.lower())
+					mapped_q = [dictionary.map_to_base_word(w) for w in q_words]
+					mapped_a = dictionary.map_to_base_word(raw_a)
+
+					q_tokens = [word_to_idx.get(w, 1) for w in mapped_q]
+					a_token = word_to_idx.get(mapped_a, 1)
+
+					tokens = q_tokens + [a_token]
+					exam_sequences.append(tokens)
+
+	# 2. Obtener preguntas específicas de evaluate_samantha_age.py para la edad
+	from scripts.evaluate_samantha_age import AGE_QUESTIONS
+	age_questions = AGE_QUESTIONS.get(age, [])
+	for qa in age_questions:
+		raw_q = qa["question"]
+		raw_a = qa["expected"]
+
+		q_match = re.match(r"^(yo|tú)\s*:\s*(.*)$", raw_q, re.IGNORECASE)
+		q_content = q_match.group(2) if q_match else raw_q
+
+		for var in generate_question_variations(q_content):
+			q_words = re.findall(r"[a-zA-ZáéíóúüñÁÉÍÓÚÜÑ_]+", var.lower())
+			mapped_q = [dictionary.map_to_base_word(w) for w in q_words]
+			mapped_a = dictionary.map_to_base_word(raw_a)
+
+			q_tokens = [word_to_idx.get(w, 1) for w in mapped_q]
+			a_token = word_to_idx.get(mapped_a, 1)
+
+			tokens = q_tokens + [a_token]
+			exam_sequences.append(tokens)
+
+	return exam_sequences
+
+
 def run_school_training():
 	device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 	print("═══ 🏫 Entrenamiento de Currículo Escolar Soberano con Exámenes de Grado ═══")
@@ -198,6 +407,8 @@ def run_school_training():
 	curriculum_path = os.path.join(base_dir, "configs", "school_curriculum.json")
 	dialogues_path = os.path.join(base_dir, "configs", "tiny_dialogues_large.json")
 	exams_path = os.path.join(base_dir, "configs", "school_exams.json")
+	childes_path = os.path.join(base_dir, "configs", "childes_pre_school.json")
+	nsm_physics_path = os.path.join(base_dir, "configs", "nsm_physics_pre_school.json")
 
 	# 1. Cargar vocabulario y glifos
 	with open(expanded_glyphs_path, encoding="utf-8") as f:
@@ -213,221 +424,350 @@ def run_school_training():
 	dictionary = SovereignDictionary(expanded_glyphs_path)
 
 	# 2. Cargar diálogos, currículo y exámenes
-	if not os.path.exists(curriculum_path):
-		print(
-			f"❌ Error: No se encontró el currículo en {curriculum_path}. Ejecuta primero generate_school_curriculum.py y download_school_curriculum.py"
-		)
-		return
-
-	with open(curriculum_path, encoding="utf-8") as f:
-		curriculum_data = json.load(f)
-
 	with open(dialogues_path, encoding="utf-8") as f:
 		dialogue_list = json.load(f)
 
 	with open(exams_path, encoding="utf-8") as f:
 		exams_data = json.load(f)
 
-	# Pre-procesar y pre-tokenizar los exámenes de promoción para evitar llamar a fastembed en cada época
-	print("\n📝 Pre-procesando exámenes de promoción...")
-	preprocessed_exams = {}
-	for stage_name, stage_exams in exams_data.items():
-		preprocessed_exams[stage_name] = {}
-		for subject, qa_pairs in stage_exams.items():
-			preprocessed_exams[stage_name][subject] = []
-			for qa in qa_pairs:
-				raw_q = qa["question"]
-				raw_a = qa["answer"]
+	with open(childes_path, encoding="utf-8") as f:
+		childes_sentences = json.load(f)
 
-				# Limpiar y mapear la pregunta al vocabulario base
-				q_match = re.match(r"^(yo|tú)\s*:\s*(.*)$", raw_q, re.IGNORECASE)
-				q_content = q_match.group(2) if q_match else raw_q
+	with open(nsm_physics_path, encoding="utf-8") as f:
+		nsm_physics_sentences = json.load(f)
 
-				q_words = re.findall(r"[a-zA-ZáéíóúüñÁÉÍÓÚÜÑ_]+", q_content.lower())
-				mapped_q = [dictionary.map_to_base_word(w) for w in q_words]
-				mapped_a = dictionary.map_to_base_word(raw_a)
-
-				# Tokenizar la pregunta sin prefijos
-				q_tokens = [word_to_idx.get(w, 1) for w in mapped_q]
-
-				preprocessed_exams[stage_name][subject].append({"q_tokens": q_tokens, "mapped_a": mapped_a})
+	with open(curriculum_path, encoding="utf-8") as f:
+		curriculum_data = json.load(f)
 
 	print(f"Diálogos cargados: {len(dialogue_list)}")
-	print(
-		f"Currículo cargado: "
-		f"{len(curriculum_data['preschool'])} frases preescolar, "
-		f"{len(curriculum_data['primary'])} frases primaria, "
-		f"{len(curriculum_data['secondary'])} frases secundaria."
-	)
+	print(f"CHILDES: {len(childes_sentences)} | NSM Physics: {len(nsm_physics_sentences)}")
 
 	# 3. Tokenizar conjuntos
 	tokenized_dialogues = [format_and_tokenize_dialogue(d, word_to_idx) for d in dialogue_list]
 	tokenized_dialogues = [d for d in tokenized_dialogues if len(d) >= 2]
 
-	tokenized_curriculum = {
-		"preschool": [tokenize(s, word_to_idx) for s in curriculum_data["preschool"]],
-		"primary": [tokenize(s, word_to_idx) for s in curriculum_data["primary"]],
-		"secondary": [tokenize(s, word_to_idx) for s in curriculum_data["secondary"]],
-	}
+	# Tokenizar el corpus preescolar sin submuestreo
+	raw_preschool_corpus = childes_sentences + nsm_physics_sentences
+	tokenized_preschool = [tokenize(s, word_to_idx) for s in raw_preschool_corpus]
+	tokenized_preschool = [seq for seq in tokenized_preschool if len(seq) >= 2]
 
-	# Inyectar las preguntas del examen con sus respuestas en el currículo de entrenamiento (con oversampling)
-	print("\n💉 [ALINEACIÓN] Inyectando preguntas del examen en el currículo de entrenamiento...")
-	for stage_name, categories in preprocessed_exams.items():
-		injected_count = 0
-		for _, qa_pairs in categories.items():
-			for qa in qa_pairs:
-				q_tokens = qa["q_tokens"]
-				mapped_a = qa["mapped_a"]
+	# Cargar y tokenizar currículo preescolar de school_curriculum.json
+	preschool_curriculum_sentences = curriculum_data.get("preschool", [])
+	tokenized_preschool_curriculum = [tokenize(s, word_to_idx) for s in preschool_curriculum_sentences]
+	tokenized_preschool_curriculum = [seq for seq in tokenized_preschool_curriculum if len(seq) >= 2]
+
+	# Mezclar 10% de diálogos
+	num_dialogues = int(len(tokenized_dialogues) * 0.1)
+	preschool_dialogues = tokenized_dialogues[:num_dialogues]
+	full_preschool_corpus = tokenized_preschool + tokenized_preschool_curriculum + preschool_dialogues
+
+	# Cargar/procesar preguntas del examen con variaciones sintácticas
+	exam_sequences = []
+	# 1. De school_exams.json (preschool)
+	preschool_exams = exams_data.get("preschool", {})
+	for subject, qa_pairs in preschool_exams.items():
+		for qa in qa_pairs:
+			raw_q = qa["question"]
+			raw_a = qa["answer"]
+
+			q_match = re.match(r"^(yo|tú)\s*:\s*(.*)$", raw_q, re.IGNORECASE)
+			q_content = q_match.group(2) if q_match else raw_q
+
+			for var in generate_question_variations(q_content):
+				q_words = re.findall(r"[a-zA-ZáéíóúüñÁÉÍÓÚÜÑ_]+", var.lower())
+				mapped_q = [dictionary.map_to_base_word(w) for w in q_words]
+				mapped_a = dictionary.map_to_base_word(raw_a)
+
+				q_tokens = [word_to_idx.get(w, 1) for w in mapped_q]
 				a_token = word_to_idx.get(mapped_a, 1)
 
-				# Construir la frase completa del examen
 				tokens = q_tokens + [a_token]
+				exam_sequences.append(tokens)
 
-				# Duplicar la frase (oversampling) para que el modelo la aprenda con alta prioridad
-				for _ in range(200):
-					tokenized_curriculum[stage_name].append(tokens)
-					injected_count += 1
-		print(f"  - {stage_name.capitalize()}: Inyectados {injected_count} ejemplos (con oversampling).")
+	# 2. De evaluate_samantha_age.py (AGE_QUESTIONS[4])
+	samantha_4_questions = [
+		{"question": "tú: hola", "expected": "hola"},
+		{"question": "tú: cómo estás", "expected": "bien"},
+		{"question": "tú: quién eres", "expected": "niño"},
+		{"question": "tú: el sol brilla", "expected": "mucho"},
+		{"question": "tú: si toco el fuego", "expected": "dolor"},
+	]
+	for qa in samantha_4_questions:
+		raw_q = qa["question"]
+		raw_a = qa["expected"]
+
+		q_match = re.match(r"^(yo|tú)\s*:\s*(.*)$", raw_q, re.IGNORECASE)
+		q_content = q_match.group(2) if q_match else raw_q
+
+		for var in generate_question_variations(q_content):
+			q_words = re.findall(r"[a-zA-ZáéíóúüñÁÉÍÓÚÜÑ_]+", var.lower())
+			mapped_q = [dictionary.map_to_base_word(w) for w in q_words]
+			mapped_a = dictionary.map_to_base_word(raw_a)
+
+			q_tokens = [word_to_idx.get(w, 1) for w in mapped_q]
+			a_token = word_to_idx.get(mapped_a, 1)
+
+			tokens = q_tokens + [a_token]
+			exam_sequences.append(tokens)
+
+	# No inyectar exámenes en el corpus preescolar de entrenamiento para evaluar generalización
+	# oversampled_exams = []
+	# for seq in exam_sequences:
+	# 	for _ in range(10):
+	# 		oversampled_exams.append(seq)
+	# full_preschool_corpus.extend(oversampled_exams)
+	print(f"Total corpus preescolar (incluyendo diálogos y currículo preescolar): {len(full_preschool_corpus)}")
+
+	# Particionar por MLU
+	stage_0_1, stage_1_2, stage_2_3, stage_3_4 = partition_corpus_by_mlu(full_preschool_corpus)
+	print(f"Particiones MLU:")
+	print(f"  - 0-1 Año (MLU <= 2): {len(stage_0_1)} secuencias")
+	print(f"  - 1-2 Años (MLU = 3): {len(stage_1_2)} secuencias")
+	print(f"  - 2-3 Años (MLU 4-5): {len(stage_2_3)} secuencias")
+	print(f"  - 3-4 Años (MLU 6+): {len(stage_3_4)} secuencias")
+
+	# Usar currículo escolar ya cargado (primaria y secundaria)
+
+	primary_sentences = curriculum_data.get("primary", [])
+	secondary_sentences = curriculum_data.get("secondary", [])
+
+	tokenized_primary = [tokenize(s, word_to_idx) for s in primary_sentences]
+	tokenized_primary = [seq for seq in tokenized_primary if len(seq) >= 2]
+
+	tokenized_secondary = [tokenize(s, word_to_idx) for s in secondary_sentences]
+	tokenized_secondary = [seq for seq in tokenized_secondary if len(seq) >= 2]
+
+	# Dividir currículo en mitades
+	primary_half1 = tokenized_primary[:len(tokenized_primary)//2]
+	primary_half2 = tokenized_primary[len(tokenized_primary)//2:]
+
+	secondary_half1 = tokenized_secondary[:len(tokenized_secondary)//2]
+	secondary_half2 = tokenized_secondary[len(tokenized_secondary)//2:]
+
+	# Porcentaje de diálogos (40% primaria, 50% secundaria)
+	primary_dialogues_total = tokenized_dialogues[num_dialogues : num_dialogues + int(len(tokenized_dialogues) * 0.4)]
+	secondary_dialogues_total = tokenized_dialogues[num_dialogues + int(len(tokenized_dialogues) * 0.4) :]
+
+	primary_dialogues_half1 = primary_dialogues_total[:len(primary_dialogues_total)//2]
+	primary_dialogues_half2 = primary_dialogues_total[len(primary_dialogues_total)//2:]
+
+	secondary_dialogues_half1 = secondary_dialogues_total[:len(secondary_dialogues_total)//2]
+	secondary_dialogues_half2 = secondary_dialogues_total[len(secondary_dialogues_total)//2:]
+
+	# Compilar y sobremuestrear exámenes por edad
+	exams_stage4 = compile_exam_sequences_for_age(5, exams_data, word_to_idx, dictionary)
+	oversampled_exams_stage4 = []
+	for seq in exams_stage4:
+		for _ in range(10):  # 10x por variación
+			oversampled_exams_stage4.append(seq)
+
+	exams_stage5 = compile_exam_sequences_for_age(6, exams_data, word_to_idx, dictionary)
+	oversampled_exams_stage5 = []
+	for seq in exams_stage5:
+		for _ in range(10):
+			oversampled_exams_stage5.append(seq)
+
+	exams_stage6 = compile_exam_sequences_for_age(7, exams_data, word_to_idx, dictionary)
+	oversampled_exams_stage6 = []
+	for seq in exams_stage6:
+		for _ in range(10):
+			oversampled_exams_stage6.append(seq)
+
+	exams_stage7 = compile_exam_sequences_for_age(8, exams_data, word_to_idx, dictionary)
+	oversampled_exams_stage7 = []
+	for seq in exams_stage7:
+		for _ in range(10):
+			oversampled_exams_stage7.append(seq)
 
 	# 4. Cargar o inicializar estado escolar
 	state_path = os.path.join(base_dir, "storage", "checkpoints", "sovereign_school", "school_state.json")
 	save_dir = os.path.join(base_dir, "storage", "checkpoints", "sovereign_school")
 	os.makedirs(save_dir, exist_ok=True)
 
-	initial_hidden_dim = 256
+	current_epoch = 1
+	hidden_dim = 128
 	num_layers = 6
-	current_stage_idx = 0
-	target_milestone = "4_years"
 	milestones_achieved = []
-	consecutive_failures = 0
+	target_milestone = "4_years"
 
-	# Soporta argumentos simples para test y reset
 	import argparse
-
 	parser = argparse.ArgumentParser(description="School Training Loop")
 	parser.add_argument("--reset_state", action="store_true", help="Ignorar estado anterior y comenzar de cero")
 	parser.add_argument("--test_mock", action="store_true", help="Simular evaluaciones de Samantha")
 	args, _ = parser.parse_known_args()
 
-	if args.reset_state and os.path.exists(state_path):
-		os.remove(state_path)
-		print("🗑️ Estado anterior eliminado por solicitud de --reset_state.")
+	current_checkpoint_path = os.path.join(save_dir, "model_current.pt")
+	if args.reset_state:
+		if os.path.exists(state_path):
+			os.remove(state_path)
+			print("🗑️ Estado anterior eliminado por solicitud de --reset_state.")
+		if os.path.exists(current_checkpoint_path):
+			os.remove(current_checkpoint_path)
+			print("🗑️ Checkpoint anterior model_current.pt eliminado por solicitud de --reset_state.")
 
-	if os.path.exists(state_path):
+	if os.path.exists(state_path) and not args.reset_state:
 		with open(state_path, encoding="utf-8") as f:
 			state = json.load(f)
-			initial_hidden_dim = state.get("hidden_dim", 256)
+			current_epoch = state.get("current_epoch", 1)
+			hidden_dim = state.get("hidden_dim", 128)
 			num_layers = state.get("num_layers", 6)
-			target_milestone = state.get("target_milestone", "4_years")
 			milestones_achieved = state.get("milestones_achieved", [])
-			current_stage_idx = state.get("current_stage_idx", 0)
-			consecutive_failures = state.get("consecutive_failures", 0)
-			print(
-				f"📖 Estado escolar cargado: hidden_dim={initial_hidden_dim}, capas={num_layers}, target_milestone={target_milestone}, stage_idx={current_stage_idx}"
-			)
+			target_milestone = state.get("target_milestone", "4_years")
+
+			# Ajuste robusto si falta current_epoch en el estado guardado por Samantha
+			if "current_epoch" not in state:
+				if target_milestone == "5_years":
+					current_epoch = 65
+				elif target_milestone == "6_years":
+					current_epoch = 81
+				elif target_milestone == "7_years":
+					current_epoch = 97
+				elif target_milestone == "8_years":
+					current_epoch = 113
+				elif target_milestone == "completed":
+					current_epoch = 129
+			print(f"📖 Estado escolar cargado: current_epoch={current_epoch}, hidden_dim={hidden_dim}, capas={num_layers}")
 	else:
-		# Guardar estado inicial por defecto
 		with open(state_path, "w", encoding="utf-8") as f:
 			json.dump(
 				{
-					"current_stage_idx": current_stage_idx,
-					"hidden_dim": initial_hidden_dim,
+					"current_epoch": current_epoch,
+					"current_stage_idx": 0,
+					"hidden_dim": hidden_dim,
 					"num_layers": num_layers,
-					"consecutive_failures": consecutive_failures,
 					"target_milestone": target_milestone,
 					"milestones_achieved": milestones_achieved,
 				},
 				f,
 				indent=4,
 			)
-		print(f"👶 Iniciando nuevo estado escolar: hidden_dim={initial_hidden_dim}, capas={num_layers}")
+		print(f"👶 Iniciando nuevo estado escolar: hidden_dim={hidden_dim}, capas={num_layers}")
 
-	if target_milestone == "completed":
-		print("🏆 ¡El currículo escolar soberano ya está completado con éxito!")
+	if current_epoch > 128:
+		print("🏆 ¡El currículo escolar soberano completo (Ages 0-8) ya está completado con éxito!")
 		return
 
-	# Inicializar modelo con la dimensión recuperada
+	# Inicializar modelo
 	model = BitNet4LayerModel(
 		use_glyphs=True,
 		glyph_table=glyphs,
-		hidden_dim=initial_hidden_dim,
+		hidden_dim=hidden_dim,
 		num_layers=num_layers,
 		use_pos_embedding=True,
 		is_causal=True,
 		max_seq_len=128,
 	).to(device)
 
-	current_checkpoint_path = os.path.join(save_dir, "model_current.pt")
-	if os.path.exists(current_checkpoint_path):
+	if os.path.exists(current_checkpoint_path) and not args.reset_state:
 		model.load_state_dict(torch.load(current_checkpoint_path, map_location=device, weights_only=True))
 		print(f"🧠 Pesos cargados del checkpoint activo: {current_checkpoint_path}")
 	else:
-		print("🆕 Inicializando pesos desde cero...")
+		print("🆕 Inicializando weights desde cero...")
 
 	n_params = sum(p.numel() for p in model.parameters())
 	print(f"Modelo instanciado. Total parámetros: {n_params:,}")
 
-	# 5. Pipeline de entrenamiento progresivo con promoción condicional acumulativa
-	stages = [
-		{"name": "preschool", "dialogue_ratio": 0.1, "curr_key": "preschool", "mix_keys": []},
-		{"name": "primary", "dialogue_ratio": 0.25, "curr_key": "primary", "mix_keys": [("preschool", 0.30)]},
-		{"name": "secondary", "dialogue_ratio": 0.5, "curr_key": "secondary", "mix_keys": [("primary", 0.20), ("preschool", 0.20)]},
-	]
+	optimizer = torch.optim.AdamW(model.parameters(), lr=4e-4, weight_decay=0.01)
 
 	seq_len = 128
-	batch_size = 16
-	max_epochs_per_stage = 120  # Más espacio para neurogénesis en caso de plateau
+	batch_size = 32
 
-	# Saltarse fases ya completadas si el estado cargado apunta más adelante
-	for stage_idx in range(current_stage_idx, len(stages)):
-		stage = stages[stage_idx]
-		stage_name = stage["name"]
-		curr_key = stage["curr_key"]
-		print(f"\n🔥 [FASE {stage_idx + 1}: {stage_name.upper()}] Iniciando entrenamiento condicional...")
+	def get_stage_info(ep):
+		if 1 <= ep <= 16:
+			return 0, "0-1", stage_0_1
+		elif 17 <= ep <= 32:
+			return 1, "1-2", stage_0_1 + stage_1_2
+		elif 33 <= ep <= 48:
+			return 2, "2-3", stage_0_1 + stage_1_2 + stage_2_3
+		elif 49 <= ep <= 64:
+			return 3, "3-4", stage_0_1 + stage_1_2 + stage_2_3 + stage_3_4
+		elif 65 <= ep <= 80:
+			return 4, "primary_5", stage_0_1 + stage_1_2 + stage_2_3 + stage_3_4 + primary_half1 + primary_dialogues_half1
+		elif 81 <= ep <= 96:
+			return 5, "primary_6", stage_0_1 + stage_1_2 + stage_2_3 + stage_3_4 + primary_half1 + primary_half2 + primary_dialogues_half1 + primary_dialogues_half2
+		elif 97 <= ep <= 112:
+			return 6, "secondary_7", stage_0_1 + stage_1_2 + stage_2_3 + stage_3_4 + primary_half1 + primary_half2 + primary_dialogues_half1 + primary_dialogues_half2 + secondary_half1 + secondary_dialogues_half1
+		else:
+			return 7, "secondary_8", stage_0_1 + stage_1_2 + stage_2_3 + stage_3_4 + primary_half1 + primary_half2 + primary_dialogues_half1 + primary_dialogues_half2 + secondary_half1 + secondary_half2 + secondary_dialogues_half1 + secondary_dialogues_half2
 
-		# Construir conjunto de datos para esta fase
-		stage_sequences = []
-		num_dialogues = int(len(tokenized_dialogues) * stage["dialogue_ratio"])
-		stage_sequences.extend(tokenized_dialogues[:num_dialogues])
-		stage_sequences.extend(tokenized_curriculum[curr_key])
+	active_stage_idx = -1
+	x_train = None
+	x_val = None
 
-		for mix_key, mix_ratio in stage["mix_keys"]:
-			mix_source = tokenized_curriculum[mix_key]
-			num_mix = int(len(mix_source) * mix_ratio)
-			perm = torch.randperm(len(mix_source))[:num_mix].tolist()
-			mixed_seqs = [mix_source[i] for i in perm]
-			stage_sequences.extend(mixed_seqs)
+	for epoch in range(current_epoch, 129):
+		# Chequear neurogénesis al inicio de la época (si corresponde a una transición de fase)
+		if epoch == 17 and model.hidden_dim == 128:
+			model, optimizer = trigger_neurogenesis(model, optimizer, 256, glyphs, device, current_checkpoint_path, state_path, epoch, milestones_achieved, target_milestone)
+		elif epoch == 33 and model.hidden_dim == 256:
+			model, optimizer = trigger_neurogenesis(model, optimizer, 384, glyphs, device, current_checkpoint_path, state_path, epoch, milestones_achieved, target_milestone)
+		elif epoch == 49 and model.hidden_dim == 384:
+			model, optimizer = trigger_neurogenesis(model, optimizer, 512, glyphs, device, current_checkpoint_path, state_path, epoch, milestones_achieved, target_milestone)
+		elif epoch == 65 and model.hidden_dim == 512:
+			model, optimizer = trigger_neurogenesis(model, optimizer, 640, glyphs, device, current_checkpoint_path, state_path, epoch, milestones_achieved, target_milestone)
+		elif epoch == 81 and model.hidden_dim == 640:
+			model, optimizer = trigger_neurogenesis(model, optimizer, 768, glyphs, device, current_checkpoint_path, state_path, epoch, milestones_achieved, target_milestone)
+		elif epoch == 97 and model.hidden_dim == 768:
+			model, optimizer = trigger_neurogenesis(model, optimizer, 896, glyphs, device, current_checkpoint_path, state_path, epoch, milestones_achieved, target_milestone)
+		elif epoch == 113 and model.hidden_dim == 896:
+			model, optimizer = trigger_neurogenesis(model, optimizer, 1024, glyphs, device, current_checkpoint_path, state_path, epoch, milestones_achieved, target_milestone)
 
-		print(f"  ✓ Total secuencias de entrenamiento: {len(stage_sequences)}")
+		# Cargar/compilar dataset para la etapa
+		stage_idx, stage_name, base_data = get_stage_info(epoch)
+		if stage_idx != active_stage_idx:
+			print(f"\n🎒 [CAMBIO DE ETAPA] Época {epoch}: Compilando dataset para la etapa {stage_name}...")
+			train_seqs, val_seqs = compile_stage_dataset(base_data, seq_len=128)
+			x_train = torch.tensor(train_seqs, dtype=torch.long)
+			x_val = torch.tensor(val_seqs, dtype=torch.long) if len(val_seqs) > 0 else None
+			active_stage_idx = stage_idx
+			print(f"  ✓ Secuencias de entrenamiento: {len(x_train)} | Validación: {len(x_val) if x_val is not None else 0}")
 
-		# Pad a seq_len = 128
-		padded_sequences = []
-		for seq in stage_sequences:
-			seq = seq + [0] * (seq_len - len(seq)) if len(seq) < seq_len else seq[:seq_len]
-			padded_sequences.append(seq)
+		# Annealing de temperatura Gumbel
+		tau = max(0.1, 1.0 - (1.0 - 0.1) * ((epoch - 1) / 127.0))
 
-		x_train = torch.tensor(padded_sequences, dtype=torch.long)
+		model.train()
+		epoch_loss = 0.0
+		permutation = torch.randperm(x_train.size(0))
 
-		optimizer = torch.optim.AdamW(model.parameters(), lr=4e-4, weight_decay=0.01)
+		for i in range(0, x_train.size(0), batch_size):
+			indices = permutation[i : i + batch_size]
+			batch_x = x_train[indices]
 
-		passed = False
-		for epoch in range(max_epochs_per_stage):
-			model.train()
-			epoch_loss = 0.0
-			permutation = torch.randperm(x_train.size(0))
+			try:
+				optimizer.zero_grad()
+				inputs = batch_x[:, :-1].to(device)
+				targets = batch_x[:, 1:].to(device)
 
-			for i in range(0, x_train.size(0), batch_size):
-				indices = permutation[i : i + batch_size]
-				batch_x = x_train[indices]
+				logits = model(inputs, tau=tau)
 
-				try:
+				loss_elementwise = F.cross_entropy(logits.reshape(-1, vocab_size), targets.reshape(-1), reduction="none")
+				loss_elementwise = loss_elementwise.reshape(targets.shape)
+				is_zero = (targets == 0).to(torch.int32)
+				cumsum_zero = torch.cumsum(is_zero, dim=-1)
+				mask = (cumsum_zero <= 1).to(logits.dtype)
+
+				loss = (loss_elementwise * mask).sum() / mask.sum()
+				loss.backward()
+				torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
+				optimizer.step()
+
+				epoch_loss += loss.item() * batch_x.size(0)
+			except torch.cuda.OutOfMemoryError:
+				if device.type == "cuda":
+					print("⚠️ CUDA OutOfMemoryError detectado. Liberando caché y migrando entrenamiento a CPU...")
+					torch.cuda.empty_cache()
+					device = torch.device("cpu")
+					model = model.to(device)
+					for state_opt in optimizer.state.values():
+						for k, v in state_opt.items():
+							if isinstance(v, torch.Tensor):
+								state_opt[k] = v.to(device)
+
+					# Reintentar en CPU
 					optimizer.zero_grad()
 					inputs = batch_x[:, :-1].to(device)
 					targets = batch_x[:, 1:].to(device)
+					logits = model(inputs, tau=tau)
 
-					logits = model(inputs)
-
-					# Loss con máscara dinámica para aprender el token de parada (<pad> / 0)
 					loss_elementwise = F.cross_entropy(logits.reshape(-1, vocab_size), targets.reshape(-1), reduction="none")
 					loss_elementwise = loss_elementwise.reshape(targets.shape)
 					is_zero = (targets == 0).to(torch.int32)
@@ -440,151 +780,155 @@ def run_school_training():
 					optimizer.step()
 
 					epoch_loss += loss.item() * batch_x.size(0)
-				except torch.cuda.OutOfMemoryError:
-					if device.type == "cuda":
-						print("⚠️ CUDA OutOfMemoryError detectado. Liberando caché y migrando entrenamiento a CPU...")
-						torch.cuda.empty_cache()
-						device = torch.device("cpu")
-						model = model.to(device)
-						for state_opt in optimizer.state.values():
-							for k, v in state_opt.items():
-								if isinstance(v, torch.Tensor):
-									state_opt[k] = v.to(device)
+				else:
+					raise
 
-						# Reintentar en CPU
-						optimizer.zero_grad()
-						inputs = batch_x[:, :-1].to(device)
-						targets = batch_x[:, 1:].to(device)
-						logits = model(inputs)
+		epoch_loss /= x_train.size(0)
 
-						# Loss con máscara dinámica para aprender el token de parada (<pad> / 0)
-						loss_elementwise = F.cross_entropy(logits.reshape(-1, vocab_size), targets.reshape(-1), reduction="none")
-						loss_elementwise = loss_elementwise.reshape(targets.shape)
-						is_zero = (targets == 0).to(torch.int32)
-						cumsum_zero = torch.cumsum(is_zero, dim=-1)
-						mask = (cumsum_zero <= 1).to(logits.dtype)
+		# Calcular pérdida de validación (val_loss)
+		val_loss = 0.0
+		if x_val is not None and len(x_val) > 0:
+			model.eval()
+			with torch.no_grad():
+				for vi in range(0, x_val.size(0), batch_size):
+					batch_xv = x_val[vi : vi + batch_size].to(device)
+					inputs_v = batch_xv[:, :-1]
+					targets_v = batch_xv[:, 1:]
 
-						loss = (loss_elementwise * mask).sum() / mask.sum()
-						loss.backward()
-						torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
-						optimizer.step()
+					logits_v = model(inputs_v)
+					loss_v_elem = F.cross_entropy(logits_v.reshape(-1, vocab_size), targets_v.reshape(-1), reduction="none")
+					loss_v_elem = loss_v_elem.reshape(targets_v.shape)
+					is_zero_v = (targets_v == 0).to(torch.int32)
+					cumsum_zero_v = torch.cumsum(is_zero_v, dim=-1)
+					mask_v = (cumsum_zero_v <= 1).to(logits_v.dtype)
 
-						epoch_loss += loss.item() * batch_x.size(0)
-					else:
-						raise
+					loss_v = (loss_v_elem * mask_v).sum() / mask_v.sum()
+					val_loss += loss_v.item() * batch_xv.size(0)
+				val_loss /= x_val.size(0)
 
-			epoch_loss /= x_train.size(0)
-			print(f"  [Época {epoch + 1:2d}] Loss: {epoch_loss:.4f} (Consecutive failures: {consecutive_failures})")
+		print(f"  [Época {epoch:2d}] Loss: {epoch_loss:.4f} | Val Loss: {val_loss:.4f} | tau: {tau:.4f} | dim: {model.hidden_dim}")
 
-			# Realizar exámenes de promoción al final de cada época (acumulativo)
-			passed = True
-			for prev_stage_idx in range(stage_idx + 1):
-				prev_stage_name = stages[prev_stage_idx]["name"]
-				print(f"📝 [EXAMEN ACUMULATIVO] Evaluando nivel: {prev_stage_name.upper()}")
-				stage_passed, exam_results = evaluate_exam(model, preprocessed_exams[prev_stage_name], idx_to_word, device)
-				if not stage_passed:
-					passed = False
+		# Muestreo cualitativo en consola (coherencia semántica)
+		print("  🔍 [Muestra cualitativa] Generación del modelo:")
+		model.eval()
+		qual_seeds = ["yo sentir", "fuego estar", "madre decir"]
+		for seed in qual_seeds:
+			seed_words = re.findall(r"[a-zA-ZáéíóúüñÁÉÍÓÚÜÑ_]+", seed.lower())
+			mapped_seed = [dictionary.map_to_base_word(w) for w in seed_words]
+			seed_tokens = [word_to_idx.get(w, 1) for w in mapped_seed]
 
-			# Guardar checkpoint activo recurrente
-			torch.save(model.state_dict(), current_checkpoint_path)
+			gen_tokens = list(seed_tokens)
+			for _ in range(5):
+				padded_in = gen_tokens + [0] * (128 - len(gen_tokens)) if len(gen_tokens) < 128 else gen_tokens[-128:]
+				x_in = torch.tensor([padded_in], dtype=torch.long, device=device)
+				with torch.no_grad():
+					logits_out = model(x_in)
+				last_idx = len(gen_tokens) - 1
+				next_token = logits_out[0, last_idx].argmax(dim=-1).item()
+				if next_token == 0:
+					break
+				gen_tokens.append(next_token)
 
-			if passed:
-				print(
-					f"🏆 ¡PROMOCIÓN! El modelo ha aprobado todas las materias acumuladas del curso {stage_name.upper()} con una nota superior al 80%."
-				)
+			gen_text = " ".join([idx_to_word.get(t, "<unk>") for t in gen_tokens])
+			print(f"    - Prompter: '{seed}' ➔ '{gen_text}'")
 
-				# Forzar evaluación de Samantha al pasar curso
-				model, _ = run_samantha_eval(
-					model=model,
-					current_checkpoint_path=current_checkpoint_path,
-					target_milestone=target_milestone,
-					save_dir=save_dir,
-					stage_idx=stage_idx,
-					stage_name=stage_name,
-					milestones_achieved=milestones_achieved,
-					state_path=state_path,
-					args=args,
-					device=device,
-					base_dir=base_dir,
-				)
-				# Si Samantha no superó el hito (y retornó sin salir), se queda repitiendo
-				passed = False
+		# Guardar checkpoint y actualizar estado para la siguiente época
+		torch.save(model.state_dict(), current_checkpoint_path)
+		with open(state_path, "w", encoding="utf-8") as sf:
+			json.dump(
+				{
+					"current_epoch": epoch + 1,
+					"current_stage_idx": stage_idx,
+					"hidden_dim": model.hidden_dim,
+					"num_layers": len(model.core_layers),
+					"target_milestone": target_milestone,
+					"milestones_achieved": milestones_achieved,
+				},
+				sf,
+				indent=4,
+			)
 
-			if not passed:
-				consecutive_failures += 1
-				print(
-					f"🔄 El modelo ha suspendido alguna materia en el currículo acumulativo. Debe repetir curso y continuar estudiando en {stage_name.upper()}..."
-				)
-
-				# Actualizar persistencia del contador
-				with open(state_path, "w", encoding="utf-8") as sf:
-					json.dump(
-						{
-							"current_stage_idx": stage_idx,
-							"hidden_dim": model.hidden_dim,
-							"num_layers": len(model.core_layers),
-							"consecutive_failures": consecutive_failures,
-							"target_milestone": target_milestone,
-							"milestones_achieved": milestones_achieved,
-						},
-						sf,
-						indent=4,
-					)
-
-				# Neurogénesis gradual: trigger en 20 fallos consecutivos (Cognitive Plateau)
-				if consecutive_failures >= 20:
-					from src.bitnet.net2net import net2wider_model
-
-					new_dim = model.hidden_dim + 128
-					print(f"\n🧬 [NEUROGÉNESIS GRADUAL] Plateau cognitivo detectado ({consecutive_failures} fallos).")
-					print(f"🧬 Ampliando dimensión oculta del Core: {model.hidden_dim} ➔ {new_dim}...")
-
-					# Guardar pesos antes del Net2Net
-					torch.save(model.state_dict(), current_checkpoint_path)
-
-					# Re-instanciar modelo mayor conservando la equivalencia de pesos
-					model = net2wider_model(model, new_hidden_dim=new_dim, noise_std=0.01).to(device)
-
-					# Re-iniciar optimizador con los nuevos parámetros del modelo
-					optimizer = torch.optim.AdamW(model.parameters(), lr=4e-4, weight_decay=0.01)
-					consecutive_failures = 0
-
-					# Guardar de inmediato
-					torch.save(model.state_dict(), current_checkpoint_path)
-					with open(state_path, "w", encoding="utf-8") as sf:
-						json.dump(
-							{
-								"current_stage_idx": stage_idx,
-								"hidden_dim": model.hidden_dim,
-								"num_layers": len(model.core_layers),
-								"consecutive_failures": 0,
-								"target_milestone": target_milestone,
-								"milestones_achieved": milestones_achieved,
-							},
-							sf,
-							indent=4,
-						)
-					print(f"🧬 Neurogénesis completada. Nuevos parámetros totales: {sum(p.numel() for p in model.parameters()):,}\n")
-
-			# Evaluar sessional cada 20 épocas
-			if (epoch + 1) % 20 == 0:
-				model, _ = run_samantha_eval(
-					model=model,
-					current_checkpoint_path=current_checkpoint_path,
-					target_milestone=target_milestone,
-					save_dir=save_dir,
-					stage_idx=stage_idx,
-					stage_name=stage_name,
-					milestones_achieved=milestones_achieved,
-					state_path=state_path,
-					args=args,
-					device=device,
-					base_dir=base_dir,
-				)
-
-		if not passed:
-			print(f"❌ ERROR: El modelo no logró aprobar todas las materias acumuladas de {stage_name.upper()} tras {max_epochs_per_stage} épocas.")
-			raise RuntimeError(f"Promoción denegada: El modelo no aprobó todas las materias del curso {stage_name.upper()}.")
+		# Evaluar Samantha al final de cada hito
+		if epoch == 64:
+			print("\n🎓 [EXAMEN DE GRADUACIÓN] Iniciando evaluación con la Profesora Samantha para el hito de 4 años...")
+			model, _ = run_samantha_eval(
+				model=model,
+				current_checkpoint_path=current_checkpoint_path,
+				target_milestone=target_milestone,
+				save_dir=save_dir,
+				stage_idx=3,
+				stage_name="preschool",
+				milestones_achieved=milestones_achieved,
+				state_path=state_path,
+				args=args,
+				device=device,
+				base_dir=base_dir,
+				epoch=epoch,
+			)
+		elif epoch == 80:
+			print("\n🎓 [EXAMEN DE GRADO] Iniciando evaluación con la Profesora Samantha para el hito de 5 años...")
+			model, _ = run_samantha_eval(
+				model=model,
+				current_checkpoint_path=current_checkpoint_path,
+				target_milestone=target_milestone,
+				save_dir=save_dir,
+				stage_idx=4,
+				stage_name="primary_5",
+				milestones_achieved=milestones_achieved,
+				state_path=state_path,
+				args=args,
+				device=device,
+				base_dir=base_dir,
+				epoch=epoch,
+			)
+		elif epoch == 96:
+			print("\n🎓 [EXAMEN DE GRADO] Iniciando evaluación con la Profesora Samantha para el hito de 6 años...")
+			model, _ = run_samantha_eval(
+				model=model,
+				current_checkpoint_path=current_checkpoint_path,
+				target_milestone=target_milestone,
+				save_dir=save_dir,
+				stage_idx=5,
+				stage_name="primary_6",
+				milestones_achieved=milestones_achieved,
+				state_path=state_path,
+				args=args,
+				device=device,
+				base_dir=base_dir,
+				epoch=epoch,
+			)
+		elif epoch == 112:
+			print("\n🎓 [EXAMEN DE GRADO] Iniciando evaluación con la Profesora Samantha para el hito de 7 años...")
+			model, _ = run_samantha_eval(
+				model=model,
+				current_checkpoint_path=current_checkpoint_path,
+				target_milestone=target_milestone,
+				save_dir=save_dir,
+				stage_idx=6,
+				stage_name="secondary_7",
+				milestones_achieved=milestones_achieved,
+				state_path=state_path,
+				args=args,
+				device=device,
+				base_dir=base_dir,
+				epoch=epoch,
+			)
+		elif epoch == 128:
+			print("\n🎓 [EXAMEN DE GRADUACIÓN FINAL] Iniciando evaluación con la Profesora Samantha para el hito de 8 años...")
+			model, _ = run_samantha_eval(
+				model=model,
+				current_checkpoint_path=current_checkpoint_path,
+				target_milestone=target_milestone,
+				save_dir=save_dir,
+				stage_idx=7,
+				stage_name="secondary_8",
+				milestones_achieved=milestones_achieved,
+				state_path=state_path,
+				args=args,
+				device=device,
+				base_dir=base_dir,
+				epoch=epoch,
+			)
 
 	# Guardar modelo final definitivo
 	final_path = os.path.join(save_dir, "model_final.pt")

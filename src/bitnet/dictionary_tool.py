@@ -29,6 +29,7 @@ class SovereignDictionary:
 		self.base_embeddings = None  # Se inicializa perezosamente para ahorrar tiempo
 		self.sharing_venv_python = "/home/joan/Documents/IA/sharing/.venv/bin/python"
 		self.sharing_src = "/home/joan/Documents/IA/sharing/src"
+		self.mapping_cache = {}  # Caché para acelerar mapeo semántico de palabras OOV
 
 	def _get_base_embeddings(self):
 		if self.base_embeddings is None:
@@ -41,10 +42,16 @@ class SovereignDictionary:
 		if word in self.vocab_set:
 			return word
 
+		# Comprobar en el caché
+		if word in self.mapping_cache:
+			return self.mapping_cache[word]
+
 		# Stemming simple para plurals
 		if word.endswith("s") and word[:-1] in self.vocab_set:
+			self.mapping_cache[word] = word[:-1]
 			return word[:-1]
 		if word.endswith("es") and word[:-2] in self.vocab_set:
+			self.mapping_cache[word] = word[:-2]
 			return word[:-2]
 
 		# Calcular embedding de la palabra desconocida
@@ -59,6 +66,9 @@ class SovereignDictionary:
 
 		best_idx = np.argmax(similarities)
 		mapped_word = self.base_vocab[best_idx]
+		
+		# Guardar en caché
+		self.mapping_cache[word] = mapped_word
 		return mapped_word
 
 	def buscar_en_samantha(self, word: str) -> str:

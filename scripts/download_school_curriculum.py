@@ -95,8 +95,8 @@ def run_download_curriculum():
 				raw_sentences = split_into_sentences(raw_text)
 				print(f"    ✓ Descargado. Encontradas {len(raw_sentences)} frases candidatas.")
 				
-				# Procesar un subconjunto de frases (máximo 150 frases por libro para mantener equilibrio)
-				selected_sentences = raw_sentences[:150]
+				# Procesar un subconjunto de frases (máximo 5000 frases por libro para enriquecer el corpus)
+				selected_sentences = raw_sentences[:5000]
 				processed_count = 0
 				
 				for sentence in selected_sentences:
@@ -138,9 +138,9 @@ def run_download_curriculum():
 								cleaned_sentence = " ".join(mapped_words)
 								school_dataset["secondary"].append(cleaned_sentence)
 								count += 1
-							if count >= 200: # Limitar a 200 frases de Borges para equilibrio
+							if count >= 5000: # Limitar a 5000 frases de Borges para equilibrio
 								break
-					if count >= 200:
+					if count >= 5000:
 						break
 			print(f"    ✓ Añadidas {count} frases de Borges a Secundaria.")
 		except Exception as e:

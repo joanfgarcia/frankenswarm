@@ -68,10 +68,21 @@ expert = ExpertNode(
 
 Every document in the repository must follow strict formatting and naming rules:
 
-- **Repo Root & Main Docs**: Use `UPPER_SNAKE_CASE.md` (e.g., [ARCHITECTURE.md](file:///home/joan/Documents/IA/frankenswarm/docs/ARCHITECTURE.md), [CONVENTIONS.md](file:///home/joan/Documents/IA/frankenswarm/CONVENTIONS.md), [EXPERTS_ROSTER.md](file:///home/joan/Documents/IA/frankenswarm/docs/EXPERTS_ROSTER.md)).
-- **External Audits (`docs/extern/`)**: Named `STAGE_AUDITOR.md` where `AUDITOR` is one of: `CLAUDE`, `DEEPSEEK`, `GROK`, `LUMO` (e.g. [POST_EXP_006_DEEPSEEK.md](file:///home/joan/Documents/IA/frankenswarm/docs/extern/POST_EXP_006_DEEPSEEK.md)).
+- **Repo Root & Main Docs**: Use `UPPER_SNAKE_CASE.md` (e.g., [ARCHITECTURE.md](docs/ARCHITECTURE.md), [CONVENTIONS.md](CONVENTIONS.md), [EXPERTS_ROSTER.md](docs/EXPERTS_ROSTER.md)).
+- **External Audits (`docs/extern/`)**: Named `STAGE_AUDITOR.md` where `AUDITOR` is one of: `CLAUDE`, `DEEPSEEK`, `GROK`, `LUMO` (e.g. [POST_EXP_006_DEEPSEEK.md](docs/extern/POST_EXP_006_DEEPSEEK.md)).
 - **Standard Metadata Header**: Every audit report must start with a YAML-style blockquote specifying Auditor, Role, Target Stage, and Date, separated by a horizontal line.
 - **Raw Outputs**: Relocated to the `docs/extern/raw/` subdirectory (e.g. `EXP_005_PROTO_SYNTAX.md`) to keep the main audits list clean.
+
+---
+
+## 🚨 RULE 7: Live Vocabulary & Collision-Free Semantic Mapping
+
+When using models with constrained vocabularies based on semantic signatures or glyphs (e.g., EXP_034):
+- **Natural Coverage Vocabulary**: The base vocabulary size must scale proportionally to the agent's cognitive stage. For the school stage (up to 8 years old), the base vocabulary must span at least **15,000 words** to prevent mapping common everyday terms to disconnected words.
+- **No Blind Vector Similarity**: Never map out-of-vocabulary (OOV) words using direct sentence-transformer cosine similarity on single words, as it leads to severe semantic distortions (e.g., *"pajaritos"* ➔ *"cálmate"*, *"calcetines"* ➔ *"cálmate"*).
+- **Coherent Fallback Mechanisms**: If a word is out of the base vocabulary, the mapping pipeline must:
+  1. Apply rigorous morphological stemming or lemmatization first.
+  2. If stemming fails, project it to its hypernym or structured semantic definition (e.g., using WordNet or deterministic Samantha templates) instead of black-box vector proximity.
 
 ---
 

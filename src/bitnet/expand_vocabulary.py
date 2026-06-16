@@ -119,12 +119,12 @@ if os.path.exists(freq_words_path):
 				# Validar que es una palabra alfabética real de al menos 2 letras
 				if re.match(r'^[a-zA-ZáéíóúüñÁÉÍÓÚÜÑ_]{2,}$', w):
 					word_set.add(w)
-					if len(word_set) >= 3000:
+					if len(word_set) >= 15000:
 						break
 
-# Si no llegamos a 3000, autocompletamos con variaciones numeradas (sólo como fallback)
+# Si no llegamos a 15000, autocompletamos con variaciones numeradas (sólo como fallback)
 i = 0
-while len(word_set) < 3000:
+while len(word_set) < 15000:
 	word_set.add(f"palabra_{i}")
 	i += 1
 

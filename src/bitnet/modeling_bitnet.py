@@ -249,7 +249,7 @@ class BitNet4LayerModel(nn.Module):
 		self.glyph_embedding.register_buffer("glyph_table", new_table)
 		self.vocab_size = self.glyph_embedding.vocab_size
 
-	def forward(self, x: torch.Tensor, logit_mask: torch.Tensor = None) -> torch.Tensor:
+	def forward(self, x: torch.Tensor, logit_mask: torch.Tensor = None, tau: float = None) -> torch.Tensor:
 		"""
 		Paso forward estándar (sin resonancia).
 		x puede ser:
@@ -654,6 +654,7 @@ class BitNet4LayerModel(nn.Module):
 		pos_mode: str = "clock",
 		logit_mask: torch.Tensor = None,
 		emotion_ids: torch.Tensor = None,
+		tau: float = 0.5,
 	) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, dict]:
 		"""
 		Variante de forward_deep_think para entrenamiento con BPTT.
@@ -694,7 +695,7 @@ class BitNet4LayerModel(nn.Module):
 
 		# ═══ PUENTE: Decodificar a tokens (Gumbel-Softmax diferenciable) ═══
 		logits_bridge = self._decode_hidden(h_think, logit_mask=logit_mask)
-		soft_tokens = F.gumbel_softmax(logits_bridge, tau=0.5, hard=False, dim=-1)
+		soft_tokens = F.gumbel_softmax(logits_bridge, tau=tau, hard=False, dim=-1)
 
 		# ═══ FASE 2: VERIFICAR (re-inyección diferenciable) ═══
 		h_verify = self._embed_input(soft_tokens)

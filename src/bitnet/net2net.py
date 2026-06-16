@@ -189,7 +189,13 @@ def get_random_mapping(old_dim, new_dim):
 	)
 
 
-def net2wider_model(old_model: nn.Module, new_hidden_dim: int, noise_std: float = 0.01) -> nn.Module:
+def net2wider_model(
+	old_model: nn.Module,
+	new_hidden_dim: int,
+	noise_std: float = 0.01,
+	old_optimizer: torch.optim.Optimizer = None,
+	new_optimizer: torch.optim.Optimizer = None
+) -> nn.Module:
 	"""
 	Net2WiderNet: Expande la dimensión oculta (hidden_dim) de todo el modelo BitNet4LayerModel.
 	Transfiere y adapta todos los pesos y bias de forma funcionalmente equivalente (preserva la salida).
@@ -248,6 +254,30 @@ def net2wider_model(old_model: nn.Module, new_hidden_dim: int, noise_std: float 
 	ahw_copy_count = ahw_copy_count.to(device)
 	ahw_is_clone = ahw_is_clone.to(device)
 
+	def transfer_state(old_p, new_p, map_fn, scale_fn=None):
+		if old_optimizer is None or new_optimizer is None:
+			return
+		if old_p not in old_optimizer.state:
+			return
+		old_state = old_optimizer.state[old_p]
+		new_state = {}
+		if "step" in old_state:
+			step_val = old_state["step"]
+			new_state["step"] = step_val.clone() if isinstance(step_val, torch.Tensor) else step_val
+		if "exp_avg" in old_state:
+			m = old_state["exp_avg"]
+			mapped_m = map_fn(m)
+			if scale_fn is not None:
+				mapped_m = scale_fn(mapped_m, 1)
+			new_state["exp_avg"] = mapped_m.clone()
+		if "exp_avg_sq" in old_state:
+			v = old_state["exp_avg_sq"]
+			mapped_v = map_fn(v)
+			if scale_fn is not None:
+				mapped_v = scale_fn(mapped_v, 2)
+			new_state["exp_avg_sq"] = mapped_v.clone()
+		new_optimizer.state[new_p] = new_state
+
 	with torch.no_grad():
 		# --- A. Glyph Embedding ---
 		if use_glyphs:
@@ -256,12 +286,35 @@ def net2wider_model(old_model: nn.Module, new_hidden_dim: int, noise_std: float 
 			noise = torch.randn_like(new_pe) * noise_std
 			new_pe = new_pe + noise * is_clone.unsqueeze(0)
 			new_model.glyph_embedding.prime_embeddings.copy_(new_pe)
+
+			transfer_state(
+				old_model.glyph_embedding.prime_embeddings,
+				new_model.glyph_embedding.prime_embeddings,
+				lambda x: x[:, g],
+				lambda x, power: x / (copy_count[g].unsqueeze(0) ** power)
+			)
 		else:
 			old_w = old_model.inbound_proj.weight.data
 			new_w = old_w[g, :]
 			noise = torch.randn_like(new_w) * noise_std
 			new_w = new_w + noise * is_clone.unsqueeze(1)
 			new_model.inbound_proj.weight.copy_(new_w)
+
+			transfer_state(
+				old_model.inbound_proj.weight,
+				new_model.inbound_proj.weight,
+				lambda x: x[g, :],
+				lambda x, power: x / (copy_count[g].unsqueeze(1) ** power)
+			)
+
+			if old_model.inbound_proj.bias is not None:
+				new_model.inbound_proj.bias.copy_(old_model.inbound_proj.bias.data[g])
+				transfer_state(
+					old_model.inbound_proj.bias,
+					new_model.inbound_proj.bias,
+					lambda x: x[g],
+					lambda x, power: x / (copy_count[g] ** power)
+				)
 
 		# --- B. Pos Embedding & Resonance Clock ---
 		if use_pos_embedding and getattr(old_model, "pos_embedding", None) is not None:
@@ -271,12 +324,26 @@ def net2wider_model(old_model: nn.Module, new_hidden_dim: int, noise_std: float 
 			new_pos = new_pos + noise * is_clone.view(1, 1, -1)
 			new_model.pos_embedding.copy_(new_pos)
 
+			transfer_state(
+				old_model.pos_embedding,
+				new_model.pos_embedding,
+				lambda x: x[:, :, g],
+				lambda x, power: x / (copy_count[g].view(1, 1, -1) ** power)
+			)
+
 		if getattr(old_model, "resonance_clock", None) is not None:
 			old_clock = old_model.resonance_clock.data
 			new_clock = old_clock[:, :, g]
 			noise = torch.randn_like(new_clock) * noise_std
 			new_clock = new_clock + noise * is_clone.view(1, 1, -1)
 			new_model.resonance_clock.copy_(new_clock)
+
+			transfer_state(
+				old_model.resonance_clock,
+				new_model.resonance_clock,
+				lambda x: x[:, :, g],
+				lambda x, power: x / (copy_count[g].view(1, 1, -1) ** power)
+			)
 
 		# --- C. Emotion Proj ---
 		if old_model.emotion_proj is not None:
@@ -286,6 +353,22 @@ def net2wider_model(old_model: nn.Module, new_hidden_dim: int, noise_std: float 
 			new_w = new_w + noise * is_clone.unsqueeze(1)
 			new_model.emotion_proj.weight.copy_(new_w)
 
+			transfer_state(
+				old_model.emotion_proj.weight,
+				new_model.emotion_proj.weight,
+				lambda x: x[g, :],
+				lambda x, power: x / (copy_count[g].unsqueeze(1) ** power)
+			)
+
+			if old_model.emotion_proj.bias is not None:
+				new_model.emotion_proj.bias.copy_(old_model.emotion_proj.bias.data[g])
+				transfer_state(
+					old_model.emotion_proj.bias,
+					new_model.emotion_proj.bias,
+					lambda x: x[g],
+					lambda x, power: x / (copy_count[g] ** power)
+				)
+
 			if emotion_mode == "gated":
 				old_w = old_model.emotion_gate.weight.data
 				new_w = old_w[g][:, g] / copy_count[g].unsqueeze(0)
@@ -294,11 +377,47 @@ def net2wider_model(old_model: nn.Module, new_hidden_dim: int, noise_std: float 
 				new_w = new_w + noise * clone_mask
 				new_model.emotion_gate.weight.copy_(new_w)
 
+				transfer_state(
+					old_model.emotion_gate.weight,
+					new_model.emotion_gate.weight,
+					lambda x: x[g][:, g],
+					lambda x, power: x / ((copy_count[g].unsqueeze(0) * copy_count[g].unsqueeze(1)) ** power)
+				)
+
+				if old_model.emotion_gate.bias is not None:
+					new_model.emotion_gate.bias.copy_(old_model.emotion_gate.bias.data[g])
+					transfer_state(
+						old_model.emotion_gate.bias,
+						new_model.emotion_gate.bias,
+						lambda x: x[g],
+						lambda x, power: x / (copy_count[g] ** power)
+					)
+
 			new_model.emotion_embeddings.weight.copy_(old_model.emotion_embeddings.weight.data)
+			transfer_state(
+				old_model.emotion_embeddings.weight,
+				new_model.emotion_embeddings.weight,
+				lambda x: x,
+				None
+			)
 
 		# --- D. Core Layers (Transformer Blocks) ---
-		for _l_idx, (old_block, new_block) in enumerate(zip(old_model.core_layers, new_model.core_layers, strict=False)):
+		for l_idx, (old_block, new_block) in enumerate(zip(old_model.core_layers, new_model.core_layers, strict=False)):
 			new_block.attn_norm.weight.copy_(old_block.attn_norm.weight.data[g])
+			transfer_state(
+				old_block.attn_norm.weight,
+				new_block.attn_norm.weight,
+				lambda x: x[g],
+				lambda x, power: x / (copy_count[g] ** power)
+			)
+			if getattr(old_block.attn_norm, "bias", None) is not None:
+				new_block.attn_norm.bias.copy_(old_block.attn_norm.bias.data[g])
+				transfer_state(
+					old_block.attn_norm.bias,
+					new_block.attn_norm.bias,
+					lambda x: x[g],
+					lambda x, power: x / (copy_count[g] ** power)
+				)
 
 			# Attention: q_proj, k_proj, v_proj
 			old_head_dim = old_hidden_dim // num_heads
@@ -314,14 +433,34 @@ def net2wider_model(old_model: nn.Module, new_hidden_dim: int, noise_std: float 
 				if proj_name == "q_proj":
 					scale_vector = scale_factor / torch.sqrt(copy_count[g])
 					new_w = new_w * scale_vector.unsqueeze(1)
+					scale_w = (1.0 / copy_count[g].unsqueeze(0)) * (scale_factor / torch.sqrt(copy_count[g].unsqueeze(1)))
 				elif proj_name == "k_proj":
 					scale_vector = 1.0 / torch.sqrt(copy_count[g])
 					new_w = new_w * scale_vector.unsqueeze(1)
+					scale_w = (1.0 / copy_count[g].unsqueeze(0)) * (1.0 / torch.sqrt(copy_count[g].unsqueeze(1)))
+				elif proj_name == "v_proj":
+					scale_w = 1.0 / copy_count[g].unsqueeze(0)
 
 				noise = torch.randn_like(new_w) * noise_std
 				clone_mask = is_clone.unsqueeze(0) | is_clone.unsqueeze(1)
 				new_w = new_w + noise * clone_mask
 				new_proj.weight.copy_(new_w)
+
+				transfer_state(
+					old_proj.weight,
+					new_proj.weight,
+					lambda x: x[g][:, g],
+					lambda x, power, s_w=scale_w: x * (s_w ** power)
+				)
+
+				if old_proj.bias is not None:
+					new_proj.bias.copy_(old_proj.bias.data[g])
+					transfer_state(
+						old_proj.bias,
+						new_proj.bias,
+						lambda x: x[g],
+						lambda x, power: x / (copy_count[g] ** power)
+					)
 
 			# out_proj
 			old_proj = old_block.attn.out_proj
@@ -333,8 +472,38 @@ def net2wider_model(old_model: nn.Module, new_hidden_dim: int, noise_std: float 
 			new_w = new_w + noise * clone_mask
 			new_proj.weight.copy_(new_w)
 
+			transfer_state(
+				old_proj.weight,
+				new_proj.weight,
+				lambda x: x[g][:, g],
+				lambda x, power: x / (copy_count[g].unsqueeze(0) ** power)
+			)
+
+			if old_proj.bias is not None:
+				new_proj.bias.copy_(old_proj.bias.data[g])
+				transfer_state(
+					old_proj.bias,
+					new_proj.bias,
+					lambda x: x[g],
+					lambda x, power: x / (copy_count[g] ** power)
+				)
+
 			# mlp_norm
 			new_block.mlp_norm.weight.copy_(old_block.mlp_norm.weight.data[g])
+			transfer_state(
+				old_block.mlp_norm.weight,
+				new_block.mlp_norm.weight,
+				lambda x: x[g],
+				lambda x, power: x / (copy_count[g] ** power)
+			)
+			if getattr(old_block.mlp_norm, "bias", None) is not None:
+				new_block.mlp_norm.bias.copy_(old_block.mlp_norm.bias.data[g])
+				transfer_state(
+					old_block.mlp_norm.bias,
+					new_block.mlp_norm.bias,
+					lambda x: x[g],
+					lambda x, power: x / (copy_count[g] ** power)
+				)
 
 			# mlp up_proj
 			old_up = old_block.mlp.up_proj
@@ -354,6 +523,22 @@ def net2wider_model(old_model: nn.Module, new_hidden_dim: int, noise_std: float 
 			new_w = new_w + noise * clone_mask
 			new_up.weight.copy_(new_w)
 
+			transfer_state(
+				old_up.weight,
+				new_up.weight,
+				lambda x, g_m=g_mlp: x[g_m][:, g],
+				lambda x, power: x / (copy_count[g].unsqueeze(0) ** power)
+			)
+
+			if old_up.bias is not None:
+				new_up.bias.copy_(old_up.bias.data[g_mlp])
+				transfer_state(
+					old_up.bias,
+					new_up.bias,
+					lambda x, g_m=g_mlp: x[g_m],
+					lambda x, power, m_cc=mlp_copy_count, g_m=g_mlp: x / (m_cc[g_m] ** power)
+				)
+
 			# mlp down_proj
 			old_down = old_block.mlp.down_proj
 			new_down = new_block.mlp.down_proj
@@ -364,8 +549,38 @@ def net2wider_model(old_model: nn.Module, new_hidden_dim: int, noise_std: float 
 			new_w = new_w + noise * clone_mask
 			new_down.weight.copy_(new_w)
 
+			transfer_state(
+				old_down.weight,
+				new_down.weight,
+				lambda x, g_m=g_mlp: x[g][:, g_m],
+				lambda x, power, m_cc=mlp_copy_count, g_m=g_mlp: x / (m_cc[g_m].unsqueeze(0) ** power)
+			)
+
+			if old_down.bias is not None:
+				new_down.bias.copy_(old_down.bias.data[g])
+				transfer_state(
+					old_down.bias,
+					new_down.bias,
+					lambda x: x[g],
+					lambda x, power: x / (copy_count[g] ** power)
+				)
+
 		# --- E. Norm ---
 		new_model.norm.weight.copy_(old_model.norm.weight.data[g])
+		transfer_state(
+			old_model.norm.weight,
+			new_model.norm.weight,
+			lambda x: x[g],
+			lambda x, power: x / (copy_count[g] ** power)
+		)
+		if getattr(old_model.norm, "bias", None) is not None:
+			new_model.norm.bias.copy_(old_model.norm.bias.data[g])
+			transfer_state(
+				old_model.norm.bias,
+				new_model.norm.bias,
+				lambda x: x[g],
+				lambda x, power: x / (copy_count[g] ** power)
+			)
 
 		# --- F. Outbound Proj ---
 		if not use_glyphs:
@@ -374,6 +589,22 @@ def net2wider_model(old_model: nn.Module, new_hidden_dim: int, noise_std: float 
 			noise = torch.randn_like(new_w) * noise_std
 			new_w = new_w + noise * is_clone.unsqueeze(0)
 			new_model.outbound_proj.weight.copy_(new_w)
+
+			transfer_state(
+				old_model.outbound_proj.weight,
+				new_model.outbound_proj.weight,
+				lambda x: x[:, g],
+				lambda x, power: x / (copy_count[g].unsqueeze(0) ** power)
+			)
+
+			if old_model.outbound_proj.bias is not None:
+				new_model.outbound_proj.bias.copy_(old_model.outbound_proj.bias.data)
+				transfer_state(
+					old_model.outbound_proj.bias,
+					new_model.outbound_proj.bias,
+					lambda x: x,
+					None
+				)
 
 		# --- G. Action Head ---
 		old_w = old_model.action_head[0].weight.data
@@ -384,12 +615,38 @@ def net2wider_model(old_model: nn.Module, new_hidden_dim: int, noise_std: float 
 		new_model.action_head[0].weight.copy_(new_w)
 		new_model.action_head[0].bias.copy_(old_model.action_head[0].bias.data[g_ahw])
 
+		transfer_state(
+			old_model.action_head[0].weight,
+			new_model.action_head[0].weight,
+			lambda x: x[g_ahw][:, g],
+			lambda x, power: x / (copy_count[g].unsqueeze(0) ** power)
+		)
+		transfer_state(
+			old_model.action_head[0].bias,
+			new_model.action_head[0].bias,
+			lambda x: x[g_ahw],
+			lambda x, power: x / (ahw_copy_count[g_ahw] ** power)
+		)
+
 		old_w = old_model.action_head[2].weight.data
 		new_w = old_w[:, g_ahw] / ahw_copy_count[g_ahw].unsqueeze(0)
 		noise = torch.randn_like(new_w) * noise_std
 		new_w = new_w + noise * ahw_is_clone.unsqueeze(0)
 		new_model.action_head[2].weight.copy_(new_w)
 		new_model.action_head[2].bias.copy_(old_model.action_head[2].bias.data)
+
+		transfer_state(
+			old_model.action_head[2].weight,
+			new_model.action_head[2].weight,
+			lambda x: x[:, g_ahw],
+			lambda x, power: x / (ahw_copy_count[g_ahw].unsqueeze(0) ** power)
+		)
+		transfer_state(
+			old_model.action_head[2].bias,
+			new_model.action_head[2].bias,
+			lambda x: x,
+			None
+		)
 
 		# --- H. Value Head ---
 		old_w = old_model.value_head[0].weight.data
@@ -399,12 +656,38 @@ def net2wider_model(old_model: nn.Module, new_hidden_dim: int, noise_std: float 
 		new_model.value_head[0].weight.copy_(new_w)
 		new_model.value_head[0].bias.copy_(old_model.value_head[0].bias.data[g_ahw])
 
+		transfer_state(
+			old_model.value_head[0].weight,
+			new_model.value_head[0].weight,
+			lambda x: x[g_ahw][:, g],
+			lambda x, power: x / (copy_count[g].unsqueeze(0) ** power)
+		)
+		transfer_state(
+			old_model.value_head[0].bias,
+			new_model.value_head[0].bias,
+			lambda x: x[g_ahw],
+			lambda x, power: x / (ahw_copy_count[g_ahw] ** power)
+		)
+
 		old_w = old_model.value_head[2].weight.data
 		new_w = old_w[:, g_ahw] / ahw_copy_count[g_ahw].unsqueeze(0)
 		noise = torch.randn_like(new_w) * noise_std
 		new_w = new_w + noise * ahw_is_clone.unsqueeze(0)
 		new_model.value_head[2].weight.copy_(new_w)
 		new_model.value_head[2].bias.copy_(old_model.value_head[2].bias.data)
+
+		transfer_state(
+			old_model.value_head[2].weight,
+			new_model.value_head[2].weight,
+			lambda x: x[:, g_ahw],
+			lambda x, power: x / (ahw_copy_count[g_ahw].unsqueeze(0) ** power)
+		)
+		transfer_state(
+			old_model.value_head[2].bias,
+			new_model.value_head[2].bias,
+			lambda x: x,
+			None
+		)
 
 		# --- I. Glyph Projection Head ---
 		old_w = old_model.glyph_projection_head[0].weight.data
@@ -414,8 +697,37 @@ def net2wider_model(old_model: nn.Module, new_hidden_dim: int, noise_std: float 
 		new_model.glyph_projection_head[0].weight.copy_(new_w)
 		new_model.glyph_projection_head[0].bias.copy_(old_model.glyph_projection_head[0].bias.data)
 
+		transfer_state(
+			old_model.glyph_projection_head[0].weight,
+			new_model.glyph_projection_head[0].weight,
+			lambda x: x[:, g],
+			lambda x, power: x / (copy_count[g].unsqueeze(0) ** power)
+		)
+		transfer_state(
+			old_model.glyph_projection_head[0].bias,
+			new_model.glyph_projection_head[0].bias,
+			lambda x: x,
+			None
+		)
+
 		new_model.glyph_projection_head[2].weight.copy_(old_model.glyph_projection_head[2].weight.data)
 		new_model.glyph_projection_head[2].bias.copy_(old_model.glyph_projection_head[2].bias.data)
+
+		transfer_state(
+			old_model.glyph_projection_head[2].weight,
+			new_model.glyph_projection_head[2].weight,
+			lambda x: x,
+			None
+		)
+		transfer_state(
+			old_model.glyph_projection_head[2].bias,
+			new_model.glyph_projection_head[2].bias,
+			lambda x: x,
+			None
+		)
+
+	if new_optimizer is not None:
+		new_optimizer.param_groups[0]['params'] = list(new_model.parameters())
 
 	return new_model
 
