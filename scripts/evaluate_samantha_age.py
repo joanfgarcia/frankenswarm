@@ -114,7 +114,54 @@ except Exception as e:
 	return None
 
 
+def get_allowed_vocab_for_age(age: int, base_dir: str) -> set[str]:
+	curriculum_path = os.path.join(base_dir, "configs", "school_curriculum.json")
+	childes_path = os.path.join(base_dir, "configs", "childes_pre_school.json")
+	nsm_path = os.path.join(base_dir, "configs", "nsm_physics_pre_school.json")
+
+	with open(curriculum_path, encoding="utf-8") as f:
+		curriculum_data = json.load(f)
+
+	preschool_words = set()
+	for sentence in curriculum_data.get("preschool", []):
+		words = re.findall(r"[a-zA-ZáéíóúüñÁÉÍÓÚÜÑ_]+", sentence.lower())
+		preschool_words.update(words)
+
+	if os.path.exists(childes_path):
+		with open(childes_path, encoding="utf-8") as f:
+			childes_data = json.load(f)
+		for sentence in childes_data:
+			words = re.findall(r"[a-zA-ZáéíóúüñÁÉÍÓÚÜÑ_]+", sentence.lower())
+			preschool_words.update(words)
+
+	if os.path.exists(nsm_path):
+		with open(nsm_path, encoding="utf-8") as f:
+			nsm_data = json.load(f)
+		for sentence in nsm_data:
+			words = re.findall(r"[a-zA-ZáéíóúüñÁÉÍÓÚÜÑ_]+", sentence.lower())
+			preschool_words.update(words)
+
+	if age <= 4:
+		return preschool_words
+
+	primary_words = set()
+	for sentence in curriculum_data.get("primary", []):
+		words = re.findall(r"[a-zA-ZáéíóúüñÁÉÍÓÚÜÑ_]+", sentence.lower())
+		primary_words.update(words)
+
+	if age <= 6:
+		return preschool_words | primary_words
+
+	secondary_words = set()
+	for sentence in curriculum_data.get("secondary", []):
+		words = re.findall(r"[a-zA-ZáéíóúüñÁÉÍÓÚÜÑ_]+", sentence.lower())
+		secondary_words.update(words)
+
+	return preschool_words | primary_words | secondary_words
+
+
 def run_evaluation(args):
+
 	device = torch.device(args.device)
 	base_dir = "/home/joan/Documents/IA/frankenswarm"
 	expanded_glyphs_path = os.path.join(base_dir, "configs", "expanded_glyphs.json")
@@ -193,17 +240,39 @@ def run_evaluation(args):
 	if args.device == "cuda":
 		torch.cuda.empty_cache()
 
-	# 4. Formular el prompt evaluador para Samantha (Mistral 7B)
+	# 4. Escaneo de vocabulario fuera de edad (Monitor de Alucinaciones Controladas)
+	allowed_vocab = get_allowed_vocab_for_age(target_age, base_dir)
+	oob_words_found = {}
+	for qa in qa_pairs:
+		ans = qa["answer"]
+		ans_words = re.findall(r"[a-zA-ZáéíóúüñÁÉÍÓÚÜÑ_]+", ans.lower())
+		oob = [w for w in ans_words if w not in allowed_vocab]
+		if oob:
+			oob_words_found[qa["question"]] = oob
+
+	if oob_words_found:
+		print("\n⚠️ [ALERTA DE VOCABULARIO FUERA DE EDAD - DETECTADO]")
+		print("Se han detectado tokens que no corresponden al desarrollo cognitivo de la edad actual:")
+		for q, words_list in oob_words_found.items():
+			print(f"   - En respuesta a '{q}': {words_list}")
+		print("Esto puede deberse a ruido estocástico del output head proyectado (15k) o deriva semántica.")
+		print("============================================================\n")
+
+	# 5. Formular el prompt evaluador para Samantha (Mistral 7B)
 	system_prompt = (
 		"Eres la Profesora Samantha, una experta en psicología infantil y lingüística. "
-		"Estás evaluando el habla y desarrollo cognitivo de un niño de 4 a 8 años. "
+		"Estás evaluando el habla y desarrollo cognitivo de un niño de 4 a 8 años.\n"
 		"Tu tarea es analizar la respuesta del alumno para cada pregunta y determinar si demuestra "
-		"comprensión semántica, lógica física básica y coherencia sintáctica para su edad. "
+		"comprensión semántica, lógica física básica y coherencia sintáctica para su edad.\n"
 		"No exijas una coincidencia de palabras exacta; valora positivamente sinónimos, expresiones semánticamente "
 		"equivalentes y respuestas con sentido lógico (por ejemplo, si se espera 'mucho' ante 'el sol brilla', "
 		"respuestas como 'alto', 'caliente' o 'luz' son válidas; si se espera 'dolor' ante 'si toco el fuego', "
-		"respuestas como 'quema', 'caliente' o 'malo' son válidas). "
-		"Califica cada respuesta de 0 a 10 y detalla tu motivo. "
+		"respuestas como 'quema', 'caliente' o 'malo' son válidas).\n"
+		"Sin embargo, debes penalizar rigurosamente:\n"
+		"- Respuestas con lenguaje metafórico abstracto o excesivamente complejo para la edad cognitiva dada (por ejemplo, un niño de 4 años no debe responder con terminología científica o conceptos abstractos complejos).\n"
+		f"- Respuestas que correspondan a etapas de desarrollo superiores. Si la edad evaluada es {target_age} años, el niño NO debe responder con palabras de primaria o secundaria (como 'asteroide', 'población', 'cáncer', 'oxígeno', 'espejos', 'infinitos', 'tiempo', 'capital'). Si el alumno usa vocabulario fuera de su rango de edad (como palabras escolares complejas o conceptos de matemáticas avanzadas), la calificación de esa pregunta debe ser castigada a un rango de 0 a 3.\n"
+		"- Respuestas que contengan palabras de ruido/alucinación aleatoria que no tengan coherencia sintáctica o gramatical en una frase simple.\n\n"
+		"Califica cada respuesta de 0 a 10 y detalla tu motivo.\n"
 		"Debes responder ÚNICAMENTE con un objeto JSON válido que siga exactamente este formato:\n"
 		"{\n"
 		'  "calificaciones": [\n'
@@ -220,6 +289,13 @@ def run_evaluation(args):
 		prompt += f'{idx + 1}. Pregunta: "{qa["question"]}"\n'
 		prompt += f'   Respuesta del alumno: "{qa["answer"]}"\n'
 		prompt += f'   Respuesta correcta esperada: "{qa["expected"]}"\n\n'
+
+	if oob_words_found:
+		prompt += "⚠️ ALERTA DE VOCABULARIO ANÓMALO DETECTADO POR EL SISTEMA:\n"
+		prompt += f"El sistema de detección automática de anomalías ha encontrado que las siguientes respuestas contienen palabras que están completamente fuera del rango de desarrollo de {target_age} años:\n"
+		for q, words_list in oob_words_found.items():
+			prompt += f"   - En respuesta a '{q}': se detectó la palabra/s {words_list}\n"
+		prompt += "Por favor, ten en cuenta esta alerta de vocabulario y penaliza severamente el uso de estas palabras anómalas (asignando notas muy bajas, de 0 a 3, en las preguntas correspondientes).\n\n"
 
 	print(f"\n📡 Enviando examen del hito de {target_age} años a la Profesora Samantha para calificar...")
 	print("--- DEBUG PROMPT ---")

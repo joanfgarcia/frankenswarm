@@ -47,3 +47,9 @@ For every major training run and architectural pivot on the Bit visuo-semantic g
 * **Progress**:
   * *Epoch 52*: Loss `5.2537` | Val Loss `5.4464` (Sample: *"yo sentir"* ➔ *"yo sentir asteroide"*).
   * *Epoch 53*: Loss `5.1649` | Val Loss `5.4662` (Sample: *"madre decir"* ➔ *"madre decir población"*).
+  * *Epoch 60*: Loss `4.4990` | Val Loss `5.7607` (Sample: *"yo sentir"* ➔ *"yo sentir cáncer"*).
+  * *Epoch 63*: Loss `4.2461` | Val Loss `5.9461` (Sample: *"yo sentir"* ➔ *"yo sentir asteroide"*).
+  * *Hito 4 años (Epoch 64)*:
+    * **Hardened Samantha Evaluator**: Implemented automated out-of-age vocabulary detection to parse `school_curriculum.json` and flag advanced/OOB tokens (e.g. primary/secondary words generated during preschool).
+    * **LLM Prompter Hardening**: Instructed Samantha to grade out-of-age terms in a strict 0-3 range, passing explicit anomaly flags directly into the LLM context.
+    * **Embedding Orthogonality**: Running `audit_projected_embeddings.py` confirmed that the 15k embedding space remains highly orthogonal (mean similarity `0.0335`, std dev `0.2807`) and that words like "asteroide" and "población" show minimal alignment to core active verbs/nouns, verifying that their generation is stochastic head noise rather than semantic collapse.

@@ -231,6 +231,12 @@ def run_samantha_eval(
 		print("   PYTHONPATH=. .venv/bin/python playground/chat_school_agent.py\n")
 		print("👋 Pausando el bucle de entrenamiento. ¡Buen trabajo, profesora! Entrenador detenido.")
 		sys.exit(0)
+	else:
+		print(f"\n❌ [EXAMEN SUSPENDIDO] El alumno ha suspendido el examen del hito de {eval_age} años.")
+		print(f"🛑 [PAUSA DE REVISIÓN] Estado guardado en: {state_path}")
+		print("💬 Por favor, revisa las calificaciones de Samantha arriba.")
+		print("👋 Deteniendo el entrenamiento para análisis y revisión manual.")
+		sys.exit(1)
 
 	return model, False
 
@@ -452,9 +458,21 @@ def run_school_training():
 	tokenized_preschool = [seq for seq in tokenized_preschool if len(seq) >= 2]
 
 	# Cargar y tokenizar currículo preescolar de school_curriculum.json
-	preschool_curriculum_sentences = curriculum_data.get("preschool", [])
+	english_stop_words = {"and", "the", "of", "in", "to", "is", "it", "that", "you", "was", "for", "on", "with", "his", "they", "he", "she", "at", "by", "this", "but", "from", "are", "as"}
+
+	def clean_curriculum(sentences):
+		cleaned = []
+		for s in sentences:
+			words = re.findall(r"[a-zA-ZáéíóúüñÁÉÍÓÚÜÑ_]+", s.lower())
+			if not any(w in english_stop_words for w in words):
+				cleaned.append(s)
+		return cleaned
+
+	preschool_curriculum_sentences = clean_curriculum(curriculum_data.get("preschool", []))
+	print(f"🎒 [LIMPIEZA DE DATOS] Currículo Preschool filtrado: {len(curriculum_data.get('preschool', []))} ➔ {len(preschool_curriculum_sentences)} limpio.")
 	tokenized_preschool_curriculum = [tokenize(s, word_to_idx) for s in preschool_curriculum_sentences]
 	tokenized_preschool_curriculum = [seq for seq in tokenized_preschool_curriculum if len(seq) >= 2]
+
 
 	# Mezclar 10% de diálogos
 	num_dialogues = int(len(tokenized_dialogues) * 0.1)
@@ -528,8 +546,10 @@ def run_school_training():
 
 	# Usar currículo escolar ya cargado (primaria y secundaria)
 
-	primary_sentences = curriculum_data.get("primary", [])
-	secondary_sentences = curriculum_data.get("secondary", [])
+	primary_sentences = clean_curriculum(curriculum_data.get("primary", []))
+	secondary_sentences = clean_curriculum(curriculum_data.get("secondary", []))
+	print(f"🎒 [LIMPIEZA DE DATOS] Currículo Primary filtrado: {len(curriculum_data.get('primary', []))} ➔ {len(primary_sentences)} limpio.")
+	print(f"🎒 [LIMPIEZA DE DATOS] Currículo Secondary filtrado: {len(curriculum_data.get('secondary', []))} ➔ {len(secondary_sentences)} limpio.")
 
 	tokenized_primary = [tokenize(s, word_to_idx) for s in primary_sentences]
 	tokenized_primary = [seq for seq in tokenized_primary if len(seq) >= 2]
