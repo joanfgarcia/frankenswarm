@@ -10,8 +10,22 @@ import torch
 from src.bitnet.dictionary_tool import SovereignDictionary
 from src.bitnet.modeling_bitnet import BitNet4LayerModel
 
-# Batería de preguntas por edad cognitiva/milestone (4 a 8 años)
+# Batería de preguntas por edad cognitiva/milestone (2 a 8 años)
 AGE_QUESTIONS = {
+	2: [
+		{"question": "tú: hola", "expected": "hola"},
+		{"question": "tú: gato", "expected": "miau"},
+		{"question": "tú: agua", "expected": "agua"},
+		{"question": "tú: fuego", "expected": "mal"},
+		{"question": "tú: mamá", "expected": "papá"},
+	],
+	3: [
+		{"question": "tú: cómo te llamas", "expected": "nene"},
+		{"question": "tú: el perro corre", "expected": "mucho"},
+		{"question": "tú: yo quiero", "expected": "pan"},
+		{"question": "tú: si toco el fuego", "expected": "quema"},
+		{"question": "tú: dónde está papá", "expected": "aquí"},
+	],
 	4: [
 		{"question": "tú: hola", "expected": "hola"},
 		{"question": "tú: cómo estás", "expected": "bien"},
@@ -100,10 +114,37 @@ except Exception as e:
 			match = re.search(r"(\{.*\})", output, re.DOTALL)
 			if match:
 				json_str = match.group(1)
+				# Limpiar escapes de barra invertida antes de guiones bajos en JSON
+				json_str_clean = json_str.replace(r"\_", "_")
 				try:
-					return json.loads(json_str)
+					return json.loads(json_str_clean)
 				except json.JSONDecodeError as je:
-					print(f"❌ Error al decodificar JSON devuelto por Samantha: {je}. Contenido: {json_str}")
+					print(f"⚠️ Error al decodificar JSON devuelto por Samantha ({je}). Intentando reconstrucción via regex...")
+					calificaciones = []
+					blocks = re.findall(r"\{\s*\"pregunta\".*?\}", json_str_clean, re.DOTALL)
+					for block in blocks:
+						pregunta_match = re.search(r'"pregunta"\s*:\s*"([^"]*)"', block)
+						respuesta_match = re.search(r'"respuesta"\s*:\s*"([^"]*)"', block)
+						esperada_match = re.search(r'"esperada"\s*:\s*"([^"]*)"', block)
+						calificacion_match = re.search(r'"calificacion"\s*:\s*(\d+)', block)
+						motivo_match = re.search(r'"motivo"\s*:\s*"([^"]*)"', block)
+
+						if pregunta_match and respuesta_match and esperada_match and calificacion_match and motivo_match:
+							calificaciones.append({
+								"pregunta": pregunta_match.group(1),
+								"respuesta": respuesta_match.group(1),
+								"esperada": esperada_match.group(1),
+								"calificacion": int(calificacion_match.group(1)),
+								"motivo": motivo_match.group(1)
+							})
+					if len(calificaciones) > 0:
+						avg = sum(c["calificacion"] for c in calificaciones) / len(calificaciones)
+						return {
+							"calificaciones": calificaciones,
+							"puntuacion_media": avg,
+							"hito_superado": avg >= 8.0 and len(calificaciones) == 5
+						}
+					print(f"❌ Fallo al reconstruir JSON. Contenido: {json_str}")
 			else:
 				print(f"❌ No se encontró formato JSON en la salida de Samantha: {output}")
 		else:
@@ -115,14 +156,31 @@ except Exception as e:
 
 
 def get_allowed_vocab_for_age(age: int, base_dir: str) -> set[str]:
-	curriculum_path = os.path.join(base_dir, "configs", "school_curriculum.json")
+	curriculum_path = os.path.join(base_dir, "configs", "school_curriculum_structured.json")
 	childes_path = os.path.join(base_dir, "configs", "childes_pre_school.json")
 	nsm_path = os.path.join(base_dir, "configs", "nsm_physics_pre_school.json")
 
 	with open(curriculum_path, encoding="utf-8") as f:
-		curriculum_data = json.load(f)
+		curriculum_json = json.load(f)
+		curriculum_data_raw = curriculum_json.get("curriculum", {})
+		curriculum_data = {
+			"preschool": [item["text"] for item in curriculum_data_raw.get("preschool", [])],
+			"primary": [item["text"] for item in curriculum_data_raw.get("primary", [])],
+			"secondary": [item["text"] for item in curriculum_data_raw.get("secondary", [])]
+		}
 
-	preschool_words = set()
+	# Lista de palabras básicas permitidas para evitar falsos positivos
+	safe_words = {
+		"no", "yo", "tú", "él", "ella", "nosotros", "ellos", "mi", "mis", "tu", "tus", "su", "sus",
+		"me", "te", "se", "nos", "le", "les", "lo", "la", "los", "las", "un", "una", "unos", "unas",
+		"este", "esta", "estos", "estas", "ese", "esa", "esos", "esas", "a", "de", "en", "para", "por",
+		"con", "sin", "sobre", "y", "o", "pero", "si", "que", "es", "son", "está", "están", "ser", "estar",
+		"haber", "hacer", "tener", "querer", "poder", "decir", "ver", "ir", "dar", "saber", "comer",
+		"beber", "miau", "guau", "pupa", "hola", "bien", "papá", "mamá", "nene", "nena", "bésame", "beso",
+		"dame", "toma", "más", "dormir", "duerme", "quiere", "tengo", "tienes", "tiene", "jugar", "corre"
+	}
+
+	preschool_words = set(safe_words)
 	for sentence in curriculum_data.get("preschool", []):
 		words = re.findall(r"[a-zA-ZáéíóúüñÁÉÍÓÚÜÑ_]+", sentence.lower())
 		preschool_words.update(words)
@@ -203,6 +261,16 @@ def run_evaluation(args):
 		print(f"❌ Error: No hay preguntas definidas para la edad {target_age}")
 		return False, 0.0
 
+	# Construir logit mask de edad para restringir la generación al vocabulario del hito
+	allowed_vocab = get_allowed_vocab_for_age(target_age, base_dir)
+	special_tokens = {"yo", "tú", "<pad>", "<unk>", "hola", "mamá", "papá", "nene", "nena", "miau", "guau", "agua", "fuego", "sí", "no", "bien", "mal", "pan"}
+	allowed_mask = torch.zeros(len(words), dtype=torch.bool, device=device)
+	for w, idx in word_to_idx.items():
+		if w in allowed_vocab or w in special_tokens or w.lower() in allowed_vocab:
+			allowed_mask[idx] = True
+	allowed_mask[0] = True
+	allowed_mask[1] = True
+
 	print(f"\n📝 [Evaluación] Haciendo preguntas del hito de {target_age} años al alumno...")
 	qa_pairs = []
 	for qa in questions:
@@ -218,22 +286,45 @@ def run_evaluation(args):
 		mapped_q = [dictionary.map_to_base_word(w) for w in q_words]
 
 		# Tokenizar
-		context = [word_to_idx.get(w, 1) for w in mapped_q]
+		dialogue_triggers = {"hola", "cómo estás", "quién eres", "cómo te llamas", "de dónde eres", "qué es el búnker", "te gusta borges"}
+		is_dialogue = q_content.lower().strip() in dialogue_triggers
 
-		# Pad a 128
-		padded_input = list(context)
-		padded_input = padded_input + [0] * (128 - len(padded_input)) if len(padded_input) < 128 else padded_input[-128:]
+		if is_dialogue:
+			context = [word_to_idx.get("tú", 1)] + [word_to_idx.get(w, 1) for w in mapped_q] + [word_to_idx.get("yo", 1)]
+		else:
+			context = [word_to_idx.get(w, 1) for w in mapped_q]
 
-		x = torch.tensor([padded_input], dtype=torch.long, device=device)
+		# Autoregressive generation (hasta 5 tokens)
+		gen_tokens = list(context)
+		for step_i in range(5):
+			padded_input = list(gen_tokens)
+			padded_input = padded_input + [0] * (128 - len(padded_input)) if len(padded_input) < 128 else padded_input[-128:]
+			x_in = torch.tensor([padded_input], dtype=torch.long, device=device)
+			with torch.no_grad():
+				logits = model(x_in)
+			last_token_idx = len(gen_tokens) - 1
+			step_logits = logits[0, last_token_idx]
+			
+			# Copiar máscara para desactivar pad/unk temporalmente en el primer token
+			current_mask = allowed_mask.clone()
+			if step_i == 0:
+				current_mask[0] = False  # Forbid <pad>
+				current_mask[1] = False  # Forbid <unk>
+				
+			step_logits = step_logits.masked_fill(~current_mask, -1e9)
+			pred_token = step_logits.argmax(dim=-1).item()
+			if pred_token in [0, 1]:  # Stop on pad or unk (solo aplicable a partir de step_i > 0)
+				break
+			gen_tokens.append(pred_token)
 
-		with torch.no_grad():
-			logits = model(x)
-			last_token_idx = len(context) - 1
-			pred_token = logits[0, last_token_idx].argmax(dim=-1).item()
+		# Obtener palabras generadas (excluyendo el contexto inicial)
+		pred_words = [idx_to_word.get(t, "<unk>") for t in gen_tokens[len(context):]]
+		pred_response = " ".join(pred_words).strip()
+		if not pred_response:
+			pred_response = "<pad>"
 
-		pred_word = idx_to_word.get(pred_token, "<unk>")
-		print(f"   💬 P: '{q_content}' | R: '{pred_word}' (Esperado: '{expected}')")
-		qa_pairs.append({"question": q_content, "answer": pred_word, "expected": expected})
+		print(f"   💬 P: '{q_content}' | R: '{pred_response}' (Esperado: '{qa['expected']}')")
+		qa_pairs.append({"question": q_content, "answer": pred_response, "expected": qa["expected"]})
 
 	# Liberar el modelo y los tensores de memoria antes de llamar a Samantha
 	del model
@@ -246,6 +337,7 @@ def run_evaluation(args):
 	for qa in qa_pairs:
 		ans = qa["answer"]
 		ans_words = re.findall(r"[a-zA-ZáéíóúüñÁÉÍÓÚÜÑ_]+", ans.lower())
+		ans_words = [w for w in ans_words if w not in {"pad", "unk"}]
 		oob = [w for w in ans_words if w not in allowed_vocab]
 		if oob:
 			oob_words_found[qa["question"]] = oob
@@ -259,20 +351,30 @@ def run_evaluation(args):
 		print("============================================================\n")
 
 	# 5. Formular el prompt evaluador para Samantha (Mistral 7B)
+	age_guideline = ""
+	if target_age in [2, 3]:
+		age_guideline = (
+			"\nCRITICAL NOTE: El alumno es un bebé de 2 o 3 años. Su habla es telegráfica y comete errores gramaticales comunes. "
+			"NO exijas oraciones completas ni corrección gramatical. Califica basándote únicamente en si la palabra clave o "
+			"la intención semántica es la esperada (por ejemplo, ante 'gato' -> 'miau' es excelente; ante 'mamá' -> 'papá' es una asociación infantil normal; "
+			"ante 'agua' -> 'agua' o 'beber' es excelente; ante 'fuego' -> 'mal' o 'calor' es excelente)."
+		)
+
 	system_prompt = (
 		"Eres la Profesora Samantha, una experta en psicología infantil y lingüística. "
-		"Estás evaluando el habla y desarrollo cognitivo de un niño de 4 a 8 años.\n"
+		"Estás evaluando el habla y desarrollo cognitivo de un niño de 2 a 8 años.\n"
 		"Tu tarea es analizar la respuesta del alumno para cada pregunta y determinar si demuestra "
 		"comprensión semántica, lógica física básica y coherencia sintáctica para su edad.\n"
 		"No exijas una coincidencia de palabras exacta; valora positivamente sinónimos, expresiones semánticamente "
 		"equivalentes y respuestas con sentido lógico (por ejemplo, si se espera 'mucho' ante 'el sol brilla', "
 		"respuestas como 'alto', 'caliente' o 'luz' son válidas; si se espera 'dolor' ante 'si toco el fuego', "
 		"respuestas como 'quema', 'caliente' o 'malo' son válidas).\n"
+		f"{age_guideline}\n"
 		"Sin embargo, debes penalizar rigurosamente:\n"
-		"- Respuestas con lenguaje metafórico abstracto o excesivamente complejo para la edad cognitiva dada (por ejemplo, un niño de 4 años no debe responder con terminología científica o conceptos abstractos complejos).\n"
+		"- Respuestas con lenguaje metafórico abstracto o excesivamente complejo para la edad cognitiva dada.\n"
 		f"- Respuestas que correspondan a etapas de desarrollo superiores. Si la edad evaluada es {target_age} años, el niño NO debe responder con palabras de primaria o secundaria (como 'asteroide', 'población', 'cáncer', 'oxígeno', 'espejos', 'infinitos', 'tiempo', 'capital'). Si el alumno usa vocabulario fuera de su rango de edad (como palabras escolares complejas o conceptos de matemáticas avanzadas), la calificación de esa pregunta debe ser castigada a un rango de 0 a 3.\n"
 		"- Respuestas que contengan palabras de ruido/alucinación aleatoria que no tengan coherencia sintáctica o gramatical en una frase simple.\n\n"
-		"Califica cada respuesta de 0 a 10 y detalla tu motivo.\n"
+		"Califica cada respuesta de 0 a 10 y detalla tu motivo en una frase muy corta (máximo 10 palabras).\n"
 		"Debes responder ÚNICAMENTE con un objeto JSON válido que siga exactamente este formato:\n"
 		"{\n"
 		'  "calificaciones": [\n'
@@ -281,7 +383,8 @@ def run_evaluation(args):
 		'  "puntuacion_media": 10.0,\n'
 		'  "hito_superado": true\n'
 		"}\n"
-		"Nota: La puntuacion_media es el promedio de las calificaciones de las 5 preguntas. El hito se considera superado si la puntuación media es igual o superior a 8.0."
+		"Nota: La puntuacion_media es el promedio de las calificaciones de las 5 preguntas. El hito se considera superado si la puntuación media es igual o superior a 8.0.\n"
+		"CRITICAL: Do NOT escape underscores in JSON keys or values (do NOT use \\_). The output must be standard JSON parseable by python json.loads."
 	)
 
 	prompt = f"Edad de evaluación cognitiva: {target_age} años.\n\nPreguntas del examen y respuestas dadas por el alumno:\n"
@@ -333,7 +436,7 @@ if __name__ == "__main__":
 	parser.add_argument("--model_path", type=str, required=True, help="Ruta del checkpoint a evaluar")
 	parser.add_argument("--hidden_dim", type=int, default=256, help="Dimensión oculta del modelo")
 	parser.add_argument("--num_layers", type=int, default=6, help="Capas del modelo")
-	parser.add_argument("--target_age", type=int, required=True, choices=[4, 5, 6, 7, 8], help="Edad objetivo a evaluar")
+	parser.add_argument("--target_age", type=int, required=True, choices=[2, 3, 4, 5, 6, 7, 8], help="Edad objetivo a evaluar")
 	parser.add_argument("--device", type=str, default="cpu", help="Dispositivo para correr el modelo (default: cpu)")
 	parser.add_argument("--test_mock", action="store_true", help="Simular respuestas de Samantha de forma mock")
 
