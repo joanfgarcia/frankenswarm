@@ -31,3 +31,7 @@ Este snapshot documenta el estado técnico para permitir reiniciar la sesión li
 
 *   **Siguiente Paso**: Reanudar el entrenamiento de la Fase 4 (Hito de 5 años, 640-dim, 192 épocas, epochs 449 a 640) usando:
     `PYTHONPATH=. systemd-run --user --scope -p MemoryMax=10G .venv/bin/python src/bitnet/train_sovereign_school.py`
+
+## 5. Próximos Experimentos Propuestos (Evolución y Mezcla Heterogénea)
+1. **Curva Empírica de Supervivencia**: Correr el Dojo de Supervivencia (`train_survival_unified.py`) comparando la tasa de supervivencia (ticks de vida y recolección) de checkpoints de diferentes edades (3 años / 384-dim vs 4 años / 512-dim vs 5 años / 640-dim). Esto medirá cuantitativamente si a más edad escolar, mayor adaptabilidad física.
+2. **Comunicación Heterogénea Inter-generacional**: Ejecutar la arena cooperativa (`train_arena_distributed.py`) mezclando cerebros: Nico (hermano mayor con cerebro de 4 o 5 años en servidor de socket) y Sofy (hermana menor con cerebro de 3 años). Como el acoplamiento semántico mediante el vocabulario es parameter-free, la comunicación y delegación debe funcionar sin entrenamiento de adaptadores.
