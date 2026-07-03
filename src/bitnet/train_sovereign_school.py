@@ -461,6 +461,7 @@ def run_school_training():
 	parser.add_argument("--curriculum_mode", type=str, default="mixed", choices=["mixed", "childes_only", "structured_only"], help="Modo de currículo de entrenamiento")
 	parser.add_argument("--base_epochs", type=int, default=64, help="Número de épocas base por etapa")
 	parser.add_argument("--stage_scale", type=float, default=0.5, help="Escala de crecimiento de épocas por dificultad")
+	parser.add_argument("--batch_size", type=int, default=64, help="Batch size for training")
 	args, _ = parser.parse_known_args()
 
 	device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -723,7 +724,7 @@ def run_school_training():
 	optimizer = torch.optim.AdamW(model.parameters(), lr=4e-4 * lr_scale, weight_decay=0.05)
 
 	seq_len = 128
-	batch_size = 64
+	batch_size = args.batch_size
 
 	def get_stage_info(ep):
 		for config in stage_config:
