@@ -2,6 +2,25 @@
 
 ## [Unreleased]
 
+### 🧭 ROUTE CHANGE — School v3: Clean Vocabulary, Synthetic Corpus, Operational Milestones
+- **[AUDIT] Milestone-5 Cold Audit (`scratch/audit_bit_milestone5_fable.py`)**: Independent evaluation of `model_milestone_5_years.pt` (31.1M, 640-dim). Findings: grammar preference on novel sentences **14/15 (93%)** — the ternary+glyph substrate genuinely learns Spanish syntax — but free generation collapsed (1-4 words then `<pad>`, or sampling into the contaminated vocabulary tail). Full decision record: `docs/sessions/20260703/ROUTE_CHANGE_SCHOOL_V3.md`.
+- **[ROOT CAUSE] Ghost Vocabulary**: census proves 8,671 of 15,005 words (**57.8%**) never occur in the training corpus — imported by the 3k→15k expansion from a generic (subtitle-derived) frequency list, leaving live glyphs/logits the model cannot learn to suppress. Corpus total: 863,712 tokens (~1000x below TinyStories scale), 62% template-monotone dialogues.
+- **[FIX] `verify_milestone_4.py` causal-mask bug**: the harness built the model without `is_causal=True` — all manual milestone verifications ran with the wrong attention mask.
+- **[NEW] `scripts/rebuild_clean_vocabulary.py`**: clean-source census → `configs/clean_vocabulary_words.json` (6,361 words v1) to feed `expand_vocabulary` glyph re-derivation. OOV→`<unk>` always (Rule 7 upheld; the 15k *size* goal stays, the *source* changes to clean corpora + factory).
+- **[NEW] `scripts/samantha_story_factory.py`**: controlled-vocabulary synthetic corpus generator (graded stages, OOV ≤2% filter, dedup, resumable JSONL); designed to run unattended under the Sovereign Wake Gate. Volume target: 20-50M tokens.
+- **[NEW] `scripts/milestone_battery.py`**: judge-free milestone certification (M1-M4) with **pre-registered thresholds frozen in code**: grammar preference, held-out cloze, production health (length, natural stop, ghost-word rate). LLM judge demoted to secondary evaluation.
+- **[DECISION] Run-2 checkpoints archived as documented negative result** (vocab rebuild changes the glyph table → incompatible). Curriculum corrections: 5% held-out per stage, graded synthetic readers instead of Gutenberg, pain-triggered (validation-plateau) neurogenesis instead of scheduled growth, response-length variety.
+
+### 🛡️ Sovereign Wake Gate — Four-Check Doctrine for Autonomous Training
+- **[NEW] `src/swarm/wake_gate.py`**: autonomous launches require CONSENT (approved queue entry + config on disk), HARDWARE (VRAM ≥6G, no fever, operator absent ≥1h multi-signal — refuses to assume absence without signals), CONTAINMENT (cgroup `MemoryMax` + `RuntimeMaxSec`), BUDGET (≤2 autonomous runs/day). Grafted into `scripts/minion_scheduler.py` ahead of the subprocess; every decision — fire or hold — is recorded in `lab/wake_ledger.jsonl` (gitignored).
+- **[TEST] `tests/test_wake_gate.py`**: 13 tests with injected probes (no nvidia-smi, no wall clock). First live run correctly HELD on busy VRAM with a reasoned ledger entry.
+
+### 🧹 Repo Hygiene (Fable review, 2026-07-03)
+- **[FIX] pytest collection**: `pythonpath = ["."]` in `pyproject.toml` — suite went from 10/11 modules uncollectable (`ModuleNotFoundError: src`) to 46/46 green.
+- **[PRUNE] 30 fossilized experiment scripts** moved `src/bitnet/` → `lab/experiments/` (zero inbound imports + zero refs in REPRODUCE/DEMO_GUIDE/configs; entrypoints pinned by the papers stay). `src/bitnet` 67→37 files.
+- **[DOCS] "Why Bit?" positioning** added to README (EN+ES), paper 1 §1.1 (`.md`+`.tex`, PDF regenerated), and ROADMAP "Current Sequencing" (staged bet: School → Jungle Reboot with Nico/Sofy/Hugo from Bit's base brain → unpark MoE). Energy table rows labeled measured vs estimated.
+- **[DOCS] `lab/BRIEFING.md`** rewritten as honest snapshot; `lab/experiment_queue.yaml` flagged STALE pending reconciliation.
+
 ### 🎓 Vocabulary Redesign & Corpus Saneing (15,000 Words)
 - **[FIX] OOM-Shield in Hot Neurogenesis (`src/bitnet/train_sovereign_school.py`)**: Resolved the temporary VRAM spike that caused silent and permanent migration to CPU training during hot neurogenesis (weight mitosis). Implemented a temporary CPU-offloading pipeline in `trigger_neurogenesis` to perform the expansion and weight cloning of Net2WiderNet entirely on CPU, clear CUDA VRAM using `torch.cuda.empty_cache()`, and safely reload the expanded model and optimizer back to the GPU.
 - **[CONV] New Rule 7 in CONVENTIONS.md**: Documented the semantic collision failure mode (e.g., *"pajaritos"* ➔ *"cálmate"*) to enforce vocabularies of at least 15,000 words and prohibit blind vector similarity mappings for OOV tokens.

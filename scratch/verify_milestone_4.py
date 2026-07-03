@@ -1,7 +1,8 @@
-import os
-import sys
 import json
+import os
 import re
+import sys
+
 import numpy as np
 import torch
 
@@ -9,7 +10,8 @@ base_dir = "/home/joan/Documents/IA/frankenswarm"
 sys.path.append(base_dir)
 sys.path.append(os.path.join(base_dir, "src"))
 
-from bitnet.modeling_bitnet import BitNet4LayerModel
+from bitnet.modeling_bitnet import BitNet4LayerModel  # noqa: E402
+
 
 def tokenize(text: str, word_to_idx: dict) -> list[int]:
 	words = re.findall(r'[a-zA-ZáéíóúüñÁÉÍÓÚÜÑ_<>\-]+', text.lower())
@@ -28,7 +30,7 @@ def verify_model():
 	hidden_dim = 512
 	num_layers = 6
 
-	print(f"Loading milestone model (Age: 4 years)...")
+	print("Loading milestone model (Age: 4 years)...")
 	print(f"Dimension: {hidden_dim}, Layers: {num_layers}, Device: {device}")
 
 	with open(expanded_glyphs_path, encoding="utf-8") as f:
@@ -44,7 +46,9 @@ def verify_model():
 		glyph_table=glyphs,
 		hidden_dim=hidden_dim,
 		num_layers=num_layers,
-		use_pos_embedding=True
+		use_pos_embedding=True,
+		is_causal=True,
+		max_seq_len=128
 	).to(device)
 
 	state_dict = torch.load(checkpoint_path, map_location=device, weights_only=True)
