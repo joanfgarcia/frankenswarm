@@ -28,3 +28,4 @@ lab/.inbox/
 *.synctex.gz
 *.pdf
 
+lab/wake_ledger.jsonl
