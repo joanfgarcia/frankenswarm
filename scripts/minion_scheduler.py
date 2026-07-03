@@ -11,6 +11,8 @@ import yaml
 base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(base_dir)
 
+from src.swarm.wake_gate import build_contained_command, evaluate_gate, record_decision  # noqa: E402, I001
+
 
 
 def load_queue(queue_path: str) -> dict:
@@ -46,6 +48,30 @@ def run_next_experiment():
 	task_id = task["id"]
 	task_name = task.get("name", f"Experimento {task_id}")
 
+	config_path = f"configs/experiments/EXP_{task_id}.json"
+	script_name = task.get("script", "src.bitnet.train_generic")
+	script_file = "src/bitnet/train_generic.py"
+
+	if script_name != "src.bitnet.train_generic":
+		# Mapear script module a path de archivo
+		script_file = script_name.replace(".", "/") + ".py"
+
+	cmd = build_contained_command(script_file, config_path)
+
+	# Sovereign Wake Gate: las cuatro condiciones o no hay disparo
+	ledger_path = os.path.join(base_dir, "lab", "wake_ledger.jsonl")
+	decision = evaluate_gate(task, base_dir, cmd, ledger_path)
+	record_decision(ledger_path, decision)
+
+	if not decision.fire:
+		print(f"🛑 Gate cerrado para EXP_{task_id}. Motivos:")
+		for name, ok in decision.checks.items():
+			print(f"   {'✅' if ok else '❌'} {name}")
+		for reason in decision.reasons:
+			print(f"   · {reason}")
+		print(f"📒 Decisión registrada en {ledger_path}")
+		return
+
 	print(f"🚀 Iniciando {task_name} (ID: {task_id})...")
 
 	# Actualizar estado de experimento actual en el YAML
@@ -57,17 +83,6 @@ def run_next_experiment():
 	exp_dir = os.path.join(base_dir, "storage", "experiments", f"EXP_{task_id}")
 	os.makedirs(exp_dir, exist_ok=True)
 	log_path = os.path.join(exp_dir, "train.log")
-
-	# Comando con OOM Shield de systemd
-	config_path = f"configs/experiments/EXP_{task_id}.json"
-	script_name = task.get("script", "src.bitnet.train_generic")
-	script_file = "src/bitnet/train_generic.py"
-
-	if script_name != "src.bitnet.train_generic":
-		# Mapear script module a path de archivo
-		script_file = script_name.replace(".", "/") + ".py"
-
-	cmd = ["systemd-run", "--user", "--scope", "-p", "MemoryMax=10G", "env", "PYTHONPATH=.", ".venv/bin/python", script_file, "--config", config_path]
 
 	print(f"📋 Ejecutando: {' '.join(cmd)}")
 	print(f"📝 Redirigiendo salida a: {log_path}")
