@@ -3,9 +3,9 @@ import os
 
 import torch
 
-from src.bitnet.generalization_breeder import CompositionalMathDatasetBreeder
-from src.bitnet.modeling_bitnet import BitNet4LayerModel
-from src.bitnet.translator import SovereignTranslator
+from src.bitnet.data.generalization_breeder import CompositionalMathDatasetBreeder
+from src.bitnet.model.modeling_bitnet import BitNet4LayerModel
+from src.bitnet.translation.translator import SovereignTranslator
 
 
 def eval_generalization(experiment_id: str = "EXP_013"):

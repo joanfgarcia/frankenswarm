@@ -1,6 +1,6 @@
 # Cambio de Ruta: Escuela Soberana v3
 
-**Fecha**: 2026-07-03 · **Decisión**: Joan (Operador) · **Auditoría y propuesta**: Aleth (Claude Fable 5) · **Estado**: aprobado, pendiente de commit
+**Fecha**: 2026-07-03 · **Decisión**: Joan (Operador) · **Auditoría y propuesta**: Aleth (Claude Fable 5) · **Estado**: aprobado, parcialmente implementado (2026-07-06)
 
 ---
 
@@ -95,10 +95,11 @@ La fábrica está diseñada para correr desatendida bajo el **Sovereign Wake Gat
 3. **Secundaria ≠ Gutenberg.** Lecturas graduadas sintéticas en espiral (vocabulario
    anterior + N palabras nuevas por etapa); la literatura adulta es un precipicio de
    registro y una puerta de contaminación.
-4. **Neurogénesis por dolor, no por calendario.** Crecimiento 256→384→512→640 solo
-   cuando la loss de *validación* se estanque (plateau = dolor), no automáticamente
-   por etapa. Recupera el mecanismo del paper 1 en un entorno que por fin exige
-   capacidad.
+4. ✅ **Neurogénesis por dolor, no por calendario.** *(Implementado 2026-07-06)*
+   Crecimiento 256→384→512→640 solo cuando la loss de *validación* se estanque
+   (plateau = dolor), no automáticamente por etapa. Implementado con `--patience=15`
+   y `--min_delta=0.01` configurables. Estado persistido en `school_state.json`.
+   Helper `get_next_dim()` con ceiling por etapa. 17 tests.
 5. **Variedad de longitud en respuestas objetivo**, para no re-entrenar el colapso a
    `<pad>` ("mejor callo") que produjo el dataset monótono.
 

@@ -2,7 +2,7 @@ import os
 import re
 import urllib.request
 import json
-from src.bitnet.dictionary_tool import SovereignDictionary
+from src.bitnet.vocab.dictionary_tool import SovereignDictionary
 
 def clean_and_extract_words(line: str) -> list[str]:
 	# Quitar signos de puntuación comunes e interrogaciones/exclamaciones

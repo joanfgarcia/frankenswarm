@@ -2,6 +2,14 @@
 
 ## [Unreleased]
 
+### 🏗️ School v3 Consolidation — Codebase Restructuring & Bug Fixes (2026-07-06)
+- **[FIX] Temperature propagation in `samantha_on_demand.py`**: `invoke()` now accepts and propagates `temperature` parameter (default `0.7`). Previously hardcoded to `0.0` and callers passing `temperature=` raised `TypeError`. Affects 11+ consumers including `samantha_story_factory.py`.
+- **[FIX] Neurogenesis trigger: calendar → plateau**: Replaced the epoch-based (`epoch == config["start_epoch"]`) neurogenesis trigger with a validation-loss plateau monitor. The model now grows only when `val_loss` stagnates for `--patience` epochs (default 15). New CLI args: `--patience`, `--min_delta`. State persisted in `school_state.json` (`best_val_loss`, `epochs_without_improvement`, `neurogenesis_history`). Aligns with ROUTE_CHANGE_SCHOOL_V3.md specification.
+- **[REF] `src/bitnet/` reorganized into 10 submodules**: Flat directory (39 files) split into `model/`, `growth/`, `vocab/`, `worlds/`, `data/`, `operators/`, `training/`, `inference/`, `translation/`, `telemetry/`. Backward compatibility maintained via `MetaPathFinder` import hook in `__init__.py`. ~80 files updated across `scripts/`, `tests/`, `playground/`, `lab/`.
+- **[PRUNE] Legacy training scripts → `lab/experiments/`**: 10 training scripts from pre-School-v3 phases (`train_arena*.py`, `train_ppo.py`, `train_resonance.py`, etc.) moved out of `src/bitnet/`. Only `train_sovereign_school.py` remains as the active training script.
+- **[NEW] `get_next_dim()` helper**: Testable function for neurogenesis dim progression with stage ceiling support.
+- **[TEST] 26 new tests**: `test_samantha_temperature.py` (7), `test_story_factory.py` (9), `test_neurogenesis_plateau.py` (17, includes regression test confirming calendar trigger removal). Suite: 46 → 72 tests, all green.
+
 ### 🧭 ROUTE CHANGE — School v3: Clean Vocabulary, Synthetic Corpus, Operational Milestones
 - **[AUDIT] Milestone-5 Cold Audit (`scratch/audit_bit_milestone5_fable.py`)**: Independent evaluation of `model_milestone_5_years.pt` (31.1M, 640-dim). Findings: grammar preference on novel sentences **14/15 (93%)** — the ternary+glyph substrate genuinely learns Spanish syntax — but free generation collapsed (1-4 words then `<pad>`, or sampling into the contaminated vocabulary tail). Full decision record: `docs/sessions/20260703/ROUTE_CHANGE_SCHOOL_V3.md`.
 - **[ROOT CAUSE] Ghost Vocabulary**: census proves 8,671 of 15,005 words (**57.8%**) never occur in the training corpus — imported by the 3k→15k expansion from a generic (subtitle-derived) frequency list, leaving live glyphs/logits the model cannot learn to suppress. Corpus total: 863,712 tokens (~1000x below TinyStories scale), 62% template-monotone dialogues.

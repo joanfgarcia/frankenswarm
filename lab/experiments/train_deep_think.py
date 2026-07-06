@@ -28,7 +28,7 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 
-from src.bitnet.glyph_vocabulary import (
+from src.bitnet.vocab.glyph_vocabulary import (
 	EMOTION_INDEX,
 	N_EMOTIONS,
 	N_WORDS,
@@ -37,8 +37,8 @@ from src.bitnet.glyph_vocabulary import (
 	build_emotional_chains,
 	get_bifurcation_pairs,
 )
-from src.bitnet.modeling_bitnet import BitNet4LayerModel
-from src.bitnet.telemetry import ExperimentLogger
+from src.bitnet.model.modeling_bitnet import BitNet4LayerModel
+from src.bitnet.telemetry.telemetry import ExperimentLogger
 
 
 def svd_crossover(parent_a, parent_b, child, alpha=0.5, sigma=0.01):

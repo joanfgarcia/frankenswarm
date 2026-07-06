@@ -6,9 +6,9 @@ import torch
 # Ensure root dir is in sys.path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from src.bitnet.generalization_breeder import RelationalLogicDatasetBreeder
-from src.bitnet.modeling_bitnet import BitNet4LayerModel
-from src.bitnet.translator import SovereignTranslator
+from src.bitnet.data.generalization_breeder import RelationalLogicDatasetBreeder
+from src.bitnet.model.modeling_bitnet import BitNet4LayerModel
+from src.bitnet.translation.translator import SovereignTranslator
 
 
 def load_agent(checkpoint_path, vocab_embeddings):

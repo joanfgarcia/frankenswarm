@@ -1,6 +1,6 @@
 import torch
 
-from src.bitnet.modeling_conversational import BitNetCausalLM
+from src.bitnet.model.modeling_conversational import BitNetCausalLM
 
 
 def test_conversational_model_shapes():

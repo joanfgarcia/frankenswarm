@@ -90,7 +90,7 @@ echo "═══ PHASE 2: RANDOM BASELINE (5 seeds, proper MinimalWorld) ══�
 
 .venv/bin/python - << 'PYEOF'
 import numpy as np
-from src.bitnet.minimal_world import MinimalWorld, ACTIONS
+from src.bitnet.worlds.minimal_world import MinimalWorld, ACTIONS
 
 seeds = [42, 123, 456, 789, 1337]
 for seed in seeds:

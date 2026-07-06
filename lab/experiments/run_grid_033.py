@@ -7,8 +7,8 @@ Ejecuta las 9 condiciones experimentales secuencialmente:
     E: resonancia + emoción + fear (additive/gated/first_only)
 
 Uso:
-    python -m src.bitnet.run_grid_033
-    python -m src.bitnet.run_grid_033 --tasting    # Modo cata (40ep, 50 steps)
+    python -m lab.experiments.run_grid_033
+    python -m lab.experiments.run_grid_033 --tasting    # Modo cata (40ep, 50 steps)
 """
 
 import argparse
@@ -70,7 +70,7 @@ def main():
 			result = subprocess.run(
 				[
 					"systemd-run", "--user", "--scope", "-p", "MemoryMax=10G",
-					sys.executable, "-m", "src.bitnet.train_emotional_resonance",
+					sys.executable, "-m", "lab.experiments.train_emotional_resonance",
 					"--config", config_path,
 				],
 				cwd=base_dir,

@@ -37,7 +37,7 @@ def run_audit():
 	print(f"Loaded vocabulary: {vocab_size} words.")
 	
 	# 3. Instantiate model and load checkpoint
-	from src.bitnet.modeling_bitnet import BitNet4LayerModel
+	from src.bitnet.model.modeling_bitnet import BitNet4LayerModel
 	
 	device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 	print(f"Using device: {device}")

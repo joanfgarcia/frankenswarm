@@ -8,10 +8,10 @@ import torch.nn as nn
 base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(base_dir)
 
-from src.bitnet.cooperative_world import COOP_ACTIONS, COOP_ADJACENCY, CooperativeWorld, _bfs_next_step
-from src.bitnet.glyph_vocabulary import N_EMOTIONS, WORD_INDEX
-from src.bitnet.modeling_bitnet import BitNet4LayerModel
-from src.bitnet.train_arena_ppo import get_masked_probs
+from src.bitnet.worlds.cooperative_world import COOP_ACTIONS, COOP_ADJACENCY, CooperativeWorld, _bfs_next_step
+from src.bitnet.vocab.glyph_vocabulary import N_EMOTIONS, WORD_INDEX
+from src.bitnet.model.modeling_bitnet import BitNet4LayerModel
+from lab.experiments.train_arena_ppo import get_masked_probs
 
 
 def load_agent_a(checkpoint_path, hidden_dim, device):

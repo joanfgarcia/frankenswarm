@@ -1,4 +1,4 @@
-from src.bitnet.puzzle_world import PuzzleWorld
+from src.bitnet.worlds.puzzle_world import PuzzleWorld
 
 
 def test_puzzle_world_initialization():

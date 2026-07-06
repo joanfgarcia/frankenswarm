@@ -38,8 +38,8 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 
-from src.bitnet.modeling_bitnet import BitNet4LayerModel
-from src.bitnet.translator import SovereignTranslator
+from src.bitnet.model.modeling_bitnet import BitNet4LayerModel
+from src.bitnet.translation.translator import SovereignTranslator
 
 # ═══════════════════════════════════════════
 # DOMINIO ISOMORFO

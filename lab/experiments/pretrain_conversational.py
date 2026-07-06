@@ -5,7 +5,7 @@ import torch.nn.functional as F
 from tokenizers import Tokenizer
 from torch.utils.data import DataLoader, Dataset
 
-from src.bitnet.modeling_conversational import BitNetCausalLM
+from src.bitnet.model.modeling_conversational import BitNetCausalLM
 
 
 class PretrainDataset(Dataset):

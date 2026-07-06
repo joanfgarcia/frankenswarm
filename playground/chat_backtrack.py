@@ -6,7 +6,7 @@ import torch
 import torch.nn.functional as F
 from tokenizers import Tokenizer
 
-from src.bitnet.modeling_conversational import BitNetCausalLM
+from src.bitnet.model.modeling_conversational import BitNetCausalLM
 
 
 def get_entropy(probs):

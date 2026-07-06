@@ -7,10 +7,10 @@ import torch.nn as nn
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from src.bitnet.cooperative_world import COOP_ACTIONS, COOP_N_ACTIONS, CooperativeWorld
-from src.bitnet.glyph_vocabulary import N_EMOTIONS
-from src.bitnet.modeling_bitnet import BitNet4LayerModel
-from src.bitnet.train_arena_ppo import get_masked_probs, perception_to_input_coop
+from src.bitnet.worlds.cooperative_world import COOP_ACTIONS, COOP_N_ACTIONS, CooperativeWorld
+from src.bitnet.vocab.glyph_vocabulary import N_EMOTIONS
+from src.bitnet.model.modeling_bitnet import BitNet4LayerModel
+from lab.experiments.train_arena_ppo import get_masked_probs, perception_to_input_coop
 
 device = torch.device("cpu")
 with open("configs/experiments/EXP_073_easy_train.json") as f:

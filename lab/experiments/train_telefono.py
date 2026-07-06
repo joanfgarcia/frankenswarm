@@ -24,9 +24,9 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 
-from src.bitnet.modeling_bitnet import BitNet4LayerModel
-from src.bitnet.operators_logic import CONCEPT_NAMES, get_causal_graph
-from src.bitnet.translator import SovereignTranslator
+from src.bitnet.model.modeling_bitnet import BitNet4LayerModel
+from src.bitnet.operators.operators_logic import CONCEPT_NAMES, get_causal_graph
+from src.bitnet.translation.translator import SovereignTranslator
 
 
 def svd_crossover(parent_a, parent_b, child, alpha=0.5, sigma=0.01):

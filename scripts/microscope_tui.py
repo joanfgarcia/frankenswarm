@@ -13,8 +13,8 @@ sys.path.append(base_dir)
 
 import microscope
 
-from src.bitnet.modeling_bitnet import BitNet4LayerModel
-from src.bitnet.translator import SovereignTranslator
+from src.bitnet.model.modeling_bitnet import BitNet4LayerModel
+from src.bitnet.translation.translator import SovereignTranslator
 
 # Códigos ANSI para colores
 C_RESET = "\033[0m"

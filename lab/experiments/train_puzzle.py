@@ -13,10 +13,10 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 
-from src.bitnet.glyph_vocabulary import N_EMOTIONS, WORD_INDEX
-from src.bitnet.modeling_bitnet import BitNet4LayerModel
+from src.bitnet.vocab.glyph_vocabulary import N_EMOTIONS, WORD_INDEX
+from src.bitnet.model.modeling_bitnet import BitNet4LayerModel
 from src.bitnet.puzzle_world import PuzzleWorld
-from src.bitnet.telemetry import ExperimentLogger
+from src.bitnet.telemetry.telemetry import ExperimentLogger
 
 
 def perception_to_input(perception: list[str], device: torch.device) -> torch.Tensor:

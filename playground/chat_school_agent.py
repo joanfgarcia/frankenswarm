@@ -7,8 +7,8 @@ import numpy as np
 import torch
 import torch.nn.functional as F  # noqa: N812
 
-from src.bitnet.dictionary_tool import SovereignDictionary
-from src.bitnet.modeling_bitnet import BitNet4LayerModel
+from src.bitnet.vocab.dictionary_tool import SovereignDictionary
+from src.bitnet.model.modeling_bitnet import BitNet4LayerModel
 
 
 def tokenize(text: str, word_to_idx: dict) -> list[int]:

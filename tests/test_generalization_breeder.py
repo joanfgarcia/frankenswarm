@@ -1,5 +1,5 @@
-from src.bitnet.generalization_breeder import CompositionalMathDatasetBreeder
-from src.bitnet.translator import SovereignTranslator
+from src.bitnet.data.generalization_breeder import CompositionalMathDatasetBreeder
+from src.bitnet.translation.translator import SovereignTranslator
 
 
 def test_compositional_breeder_splits():

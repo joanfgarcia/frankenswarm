@@ -6,7 +6,7 @@ import time
 
 import requests
 
-from src.bitnet.dictionary_tool import SovereignDictionary
+from src.bitnet.vocab.dictionary_tool import SovereignDictionary
 
 
 def clean_gutenberg_text(text):

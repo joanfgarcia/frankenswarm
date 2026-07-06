@@ -11,9 +11,9 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 
-from src.bitnet.glyph_vocabulary import N_EMOTIONS, WORD_INDEX
-from src.bitnet.minimal_world import LOCATION_GLYPHS, MinimalWorld
-from src.bitnet.modeling_bitnet import BitNet4LayerModel
+from src.bitnet.vocab.glyph_vocabulary import N_EMOTIONS, WORD_INDEX
+from src.bitnet.worlds.minimal_world import LOCATION_GLYPHS, MinimalWorld
+from src.bitnet.model.modeling_bitnet import BitNet4LayerModel
 
 
 def perception_to_input(perception: list[str], location: str, device: torch.device) -> torch.Tensor:

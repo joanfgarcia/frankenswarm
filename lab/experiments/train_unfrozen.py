@@ -19,8 +19,8 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from src.bitnet.modeling_bitnet import BitNet4LayerModel
-from src.bitnet.telemetry import ExperimentLogger
+from src.bitnet.model.modeling_bitnet import BitNet4LayerModel
+from src.bitnet.telemetry.telemetry import ExperimentLogger
 
 CONCEPTS = [
 	"gato",

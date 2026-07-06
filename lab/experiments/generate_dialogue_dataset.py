@@ -9,7 +9,7 @@ import time
 sys.path.append('/home/joan/Documents/IA/sharing/src')
 sys.path.append('/home/joan/Documents/IA/frankenswarm')
 
-from src.bitnet.dictionary_tool import SovereignDictionary
+from src.bitnet.vocab.dictionary_tool import SovereignDictionary
 
 
 def run_dataset_generation():

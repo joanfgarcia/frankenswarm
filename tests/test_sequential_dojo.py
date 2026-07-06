@@ -1,9 +1,9 @@
 import torch
 import torch.nn as nn
 
-from src.bitnet.cooperative_world import COOP_N_ACTIONS
-from src.bitnet.dojo_populora import generate_sequential_dojo_batch, train_sequential_dojo_step
-from src.bitnet.modeling_bitnet import BitNet4LayerModel
+from src.bitnet.worlds.cooperative_world import COOP_N_ACTIONS
+from src.bitnet.data.dojo_populora import generate_sequential_dojo_batch, train_sequential_dojo_step
+from src.bitnet.model.modeling_bitnet import BitNet4LayerModel
 
 
 def test_sequential_dojo_generation():

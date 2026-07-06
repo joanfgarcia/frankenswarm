@@ -6,8 +6,8 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 
-from src.bitnet.dictionary_tool import SovereignDictionary
-from src.bitnet.modeling_bitnet import BitNet4LayerModel
+from src.bitnet.vocab.dictionary_tool import SovereignDictionary
+from src.bitnet.model.modeling_bitnet import BitNet4LayerModel
 
 # Definición de definiciones para entrenar el glyph_projection_head (Fase 2)
 KNOWN_DEFINITIONS = {

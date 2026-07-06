@@ -1,4 +1,4 @@
-from src.bitnet.cooperative_world import CooperativeWorld, query_prolog
+from src.bitnet.worlds.cooperative_world import CooperativeWorld, query_prolog
 
 
 def test_prolog_rules():

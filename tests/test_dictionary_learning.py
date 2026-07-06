@@ -5,8 +5,8 @@ import unittest
 import numpy as np
 import torch
 
-from src.bitnet.dictionary_tool import SovereignDictionary
-from src.bitnet.modeling_bitnet import BitNet4LayerModel
+from src.bitnet.vocab.dictionary_tool import SovereignDictionary
+from src.bitnet.model.modeling_bitnet import BitNet4LayerModel
 
 
 class TestDictionaryLearning(unittest.TestCase):

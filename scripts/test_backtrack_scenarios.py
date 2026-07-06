@@ -5,7 +5,7 @@ import torch
 from tokenizers import Tokenizer
 
 from playground.chat_backtrack import generate_response_with_backtrack
-from src.bitnet.modeling_conversational import BitNetCausalLM
+from src.bitnet.model.modeling_conversational import BitNetCausalLM
 
 
 def run_benchmark():

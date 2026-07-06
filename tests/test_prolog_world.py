@@ -1,4 +1,4 @@
-from src.bitnet.prolog_world import PrologSurvivalWorld
+from src.bitnet.worlds.prolog_world import PrologSurvivalWorld
 
 
 def test_prolog_world_initialization():

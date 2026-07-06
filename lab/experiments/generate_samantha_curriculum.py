@@ -3,7 +3,7 @@ import os
 import re
 import subprocess
 
-from src.bitnet.dictionary_tool import SovereignDictionary
+from src.bitnet.vocab.dictionary_tool import SovereignDictionary
 
 CORE_GRAMMAR_WORDS = [
 	# Artículos y pronombres

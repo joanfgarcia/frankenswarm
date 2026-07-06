@@ -7,10 +7,10 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from src.bitnet.generalization_breeder import RelationalLogicDatasetBreeder
-from src.bitnet.modeling_bitnet import BitNet4LayerModel
-from src.bitnet.telemetry import ExperimentLogger
-from src.bitnet.translator import SovereignTranslator
+from src.bitnet.data.generalization_breeder import RelationalLogicDatasetBreeder
+from src.bitnet.model.modeling_bitnet import BitNet4LayerModel
+from src.bitnet.telemetry.telemetry import ExperimentLogger
+from src.bitnet.translation.translator import SovereignTranslator
 
 
 def svd_crossover(parent_a: nn.Module, parent_b: nn.Module, child: nn.Module, alpha: float = 0.5, sigma: float = 0.01):

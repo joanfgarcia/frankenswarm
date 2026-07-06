@@ -14,9 +14,9 @@ import os
 import torch
 import torch.nn.functional as F
 
-import src.bitnet.operators_logic as ol
-from src.bitnet.modeling_bitnet import BitNet4LayerModel
-from src.bitnet.translator import SovereignTranslator
+import src.bitnet.operators.operators_logic as ol
+from src.bitnet.model.modeling_bitnet import BitNet4LayerModel
+from src.bitnet.translation.translator import SovereignTranslator
 
 
 def load_model(checkpoint_path: str, config_path: str, device: torch.device):

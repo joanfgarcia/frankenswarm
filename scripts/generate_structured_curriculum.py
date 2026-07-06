@@ -9,8 +9,8 @@ import sys
 base_dir = "/home/joan/Documents/IA/frankenswarm"
 sys.path.append(base_dir)
 
-from src.bitnet.dictionary_tool import SovereignDictionary
-from src.bitnet.glyph_vocabulary import SEMANTIC_PRIMES
+from src.bitnet.vocab.dictionary_tool import SovereignDictionary
+from src.bitnet.vocab.glyph_vocabulary import SEMANTIC_PRIMES
 
 VALID_CATEGORIES = {
 	"física_sensorial",

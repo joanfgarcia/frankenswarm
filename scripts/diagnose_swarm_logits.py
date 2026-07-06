@@ -5,7 +5,7 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 
-from src.bitnet.modeling_bitnet import BitNet4LayerModel
+from src.bitnet.model.modeling_bitnet import BitNet4LayerModel
 
 
 def get_entropy(probs):

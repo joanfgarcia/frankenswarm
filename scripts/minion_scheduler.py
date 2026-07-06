@@ -49,10 +49,10 @@ def run_next_experiment():
 	task_name = task.get("name", f"Experimento {task_id}")
 
 	config_path = f"configs/experiments/EXP_{task_id}.json"
-	script_name = task.get("script", "src.bitnet.train_generic")
+	script_name = task.get("script", "lab.experiments.train_generic")
 	script_file = "src/bitnet/train_generic.py"
 
-	if script_name != "src.bitnet.train_generic":
+	if script_name != "lab.experiments.train_generic":
 		# Mapear script module a path de archivo
 		script_file = script_name.replace(".", "/") + ".py"
 

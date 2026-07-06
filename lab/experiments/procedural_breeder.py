@@ -14,8 +14,8 @@ Diseñado para soportar:
 
 import numpy as np
 
-from src.bitnet.operators import OperatorRegistry
-from src.bitnet.translator import SovereignTranslator
+from src.bitnet.operators.operators import OperatorRegistry
+from src.bitnet.translation.translator import SovereignTranslator
 
 
 class ProceduralLogicDatasetBreeder:

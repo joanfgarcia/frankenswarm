@@ -3,9 +3,9 @@ import os
 
 import torch
 
-from src.bitnet.dataset_breeder import MathDatasetBreeder
-from src.bitnet.modeling_bitnet import BitNet4LayerModel
-from src.bitnet.translator import SovereignTranslator
+from src.bitnet.data.dataset_breeder import MathDatasetBreeder
+from src.bitnet.model.modeling_bitnet import BitNet4LayerModel
+from src.bitnet.translation.translator import SovereignTranslator
 
 
 def eval_agent(experiment_id: str = "EXP_012"):

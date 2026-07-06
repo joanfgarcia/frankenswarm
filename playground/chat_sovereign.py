@@ -5,7 +5,7 @@ import torch
 import torch.nn.functional as F
 from tokenizers import Tokenizer
 
-from src.bitnet.modeling_conversational import BitNetCausalLM
+from src.bitnet.model.modeling_conversational import BitNetCausalLM
 
 
 def sample_next_token(logits, temperature=0.7, top_p=0.9, top_k=50):
