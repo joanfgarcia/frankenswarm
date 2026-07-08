@@ -1,4 +1,4 @@
-"""Tests de la sintaxis canónica de glifos NSM-C v0 (RFC-002)."""
+"""Tests de K-65P v0 (Kernel de 65 Primos), la sintaxis canónica de glifos (RFC-002)."""
 
 import pytest
 

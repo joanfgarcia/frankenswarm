@@ -1,11 +1,16 @@
 """
-NSM-C v0 — Sintaxis Canónica de Glifos (RFC-002).
+K-65P v0 — Kernel de 65 Primos — Sintaxis Canónica de Glifos (RFC-002).
 
 Parser y validador de referencia del lenguaje propio de Bit: linealización
 determinista de árboles semánticos sobre los 65 primos de Wierzbicka.
 La posición determina el rol, siempre. Este módulo es la fuente de verdad
 de la spec: en caso de discrepancia con docs/RFC-002_SINTAXIS_GLIFOS.md,
 gana el código.
+
+El nombre no es azar (RFC-002 §0): K de Kernel (el núcleo semántico mínimo),
+65 por el canon de primos de Wierzbicka (la tabla periódica del lenguaje),
+P de Primos/Primes (bilingüe por accidente — coherente con un lenguaje cuya
+razón de ser es la independencia de cualquier idioma humano).
 
 API:
 	parse(texto) -> árbol (str = átomo, list = cláusula/grupo)

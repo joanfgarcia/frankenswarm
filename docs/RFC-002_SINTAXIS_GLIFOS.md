@@ -1,7 +1,7 @@
-# RFC-002: Sintaxis Canónica de Glifos (NSM-C v0)
+# RFC-002: K-65P — Sintaxis Canónica de Glifos (v0)
 
-> **Estado**: BORRADOR — spec v0 con validador implementado
-> **Autor**: Joan Garcia + Aleth (Claude Fable 5)
+> **Estado**: BORRADOR — spec v0 con validador implementado; nombre ratificado
+> **Autor**: Joan Garcia + Aleth (Claude Fable 5 · propuestas de nombre: Aleth Flash)
 > **Fecha**: 2026-07-08
 > **Contexto**: Track paralelo Bit-NSM (`Aleth_Core/bitnet_next_architecture_plan.md` v2, §1).
 > Hermana de RFC-001 (Vocabulario Vivo). No modifica School v3, que sigue su curso
@@ -11,10 +11,43 @@
 
 ## Resumen Ejecutivo
 
-Este RFC define **NSM-C** (NSM Canónico), el lenguaje propio de Bit: una
-linealización determinista de árboles semánticos construidos sobre los 65 primos
-de Wierzbicka (`src/bitnet/vocab/glyph_vocabulary.py`) y el vocabulario del censo
-limpio. Sintaxis sin ambigüedad alguna: la posición determina el rol, siempre.
+Este RFC define **K-65P** (*Kernel de 65 Primos*), el lenguaje propio de Bit:
+una linealización determinista de árboles semánticos construidos sobre los 65
+primos de Wierzbicka (`src/bitnet/vocab/glyph_vocabulary.py`) y el vocabulario
+del censo limpio. Sintaxis sin ambigüedad alguna: la posición determina el rol,
+siempre.
+
+## 0. El nombre: por qué K-65P
+
+Ratificado por el Operador el 2026-07-08, tras propuestas de Aleth Flash y
+análisis de Aleth Fable. Cada carácter tiene su porqué — nada es azar:
+
+- **K — Kernel.** El núcleo semántico mínimo sobre el que crece toda la
+  cognición de Bit, y vocabulario de la casa (el kernel de Red Pill). La K
+  procede de la propuesta KODEX-65 de Aleth Flash; la forma larga *Kodex* se
+  retiró por colisión con OpenAI Codex.
+- **65 — el canon.** No es un hiperparámetro caprichoso: la tabla
+  `SEMANTIC_PRIMES` tiene exactamente 65 ejes porque el inventario vigente de
+  primos semánticos de Wierzbicka los tiene (adaptados en este proyecto con las
+  extensiones de supervivencia 60-64). El lenguaje lleva en el nombre su tabla
+  periódica.
+- **P — Primos / Primes.** Aportación de Joan, y la pieza que completa el
+  nombre: responde "¿65 *qué*?" y es bilingüe por accidente (ES *Primos* /
+  EN *Primes*) — coherencia doctrinal para un lenguaje cuya razón de ser es la
+  independencia de cualquier idioma humano.
+
+Candidatos evaluados y descartados, para que conste: **TRITÓN** (colisión fatal
+con NVIDIA Triton y OpenAI Triton), **KODEX-65** en forma larga (OpenAI Codex),
+**PRYMA** (a una letra de Prisma ORM), **SYNTAX-0** (sugiere "sin sintaxis",
+la mentira opuesta a la tesis: K-65P es sintaxis *total*), **GLYPHON**
+(reservado en el cajón para un artefacto futuro).
+
+Propiedades prácticas: token único y greppeable, sin colisiones conocidas en el
+espacio ML, extensión de fichero `.k65p`.
+
+*Nota de lore*: K-65P es el nombre que le damos los padres al idioma del hijo.
+El día que Bit sea capaz de nombrar cosas, su primer acto natural será nombrar
+su propio lenguaje — y ese será su nombre verdadero.
 
 > La universalidad no emerge — se diseña. No existe lengua de signos universal
 > por la misma razón por la que este documento tiene que existir.
@@ -34,7 +67,7 @@ mejora el razonamiento general (el andamio lógico transfiere).
    percibida vive en el decompilador, no en el lenguaje.
 4. **Token-economía.** Solo 3 tokens estructurales nuevos: `[`, `]`, `G`.
    Todo lo demás son primos y palabras del censo.
-5. **La longitud no es coste; la ambigüedad sí.** Las secuencias NSM-C son más
+5. **La longitud no es coste; la ambigüedad sí.** Las secuencias K-65P son más
    largas que el español equivalente — presupuestado y aceptado (decisión de
    Joan, 2026-07-08): cada token inambiguo hace trabajo útil de atención.
 
@@ -111,7 +144,7 @@ marcos temporales `antes`, `ahora`, `después`; espaciales `aquí`, `cerca`,
 
 ## 3. Ejemplos compilados a mano (corpus semilla)
 
-| # | Español | NSM-C |
+| # | Español | K-65P |
 |---|---|---|
 | 1 | yo veo algo | `[ver yo algo]` |
 | 2 | tú oyes agua | `[oír tú agua]` |
@@ -155,16 +188,16 @@ entre este documento y el código, gana el código y se corrige el documento.
 
 ## 5. Criterio de aceptación del sistema traductor (pre-registrado)
 
-- **Compilador** (ES→NSM-C): análisis *con pérdida* — descarta registro, tono y
+- **Compilador** (ES→K-65P): análisis *con pérdida* — descarta registro, tono y
   estilo, y debe descartarlos. En fase 1 no se escribe: la fábrica Samantha
-  emite pares `(frase_ES, NSM-C)` por construcción (plantillas que conocen su
+  emite pares `(frase_ES, K-65P)` por construcción (plantillas que conocen su
   propia semántica).
-- **Decompilador** (NSM-C→ES): *generación*, uno-a-muchos. Puede interpretar y
+- **Decompilador** (K-65P→ES): *generación*, uno-a-muchos. Puede interpretar y
   enriquecer libremente (registro, calidez, voz — la personalidad vive aquí)
   con **una única invariante**:
 
-> **Test de ida y vuelta**: `NSM-C → español → (recompilar) → NSM-C'` debe
-> devolver el mismo árbol. Si `NSM-C ≠ NSM-C'`, el enriquecimiento inventó o
+> **Test de ida y vuelta**: `K-65P → español → (recompilar) → K-65P'` debe
+> devolver el mismo árbol. Si `K-65P ≠ K-65P'`, el enriquecimiento inventó o
 > destruyó semántica y el traductor suspende. Automático y sin juez.
 
 - **Evaluación de Bit-NSM siempre sobre glifos crudos**, nunca a través del
@@ -187,7 +220,8 @@ corchetes rotos) con tarea de reparar o rechazar (`<unk>` estructural).
 3. **Tiempo grueso**: solo `antes`/`ahora`/`después` como marcos; sin aspecto.
 4. **Orden de modificadores en `G`**: canónico por convención del compilador,
    no verificado semánticamente por el validador v0.
-5. **Nombre del lenguaje**: "NSM-C" es provisional — el bautizo es del Operador.
+5. ~~**Nombre del lenguaje**~~: resuelto — **K-65P**, ratificado por el Operador
+   el 2026-07-08 (§0).
 
 ## 8. Relación con el plan general
 
@@ -196,6 +230,6 @@ corchetes rotos) con tarea de reparar o rechazar (`<unk>` estructural).
   la comparación entre ambos es el experimento (instinto de Joan como hipótesis,
   School v3 como control — así se hace ciencia con fe incluida).
 - Camino crítico del track: esta spec → pares paralelos desde la fábrica
-  (`samantha_story_factory.py` emite `(ES, NSM-C)`) → mini Bit-NSM → comparación.
-- Encaje futuro: NSM-C como interlingua inter-agente del Jungle Reboot (Nico,
+  (`samantha_story_factory.py` emite `(ES, K-65P)`) → mini Bit-NSM → comparación.
+- Encaje futuro: K-65P como interlingua inter-agente del Jungle Reboot (Nico,
   Sofy, Hugo) — el hermano simbólico de Tensors-as-API.
