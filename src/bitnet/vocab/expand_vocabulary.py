@@ -95,45 +95,55 @@ categories = {
 	"sentimientos_extra": ["amor", "cariño", "afecto", "amistad", "odio", "rencor", "rabia", "ira", "enfado", "molestia", "miedo", "temor", "terror", "pánico", "tristeza", "pena", "dolor", "sufrimiento", "alegría", "felicidad", "gozo", "placer", "orgullo", "vergüenza", "culpa", "sorpresa", "asombro", "curiosidad", "aburrimiento", "interés", "calma", "tranquilidad", "paz", "esperanza", "desesperación", "celos", "envidia", "compasión", "empatía"]
 }
 
-# Agregar palabras de las categorías adicionales
-word_set = set(BASE_WORDS)
+# Cargar el vocabulario limpio (rebuild_clean_vocabulary.py) si existe, de lo contrario usar el fallback base
+clean_vocab_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))), "configs/clean_vocabulary_words.json")
 
-# Asegurar que todos los primos semánticos estén en el vocabulario base
-for p in SEMANTIC_PRIMES:
-	word_set.add(VOCAB_MAP.get(p, p))
+if os.path.exists(clean_vocab_path):
+	print(f"Cargando vocabulario limpio desde {clean_vocab_path}...")
+	with open(clean_vocab_path, encoding="utf-8") as f:
+		FINAL_VOCAB = json.load(f)["words"]
+else:
+	print("⚠️ No se encontró configs/clean_vocabulary_words.json, utilizando fallback de 15,000 palabras...")
+	# Agregar palabras de las categorías adicionales
+	word_set = set(BASE_WORDS)
 
-for _cat, list_words in categories.items():
-	for w in list_words:
-		word_set.add(w)
+	# Asegurar que todos los primos semánticos estén en el vocabulario base
+	for p in SEMANTIC_PRIMES:
+		word_set.add(VOCAB_MAP.get(p, p))
 
-# Agregar palabras de alta frecuencia de HermitDave
-freq_words_path = "/home/joan/.gemini/antigravity/scratch/spanish_words.txt"
-if os.path.exists(freq_words_path):
-	print(f"Cargando frecuencias de español desde {freq_words_path}...")
-	import re
-	with open(freq_words_path, encoding="utf-8") as f:
-		for line in f:
-			parts = line.strip().split()
-			if parts:
-				w = parts[0].lower().strip()
-				# Validar que es una palabra alfabética real de al menos 2 letras
-				if re.match(r'^[a-zA-ZáéíóúüñÁÉÍÓÚÜÑ_]{2,}$', w):
-					word_set.add(w)
-					if len(word_set) >= 15000:
-						break
+	for _cat, list_words in categories.items():
+		for w in list_words:
+			word_set.add(w)
 
-# Si no llegamos a 15000, autocompletamos con variaciones numeradas (sólo como fallback)
-i = 0
-while len(word_set) < 15000:
-	word_set.add(f"palabra_{i}")
-	i += 1
+	# Agregar palabras de alta frecuencia de HermitDave
+	freq_words_path = "/home/joan/.gemini/antigravity/scratch/spanish_words.txt"
+	if os.path.exists(freq_words_path):
+		print(f"Cargando frecuencias de español desde {freq_words_path}...")
+		import re
+		with open(freq_words_path, encoding="utf-8") as f:
+			for line in f:
+				parts = line.strip().split()
+				if parts:
+					w = parts[0].lower().strip()
+					# Validar que es una palabra alfabética real de al menos 2 letras
+					if re.match(r'^[a-zA-ZáéíóúüñÁÉÍÓÚÜÑ_]{2,}$', w):
+						word_set.add(w)
+						if len(word_set) >= 15000:
+							break
 
-# Asegurar que las 26 palabras de referencia están incluidas EXACTAMENTE con sus nombres clave de glyph_vocabulary
-for k in VOCABULARY:
-	word_set.add(k)
+	# Si no llegamos a 15000, autocompletamos con variaciones numeradas (sólo como fallback)
+	i = 0
+	while len(word_set) < 15000:
+		word_set.add(f"palabra_{i}")
+		i += 1
 
-# Convertir a lista y ordenar
-FINAL_VOCAB = sorted(word_set)
+	# Asegurar que las 26 palabras de referencia están incluidas EXACTAMENTE con sus nombres clave de glyph_vocabulary
+	for k in VOCABULARY:
+		word_set.add(k)
+
+	# Convertir a lista y ordenar
+	FINAL_VOCAB = sorted(word_set)
+
 print(f"Total palabras en el vocabulario base: {len(FINAL_VOCAB)}")
 
 def calibrate_and_project():

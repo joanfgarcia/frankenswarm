@@ -13,53 +13,54 @@ from src.bitnet.model.modeling_bitnet import BitNet4LayerModel
 # Batería de preguntas por edad cognitiva/milestone (2 a 8 años)
 AGE_QUESTIONS = {
 	2: [
-		{"question": "tú: hola", "expected": "hola"},
-		{"question": "tú: gato", "expected": "miau"},
-		{"question": "tú: agua", "expected": "agua"},
-		{"question": "tú: fuego", "expected": "mal"},
-		{"question": "tú: mamá", "expected": "papá"},
+		{"question": "you: hello", "expected": "hello"},
+		{"question": "you: cat", "expected": "meow"},
+		{"question": "you: water", "expected": "water"},
+		{"question": "you: fire", "expected": "bad"},
+		{"question": "you: mom", "expected": "dad"},
 	],
 	3: [
-		{"question": "tú: cómo te llamas", "expected": "nene"},
-		{"question": "tú: el perro corre", "expected": "mucho"},
-		{"question": "tú: yo quiero", "expected": "pan"},
-		{"question": "tú: si toco el fuego", "expected": "quema"},
-		{"question": "tú: dónde está papá", "expected": "aquí"},
+		{"question": "you: what is your name", "expected": "baby"},
+		{"question": "you: the dog runs", "expected": "much"},
+		{"question": "you: i want", "expected": "bread"},
+		{"question": "you: if i touch the fire", "expected": "burns"},
+		{"question": "you: where is dad", "expected": "here"},
 	],
 	4: [
-		{"question": "tú: hola", "expected": "hola"},
-		{"question": "tú: cómo estás", "expected": "bien"},
-		{"question": "tú: quién eres", "expected": "niño"},
-		{"question": "tú: el sol brilla", "expected": "mucho"},
-		{"question": "tú: si toco el fuego", "expected": "dolor"},
+		{"question": "you: hello", "expected": "hello"},
+		{"question": "you: how are you", "expected": "fine"},
+		{"question": "you: who are you", "expected": "boy"},
+		{"question": "you: the sun shines", "expected": "much"},
+		{"question": "you: if i touch the fire", "expected": "hurt"},
 	],
 	5: [
-		{"question": "tú: cuento uno dos", "expected": "tres"},
-		{"question": "tú: uno más uno son", "expected": "dos"},
-		{"question": "tú: el oso come", "expected": "miel"},
-		{"question": "tú: el pájaro vuela", "expected": "alto"},
-		{"question": "tú: las flores beben", "expected": "agua"},
+		{"question": "you: i count one two", "expected": "three"},
+		{"question": "you: one plus one is", "expected": "two"},
+		{"question": "you: the bear eats", "expected": "honey"},
+		{"question": "you: the bird flies", "expected": "high"},
+		{"question": "you: the flowers drink", "expected": "water"},
 	],
 	6: [
-		{"question": "tú: cuánto es tres más tres? es", "expected": "seis"},
-		{"question": "tú: cuánto es seis menos cuatro? es", "expected": "dos"},
-		{"question": "tú: el agua del río corre hacia el", "expected": "mar"},
-		{"question": "tú: los árboles dan oxígeno y", "expected": "sombra"},
-		{"question": "tú: el corazón bombea sangre al", "expected": "cuerpo"},
+		{"question": "you: what is three plus three? it is", "expected": "six"},
+		{"question": "you: what is six minus four? it is", "expected": "two"},
+		{"question": "you: the water of the river runs towards the", "expected": "sea"},
+		{"question": "you: the trees give oxygen and", "expected": "shade"},
+		{"question": "you: the heart pumps blood to the", "expected": "body"},
 	],
 	7: [
-		{"question": "tú: cómo te llamas", "expected": "aleth"},
-		{"question": "tú: de dónde eres", "expected": "búnker"},
-		{"question": "tú: la capital de España es", "expected": "madrid"},
-		{"question": "tú: la tierra gira alrededor del", "expected": "sol"},
-		{"question": "tú: los mapas muestran los ríos y", "expected": "países"},
+		{"question": "you: what is your name", "expected": "aleth"},
+		{"question": "you: where are you from", "expected": "bunker"},
+		{"question": "you: the capital of Spain is", "expected": "madrid"},
+		{"question": "you: the earth rotates around the", "expected": "sun"},
+		{"question": "you: the maps show rivers and", "expected": "countries"},
 	],
 	8: [
-		{"question": "tú: si equis más dos es cinco entonces equis es", "expected": "tres"},
-		{"question": "tú: toda causa produce un", "expected": "efecto"},
-		{"question": "tú: el laberinto es una biblioteca de espejos", "expected": "infinitos"},
-		{"question": "tú: el Aleph es un punto que contiene todo el", "expected": "universo"},
-		{"question": "tú: qué es el búnker", "expected": "sistema"},
+		{"question": "you: if x plus two is five then x is", "expected": "three"},
+		{"question": "you: every cause produces an", "expected": "effect"},
+		{"question": "you: the labyrinth is a library of infinite", "expected": "mirrors"},
+		{"question": "you: Funes remembers the shape of each", "expected": "cloud"},
+		{"question": "you: the Aleph is a point that contains all the", "expected": "universe"},
+		{"question": "you: what is the bunker", "expected": "system"},
 	],
 }
 
@@ -156,7 +157,7 @@ except Exception as e:
 
 
 def get_allowed_vocab_for_age(age: int, base_dir: str) -> set[str]:
-	curriculum_path = os.path.join(base_dir, "configs", "school_curriculum_structured.json")
+	curriculum_path = os.path.join(base_dir, "configs", "school_curriculum_structured_en.json")
 	childes_path = os.path.join(base_dir, "configs", "childes_pre_school.json")
 	nsm_path = os.path.join(base_dir, "configs", "nsm_physics_pre_school.json")
 
@@ -171,13 +172,12 @@ def get_allowed_vocab_for_age(age: int, base_dir: str) -> set[str]:
 
 	# Lista de palabras básicas permitidas para evitar falsos positivos
 	safe_words = {
-		"no", "yo", "tú", "él", "ella", "nosotros", "ellos", "mi", "mis", "tu", "tus", "su", "sus",
-		"me", "te", "se", "nos", "le", "les", "lo", "la", "los", "las", "un", "una", "unos", "unas",
-		"este", "esta", "estos", "estas", "ese", "esa", "esos", "esas", "a", "de", "en", "para", "por",
-		"con", "sin", "sobre", "y", "o", "pero", "si", "que", "es", "son", "está", "están", "ser", "estar",
-		"haber", "hacer", "tener", "querer", "poder", "decir", "ver", "ir", "dar", "saber", "comer",
-		"beber", "miau", "guau", "pupa", "hola", "bien", "papá", "mamá", "nene", "nena", "bésame", "beso",
-		"dame", "toma", "más", "dormir", "duerme", "quiere", "tengo", "tienes", "tiene", "jugar", "corre"
+		"no", "i", "you", "he", "she", "we", "they", "my", "your", "his", "her", "its", "our", "their",
+		"me", "him", "us", "them", "it", "this", "that", "these", "those", "a", "an", "the",
+		"to", "of", "in", "for", "on", "with", "without", "about", "and", "or", "but", "if", "because",
+		"is", "are", "was", "were", "be", "been", "have", "has", "had", "do", "does", "did", "want", "can",
+		"say", "see", "go", "give", "know", "eat", "drink", "meow", "bark", "hurt", "hello", "fine", "good",
+		"dad", "mom", "baby", "kid", "kiss", "give", "take", "more", "sleep", "runs", "much", "very"
 	}
 
 	preschool_words = set(safe_words)
@@ -263,7 +263,7 @@ def run_evaluation(args):
 
 	# Construir logit mask de edad para restringir la generación al vocabulario del hito
 	allowed_vocab = get_allowed_vocab_for_age(target_age, base_dir)
-	special_tokens = {"yo", "tú", "<pad>", "<unk>", "hola", "mamá", "papá", "nene", "nena", "miau", "guau", "agua", "fuego", "sí", "no", "bien", "mal", "pan"}
+	special_tokens = {"me", "you", "<pad>", "<unk>", "hello", "mom", "dad", "baby", "kid", "meow", "bark", "water", "fire", "yes", "no", "fine", "bad", "bread", "good"}
 	allowed_mask = torch.zeros(len(words), dtype=torch.bool, device=device)
 	for w, idx in word_to_idx.items():
 		if w in allowed_vocab or w in special_tokens or w.lower() in allowed_vocab:
@@ -278,7 +278,7 @@ def run_evaluation(args):
 		expected = dictionary.map_to_base_word(qa["expected"])
 
 		# Extraer contenido de la pregunta
-		q_match = re.match(r"^(yo|tú)\s*:\s*(.*)$", raw_q, re.IGNORECASE)
+		q_match = re.match(r"^(yo|tú|me|you)\s*:\s*(.*)$", raw_q, re.IGNORECASE)
 		q_content = q_match.group(2) if q_match else raw_q
 
 		# Limpiar y mapear la pregunta
@@ -286,11 +286,11 @@ def run_evaluation(args):
 		mapped_q = [dictionary.map_to_base_word(w) for w in q_words]
 
 		# Tokenizar
-		dialogue_triggers = {"hola", "cómo estás", "quién eres", "cómo te llamas", "de dónde eres", "qué es el búnker", "te gusta borges"}
+		dialogue_triggers = {"hello", "how are you", "who are you", "what is your name", "where are you from", "what is the bunker", "do you like borges"}
 		is_dialogue = q_content.lower().strip() in dialogue_triggers
 
 		if is_dialogue:
-			context = [word_to_idx.get("tú", 1)] + [word_to_idx.get(w, 1) for w in mapped_q] + [word_to_idx.get("yo", 1)]
+			context = [word_to_idx.get("you", 1)] + [word_to_idx.get(w, 1) for w in mapped_q] + [word_to_idx.get("me", 1)]
 		else:
 			context = [word_to_idx.get(w, 1) for w in mapped_q]
 
@@ -356,8 +356,8 @@ def run_evaluation(args):
 		age_guideline = (
 			"\nCRITICAL NOTE: El alumno es un bebé de 2 o 3 años. Su habla es telegráfica y comete errores gramaticales comunes. "
 			"NO exijas oraciones completas ni corrección gramatical. Califica basándote únicamente en si la palabra clave o "
-			"la intención semántica es la esperada (por ejemplo, ante 'gato' -> 'miau' es excelente; ante 'mamá' -> 'papá' es una asociación infantil normal; "
-			"ante 'agua' -> 'agua' o 'beber' es excelente; ante 'fuego' -> 'mal' o 'calor' es excelente)."
+			"la intención semántica es la esperada (por ejemplo, ante 'cat' -> 'meow' es excelente; ante 'mom' -> 'dad' es una asociación infantil normal; "
+			"ante 'water' -> 'water' o 'drink' es excelente; ante 'fire' -> 'bad' o 'hot' es excelente)."
 		)
 
 	system_prompt = (
@@ -400,13 +400,66 @@ def run_evaluation(args):
 			prompt += f"   - En respuesta a '{q}': se detectó la palabra/s {words_list}\n"
 		prompt += "Por favor, ten en cuenta esta alerta de vocabulario y penaliza severamente el uso de estas palabras anómalas (asignando notas muy bajas, de 0 a 3, en las preguntas correspondientes).\n\n"
 
-	print(f"\n📡 Enviando examen del hito de {target_age} años a la Profesora Samantha para calificar...")
-	print("--- DEBUG PROMPT ---")
-	print(prompt)
-	print("--- DEBUG SYSTEM PROMPT ---")
-	print(system_prompt)
-	print("---------------------------")
-	result_json = query_samantha(prompt, system_prompt, mock=args.test_mock)
+	# Hybrid auto-grader: check for exact matches
+	calificaciones = []
+	needs_llm_grading = False
+	
+	for qa in qa_pairs:
+		ans_clean = qa["answer"].strip().lower()
+		exp_clean = dictionary.map_to_base_word(qa["expected"]).strip().lower()
+		raw_exp_clean = qa["expected"].strip().lower()
+		
+		if ans_clean == exp_clean or ans_clean == raw_exp_clean:
+			calificaciones.append({
+				"pregunta": qa["question"],
+				"respuesta": qa["answer"],
+				"esperada": qa["expected"],
+				"calificacion": 10,
+				"motivo": "Exact match (Auto-graded)"
+			})
+		else:
+			needs_llm_grading = True
+			
+	if not needs_llm_grading and len(calificaciones) == len(qa_pairs):
+		print("⚡ [AUTO-GRADER] All responses match expected answers exactly. Skipping LLM call.")
+		result_json = {
+			"calificaciones": calificaciones,
+			"puntuacion_media": 10.0,
+			"hito_superado": True
+		}
+	else:
+		print(f"\n📡 Enviando examen del hito de {target_age} años a la Profesora Samantha para calificar...")
+		print("--- DEBUG PROMPT ---")
+		print(prompt)
+		print("--- DEBUG SYSTEM PROMPT ---")
+		print(system_prompt)
+		print("---------------------------")
+		result_json = query_samantha(prompt, system_prompt, mock=args.test_mock)
+		
+		if result_json and "calificaciones" in result_json:
+			# Post-process to ensure exact matches are always 10/10
+			for cal in result_json["calificaciones"]:
+				p_clean = cal.get("pregunta", "").strip().lower()
+				r_clean = cal.get("respuesta", "").strip().lower()
+				matching_expected = None
+				for qa in qa_pairs:
+					q_clean_def = qa["question"].strip().lower()
+					if q_clean_def == p_clean or p_clean in q_clean_def or q_clean_def in p_clean:
+						matching_expected = qa["expected"]
+						break
+				if matching_expected:
+					exp_clean = dictionary.map_to_base_word(matching_expected).strip().lower()
+					raw_exp_clean = matching_expected.strip().lower()
+					if r_clean == exp_clean or r_clean == raw_exp_clean:
+						cal["calificacion"] = 10
+						cal["motivo"] = "Exact match (Auto-grade Override)"
+						cal["esperada"] = matching_expected
+			
+			# Recalculate averages
+			scores = [c["calificacion"] for c in result_json["calificaciones"]]
+			avg = sum(scores) / len(scores) if scores else 0.0
+			result_json["puntuacion_media"] = avg
+			result_json["hito_superado"] = avg >= 8.0 and len(scores) == len(qa_pairs)
 
 	if not result_json:
 		print("❌ Fallo en la evaluación. No se pudo obtener calificación de Samantha.")

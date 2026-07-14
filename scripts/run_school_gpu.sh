@@ -22,6 +22,6 @@ cleanup() {
 trap cleanup EXIT SIGINT SIGTERM
 
 echo "Starting school training on GPU under cgroups..."
-systemd-run --user --scope -p MemoryMax=10G .venv/bin/python src/bitnet/train_sovereign_school.py --test_mock --batch_size 64
+systemd-run --user --scope -p MemoryMax=10G .venv/bin/python src/bitnet/training/train_sovereign_school.py --batch_size 64
 
 echo "Training completed or paused successfully."

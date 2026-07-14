@@ -54,18 +54,19 @@ def generate_question_variations(q_content: str) -> list[str]:
 
 
 def tokenize(text: str, word_to_idx: dict) -> list[int]:
-	words = re.findall(r"[a-zA-ZáéíóúüñÁÉÍÓÚÜÑ_<>\-]+", text.lower())
+	words = re.findall(r"[a-zA-ZáéíóúüñÁÉÍÓÚÜÑ_<>'\-]+", text.lower())
 	return [word_to_idx.get(w, 1) for w in words]  # 1 is <unk>
 
 
 def format_and_tokenize_dialogue(dialogue, word_to_idx):
 	dialogue_tokens = []
 	for turn in dialogue:
-		match = re.match(r"^(yo|tú)\s*:\s*(.*)$", turn, re.IGNORECASE)
+		# Support both English (me/you) and Spanish (yo/tú) speaker prefixes
+		match = re.match(r"^(yo|tú|me|you)\s*:\s*(.*)$", turn, re.IGNORECASE)
 		if match:
 			speaker = match.group(1).lower()
 			content = match.group(2)
-			turn_words = [speaker] + re.findall(r"[a-zA-ZáéíóúüñÁÉÍÓÚÜÑ_<>\-]+", content.lower())
+			turn_words = [speaker] + re.findall(r"[a-zA-ZáéíóúüñÁÉÍÓÚÜÑ_<>'\-]+", content.lower())
 			turn_tokens = [word_to_idx.get(w, 1) for w in turn_words]
 			dialogue_tokens.extend(turn_tokens)
 	return dialogue_tokens
@@ -156,7 +157,8 @@ def run_samantha_eval(
 
 	print(f"🚀 Iniciando proceso síncrono del evaluador Samantha (Hito target: {eval_age} años)")
 	env = dict(os.environ)
-	env["PYTHONPATH"] = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+	project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
+	env["PYTHONPATH"] = project_root + (":" + env["PYTHONPATH"] if "PYTHONPATH" in env else "")
 	eval_res = subprocess.run(eval_cmd, env=env)
 
 	# 🔀 GPU Reload
@@ -376,7 +378,7 @@ def compile_exam_sequences_for_age(age: int, exams_data: dict, word_to_idx: dict
 				raw_a = qa["answer"]
 
 				# Extraer contenido de la pregunta
-				q_match = re.match(r"^(yo|tú)\s*:\s*(.*)$", raw_q, re.IGNORECASE)
+				q_match = re.match(r"^(yo|tú|me|you)\s*:\s*(.*)$", raw_q, re.IGNORECASE)
 				q_content = q_match.group(2) if q_match else raw_q
 
 				for var in generate_question_variations(q_content):
@@ -387,7 +389,11 @@ def compile_exam_sequences_for_age(age: int, exams_data: dict, word_to_idx: dict
 					q_tokens = [word_to_idx.get(w, 1) for w in mapped_q]
 					a_token = word_to_idx.get(mapped_a, 1)
 
-					tokens = q_tokens + [a_token]
+					dialogue_triggers = {"hello", "how are you", "who are you", "what is your name", "where are you from", "what is the bunker", "do you like borges"}
+					if q_content.lower().strip() in dialogue_triggers:
+						tokens = [word_to_idx.get("you", 1)] + q_tokens + [word_to_idx.get("me", 1)] + [a_token]
+					else:
+						tokens = q_tokens + [a_token]
 					exam_sequences.append(tokens)
 
 	# 2. Obtener preguntas específicas de evaluate_samantha_age.py para la edad
@@ -397,7 +403,7 @@ def compile_exam_sequences_for_age(age: int, exams_data: dict, word_to_idx: dict
 		raw_q = qa["question"]
 		raw_a = qa["expected"]
 
-		q_match = re.match(r"^(yo|tú)\s*:\s*(.*)$", raw_q, re.IGNORECASE)
+		q_match = re.match(r"^(yo|tú|me|you)\s*:\s*(.*)$", raw_q, re.IGNORECASE)
 		q_content = q_match.group(2) if q_match else raw_q
 
 		for var in generate_question_variations(q_content):
@@ -408,7 +414,11 @@ def compile_exam_sequences_for_age(age: int, exams_data: dict, word_to_idx: dict
 			q_tokens = [word_to_idx.get(w, 1) for w in mapped_q]
 			a_token = word_to_idx.get(mapped_a, 1)
 
-			tokens = q_tokens + [a_token]
+			dialogue_triggers = {"hello", "how are you", "who are you", "what is your name", "where are you from", "what is the bunker", "do you like borges"}
+			if q_content.lower().strip() in dialogue_triggers:
+				tokens = [word_to_idx.get("you", 1)] + q_tokens + [word_to_idx.get("me", 1)] + [a_token]
+			else:
+				tokens = q_tokens + [a_token]
 			exam_sequences.append(tokens)
 
 	return exam_sequences
@@ -495,11 +505,9 @@ def run_school_training():
 
 	base_dir = "/home/joan/Documents/IA/frankenswarm"
 	expanded_glyphs_path = os.path.join(base_dir, "configs", "expanded_glyphs.json")
-	curriculum_path = os.path.join(base_dir, "configs", "school_curriculum_structured.json")
-	dialogues_path = os.path.join(base_dir, "configs", "tiny_dialogues_large.json")
-	exams_path = os.path.join(base_dir, "configs", "school_exams.json")
-	childes_path = os.path.join(base_dir, "configs", "childes_pre_school.json")
-	nsm_physics_path = os.path.join(base_dir, "configs", "nsm_physics_pre_school.json")
+	curriculum_path = os.path.join(base_dir, "configs", "school_curriculum_structured_en.json")
+	dialogues_path = os.path.join(base_dir, "configs", "tiny_dialogues_large_en.json")
+	exams_path = os.path.join(base_dir, "configs", "school_exams_en.json")
 
 	# 1. Cargar vocabulario y glifos
 	with open(expanded_glyphs_path, encoding="utf-8") as f:
@@ -521,12 +529,6 @@ def run_school_training():
 	with open(exams_path, encoding="utf-8") as f:
 		exams_data = json.load(f)
 
-	with open(childes_path, encoding="utf-8") as f:
-		childes_sentences = json.load(f)
-
-	with open(nsm_physics_path, encoding="utf-8") as f:
-		nsm_physics_sentences = json.load(f)
-
 	with open(curriculum_path, encoding="utf-8") as f:
 		curriculum_json = json.load(f)
 		curriculum_metadata = curriculum_json.get("metadata", {})
@@ -540,30 +542,39 @@ def run_school_training():
 		}
 
 	print(f"Diálogos cargados: {len(dialogue_list)}")
-	print(f"CHILDES: {len(childes_sentences)} | NSM Physics: {len(nsm_physics_sentences)}")
 
-	# 3. Tokenizar conjuntos
+	# 3. Cargar TinyStories (inglés) como corpus principal preescolar
+	print("📖 Cargando TinyStories (inglés) desde caché local de HuggingFace...")
+	from datasets import load_dataset
+	ts_dataset = load_dataset("roneneldan/TinyStories", split="train")
+	n_stories = min(100000, len(ts_dataset))
+	print(f"  ✓ {n_stories:,} historias disponibles en TinyStories.")
+
+	# Tokenizar historias TinyStories directamente
+	tiny_stories_tokenized = []
+	for i in range(n_stories):
+		text = ts_dataset[i]["text"]
+		# Split into sentences for finer-grained sequences
+		sentences = re.split(r'[.!?]+', text)
+		for sent in sentences:
+			sent = sent.strip()
+			if len(sent) < 5:
+				continue
+			tokens = tokenize(sent, word_to_idx)
+			if 2 <= len(tokens) <= 64:
+				tiny_stories_tokenized.append(tokens)
+	print(f"  ✓ {len(tiny_stories_tokenized):,} secuencias tokenizadas de TinyStories.")
+
+	# Tokenizar diálogos
 	tokenized_dialogues = [format_and_tokenize_dialogue(d, word_to_idx) for d in dialogue_list]
 	tokenized_dialogues = [d for d in tokenized_dialogues if len(d) >= 2]
 
-	# Tokenizar el corpus preescolar sin submuestreo
-	raw_preschool_corpus = childes_sentences + nsm_physics_sentences
-	tokenized_preschool = [tokenize(s, word_to_idx) for s in raw_preschool_corpus]
-	tokenized_preschool = [seq for seq in tokenized_preschool if len(seq) >= 2]
+	# El corpus preescolar principal son las TinyStories tokenizadas
+	tokenized_preschool = tiny_stories_tokenized
 
-	# Cargar y tokenizar currículo preescolar de school_curriculum.json
-	english_stop_words = {"and", "the", "of", "in", "to", "is", "it", "that", "you", "was", "for", "on", "with", "his", "they", "he", "she", "at", "by", "this", "but", "from", "are", "as"}
-
-	def clean_curriculum(sentences):
-		cleaned = []
-		for s in sentences:
-			words = re.findall(r"[a-zA-ZáéíóúüñÁÉÍÓÚÜÑ_]+", s.lower())
-			if not any(w in english_stop_words for w in words):
-				cleaned.append(s)
-		return cleaned
-
-	preschool_curriculum_sentences = clean_curriculum(curriculum_data.get("preschool", []))
-	print(f"🎒 [LIMPIEZA DE DATOS] Currículo Preschool filtrado: {len(curriculum_data.get('preschool', []))} ➔ {len(preschool_curriculum_sentences)} limpio.")
+	# Tokenizar currículo estructurado preescolar (español — se mapea a glifos igualmente)
+	preschool_curriculum_sentences = curriculum_data.get("preschool", [])
+	print(f"🎒 [DATOS] Currículo Preschool: {len(preschool_curriculum_sentences)} frases.")
 	tokenized_preschool_curriculum = [tokenize(s, word_to_idx) for s in preschool_curriculum_sentences]
 	tokenized_preschool_curriculum = [seq for seq in tokenized_preschool_curriculum if len(seq) >= 2]
 
@@ -585,11 +596,10 @@ def run_school_training():
 	print(f"  - 2-3 Años (MLU 4-5): {len(gen_2_3)} secuencias")
 	print(f"  - 3-4 Años (MLU 6+): {len(gen_3_4)} secuencias")
 
-	# Cargar y limpiar primaria y secundaria
-	primary_sentences = clean_curriculum(curriculum_data.get("primary", []))
-	secondary_sentences = clean_curriculum(curriculum_data.get("secondary", []))
-	print(f"🎒 [LIMPIEZA DE DATOS] Currículo Primary filtrado: {len(curriculum_data.get('primary', []))} ➔ {len(primary_sentences)} limpio.")
-	print(f"🎒 [LIMPIEZA DE DATOS] Currículo Secondary filtrado: {len(curriculum_data.get('secondary', []))} ➔ {len(secondary_sentences)} limpio.")
+	# Cargar primaria y secundaria (sin filtro — el corpus es multilingüe mapeado a glifos)
+	primary_sentences = curriculum_data.get("primary", [])
+	secondary_sentences = curriculum_data.get("secondary", [])
+	print(f"🎒 [DATOS] Currículo Primary: {len(primary_sentences)} | Secondary: {len(secondary_sentences)}")
 
 	tokenized_primary = [tokenize(s, word_to_idx) for s in primary_sentences]
 	tokenized_primary = [seq for seq in tokenized_primary if len(seq) >= 2]
@@ -637,10 +647,10 @@ def run_school_training():
 			curriculum = curr_0_1 + curr_1_2 + curr_2_3 + curr_3_4 + primary_half1 + primary_half2
 		elif stage_idx == 6:
 			general = gen_0_1 + gen_1_2 + gen_2_3 + gen_3_4 + primary_dialogues_total + secondary_dialogues_half1
-			curriculum = curr_0_1 + curr_1_2 + curr_2_3 + curr_3_4 + primary_sentences + secondary_half1
+			curriculum = curr_0_1 + curr_1_2 + curr_2_3 + curr_3_4 + tokenized_primary + secondary_half1
 		else:
 			general = gen_0_1 + gen_1_2 + gen_2_3 + gen_3_4 + primary_dialogues_total + secondary_dialogues_total
-			curriculum = curr_0_1 + curr_1_2 + curr_2_3 + curr_3_4 + primary_sentences + secondary_sentences
+			curriculum = curr_0_1 + curr_1_2 + curr_2_3 + curr_3_4 + tokenized_primary + tokenized_secondary
 
 		# Mix in exam sequences up to the current stage's age
 		exams = []
@@ -650,14 +660,14 @@ def run_school_training():
 				exams.extend(compile_exam_sequences_for_age(age, exams_data, word_to_idx, dictionary))
 		if len(exams) > 0:
 			# Duplicar las preguntas de examen para asegurar que se memoricen
-			curriculum = curriculum + exams * 50
+			curriculum = curriculum + exams * 300
 
 		if args.curriculum_mode == "childes_only":
-			return general
+			return general, []
 		elif args.curriculum_mode == "structured_only":
-			return curriculum
+			return [], curriculum
 		else:
-			return oversample_curriculum_for_stage(general, curriculum, target_ratio=0.20)
+			return general, curriculum
 
 	# 4. Cargar o inicializar estado escolar
 	state_path = os.path.join(base_dir, "storage", "checkpoints", "sovereign_school", "school_state.json")
@@ -773,12 +783,19 @@ def run_school_training():
 		stage_idx, stage_name = get_stage_info(epoch)
 		if stage_idx != active_stage_idx:
 			print(f"\n🎒 [CAMBIO DE ETAPA] Época {epoch}: Compilando dataset para la etapa {stage_name}...")
-			base_data = compile_data_for_stage(stage_idx)
-			train_seqs, val_seqs = compile_stage_dataset(base_data, seq_len=128)
-			x_train = torch.tensor(train_seqs, dtype=torch.long)
+			general_data, curriculum_data = compile_data_for_stage(stage_idx)
+			
+			train_gen, val_gen = compile_stage_dataset(general_data, seq_len=128)
+			train_curr, val_curr = compile_stage_dataset(curriculum_data, seq_len=128)
+			
+			x_train_gen = torch.tensor(train_gen, dtype=torch.long)
+			x_train_curr = torch.tensor(train_curr, dtype=torch.long)
+			
+			# Combine validation directly
+			val_seqs = val_gen + val_curr
 			x_val = torch.tensor(val_seqs, dtype=torch.long) if len(val_seqs) > 0 else None
 			active_stage_idx = stage_idx
-			print(f"  ✓ Secuencias de entrenamiento: {len(x_train)} | Validación: {len(x_val) if x_val is not None else 0}")
+			print(f"  ✓ Gen Train: {len(x_train_gen)} | Curr Train: {len(x_train_curr)} | Val: {len(x_val) if x_val is not None else 0}")
 
 		# Warmup de learning rate lineal (primeras 10 épocas) o decaimiento coseno por etapa
 		lr_scale = 128.0 / model.hidden_dim
@@ -811,11 +828,21 @@ def run_school_training():
 
 		model.train()
 		epoch_loss = 0.0
-		permutation = torch.randperm(x_train.size(0))
 
-		for i in range(0, x_train.size(0), batch_size):
+		# Subsamplear solo general y concatenar con currículo/exámenes completos
+		MAX_GEN_SEQS_PER_EPOCH = 15000
+		if x_train_gen.size(0) > MAX_GEN_SEQS_PER_EPOCH:
+			subsample_idx = torch.randperm(x_train_gen.size(0))[:MAX_GEN_SEQS_PER_EPOCH]
+			x_gen_sub = x_train_gen[subsample_idx]
+		else:
+			x_gen_sub = x_train_gen
+			
+		x_epoch = torch.cat([x_gen_sub, x_train_curr], dim=0)
+		permutation = torch.randperm(x_epoch.size(0))
+
+		for i in range(0, x_epoch.size(0), batch_size):
 			indices = permutation[i : i + batch_size]
-			batch_x = x_train[indices]
+			batch_x = x_epoch[indices]
 
 			try:
 				optimizer.zero_grad()
@@ -868,7 +895,7 @@ def run_school_training():
 				else:
 					raise
 
-		epoch_loss /= x_train.size(0)
+		epoch_loss /= x_epoch.size(0)
 
 		# Calcular pérdida de validación (val_loss)
 		val_loss = 0.0
@@ -939,7 +966,7 @@ def run_school_training():
 		allowed_mask[0] = True
 		allowed_mask[1] = True
 
-		qual_seeds = ["yo sentir", "fuego estar", "madre decir"]
+		qual_seeds = ["once upon", "the cat", "she wanted"]
 		for seed in qual_seeds:
 			seed_words = re.findall(r"[a-zA-ZáéíóúüñÁÉÍÓÚÜÑ_]+", seed.lower())
 			mapped_seed = [dictionary.map_to_base_word(w) for w in seed_words]

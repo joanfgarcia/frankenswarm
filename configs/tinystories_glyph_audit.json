@@ -1,0 +1,1151 @@
+{
+  "metadata": {
+    "generated": "2026-07-06T15:13:56.657965+00:00",
+    "source": "roneneldan/TinyStories",
+    "stories_processed": 100000,
+    "total_tokens": 16654334,
+    "unique_words": 17100,
+    "content_words": 16964,
+    "unique_glyphs": 15228,
+    "compression_ratio": 1.11,
+    "theta": 0.26000000000000006,
+    "stopwords_removed": 122,
+    "blacklisted_count": 14,
+    "flagged_stories": 689
+  },
+  "blacklisted": [
+    [
+      "gun",
+      1069
+    ],
+    [
+      "wine",
+      377
+    ],
+    [
+      "weapon",
+      312
+    ],
+    [
+      "bomb",
+      37
+    ],
+    [
+      "pistol",
+      348
+    ],
+    [
+      "alcohol",
+      3
+    ],
+    [
+      "drunk",
+      7
+    ],
+    [
+      "cigarette",
+      27
+    ],
+    [
+      "kill",
+      19
+    ],
+    [
+      "bullet",
+      9
+    ],
+    [
+      "cock",
+      1
+    ],
+    [
+      "naked",
+      6
+    ],
+    [
+      "rifle",
+      1
+    ],
+    [
+      "beer",
+      1
+    ]
+  ],
+  "top_collisions": [
+    {
+      "words": [
+        "acai",
+        "afloat",
+        "alwayshave",
+        "ami",
+        "askew",
+        "atchoo",
+        "bawk",
+        "bert",
+        "billowing",
+        "boast",
+        "boasted",
+        "boistorous",
+        "boos",
+        "boringer",
+        "bouncier",
+        "bravest",
+        "bunbun",
+        "burly",
+        "chubbiest",
+        "clasp",
+        "clasped",
+        "clasps",
+        "cleats",
+        "delilah",
+        "deter",
+        "dollop",
+        "doodle",
+        "douglas",
+        "fancied",
+        "fanciest",
+        "flitted",
+        "freckle",
+        "frolicked",
+        "funniest",
+        "gardem",
+        "giddily",
+        "giv",
+        "helpul",
+        "kay",
+        "lapping",
+        "leant",
+        "locket",
+        "loosen",
+        "matilda",
+        "meowed",
+        "mewing",
+        "mooing",
+        "muy",
+        "neem",
+        "nosiness",
+        "nudges",
+        "ol",
+        "pal",
+        "palate",
+        "paler",
+        "pleas",
+        "reddest",
+        "repack",
+        "retuned",
+        "reverie",
+        "runnig",
+        "ruth",
+        "savored",
+        "scampi",
+        "sia",
+        "snoozed",
+        "sob",
+        "sourest",
+        "spencer",
+        "spiciness",
+        "spiky",
+        "splat",
+        "spongy",
+        "spout",
+        "spouty",
+        "sprocket",
+        "sternest",
+        "stevens",
+        "studs",
+        "sulk",
+        "tallest",
+        "tandy",
+        "tapas",
+        "tart",
+        "teeing",
+        "teeming",
+        "tidily",
+        "togeth",
+        "tolled",
+        "took",
+        "za",
+        "zaps"
+      ],
+      "total_freq": 22758
+    },
+    {
+      "words": [
+        "billowed",
+        "bramble",
+        "brambles",
+        "brimmed",
+        "bristled",
+        "busied",
+        "chasd",
+        "chirruped",
+        "clattering",
+        "clucks",
+        "clumsier",
+        "cowered",
+        "crabby",
+        "crept",
+        "croaky",
+        "duller",
+        "erase",
+        "eraser",
+        "excitied",
+        "grouchy",
+        "gushed",
+        "hunkered",
+        "jumbled",
+        "ladled",
+        "lapped",
+        "lulled",
+        "lurk",
+        "mesmerised",
+        "pared",
+        "parsley",
+        "pasted",
+        "plea",
+        "propped",
+        "puncture",
+        "quilled",
+        "quivered",
+        "rambled",
+        "repacking",
+        "reveled",
+        "reveling",
+        "revved",
+        "rip",
+        "rudolph",
+        "runnning",
+        "sauntered",
+        "scamper",
+        "scramble",
+        "scrunchies",
+        "shakily",
+        "simmer",
+        "skilful",
+        "skittered",
+        "slither",
+        "snached",
+        "splatter",
+        "squelch",
+        "squelching",
+        "squishy",
+        "stubby",
+        "sunken",
+        "swarmed",
+        "swerve",
+        "toothed",
+        "waddled",
+        "wedged",
+        "whined",
+        "wondeful",
+        "wrinkly"
+      ],
+      "total_freq": 1565
+    },
+    {
+      "words": [
+        "bale",
+        "baxter",
+        "beautifu",
+        "candace",
+        "chester",
+        "delve",
+        "dos",
+        "easel",
+        "eileen",
+        "fedor",
+        "fritz",
+        "gaa",
+        "gracel",
+        "iarrange",
+        "jolt",
+        "kai",
+        "kira",
+        "lina",
+        "mateo",
+        "mato",
+        "namaste",
+        "pablo",
+        "percival",
+        "pico",
+        "rac",
+        "ralf",
+        "rani",
+        "riko",
+        "rind",
+        "roost",
+        "saila",
+        "savannas",
+        "simone",
+        "solver",
+        "sooo",
+        "sophia",
+        "squirm",
+        "susa",
+        "tastiest",
+        "tidied",
+        "ton",
+        "tori",
+        "veronica",
+        "vest",
+        "vide",
+        "zest"
+      ],
+      "total_freq": 1031
+    },
+    {
+      "words": [
+        "ajay",
+        "befallen",
+        "bout",
+        "cecil",
+        "clarissa",
+        "cooed",
+        "cosier",
+        "cozied",
+        "craig",
+        "crannies",
+        "der",
+        "em",
+        "ga",
+        "giodano",
+        "ii",
+        "intrepid",
+        "ish",
+        "iza",
+        "mantelpiece",
+        "mend",
+        "morris",
+        "ollie",
+        "owie",
+        "pasting",
+        "peddlar",
+        "peddled",
+        "pendant",
+        "perked",
+        "poms",
+        "pranks",
+        "puto",
+        "rainiest",
+        "roberta",
+        "roly",
+        "rounder",
+        "sorbet",
+        "sprout",
+        "stammers",
+        "sticker",
+        "strum",
+        "tease",
+        "themed",
+        "ties",
+        "trove"
+      ],
+      "total_freq": 1583
+    },
+    {
+      "words": [
+        "addie",
+        "audrey",
+        "baaaa",
+        "billowy",
+        "bravado",
+        "buoy",
+        "dougie",
+        "floss",
+        "froggie",
+        "frothed",
+        "glug",
+        "hapy",
+        "heave",
+        "heeelp",
+        "jingly",
+        "laziest",
+        "manged",
+        "medlar",
+        "moni",
+        "plop",
+        "pormised",
+        "prongs",
+        "quinces",
+        "quivery",
+        "relishing",
+        "replant",
+        "roaaaar",
+        "rraaaaaaaawr",
+        "salute",
+        "seas",
+        "sled",
+        "slinky",
+        "sliver",
+        "sous",
+        "spiciest",
+        "splutter",
+        "sprite",
+        "spritely",
+        "suprise",
+        "techo",
+        "tress",
+        "tresses",
+        "trinkets"
+      ],
+      "total_freq": 283
+    },
+    {
+      "words": [
+        "abcs",
+        "agnes",
+        "ajar",
+        "album",
+        "alessio",
+        "alexa",
+        "alys",
+        "anise",
+        "annalise",
+        "celi",
+        "cici",
+        "el",
+        "elise",
+        "eric",
+        "eskimos",
+        "eveyone",
+        "glinda",
+        "glowier",
+        "hullo",
+        "ivan",
+        "lair",
+        "linny",
+        "linus",
+        "los",
+        "mazes",
+        "missel",
+        "mitten",
+        "ogre",
+        "pams",
+        "paolo",
+        "patties",
+        "pli",
+        "propel",
+        "pru",
+        "ras",
+        "ruder",
+        "saskatoon",
+        "snivel",
+        "tul",
+        "turt"
+      ],
+      "total_freq": 565
+    },
+    {
+      "words": [
+        "andrew",
+        "annie",
+        "bess",
+        "bo",
+        "boppity",
+        "bubu",
+        "chime",
+        "chimed",
+        "dasher",
+        "dime",
+        "doin",
+        "doug",
+        "funnest",
+        "gaily",
+        "gajar",
+        "gargantuan",
+        "garry",
+        "gushes",
+        "hefty",
+        "hoeing",
+        "hoist",
+        "jam",
+        "jot",
+        "li",
+        "lo",
+        "louie",
+        "luigi",
+        "mane",
+        "meghan",
+        "meowing",
+        "meowy",
+        "miguel",
+        "pot",
+        "savouring",
+        "spe",
+        "tines",
+        "wildest",
+        "zam",
+        "zane"
+      ],
+      "total_freq": 3842
+    },
+    {
+      "words": [
+        "alfried",
+        "aproached",
+        "baaed",
+        "baaing",
+        "casted",
+        "crododile",
+        "dedicate",
+        "deflates",
+        "deletes",
+        "diced",
+        "embroider",
+        "emmi",
+        "erases",
+        "glistened",
+        "jumble",
+        "lazily",
+        "rabid",
+        "reattach",
+        "recharged",
+        "rusher",
+        "savoured",
+        "skelly",
+        "slunk",
+        "splodge",
+        "spoilt",
+        "squish",
+        "suprised",
+        "tarnished",
+        "thimble",
+        "toppling",
+        "trim",
+        "whinnied",
+        "whisked",
+        "whizing"
+      ],
+      "total_freq": 193
+    },
+    {
+      "words": [
+        "bestest",
+        "chimes",
+        "chives",
+        "claude",
+        "curtis",
+        "emmie",
+        "froggies",
+        "hannah",
+        "hone",
+        "hudson",
+        "joanie",
+        "jodi",
+        "jolliden",
+        "jolliest",
+        "jostaberry",
+        "jub",
+        "karla",
+        "milled",
+        "milo",
+        "mingle",
+        "mon",
+        "monu",
+        "prommie",
+        "rushes",
+        "saucer",
+        "smidgen",
+        "sofie",
+        "suzie",
+        "tillie",
+        "tuner",
+        "wally",
+        "wares",
+        "whith"
+      ],
+      "total_freq": 890
+    },
+    {
+      "words": [
+        "baubles",
+        "calico",
+        "clarice",
+        "comfier",
+        "flit",
+        "flutist",
+        "fragrant",
+        "grate",
+        "greenie",
+        "kaffir",
+        "le",
+        "mat",
+        "mulberry",
+        "onit",
+        "rinses",
+        "silliest",
+        "simmi",
+        "stuart",
+        "tanner",
+        "topple"
+      ],
+      "total_freq": 223
+    },
+    {
+      "words": [
+        "abbie",
+        "agave",
+        "baeden",
+        "bales",
+        "balm",
+        "bamba",
+        "bambi",
+        "basil",
+        "beluga",
+        "brim",
+        "dadbrang",
+        "discard",
+        "racoon",
+        "ralph",
+        "russel",
+        "simba",
+        "stub",
+        "susan"
+      ],
+      "total_freq": 651
+    },
+    {
+      "words": [
+        "billi",
+        "davis",
+        "fraglie",
+        "gertie",
+        "halwa",
+        "jamel",
+        "jing",
+        "juan",
+        "kaylee",
+        "lego",
+        "llama",
+        "saurus",
+        "sunhat",
+        "tami",
+        "teena",
+        "tidiest",
+        "voila",
+        "zara"
+      ],
+      "total_freq": 226
+    },
+    {
+      "words": [
+        "bristles",
+        "croutons",
+        "curvy",
+        "dinged",
+        "ladle",
+        "lurched",
+        "peddle",
+        "pleeease",
+        "ruckus",
+        "splatted",
+        "spouted",
+        "spouting",
+        "trudy",
+        "tuckered",
+        "unravelled",
+        "vroomed"
+      ],
+      "total_freq": 55
+    },
+    {
+      "words": [
+        "comin",
+        "jon",
+        "jonnie",
+        "nathaniel",
+        "nemo",
+        "nibs",
+        "nicky",
+        "nifty",
+        "nikki",
+        "nimble",
+        "nip",
+        "nugget",
+        "ryan",
+        "tinky",
+        "tins",
+        "tintin"
+      ],
+      "total_freq": 1122
+    },
+    {
+      "words": [
+        "antics",
+        "carted",
+        "cranky",
+        "ellen",
+        "fixer",
+        "fixes",
+        "hopuped",
+        "onceuponatime",
+        "pestered",
+        "pj",
+        "snagged",
+        "tweezer",
+        "tyre"
+      ],
+      "total_freq": 102
+    },
+    {
+      "words": [
+        "bobo",
+        "carlos",
+        "coo",
+        "custard",
+        "gabbi",
+        "monte",
+        "renee",
+        "rim",
+        "roundest",
+        "sofia",
+        "suna",
+        "toni"
+      ],
+      "total_freq": 1031
+    },
+    {
+      "words": [
+        "clara",
+        "evan",
+        "exported",
+        "greta",
+        "haired",
+        "hue",
+        "ralphie",
+        "sa",
+        "shyer",
+        "tinged",
+        "trina",
+        "vast"
+      ],
+      "total_freq": 579
+    },
+    {
+      "words": [
+        "assuring",
+        "ate",
+        "bitten",
+        "devour",
+        "fribble",
+        "halves",
+        "onto",
+        "ot",
+        "pasty",
+        "someoone"
+      ],
+      "total_freq": 7968
+    },
+    {
+      "words": [
+        "bobro",
+        "busiest",
+        "capped",
+        "chipper",
+        "pram",
+        "pre",
+        "quince",
+        "ricky",
+        "spikey",
+        "takeout"
+      ],
+      "total_freq": 81
+    },
+    {
+      "words": [
+        "copies",
+        "doed",
+        "grossed",
+        "plummet",
+        "scaly",
+        "scuttles",
+        "snag",
+        "snoozes",
+        "sprites",
+        "sprouts"
+      ],
+      "total_freq": 45
+    },
+    {
+      "words": [
+        "die",
+        "dis",
+        "duet",
+        "gal",
+        "harriet",
+        "heidi",
+        "madder",
+        "patsy",
+        "pjs",
+        "sqwak"
+      ],
+      "total_freq": 194
+    },
+    {
+      "words": [
+        "dora",
+        "drina",
+        "jessa",
+        "julia",
+        "lisa",
+        "luisa",
+        "lychee",
+        "lydia",
+        "maurice",
+        "trix"
+      ],
+      "total_freq": 1940
+    },
+    {
+      "words": [
+        "bandana",
+        "jayden",
+        "kylie",
+        "lauren",
+        "otthers",
+        "savor",
+        "savory",
+        "savour",
+        "savoury"
+      ],
+      "total_freq": 39
+    },
+    {
+      "words": [
+        "bare",
+        "dont",
+        "however",
+        "jen",
+        "kinda",
+        "tik",
+        "untrue",
+        "vain",
+        "yet"
+      ],
+      "total_freq": 3527
+    },
+    {
+      "words": [
+        "becos",
+        "bruno",
+        "de",
+        "melvin",
+        "nutella",
+        "pasta",
+        "sift",
+        "tic",
+        "winston"
+      ],
+      "total_freq": 801
+    },
+    {
+      "words": [
+        "bleep",
+        "drier",
+        "marvelled",
+        "pincers",
+        "rambutan",
+        "royce",
+        "splishy",
+        "twice",
+        "wore"
+      ],
+      "total_freq": 1537
+    },
+    {
+      "words": [
+        "gator",
+        "pry",
+        "ro",
+        "roam",
+        "ted",
+        "terence",
+        "trowel",
+        "vincent",
+        "zac"
+      ],
+      "total_freq": 520
+    },
+    {
+      "words": [
+        "aiming",
+        "gruff",
+        "oval",
+        "paved",
+        "smug",
+        "steph",
+        "steve",
+        "sticken"
+      ],
+      "total_freq": 474
+    },
+    {
+      "words": [
+        "ama",
+        "eiffel",
+        "encaustic",
+        "huged",
+        "lise",
+        "neckalce",
+        "strums",
+        "tutted"
+      ],
+      "total_freq": 21
+    },
+    {
+      "words": [
+        "andsaid",
+        "era",
+        "grooved",
+        "petalled",
+        "pounced",
+        "pungent",
+        "skit",
+        "ugli"
+      ],
+      "total_freq": 46
+    },
+    {
+      "words": [
+        "ba",
+        "celine",
+        "es",
+        "fronds",
+        "help",
+        "pours",
+        "saliva",
+        "tino"
+      ],
+      "total_freq": 35189
+    },
+    {
+      "words": [
+        "batman",
+        "becasue",
+        "colander",
+        "dervish",
+        "lenny",
+        "slung",
+        "suzanne",
+        "vigour"
+      ],
+      "total_freq": 89
+    },
+    {
+      "words": [
+        "bon",
+        "bun",
+        "continuously",
+        "goed",
+        "gut",
+        "keeping",
+        "kept",
+        "patiently"
+      ],
+      "total_freq": 11703
+    },
+    {
+      "words": [
+        "bounciest",
+        "conjured",
+        "croaks",
+        "curd",
+        "plier",
+        "setlled",
+        "splotchy",
+        "whooshed"
+      ],
+      "total_freq": 29
+    },
+    {
+      "words": [
+        "caressed",
+        "dressing",
+        "huggies",
+        "huggy",
+        "ravi",
+        "snug",
+        "snugly",
+        "tailor"
+      ],
+      "total_freq": 226
+    },
+    {
+      "words": [
+        "hee",
+        "waa",
+        "whee",
+        "whew",
+        "woah",
+        "woof",
+        "wooosh",
+        "woosh"
+      ],
+      "total_freq": 375
+    },
+    {
+      "words": [
+        "annabelle",
+        "becky",
+        "gabe",
+        "jennie",
+        "keen",
+        "micah",
+        "tarzan"
+      ],
+      "total_freq": 243
+    },
+    {
+      "words": [
+        "bessy",
+        "crisps",
+        "gummies",
+        "jucy",
+        "loaves",
+        "soaks",
+        "stash"
+      ],
+      "total_freq": 38
+    },
+    {
+      "words": [
+        "blub",
+        "jarred",
+        "repurpose",
+        "seams",
+        "susy",
+        "whitecurrant",
+        "wriggly"
+      ],
+      "total_freq": 58
+    },
+    {
+      "words": [
+        "bonnie",
+        "diego",
+        "hickory",
+        "jackalope",
+        "jaunt",
+        "ruffy",
+        "sonja"
+      ],
+      "total_freq": 91
+    },
+    {
+      "words": [
+        "cecilia",
+        "freya",
+        "gabriella",
+        "hilary",
+        "izzy",
+        "janelle",
+        "juliet"
+      ],
+      "total_freq": 212
+    },
+    {
+      "words": [
+        "dam",
+        "doris",
+        "finer",
+        "gloomier",
+        "mam",
+        "sourer",
+        "stirrer"
+      ],
+      "total_freq": 30
+    },
+    {
+      "words": [
+        "fixture",
+        "hind",
+        "jalape",
+        "jimbo",
+        "ore",
+        "piecing",
+        "taut"
+      ],
+      "total_freq": 60
+    },
+    {
+      "words": [
+        "hia",
+        "jaay",
+        "jed",
+        "jojo",
+        "lolo",
+        "lovable",
+        "yippee"
+      ],
+      "total_freq": 181
+    },
+    {
+      "words": [
+        "hosepipe",
+        "jellies",
+        "lasso",
+        "lulu",
+        "puree",
+        "tess",
+        "wilf"
+      ],
+      "total_freq": 344
+    },
+    {
+      "words": [
+        "mitchell",
+        "ouchies",
+        "quiver",
+        "quivers",
+        "sharon",
+        "sully",
+        "woulod"
+      ],
+      "total_freq": 57
+    },
+    {
+      "words": [
+        "absolutely",
+        "correct",
+        "correctly",
+        "corrects",
+        "yeah",
+        "yes"
+      ],
+      "total_freq": 16327
+    },
+    {
+      "words": [
+        "amelie",
+        "hilla",
+        "ina",
+        "llamo",
+        "tim",
+        "verybig"
+      ],
+      "total_freq": 27926
+    },
+    {
+      "words": [
+        "bella",
+        "granma",
+        "lana",
+        "lucia",
+        "mandala",
+        "ooze"
+      ],
+      "total_freq": 939
+    },
+    {
+      "words": [
+        "bien",
+        "fitting",
+        "keep",
+        "keeps",
+        "ok",
+        "satisfied"
+      ],
+      "total_freq": 14446
+    }
+  ]
+}

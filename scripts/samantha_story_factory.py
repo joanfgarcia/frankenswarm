@@ -122,6 +122,8 @@ def main():
 			raw = generate_batch(build_prompt(spec, rng), args.mock)
 			for line in raw.splitlines():
 				text = line.strip().lower()
+				# Limpiar numeración inicial (ej. "1. ", "1.- ", "2) ")
+				text = re.sub(r'^\d+[\.\-\)\s]+', '', text).strip()
 				if len(words_of(text)) < 5:
 					continue
 				h = hashlib.sha256(re.sub(r"\W+", "", text).encode()).hexdigest()[:16]
