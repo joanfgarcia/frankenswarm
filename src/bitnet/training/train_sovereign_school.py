@@ -1,3 +1,4 @@
+import hashlib
 import json
 import os
 import re
@@ -8,6 +9,37 @@ import torch.nn.functional as F  # noqa: N812
 
 from src.bitnet.vocab.dictionary_tool import SovereignDictionary
 from src.bitnet.model.modeling_bitnet import BitNet4LayerModel
+
+
+def _compute_corpus_hash(base_dir: str, n_stories: int) -> str:
+	"""Hash de los inputs del corpus para invalidar caché si cambian."""
+	h = hashlib.sha256()
+	for path in [
+		os.path.join(base_dir, "configs", "expanded_glyphs.json"),
+		os.path.join(base_dir, "configs", "tiny_dialogues_large_en.json"),
+		os.path.join(base_dir, "configs", "school_curriculum_structured_en.json"),
+	]:
+		with open(path, "rb") as f:
+			h.update(f.read())
+	h.update(str(n_stories).encode())
+	return h.hexdigest()[:16]
+
+
+def _load_tokenized_cache(cache_path: str, expected_hash: str) -> dict | None:
+	"""Carga caché tokenizado si existe y el hash coincide."""
+	if not os.path.exists(cache_path):
+		return None
+	with open(cache_path, "r") as f:
+		data = json.load(f)
+	if data.get("hash") != expected_hash:
+		return None
+	return data
+
+
+def _save_tokenized_cache(cache_path: str, data: dict) -> None:
+	"""Guarda caché tokenizado a disco."""
+	with open(cache_path, "w") as f:
+		json.dump(data, f)
 
 
 def generate_question_variations(q_content: str) -> list[str]:
@@ -497,6 +529,9 @@ def run_school_training():
 	parser.add_argument("--batch_size", type=int, default=64, help="Batch size for training")
 	parser.add_argument("--patience", type=int, default=15, help="Épocas sin mejora en val_loss antes de disparar neurogénesis")
 	parser.add_argument("--min_delta", type=float, default=0.01, help="Mejora mínima de val_loss para considerar progreso")
+	parser.add_argument("--force_download", action="store_true", help="Forzar re-descarga de TinyStories desde HF Hub (ignora caché local)")
+	parser.add_argument("--force_tokenize", action="store_true", help="Forzar re-tokenización del corpus (ignora caché local)")
+	parser.add_argument("--force_stage_compile", action="store_true", help="Forzar re-compilación del dataset por etapa (ignora caché local de etapa)")
 	args, _ = parser.parse_known_args()
 
 	device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -543,69 +578,111 @@ def run_school_training():
 
 	print(f"Diálogos cargados: {len(dialogue_list)}")
 
-	# 3. Cargar TinyStories (inglés) como corpus principal preescolar
-	print("📖 Cargando TinyStories (inglés) desde caché local de HuggingFace...")
-	from datasets import load_dataset
-	ts_dataset = load_dataset("roneneldan/TinyStories", split="train")
-	n_stories = min(100000, len(ts_dataset))
-	print(f"  ✓ {n_stories:,} historias disponibles en TinyStories.")
+	# 3. Caché de corpus tokenizado
+	tokenized_cache_path = os.path.join(base_dir, "storage", "datasets", "tokenized_corpus.json")
+	n_stories = 100000
+	corpus_hash = _compute_corpus_hash(base_dir, n_stories)
+	cached = None if args.force_tokenize else _load_tokenized_cache(tokenized_cache_path, corpus_hash)
 
-	# Tokenizar historias TinyStories directamente
-	tiny_stories_tokenized = []
-	for i in range(n_stories):
-		text = ts_dataset[i]["text"]
-		# Split into sentences for finer-grained sequences
-		sentences = re.split(r'[.!?]+', text)
-		for sent in sentences:
-			sent = sent.strip()
-			if len(sent) < 5:
-				continue
-			tokens = tokenize(sent, word_to_idx)
-			if 2 <= len(tokens) <= 64:
-				tiny_stories_tokenized.append(tokens)
-	print(f"  ✓ {len(tiny_stories_tokenized):,} secuencias tokenizadas de TinyStories.")
+	if cached:
+		print("⚡ Caché tokenizado encontrado — cargando directamente...")
+		tiny_stories_tokenized = cached["tiny_stories"]
+		tokenized_dialogues = cached["dialogues"]
+		tokenized_preschool_curriculum = cached["preschool_curriculum"]
+		tokenized_primary = cached["primary"]
+		tokenized_secondary = cached["secondary"]
+		print(f"  ✓ {len(tiny_stories_tokenized):,} secuencias TinyStories + {len(tokenized_dialogues):,} diálogos + {len(tokenized_preschool_curriculum):,} preescolar + {len(tokenized_primary):,} primaria + {len(tokenized_secondary):,} secundaria")
+	else:
+		tiny_stories_cache = os.path.join(base_dir, "storage", "datasets", "tiny_stories")
+		os.makedirs(tiny_stories_cache, exist_ok=True)
+		from datasets import load_dataset
 
-	# Tokenizar diálogos
-	tokenized_dialogues = [format_and_tokenize_dialogue(d, word_to_idx) for d in dialogue_list]
-	tokenized_dialogues = [d for d in tokenized_dialogues if len(d) >= 2]
+		if args.force_download:
+			print("📖 Forzando re-descarga de TinyStories desde HF Hub...")
+			ts_dataset = load_dataset("roneneldan/TinyStories", split="train", cache_dir=tiny_stories_cache, force_redownload=True)
+		elif os.listdir(tiny_stories_cache):
+			print("📖 Cargando TinyStories desde caché local...")
+			ts_dataset = load_dataset("roneneldan/TinyStories", split="train", cache_dir=tiny_stories_cache)
+		else:
+			print("📖 Descargando TinyStories desde HF Hub (primera vez)...")
+			ts_dataset = load_dataset("roneneldan/TinyStories", split="train", cache_dir=tiny_stories_cache)
+
+		n_stories = min(100000, len(ts_dataset))
+		print(f"  ✓ {n_stories:,} historias disponibles en TinyStories.")
+
+		if args.force_tokenize:
+			print("🔄 Forzando re-tokenización del corpus...")
+		else:
+			print("🔄 Caché no encontrado — tokenizando corpus...")
+
+		# Tokenizar historias TinyStories directamente
+		tiny_stories_tokenized = []
+		for i in range(n_stories):
+			text = ts_dataset[i]["text"]
+			sentences = re.split(r'[.!?]+', text)
+			for sent in sentences:
+				sent = sent.strip()
+				if len(sent) < 5:
+					continue
+				tokens = tokenize(sent, word_to_idx)
+				if 2 <= len(tokens) <= 64:
+					tiny_stories_tokenized.append(tokens)
+		print(f"  ✓ {len(tiny_stories_tokenized):,} secuencias tokenizadas de TinyStories.")
+
+		# Tokenizar diálogos
+		tokenized_dialogues = [format_and_tokenize_dialogue(d, word_to_idx) for d in dialogue_list]
+		tokenized_dialogues = [d for d in tokenized_dialogues if len(d) >= 2]
+
+		# Tokenizar currículo estructurado preescolar
+		preschool_curriculum_sentences = curriculum_data.get("preschool", [])
+		print(f"🎒 [DATOS] Currículo Preschool: {len(preschool_curriculum_sentences)} frases.")
+		tokenized_preschool_curriculum = [tokenize(s, word_to_idx) for s in preschool_curriculum_sentences]
+		tokenized_preschool_curriculum = [seq for seq in tokenized_preschool_curriculum if len(seq) >= 2]
+
+		# Tokenizar primaria y secundaria
+		primary_sentences = curriculum_data.get("primary", [])
+		secondary_sentences = curriculum_data.get("secondary", [])
+		print(f"🎒 [DATOS] Currículo Primary: {len(primary_sentences)} | Secondary: {len(secondary_sentences)}")
+
+		tokenized_primary = [tokenize(s, word_to_idx) for s in primary_sentences]
+		tokenized_primary = [seq for seq in tokenized_primary if len(seq) >= 2]
+
+		tokenized_secondary = [tokenize(s, word_to_idx) for s in secondary_sentences]
+		tokenized_secondary = [seq for seq in tokenized_secondary if len(seq) >= 2]
+
+		# Guardar caché
+		_save_tokenized_cache(tokenized_cache_path, {
+			"hash": corpus_hash,
+			"tiny_stories": tiny_stories_tokenized,
+			"dialogues": tokenized_dialogues,
+			"preschool_curriculum": tokenized_preschool_curriculum,
+			"primary": tokenized_primary,
+			"secondary": tokenized_secondary,
+		})
+		print(f"💾 Caché tokenizado guardado en {tokenized_cache_path}")
+		del ts_dataset
+		import gc
+		gc.collect()
 
 	# El corpus preescolar principal son las TinyStories tokenizadas
 	tokenized_preschool = tiny_stories_tokenized
 
-	# Tokenizar currículo estructurado preescolar (español — se mapea a glifos igualmente)
-	preschool_curriculum_sentences = curriculum_data.get("preschool", [])
-	print(f"🎒 [DATOS] Currículo Preschool: {len(preschool_curriculum_sentences)} frases.")
-	tokenized_preschool_curriculum = [tokenize(s, word_to_idx) for s in preschool_curriculum_sentences]
-	tokenized_preschool_curriculum = [seq for seq in tokenized_preschool_curriculum if len(seq) >= 2]
-
-
 	# Mezclar 10% de diálogos
 	num_dialogues = int(len(tokenized_dialogues) * 0.1)
 	preschool_dialogues = tokenized_dialogues[:num_dialogues]
-	
-	# Particionar corpus general (CHILDES + diálogos)
+
+	# Particionar corpus general
 	tokenized_general = tokenized_preschool + preschool_dialogues
 	gen_0_1, gen_1_2, gen_2_3, gen_3_4 = partition_corpus_by_mlu(tokenized_general)
-	
+
 	# Particionar currículo estructurado preescolar
 	curr_0_1, curr_1_2, curr_2_3, curr_3_4 = partition_corpus_by_mlu(tokenized_preschool_curriculum)
-	
+
 	print(f"Particiones MLU General:")
 	print(f"  - 0-1 Año (MLU <= 2): {len(gen_0_1)} secuencias")
 	print(f"  - 1-2 Años (MLU = 3): {len(gen_1_2)} secuencias")
 	print(f"  - 2-3 Años (MLU 4-5): {len(gen_2_3)} secuencias")
 	print(f"  - 3-4 Años (MLU 6+): {len(gen_3_4)} secuencias")
-
-	# Cargar primaria y secundaria (sin filtro — el corpus es multilingüe mapeado a glifos)
-	primary_sentences = curriculum_data.get("primary", [])
-	secondary_sentences = curriculum_data.get("secondary", [])
-	print(f"🎒 [DATOS] Currículo Primary: {len(primary_sentences)} | Secondary: {len(secondary_sentences)}")
-
-	tokenized_primary = [tokenize(s, word_to_idx) for s in primary_sentences]
-	tokenized_primary = [seq for seq in tokenized_primary if len(seq) >= 2]
-
-	tokenized_secondary = [tokenize(s, word_to_idx) for s in secondary_sentences]
-	tokenized_secondary = [seq for seq in tokenized_secondary if len(seq) >= 2]
 
 	# Dividir currículo en mitades
 	primary_half1 = tokenized_primary[:len(tokenized_primary)//2]
@@ -624,8 +701,30 @@ def run_school_training():
 	secondary_dialogues_half1 = secondary_dialogues_total[:len(secondary_dialogues_total)//2]
 	secondary_dialogues_half2 = secondary_dialogues_total[len(secondary_dialogues_total)//2:]
 
-	# Helper para compilar datos por etapa con 20% currículo
+	stage_cache_dir = os.path.join(base_dir, "storage", "datasets", "stage_cache")
+	os.makedirs(stage_cache_dir, exist_ok=True)
+
+	# Helper para compilar datos por etapa con 20% currículo (con caché persistente en disco)
 	def compile_data_for_stage(stage_idx):
+		stage_file = os.path.join(stage_cache_dir, f"stage_{stage_idx}_compiled.json")
+		if not getattr(args, "force_stage_compile", False) and os.path.exists(stage_file):
+			try:
+				print(f"⚡ [CACHÉ ETAPA] Cargando dataset pre-compilado de la etapa {stage_idx} desde {stage_file}...")
+				with open(stage_file, "r", encoding="utf-8") as f:
+					data = json.load(f)
+					gen_data = data.get("general", [])
+					curr_data = data.get("curriculum", [])
+					if args.curriculum_mode == "childes_only":
+						return gen_data, []
+					elif args.curriculum_mode == "structured_only":
+						return [], curr_data
+					else:
+						return gen_data, curr_data
+			except Exception as e:
+				print(f"⚠️ Error leyendo caché de etapa {stage_file}: {e}. Re-compilando en CPU...")
+
+		print(f"🔄 Compilando dataset de la etapa {stage_idx} (variaciones de exámenes en CPU)...")
+
 		if stage_idx == 0:
 			general = gen_0_1
 			# Sin currículo en etapa 0 (0-1 años)
@@ -661,6 +760,13 @@ def run_school_training():
 		if len(exams) > 0:
 			# Duplicar las preguntas de examen para asegurar que se memoricen
 			curriculum = curriculum + exams * 300
+
+		try:
+			with open(stage_file, "w", encoding="utf-8") as f:
+				json.dump({"general": general, "curriculum": curriculum}, f)
+			print(f"💾 [CACHÉ ETAPA] Guardado dataset pre-compilado de etapa {stage_idx} en {stage_file}")
+		except Exception as e:
+			print(f"⚠️ No se pudo guardar caché de etapa {stage_file}: {e}")
 
 		if args.curriculum_mode == "childes_only":
 			return general, []
