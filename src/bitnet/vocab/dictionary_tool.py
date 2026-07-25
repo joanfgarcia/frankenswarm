@@ -29,7 +29,25 @@ class SovereignDictionary:
 		self.base_embeddings = None  # Se inicializa perezosamente para ahorrar tiempo
 		self.sharing_venv_python = "/home/joan/Documents/IA/sharing/.venv/bin/python"
 		self.sharing_src = "/home/joan/Documents/IA/sharing/src"
-		self.mapping_cache = {}  # Caché para acelerar mapeo semántico de palabras OOV
+		
+		# Ruta del caché persistente en disco
+		base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+		self.cache_file = os.path.join(base_dir, "storage", "datasets", "dictionary_mapping_cache.json")
+		os.makedirs(os.path.dirname(self.cache_file), exist_ok=True)
+		self.mapping_cache = {}
+		if os.path.exists(self.cache_file):
+			try:
+				with open(self.cache_file, "r", encoding="utf-8") as f:
+					self.mapping_cache = json.load(f)
+			except Exception:
+				pass
+
+	def _save_cache(self):
+		try:
+			with open(self.cache_file, "w", encoding="utf-8") as f:
+				json.dump(self.mapping_cache, f, ensure_ascii=False)
+		except Exception:
+			pass
 
 	def _get_base_embeddings(self):
 		if self.base_embeddings is None:
@@ -67,8 +85,10 @@ class SovereignDictionary:
 		best_idx = np.argmax(similarities)
 		mapped_word = self.base_vocab[best_idx]
 		
-		# Guardar en caché
+		# Guardar en caché y persistir a disco cada 20 palabras nuevas
 		self.mapping_cache[word] = mapped_word
+		if len(self.mapping_cache) % 20 == 0:
+			self._save_cache()
 		return mapped_word
 
 	def buscar_en_samantha(self, word: str) -> str:
