@@ -519,17 +519,26 @@ def oversample_curriculum_for_stage(general_data, curriculum_data, target_ratio=
 
 
 def run_school_training():
-	# Register GPU VRAM reservation dynamically
+	# Announce the GPU claim to red-pill, IF red-pill happens to be around, so its
+	# inference daemon falls back to the CPU worker while we hold the card.
+	# Strictly optional: frankenswarm trains on its own and must not require the
+	# kernel — hence the import by package (or $RED_PILL_SRC), never a path baked
+	# into the source, which would only ever work on one machine.
 	try:
-		import sys
 		import atexit
-		rp_src = "/home/joan/Documents/IA/sharing/src"
-		if rp_src not in sys.path:
+		import sys
+
+		rp_src = os.environ.get("RED_PILL_SRC")
+		if rp_src and os.path.isdir(rp_src) and rp_src not in sys.path:
 			sys.path.insert(0, rp_src)
+
 		from red_pill.core.gpu_reservation import GpuReservationManager
-		# Reserve 4 GB VRAM exclusively to keep model daemon on CPU worker fallback
+
 		GpuReservationManager.reserve("train_sovereign_school.py", vram_mb=4096, exclusive=True)
 		atexit.register(GpuReservationManager.release)
+		print("🔒 [GPU-RESERVE] Reserva exclusiva de 4 GB anunciada a red-pill.")
+	except ImportError:
+		pass  # Sin red-pill delante no hay nada que anunciar, y no es un problema.
 	except Exception as re_err:
 		print(f"⚠️ [GPU-RESERVE] No se pudo registrar la reserva de GPU: {re_err}")
 
