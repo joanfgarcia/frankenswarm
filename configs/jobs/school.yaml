@@ -1,0 +1,61 @@
+# Escuela Soberana de Bit — receta de ejecución diferida (red-pill script_job).
+#
+#   red-pill job submit --recipe school        # desde cualquier punto de frankenswarm
+#
+# La receta vive AQUÍ, versionada con el proyecto: describe cómo se ejecuta
+# frankenswarm, así que le pertenece y viaja con su historia. El kernel de
+# red-pill no sabe nada de Bit, y frankenswarm no necesita red-pill para
+# entrenar — para eso está ./scripts/train_school.sh (ver docs/TRAINING_BIT.md).
+#
+# Para un ajuste local y temporal, copia este fichero a .red-pill/jobs/school.yaml
+# (estado del kernel, sin versionar): red-pill lo busca antes que a este.
+
+source: script_job
+title: Escuela Soberana Bit (curriculum 0→8 años)
+priority: 5
+
+# `cwd` se omite a propósito: se resuelve a la raíz del proyecto que aloja
+# esta receta, así el fichero es portable entre máquinas.
+step_command: .venv/bin/python src/bitnet/training/train_sovereign_school.py --batch_size 64 --max_epochs_per_run 1
+env:
+  PYTHONPATH: .
+
+checkpoint_file: storage/checkpoints/sovereign_school/school_state.json
+
+# El script guarda el estado al final de CADA época (verificado 27-jul-2026):
+# current_epoch, current_stage_idx y milestones_achieved ya existen ahí, así que
+# la supervisión no exige tocar el entrenamiento.
+progress:
+  mode: bounded
+  current_key: current_epoch
+  total: 1408              # última época de la etapa 8 (base_epochs=64, stage_scale=0.5)
+  stage_current_key: current_stage_idx
+  stage_total: 8
+  stage_offset: 1          # el índice del script es 0-based; se muestra 1-based
+  stage_label: etapa
+
+# La escuela NO cierra por contador: cada etapa gradúa cuando la profesora
+# Samantha concede el hito, en la época que sea. El curriculum entero termina
+# con el hito de 8 años.
+completion:
+  key: milestones_achieved
+  contains: 8_years
+
+preflight:
+  vram_unload: true        # el proxy dual-bind vacía la VRAM sin tumbar el servicio
+  min_free_vram_mb: 3500
+  memory_max: 16G          # 10G disparaba el OOM killer (6b2db0b)
+
+control:
+  # Vidas de proceso observadas en el journal (27-jul-2026): 3h23m, 3h49m y una
+  # de ~11h que muy probablemente cayó a CPU tras un CUDA OOM. OJO: eso es lo que
+  # vivió el proceso, NO el tiempo entre checkpoints — el driver mide ahora la
+  # cadencia real durante la ejecución y la deja en `job status` y en el log.
+  # La cota es detector de cuelgue, no objetivo: se declara por encima del peor
+  # caso observado para no abatir trabajo bueno.
+  max_step_minutes: 780
+  # Con --max_epochs_per_run 1 el satélite guarda una sola vez por step, así que
+  # interrumpir cuesta el step entero. Se marca honestamente como no interrumpible
+  # hasta que la primera ejecución con medición confirme la cadencia real (y hasta
+  # que el trainer sepa trocear por debajo de la época, si hiciera falta).
+  preemptible: false

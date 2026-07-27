@@ -137,6 +137,7 @@ By sticking to standard python-based orchestrations and standardized formats lik
 ## Docs
 
 * [PAPER_DRAFT.md](docs/PAPER_DRAFT.md) — The active research paper draft.
+* [TRAINING_BIT.md](docs/TRAINING_BIT.md) — **How to train Bit**: standalone runner (no red-pill needed) or deferred via the red-pill queue.
 * [BIT_THE_CREATURE.md](docs/BIT_THE_CREATURE.md) — An educational story introducing Bit, the creature that learned to grow under pain.
 * [ARCHITECTURE.md](docs/ARCHITECTURE.md) — Full system design, Lisp thesis, lifecycle diagrams.
 * [EXPERTS_ROSTER.md](docs/EXPERTS_ROSTER.md) — Expert ↔ silicon bindings with benchmarks.

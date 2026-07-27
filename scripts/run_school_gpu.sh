@@ -1,6 +1,13 @@
 #!/usr/bin/env bash
 # ═══════════════════════════════════════════════════════════
-# Wrapper to run sovereign school training on GPU by temporarily freeing VRAM from redpill-llm.
+# SUPERSEDED (2026-07-27) → usa ./scripts/train_school.sh
+#
+# Este wrapper corre el currículo ENTERO en una sola invocación con
+# MemoryMax=10G, dos decisiones que envejecieron mal: 10G despierta al OOM
+# killer con el modelo a 896 dim, y sin trocear por épocas una interrupción
+# cuesta todo lo no guardado. El sustituto trocea época a época, sube el
+# límite a 16G e inhibe la suspensión (que mata el contexto CUDA).
+# Ver docs/TRAINING_BIT.md. Se conserva solo por compatibilidad.
 #
 # Usage:
 #   chmod +x scripts/run_school_gpu.sh
