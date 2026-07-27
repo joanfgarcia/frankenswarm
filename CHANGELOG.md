@@ -2,6 +2,27 @@
 
 ## [Unreleased]
 
+### 🎓 La batería vuelve a examinar en el idioma del alumno (2026-07-28)
+- **[FIX] `milestone_battery.py` — exam data v2-en**: los 20 pares de gramática
+  y los 8 prompts de producción seguían en castellano (v1, congelados el 03-jul)
+  mientras el corpus pasó a inglés el 14-jul (dd09ba4): grammar puntuaba 0.000
+  para **cualquier** checkpoint post-transición (destapado por EXP_079). v2-en es
+  la **traducción fiel** de los datos v1 — mismo diseño de examen, mismo
+  vocabulario preescolar (20/20 pares verificados dentro del censo, cero `<unk>`),
+  prefijo de diálogo `tú:` → `you:` — y los **umbrales pre-registrados quedan
+  intocados** (doctrina). La versión de datos de examen se imprime ahora en la
+  cabecera de cada informe (`exam data v2-en (2026-07-28)`): las cifras v1 y
+  v2-en no son comparables entre sí.
+- **[VALIDATED] El examen discrimina de nuevo**: con v2-en, los checkpoints de
+  2 años de EXP_079 puntúan grammar 0.650-0.700 y el run vivo (época 998, dim
+  896) 0.800 — gradiente monótono con la madurez, en lugar del 0.000 plano.
+  Los tres brazos del A/B siguen empatados entre sí (±1 par = ruido), así que
+  el veredicto de EXP_079 se sostiene también bajo v2-en.
+- **[NOTE] `min_len` sigue bajo en todos los checkpoints** (0.6-1.1 vs umbral
+  3.0): las respuestas a los prompts de diálogo son cortas. Es una observación
+  del *modelo* (o del diseño v1 del examen C, que se ha conservado tal cual),
+  no del idioma — se deja constancia y no se maquilla.
+
 ### ✅ EXP_079 Tier 2 — el 32→16 no cuesta calidad (2026-07-28, madrugada)
 
 - **[RESULT] A/B/C from-scratch completado** (3 × 160 épocas + una neurogénesis

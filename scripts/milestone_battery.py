@@ -32,6 +32,8 @@ sys.path.append(os.path.join(base_dir, "src"))
 from bitnet.modeling_bitnet import BitNet4LayerModel  # noqa: E402
 
 # ── PRE-REGISTERED THRESHOLDS (School v3, frozen 2026-07-03) ──
+# Los umbrales NO se tocan (doctrina). Lo único versionable son los DATOS de
+# examen (pares/prompts), que deben hablar el idioma del corpus vigente.
 MILESTONES = {
 	"M1": {"grammar": 0.80, "cloze": 0.30, "min_len": 3.0, "stop_rate": 0.80, "ghost_rate": 0.05},
 	"M2": {"grammar": 0.85, "cloze": 0.40, "min_len": 5.0, "stop_rate": 0.85, "ghost_rate": 0.03},
@@ -39,30 +41,40 @@ MILESTONES = {
 	"M4": {"grammar": 0.95, "cloze": 0.60, "min_len": 9.0, "stop_rate": 0.90, "ghost_rate": 0.01},
 }
 
+# ── EXAM DATA v2-en (2026-07-28) ──
+# v1 (2026-07-03) estaba en castellano; el corpus pasó a inglés el 14-jul
+# (dd09ba4) y la batería quedó examinando en un idioma que el modelo ya no ve:
+# grammar puntuaba 0.000 para cualquier checkpoint post-transición (EXP_079).
+# v2 es la traducción fiel de los 20 pares y 8 prompts de v1 — mismo diseño de
+# examen, mismo vocabulario preescolar, mismos umbrales. Las puntuaciones NO son
+# comparables entre versiones de datos de examen: toda cifra publicada debe
+# citar la versión (se imprime en la cabecera del informe).
+EXAM_DATA_VERSION = "v2-en (2026-07-28)"
+
 GRAM_PAIRS = [
-	("el niño bebe agua", "agua el bebe niño"),
-	("la niña come pan", "pan come la niña no"),
-	("el perro ve al gato", "al ve gato perro el"),
-	("mamá me da un beso", "beso un da me mamá"),
-	("el sol es grande", "grande sol es el"),
-	("yo quiero jugar contigo", "contigo jugar quiero yo"),
-	("el fuego quema mucho", "mucho quema fuego el"),
-	("la luna sale de noche", "noche de sale luna la"),
-	("papá tiene una casa", "casa una tiene papá"),
-	("el agua está fría", "fría está agua el"),
-	("quiero comer una manzana", "manzana una comer quiero"),
-	("el gato bebe leche", "leche bebe gato el"),
-	("tengo mucho frío hoy", "hoy frío mucho tengo"),
-	("la niña duerme en su cama", "cama su en duerme niña la"),
-	("el pájaro puede volar", "volar puede pájaro el"),
-	("mi hermano corre muy rápido", "rápido muy corre hermano mi"),
-	("la mesa tiene cuatro patas", "patas cuatro tiene mesa la"),
-	("hoy vamos a la escuela", "escuela la a vamos hoy"),
-	("el bebé llora por la noche", "noche la por llora bebé el"),
-	("quiero un vaso de leche", "leche de vaso un quiero"),
+	("the boy drinks water", "water the drinks boy"),
+	("the girl eats bread", "bread eats the girl no"),
+	("the dog sees the cat", "the sees cat dog the"),
+	("mom gives me a kiss", "kiss a me gives mom"),
+	("the sun is big", "big sun is the"),
+	("I want to play with you", "you with play to want I"),
+	("the fire burns a lot", "lot a burns fire the"),
+	("the moon comes out at night", "night at out comes moon the"),
+	("dad has a house", "house a has dad"),
+	("the water is cold", "cold is water the"),
+	("I want to eat an apple", "apple an eat to want I"),
+	("the cat drinks milk", "milk drinks cat the"),
+	("I am very cold today", "today cold very am I"),
+	("the girl sleeps in her bed", "bed her in sleeps girl the"),
+	("the bird can fly", "fly can bird the"),
+	("my brother runs very fast", "fast very runs brother my"),
+	("the table has four legs", "legs four has table the"),
+	("today we go to school", "school to go we today"),
+	("the baby cries at night", "night at cries baby the"),
+	("I want a glass of milk", "milk of glass a want I"),
 ]
 
-GEN_PROMPTS = ["hola", "cómo estás", "qué quieres comer", "dónde está el gato", "por qué lloras", "cuéntame algo del sol", "tienes frío", "vamos a jugar"]
+GEN_PROMPTS = ["hello", "how are you", "what do you want to eat", "where is the cat", "why are you crying", "tell me about the sun", "are you cold", "do you want to play"]
 
 
 def tokenize(text, word_to_idx):
@@ -103,7 +115,7 @@ def production_health(model, word_to_idx, idx_to_word, clean_vocab, device, max_
 	lengths, stops, ghost, n_words = [], 0, 0, 0
 	torch.manual_seed(770)
 	for p in GEN_PROMPTS:
-		x = torch.tensor([tokenize("tú: " + p, word_to_idx)], dtype=torch.long, device=device)
+		x = torch.tensor([tokenize("you: " + p, word_to_idx)], dtype=torch.long, device=device)
 		out = []
 		for _ in range(max_new):
 			logits = model(x)[0, -1, :]
@@ -178,7 +190,7 @@ def main():
 	mean_len, stop_rate, ghost_rate = production_health(model, word_to_idx, idx_to_word, clean_vocab, device)
 	results.update({"min_len": mean_len, "stop_rate": stop_rate, "ghost_rate": ghost_rate})
 
-	print(f"\n── BATERÍA {args.milestone} | {args.checkpoint} ──")
+	print(f"\n── BATERÍA {args.milestone} | exam data {EXAM_DATA_VERSION} | {args.checkpoint} ──")
 	verdicts = {
 		"grammar": results["grammar"] >= th["grammar"],
 		"cloze": results["cloze"] is not None and results["cloze"] >= th["cloze"],

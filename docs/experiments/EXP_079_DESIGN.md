@@ -117,12 +117,24 @@ No es una diferencia de calidad: tras su neurogénesis, B re-converge con A a
 adopción porque C (la config que se despliega, que incluye BF16) cumple el
 ±3 con desviación cero.
 
-### Observación colateral (fuera del A/B)
+### Observación colateral (fuera del A/B) — RESUELTA 28-jul
 
-La batería M1 suspende a los TRES brazos por igual (grammar 0.000, min_len
-~0.1): los datos de examen de la batería parecen anteriores a la transición a
-inglés (dd09ba4). No afecta a este experimento (comparación relativa, perfil
-idéntico) pero la batería necesita realineación → tarea aparte registrada.
+La batería M1 suspendía a los TRES brazos por igual (grammar 0.000): sus datos
+de examen eran los de v1 en castellano, anteriores a la transición a inglés
+(dd09ba4). Realineada como **exam data v2-en** (traducción fiel de pares y
+prompts, umbrales intocados). Re-puntuación con v2-en:
+
+| checkpoint | grammar | min_len | stop | ghost |
+|---|---|---|---|---|
+| arm_fp32 (2 años) | 0.650 | 0.625 | 1.0 | 0.0 |
+| arm_bf16 (2 años) | 0.650 | 0.625 | 1.0 | 0.0 |
+| arm_bf16_compile (2 años) | 0.700 | 1.125 | 1.0 | 0.0 |
+| run vivo, ép. 998 (dim 896) | **0.800** | 1.000 | 1.0 | 0.0 |
+
+El examen discrimina de nuevo (gradiente 0.65 → 0.80 con la madurez del
+modelo) y los brazos siguen empatados entre sí (±1 par de 20 = ruido) — el
+criterio de calidad del A/B se sostiene también bajo v2-en. Las cifras v1 y
+v2-en no son comparables entre sí (la versión se imprime en cada informe).
 
 ### DECISIÓN (según el criterio pre-registrado del §3)
 
