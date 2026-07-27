@@ -48,6 +48,23 @@ Si el ecosistema red-pill está presente, el script libera la VRAM del modelo
 residente antes de empezar (y la restaura al salir), pero es puramente
 oportunista: sin red-pill delante, entrena igual.
 
+### Precisión mixta (BF16)
+
+Desde el 27-jul-2026 el entrenador acepta `--amp {auto,bf16,off}` (por defecto
+`auto`: BF16 si la GPU lo soporta). Implementa la fase 1 de RFC-BITNET-VRAM-001
+como **autocast con pesos maestros FP32**: las activaciones —el ~85% de la
+VRAM— se computan en BF16, pero los pesos, gradientes y estados de AdamW siguen
+en FP32. Dos consecuencias que importan:
+
+- **`model_current.pt` no cambia de formato.** FP32 y BF16 son intercambiables
+  por ejecución: el benchmark de convergencia y cualquier rollback cuestan
+  exactamente un flag (`--amp off`). Ningún checkpoint ni la neurogénesis
+  (`net2wider`) se ven afectados.
+- **Telemetría por época**: el log añade `VRAM pico` y `∇STE` (norma del
+  gradiente de la primera BitLinear). Si `∇STE` cae a cero, el estimador
+  straight-through se ha roto en silencio — es la señal de vigilancia que
+  exige el RFC (§4.8.1), no un adorno.
+
 ### Dónde mirar
 
 - Log de la sesión: `storage/logs/school_<fecha>.log`
@@ -99,8 +116,10 @@ versionado, así que hace de override sin ensuciar el repositorio.
 ## 3. Cuánto tarda, y por qué importa
 
 Con el modelo a 896 dimensiones se han medido **épocas de entre 3h20m y 3h50m**
-en GPU, y una ejecución de casi 11 horas que muy probablemente cayó a CPU tras
-un `CUDA OutOfMemoryError` (el entrenador migra solo a CPU en lugar de abortar).
+en GPU (en FP32, antes de BF16+SDPA — ambos deberían recortar esa cifra de
+forma sustancial; la primera ejecución con `--amp` fijará el dato real), y una
+ejecución de casi 11 horas que muy probablemente cayó a CPU tras un
+`CUDA OutOfMemoryError` (el entrenador migra solo a CPU en lugar de abortar).
 
 Esa cifra tiene una consecuencia de diseño: como el checkpoint se escribe una
 sola vez por época, **la unidad recuperable es la época entera**. Interrumpir a

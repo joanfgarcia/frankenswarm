@@ -16,7 +16,7 @@ priority: 5
 
 # `cwd` se omite a propósito: se resuelve a la raíz del proyecto que aloja
 # esta receta, así el fichero es portable entre máquinas.
-step_command: .venv/bin/python src/bitnet/training/train_sovereign_school.py --batch_size 64 --max_epochs_per_run 1
+step_command: .venv/bin/python src/bitnet/training/train_sovereign_school.py --batch_size 64 --max_epochs_per_run 1 --amp auto
 env:
   PYTHONPATH: .
 
@@ -43,7 +43,10 @@ completion:
 
 preflight:
   vram_unload: true        # el proxy dual-bind vacía la VRAM sin tumbar el servicio
-  min_free_vram_mb: 3500
+  # 4500: pico estimado con BF16+SDPA a dim 1024 (~4 GB) + margen de
+  # fragmentación. En FP32 puro (--amp off) el training pide ~6.7 GB a dim 896:
+  # si se desactiva AMP, subir esto a 7000.
+  min_free_vram_mb: 4500
   memory_max: 16G          # 10G disparaba el OOM killer (6b2db0b)
 
 control:

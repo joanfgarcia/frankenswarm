@@ -2,6 +2,45 @@
 
 ## [Unreleased]
 
+### ⚡ BF16 + SDPA — el stage de 8 años cabe en la RTX (2026-07-27)
+
+Implementa la Estrategia B (fases 1-2) de RFC-BITNET-VRAM-001: sin medidas, la
+neurogénesis 896→1024 del stage `secondary_8` proyectaba ~7.7 GB de VRAM sobre
+una tarjeta de 8 GB. Decisión D1 de RFC-BIT-GRAD-001 (Aleth_Core), ratificada
+por el operador.
+
+- **[NEW] `--amp {auto,bf16,off}`** en `train_sovereign_school.py` (default
+  `auto`). **Desviación deliberada del RFC §4.4.1**: en lugar de convertir
+  modelo y optimizador a BF16, se usa autocast con **pesos maestros FP32** —
+  las activaciones (~85% de la VRAM según el propio RFC) se computan en BF16 y
+  params/gradientes/AdamW quedan en FP32. Consecuencia: `model_current.pt` no
+  cambia de formato, FP32↔BF16 son intercambiables por ejecución (el benchmark
+  de 100 épocas y el rollback cuestan un flag), y la neurogénesis (`net2wider`)
+  ni se entera. Desaparecen de golpe los tres riesgos más gordos de la matriz
+  del RFC: conversión de checkpoint, GradScaler y dtype en neurogénesis.
+- **[NEW] SDPA en `BitNetAttention`**: `F.scaled_dot_product_attention`
+  sustituye la atención manual — el kernel fusionado no materializa la matriz
+  N×N. Sin STE en ese tramo (seguro por construcción; el `torch.compile`
+  selectivo del RFC §4.8 queda como opcional futuro, D2).
+- **[FIX] `RMSNorm` computa su estadística en FP32** y devuelve el dtype de
+  entrada: bajo autocast, la varianza en BF16 desestabiliza la normalización.
+- **[NEW] Telemetría por época**: `VRAM pico` (MB) y `∇STE` (norma del
+  gradiente de la primera BitLinear — si cae a cero, el straight-through
+  estimator se rompió en silencio, RFC §4.8.1).
+- **[TEST] `tests/test_bf16_sdpa.py`** (11 tests): SDPA vs oráculo manual
+  (causal/no-causal, seq_len 1/7/32), flujo de gradientes, contrato de RMSNorm,
+  salud del STE bajo autocast, loss BF16 dentro del ±5% de FP32.
+- **[VERIFIED] Compatibilidad con el checkpoint vivo** (epoch 998, dim 896),
+  comprobada en CPU **sobre copia de backup**
+  (`storage/checkpoints/backup_pre_bf16_20260727/`, md5 verificado):
+  `load_state_dict(strict=True)` OK, logits finitos, cos(FP32,BF16)=0.9998,
+  96.85% de acuerdo argmax. El checkpoint vivo no se tocó.
+- **[CONF] `configs/jobs/school.yaml`**: `--amp auto` explícito en el
+  `step_command` y `min_free_vram_mb` 3500→4500 (pico estimado BF16 a dim 1024
+  + margen; si se corre `--amp off`, subir a 7000).
+- **[DOCS] `docs/TRAINING_BIT.md`**: sección de precisión mixta y nota de que
+  las épocas de 3h20m-3h50m eran FP32 pre-SDPA.
+
 ### 🧭 Router: las reglas deterministas vuelven a bastar (2026-07-27)
 - **[FIX] `test_prolog_router_retro_compatibility` en rojo** — "Resuelve el cálculo usando lógica matemática" acababa en `default_node`. El síntoma era el test; la causa es que **el camino semántico está muerto en el venv**: `transformers 5.8.1` importa `is_offline_mode` de `huggingface_hub`, que en la 0.36.2 instalada no existe. El `except` lo tragaba en silencio, así que **toda tarea sin keyword caía en `general`** y el router parecía funcionar.
 - **[FIX] Reglas deterministas ampliadas** con el vocabulario obvio en castellano (`cálculo`, `calcula`, `resuelve`, `lógica`, `matemátic`, `ecuación`, `demuestra`, `divide`). RULE 2 de `CONVENTIONS.md` lo exige: enrutar es clasificar, y lo nombrable por keyword no puede depender de embeddings.
