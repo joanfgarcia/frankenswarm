@@ -2,6 +2,32 @@
 
 ## [Unreleased]
 
+### 🧪 EXP_079 — los números detrás de BF16 (2026-07-27, tarde)
+
+- **[NEW] `docs/DECISION_LOG.md`** — registro de decisiones de calado (DL-NNN).
+  DL-002 documenta el problema (stage 8 no cabía; 60 días de GPU), la decisión
+  (BF16 autocast + SDPA + compile opcional) y la evidencia medida. DL-001 registra
+  retroactivamente el ROUTE CHANGE de School v3 por referencia.
+- **[NEW] `docs/experiments/EXP_079_DESIGN.md`** — pre-registro del benchmark de
+  precisión mixta. **Tier 1 ejecutado**: BF16+SDPA+compile = **3.7× más rápido**
+  (548→149 ms/step, dim 896) y **−40% VRAM**; a dim 1024, 4.1 GB frente a 6.9 GB
+  FP32 ("cabe por los pelos"); ∇STE sano en las 8 configs. Tier 2 (A/B/C
+  from-scratch hasta el hito de 2 años, seed 770, umbrales congelados) responde
+  la pregunta pendiente: si el paso 32→16 bits cuesta calidad de convergencia.
+- **[NEW] RFCs archivados en el repo** (copia canónica, antes en Aleth_Core):
+  `docs/RFC_BIT_GRADUATION_ROADMAP.md` (D1-D6, fases F0-F6 hasta la graduación)
+  y `docs/RFC_VRAM_SCALING_BITNET_CURRICULUM.md` (análisis técnico, revisado por
+  Grok + DeepSeek).
+- **[NEW] `scripts/bench_school_step.py`** (Tier 1) y
+  **`scripts/bench_school_scratch.sh`** (Tier 2: tres brazos secuenciales en
+  sandboxes, GPU exclusiva, Wake Gate, md5 del run vivo verificado entre brazos).
+- **[NEW] `--state_dir` / `--seed` / `--compile`** en `train_sovereign_school.py`,
+  y `base_dir` derivado de la posición del fichero (fuera la ruta absoluta).
+- **[FIX] NameError en arranque en frío**: todo run from-scratch sin
+  `--reset_state` moría al leer `state.get(...)` con la variable sin ligar (el
+  fichero recién escrito hacía verdadera la condición). El run vivo lo esquivó
+  porque nació con `--reset_state`.
+
 ### ⚡ BF16 + SDPA — el stage de 8 años cabe en la RTX (2026-07-27)
 
 Implementa la Estrategia B (fases 1-2) de RFC-BITNET-VRAM-001: sin medidas, la

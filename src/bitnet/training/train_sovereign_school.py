@@ -892,17 +892,22 @@ def run_school_training():
 						pass
 			print(f"📖 Estado escolar cargado: current_epoch={current_epoch}, hidden_dim={hidden_dim}, capas={num_layers}")
 	else:
+		# `state` debe quedar ligado también en el arranque en frío: unas líneas
+		# más abajo se lee state.get(...) con el fichero ya existente (recién
+		# escrito) — sin esto, todo run from-scratch sin --reset_state moría en
+		# NameError.
+		state = {
+			"current_epoch": current_epoch,
+			"current_stage_idx": 0,
+			"hidden_dim": hidden_dim,
+			"num_layers": num_layers,
+			"target_milestone": target_milestone,
+			"milestones_achieved": milestones_achieved,
+			"curriculum_hash": curriculum_hash,
+		}
 		with open(state_path, "w", encoding="utf-8") as f:
 			json.dump(
-				{
-					"current_epoch": current_epoch,
-					"current_stage_idx": 0,
-					"hidden_dim": hidden_dim,
-					"num_layers": num_layers,
-					"target_milestone": target_milestone,
-					"milestones_achieved": milestones_achieved,
-					"curriculum_hash": curriculum_hash,
-				},
+				state,
 				f,
 				indent=4,
 			)
