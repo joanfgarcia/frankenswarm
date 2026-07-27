@@ -2,6 +2,13 @@
 
 ## [Unreleased]
 
+### 🧭 Router: las reglas deterministas vuelven a bastar (2026-07-27)
+- **[FIX] `test_prolog_router_retro_compatibility` en rojo** — "Resuelve el cálculo usando lógica matemática" acababa en `default_node`. El síntoma era el test; la causa es que **el camino semántico está muerto en el venv**: `transformers 5.8.1` importa `is_offline_mode` de `huggingface_hub`, que en la 0.36.2 instalada no existe. El `except` lo tragaba en silencio, así que **toda tarea sin keyword caía en `general`** y el router parecía funcionar.
+- **[FIX] Reglas deterministas ampliadas** con el vocabulario obvio en castellano (`cálculo`, `calcula`, `resuelve`, `lógica`, `matemátic`, `ecuación`, `demuestra`, `divide`). RULE 2 de `CONVENTIONS.md` lo exige: enrutar es clasificar, y lo nombrable por keyword no puede depender de embeddings.
+- **[FIX] El fallo del traductor ya no es mudo**: se registra un `warning`. Un traductor caído era indistinguible de uno que encuentra "general" en todo.
+- **[TEST] `test_routing_survives_a_dead_translator`**: fija la causa raíz, no el síntoma — con el traductor lanzando `ImportError`, el enrutado sigue siendo correcto.
+- **[⚠️ PENDIENTE, decisión del operador] Conflicto de dependencias real**: `fastembed` exige `huggingface-hub>=0.20,<1.0` y `transformers 5.8.1` exige `>=1.5.0,<2.0` — **mutuamente excluyentes**. El venv tiene 0.36.2, así que `transformers`/`sentence-transformers` están inservibles. Salidas: retirar `fastembed`, o fijar `transformers` a la serie 4.x. No se toca aquí porque es el mismo venv que entrena a Bit.
+
 ### 🎓 Entrenar a Bit sin depender de nadie (2026-07-27)
 - **[NEW] `scripts/train_school.sh`** — runner autónomo de la Escuela Soberana, **sin necesidad de red-pill**. Trocea el trabajo **época a época**, que es la unidad que el entrenador realmente guarda: un `Ctrl-C` cuesta como mucho la época en vuelo y al relanzar retoma exacto. Bajo systemd aplica las dos lecciones que este proyecto pagó caras: `MemoryMax=16G` (los 10G despertaban al OOM killer con el modelo ya a 896 dim) y `systemd-inhibit --what=sleep` (suspender el portátil mata el contexto CUDA — causa raíz de varios entrenamientos "fritos" en julio de 2026). Si el ecosistema red-pill está presente libera la VRAM del modelo residente, pero es oportunista: sin él entrena igual. Modos: `--status` (dónde va, sin entrenar), `--epochs N`, y variables `PYTHON` / `BATCH_SIZE` / `MEMORY_MAX`.
 - **[GUARD] El runner se niega a arrancar si el entrenador no acepta `--max_epochs_per_run`**: como `train_sovereign_school.py` parsea con `parse_known_args()`, un flag ausente se ignoraría **en silencio** y cada "época" entrenaría el currículo entero. Mejor no arrancar que prometer un troceo que no ocurre.
