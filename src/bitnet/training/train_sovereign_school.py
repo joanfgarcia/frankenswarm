@@ -556,11 +556,38 @@ def run_school_training():
 	parser.add_argument("--force_tokenize", action="store_true", help="Forzar re-tokenización del corpus (ignora caché local)")
 	parser.add_argument("--force_stage_compile", action="store_true", help="Forzar re-compilación del dataset por etapa (ignora caché local de etapa)")
 	parser.add_argument("--max_epochs_per_run", type=int, default=None, help="Límite de épocas a entrenar en esta ejecución")
+	parser.add_argument("--amp", type=str, default="auto", choices=["auto", "bf16", "off"], help="Mixed precision BF16 vía autocast (RFC-VRAM-001 fase 1). Los pesos maestros y el checkpoint siguen en FP32: --amp off revierte sin conversión alguna. 'auto' = bf16 si la GPU lo soporta")
 	args, _ = parser.parse_known_args()
 
 	device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 	print("═══ 🏫 Entrenamiento de Currículo Escolar Soberano con Exámenes de Grado ═══")
 	print(f"[Device]: {device}")
+
+	# ── Mixed precision (RFC-BITNET-VRAM-001, Estrategia B fase 1) ──
+	# autocast con pesos maestros FP32: las activaciones (≈85% de la VRAM) se
+	# computan en BF16; params, gradientes y estados de AdamW quedan en FP32,
+	# así que model_current.pt no cambia de formato y FP32↔BF16 son
+	# intercambiables por ejecución (benchmark y rollback gratis).
+	if args.amp == "bf16":
+		amp_enabled = True
+	elif args.amp == "auto":
+		amp_enabled = device.type == "cuda" and torch.cuda.is_bf16_supported()
+	else:
+		amp_enabled = False
+	if amp_enabled and device.type == "cuda" and not torch.cuda.is_bf16_supported():
+		print("⚠️ [AMP] BF16 no soportado por esta GPU — se entrena en FP32.")
+		amp_enabled = False
+
+	from contextlib import nullcontext
+
+	def autocast_ctx():
+		# `device` puede migrar a CPU tras un CUDA OOM: el contexto se decide
+		# en cada uso, no una sola vez al arrancar.
+		if amp_enabled and device.type == "cuda":
+			return torch.autocast(device_type="cuda", dtype=torch.bfloat16)
+		return nullcontext()
+
+	print(f"[AMP]: {'BF16 autocast (pesos maestros FP32)' if amp_enabled else 'off — FP32 puro'}")
 
 	base_dir = "/home/joan/Documents/IA/frankenswarm"
 	expanded_glyphs_path = os.path.join(base_dir, "configs", "expanded_glyphs.json")
@@ -962,6 +989,8 @@ def run_school_training():
 
 		model.train()
 		epoch_loss = 0.0
+		if device.type == "cuda":
+			torch.cuda.reset_peak_memory_stats()
 
 		# Subsamplear solo general y concatenar con currículo/exámenes completos
 		MAX_GEN_SEQS_PER_EPOCH = 15000
@@ -983,15 +1012,16 @@ def run_school_training():
 				inputs = batch_x[:, :-1].to(device)
 				targets = batch_x[:, 1:].to(device)
 
-				logits = model(inputs, tau=tau)
+				with autocast_ctx():
+					logits = model(inputs, tau=tau)
 
-				loss_elementwise = F.cross_entropy(logits.reshape(-1, vocab_size), targets.reshape(-1), reduction="none")
-				loss_elementwise = loss_elementwise.reshape(targets.shape)
-				is_zero = (targets == 0).to(torch.int32)
-				cumsum_zero = torch.cumsum(is_zero, dim=-1)
-				mask = (cumsum_zero <= 1).to(logits.dtype)
+					loss_elementwise = F.cross_entropy(logits.reshape(-1, vocab_size), targets.reshape(-1), reduction="none")
+					loss_elementwise = loss_elementwise.reshape(targets.shape)
+					is_zero = (targets == 0).to(torch.int32)
+					cumsum_zero = torch.cumsum(is_zero, dim=-1)
+					mask = (cumsum_zero <= 1).to(logits.dtype)
 
-				loss = (loss_elementwise * mask).sum() / mask.sum()
+					loss = (loss_elementwise * mask).sum() / mask.sum()
 				loss.backward()
 				torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
 				optimizer.step()
@@ -1008,7 +1038,7 @@ def run_school_training():
 							if isinstance(v, torch.Tensor):
 								state_opt[k] = v.to(device)
 
-					# Reintentar en CPU
+					# Reintentar en CPU (autocast_ctx queda desactivado al migrar)
 					optimizer.zero_grad()
 					inputs = batch_x[:, :-1].to(device)
 					targets = batch_x[:, 1:].to(device)
@@ -1041,18 +1071,27 @@ def run_school_training():
 					inputs_v = batch_xv[:, :-1]
 					targets_v = batch_xv[:, 1:]
 
-					logits_v = model(inputs_v)
-					loss_v_elem = F.cross_entropy(logits_v.reshape(-1, vocab_size), targets_v.reshape(-1), reduction="none")
-					loss_v_elem = loss_v_elem.reshape(targets_v.shape)
-					is_zero_v = (targets_v == 0).to(torch.int32)
-					cumsum_zero_v = torch.cumsum(is_zero_v, dim=-1)
-					mask_v = (cumsum_zero_v <= 1).to(logits_v.dtype)
+					with autocast_ctx():
+						logits_v = model(inputs_v)
+						loss_v_elem = F.cross_entropy(logits_v.reshape(-1, vocab_size), targets_v.reshape(-1), reduction="none")
+						loss_v_elem = loss_v_elem.reshape(targets_v.shape)
+						is_zero_v = (targets_v == 0).to(torch.int32)
+						cumsum_zero_v = torch.cumsum(is_zero_v, dim=-1)
+						mask_v = (cumsum_zero_v <= 1).to(logits_v.dtype)
 
-					loss_v = (loss_v_elem * mask_v).sum() / mask_v.sum()
+						loss_v = (loss_v_elem * mask_v).sum() / mask_v.sum()
 					val_loss += loss_v.item() * batch_xv.size(0)
 				val_loss /= x_val.size(0)
 
-		print(f"  [Época {epoch:2d}] Loss: {epoch_loss:.4f} | Val Loss: {val_loss:.4f} | lr: {optimizer.param_groups[0]['lr']:.2e} | tau: {tau:.4f} | dim: {model.hidden_dim}")
+		# Telemetría RFC-VRAM-001: VRAM pico de la época y salud del STE bajo AMP
+		# (el gradiente de BitLinear en cero delataría un STE roto — §4.8.1).
+		vram_txt = ""
+		if device.type == "cuda":
+			vram_txt = f" | VRAM pico: {torch.cuda.max_memory_allocated() / 2**20:,.0f} MB"
+		ste_grad = model.core_layers[0].attn.q_proj.weight.grad
+		ste_txt = f" | ∇STE: {ste_grad.norm().item():.3e}" if ste_grad is not None else ""
+
+		print(f"  [Época {epoch:2d}] Loss: {epoch_loss:.4f} | Val Loss: {val_loss:.4f} | lr: {optimizer.param_groups[0]['lr']:.2e} | tau: {tau:.4f} | dim: {model.hidden_dim}{vram_txt}{ste_txt}")
 
 		# ── Neurogénesis dirigida por dolor (plateau de val_loss) ──
 		if x_val is not None and val_loss > 0:
