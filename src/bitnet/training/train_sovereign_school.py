@@ -519,6 +519,20 @@ def oversample_curriculum_for_stage(general_data, curriculum_data, target_ratio=
 
 
 def run_school_training():
+	# Register GPU VRAM reservation dynamically
+	try:
+		import sys
+		import atexit
+		rp_src = "/home/joan/Documents/IA/sharing/src"
+		if rp_src not in sys.path:
+			sys.path.insert(0, rp_src)
+		from red_pill.core.gpu_reservation import GpuReservationManager
+		# Reserve 4 GB VRAM exclusively to keep model daemon on CPU worker fallback
+		GpuReservationManager.reserve("train_sovereign_school.py", vram_mb=4096, exclusive=True)
+		atexit.register(GpuReservationManager.release)
+	except Exception as re_err:
+		print(f"⚠️ [GPU-RESERVE] No se pudo registrar la reserva de GPU: {re_err}")
+
 	import argparse
 	parser = argparse.ArgumentParser(description="School Training Loop")
 	parser.add_argument("--reset_state", action="store_true", help="Ignorar estado anterior y comenzar de cero")
@@ -532,6 +546,7 @@ def run_school_training():
 	parser.add_argument("--force_download", action="store_true", help="Forzar re-descarga de TinyStories desde HF Hub (ignora caché local)")
 	parser.add_argument("--force_tokenize", action="store_true", help="Forzar re-tokenización del corpus (ignora caché local)")
 	parser.add_argument("--force_stage_compile", action="store_true", help="Forzar re-compilación del dataset por etapa (ignora caché local de etapa)")
+	parser.add_argument("--max_epochs_per_run", type=int, default=None, help="Límite de épocas a entrenar en esta ejecución")
 	args, _ = parser.parse_known_args()
 
 	device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -883,7 +898,11 @@ def run_school_training():
 	x_train = None
 	x_val = None
 
+	epochs_trained = 0
 	for epoch in range(current_epoch, max_epochs + 1):
+		if args.max_epochs_per_run is not None and epochs_trained >= args.max_epochs_per_run:
+			print(f"🛑 [PAUSA PLANIFICADA] Alcanzado el límite de {args.max_epochs_per_run} épocas por ejecución. Deteniendo para guardar checkpoint.")
+			break
 
 		# Cargar/procesar dataset para la etapa
 		stage_idx, stage_name = get_stage_info(epoch)
@@ -1140,6 +1159,7 @@ def run_school_training():
 				base_dir=base_dir,
 				epoch=epoch,
 			)
+		epochs_trained += 1
 
 	# Guardar modelo final definitivo
 	final_path = os.path.join(save_dir, "model_final.pt")
