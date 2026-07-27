@@ -185,6 +185,7 @@ hecho estructural de que restan **410 epochs** y de que BF16 (F1) los abarata to
 |---|---|---|
 | 2026-07-27 | Aleth | Draft v1 — veredicto, diagnóstico verificado en código/estado, D1-D6, fases F0-F6 |
 | 2026-07-27 | Aleth | v1.1 — args reales confirmados vía receta job-manager (`school.yaml` + `train_school.sh`, defaults → 1408 total); D5/D6 pasan de PROPUESTA a IMPLEMENTADA (vram_unload preflight, Wake Gate, MemoryMax=16G, troceo por epoch); F0 reducido a medir cadencia + backup; nueva Q3: `min_free_vram_mb` 3500→7000 hasta BF16 |
+| 2026-07-28 | Aleth | v1.3 — **EXP_079 completo**: Tier 1 (3.7× / −40% VRAM / dim 1024 = 4.1 GB) y Tier 2 (coste de calidad indistinguible de cero: Δval final < 0.001 tras 160 épocas y neurogénesis). Adoptado `--amp auto --compile` en la receta (criterio pre-registrado, C 6/6). D2 (compile) pasa de opcional a ADOPTADA. Gate restante: vigilancia de las primeras ~100 épocas del run real al reanudar. Ver DL-002 y EXP_079 §5 |
 | 2026-07-27 | Aleth | v1.2 — **D1 ratificada e implementada** (3 commits en frankenswarm): F0 cerrado (backup + args + cadencia FP32 conocida: 3h20-3h50/epoch a dim 896), F1/F2 código hecho con desviación documentada del §4.4.1 (autocast + master FP32 en vez de conversión), Q3 resuelta en la receta (`min_free_vram_mb: 4500` con nota para `--amp off`), Q4 resuelta (el gate F1 ES el benchmark: mismos checkpoints, flag por run). Próximo paso: reanudar el job y vigilar las primeras ~100 epochs |
 
 ---
