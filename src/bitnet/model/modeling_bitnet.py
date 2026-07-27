@@ -84,8 +84,12 @@ class RMSNorm(nn.Module):
 		self.weight = nn.Parameter(torch.ones(dim))
 
 	def forward(self, x: torch.Tensor) -> torch.Tensor:
-		variance = x.pow(2).mean(-1, keepdim=True)
-		return x * torch.rsqrt(variance + self.eps) * self.weight
+		# La estadística se computa siempre en FP32: bajo autocast (BF16) la
+		# varianza pierde precisión y desestabiliza el entrenamiento.
+		h = x.float()
+		variance = h.pow(2).mean(-1, keepdim=True)
+		h = h * torch.rsqrt(variance + self.eps)
+		return (h * self.weight.float()).to(x.dtype)
 
 
 class BitNetAttention(nn.Module):
@@ -109,13 +113,10 @@ class BitNetAttention(nn.Module):
 		k = self.k_proj(x).view(batch_size, seq_len, self.num_heads, self.head_dim).transpose(1, 2)
 		v = self.v_proj(x).view(batch_size, seq_len, self.num_heads, self.head_dim).transpose(1, 2)
 
-		scores = torch.matmul(q, k.transpose(-2, -1)) / np.sqrt(self.head_dim)
-		if self.is_causal and seq_len > 1:
-			mask = torch.triu(torch.ones(seq_len, seq_len, device=x.device), diagonal=1).bool()
-			fill_value = -65000.0 if scores.dtype == torch.float16 else -1e9
-			scores = scores.masked_fill(mask, fill_value)
-		attn = F.softmax(scores, dim=-1)
-		context = torch.matmul(attn, v).transpose(1, 2).contiguous().view(batch_size, seq_len, self.dim)
+		# SDPA (RFC-BITNET-VRAM-001 §4.8): kernel fusionado que no materializa la
+		# matriz de atención N×N. Sin STE en este tramo, así que es seguro.
+		context = F.scaled_dot_product_attention(q, k, v, is_causal=self.is_causal and seq_len > 1)
+		context = context.transpose(1, 2).contiguous().view(batch_size, seq_len, self.dim)
 		return self.out_proj(context)
 
 
