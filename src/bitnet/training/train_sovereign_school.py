@@ -557,7 +557,18 @@ def run_school_training():
 	parser.add_argument("--force_stage_compile", action="store_true", help="Forzar re-compilación del dataset por etapa (ignora caché local de etapa)")
 	parser.add_argument("--max_epochs_per_run", type=int, default=None, help="Límite de épocas a entrenar en esta ejecución")
 	parser.add_argument("--amp", type=str, default="auto", choices=["auto", "bf16", "off"], help="Mixed precision BF16 vía autocast (RFC-VRAM-001 fase 1). Los pesos maestros y el checkpoint siguen en FP32: --amp off revierte sin conversión alguna. 'auto' = bf16 si la GPU lo soporta")
+	parser.add_argument("--state_dir", type=str, default=None, help="Directorio para estado y checkpoints (default: storage/checkpoints/sovereign_school). Un directorio vacío arranca de cero SIN tocar el run vivo — es la vía para benchmarks/sandboxes; --reset_state no hace falta")
+	parser.add_argument("--seed", type=int, default=None, help="Semilla global (torch/numpy/random) para runs comparables. Default: sin fijar (comportamiento histórico)")
+	parser.add_argument("--compile", action="store_true", help="torch.compile(fullgraph=False) sobre el forward de entrenamiento (RFC-VRAM-001 §4.8, D2). EXPERIMENTAL: vigilar que ∇STE no caiga a cero. El checkpoint se guarda siempre desde el modelo sin compilar")
 	args, _ = parser.parse_known_args()
+
+	if args.seed is not None:
+		import random as _random
+		_random.seed(args.seed)
+		np.random.seed(args.seed)
+		torch.manual_seed(args.seed)
+		torch.cuda.manual_seed_all(args.seed)
+		print(f"🎲 [SEED] Semilla global fijada: {args.seed}")
 
 	device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 	print("═══ 🏫 Entrenamiento de Currículo Escolar Soberano con Exámenes de Grado ═══")
@@ -589,7 +600,9 @@ def run_school_training():
 
 	print(f"[AMP]: {'BF16 autocast (pesos maestros FP32)' if amp_enabled else 'off — FP32 puro'}")
 
-	base_dir = "/home/joan/Documents/IA/frankenswarm"
+	# Raíz del repo derivada de la posición de este fichero (src/bitnet/training/../../..):
+	# nada de rutas absolutas grabadas en el código — solo funcionarían en una máquina.
+	base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
 	expanded_glyphs_path = os.path.join(base_dir, "configs", "expanded_glyphs.json")
 	curriculum_path = os.path.join(base_dir, "configs", "school_curriculum_structured_en.json")
 	dialogues_path = os.path.join(base_dir, "configs", "tiny_dialogues_large_en.json")
@@ -827,8 +840,14 @@ def run_school_training():
 			return general, curriculum
 
 	# 4. Cargar o inicializar estado escolar
-	state_path = os.path.join(base_dir, "storage", "checkpoints", "sovereign_school", "school_state.json")
-	save_dir = os.path.join(base_dir, "storage", "checkpoints", "sovereign_school")
+	# --state_dir redirige TODO el estado (school_state.json + checkpoints) a un
+	# sandbox: es lo que permite benchmarks from-scratch sin rozar el run vivo.
+	if args.state_dir:
+		save_dir = os.path.abspath(os.path.expanduser(args.state_dir))
+		print(f"📦 [SANDBOX] Estado y checkpoints redirigidos a: {save_dir}")
+	else:
+		save_dir = os.path.join(base_dir, "storage", "checkpoints", "sovereign_school")
+	state_path = os.path.join(save_dir, "school_state.json")
 	os.makedirs(save_dir, exist_ok=True)
 
 	stage_config = get_stage_config(args.base_epochs, args.stage_scale)
@@ -920,6 +939,20 @@ def run_school_training():
 
 	lr_scale = 128.0 / model.hidden_dim
 	optimizer = torch.optim.AdamW(model.parameters(), lr=4e-4 * lr_scale, weight_decay=0.05)
+
+	# ── torch.compile selectivo (RFC-VRAM-001 §4.8, D2 — experimental) ──
+	# El wrapper compilado se usa SOLO para los forwards; guardado, neurogénesis
+	# y Samantha operan sobre `model` desnudo (torch.compile prefija las claves
+	# del state_dict con `_orig_mod.` y rompería los checkpoints). fullgraph=False
+	# deja que las autograd.Function del STE caigan a eager si hace falta; la
+	# telemetría ∇STE de cada época es el detector de un STE roto en silencio.
+	def _maybe_compile(m):
+		if not args.compile:
+			return m
+		print("🧪 [COMPILE] torch.compile(fullgraph=False) activo — vigilar ∇STE.")
+		return torch.compile(m, fullgraph=False)
+
+	train_model = _maybe_compile(model)
 
 	seq_len = 128
 	batch_size = args.batch_size
@@ -1013,7 +1046,7 @@ def run_school_training():
 				targets = batch_x[:, 1:].to(device)
 
 				with autocast_ctx():
-					logits = model(inputs, tau=tau)
+					logits = train_model(inputs, tau=tau)
 
 					loss_elementwise = F.cross_entropy(logits.reshape(-1, vocab_size), targets.reshape(-1), reduction="none")
 					loss_elementwise = loss_elementwise.reshape(targets.shape)
@@ -1038,7 +1071,8 @@ def run_school_training():
 							if isinstance(v, torch.Tensor):
 								state_opt[k] = v.to(device)
 
-					# Reintentar en CPU (autocast_ctx queda desactivado al migrar)
+					# Reintentar en CPU (autocast_ctx queda desactivado al migrar;
+					# se usa el modelo eager — recompilar para CPU no compensa)
 					optimizer.zero_grad()
 					inputs = batch_x[:, :-1].to(device)
 					targets = batch_x[:, 1:].to(device)
@@ -1072,7 +1106,7 @@ def run_school_training():
 					targets_v = batch_xv[:, 1:]
 
 					with autocast_ctx():
-						logits_v = model(inputs_v)
+						logits_v = train_model(inputs_v)
 						loss_v_elem = F.cross_entropy(logits_v.reshape(-1, vocab_size), targets_v.reshape(-1), reduction="none")
 						loss_v_elem = loss_v_elem.reshape(targets_v.shape)
 						is_zero_v = (targets_v == 0).to(torch.int32)
@@ -1111,6 +1145,7 @@ def run_school_training():
 						current_checkpoint_path, state_path, epoch,
 						milestones_achieved, target_milestone
 					)
+					train_model = _maybe_compile(model)
 					neurogenesis_history.append({
 						"epoch": epoch, "old_dim": old_dim, "new_dim": next_dim,
 						"val_loss_at_trigger": val_loss,
@@ -1193,7 +1228,7 @@ def run_school_training():
 			eval_age = current_stage_conf["age"]
 			milestone_name = f"{eval_age}_years"
 			print(f"\n🎓 [EXAMEN DE GRADUACIÓN] Iniciando evaluación con la Profesora Samantha para el hito de {eval_age} años...")
-			model, _ = run_samantha_eval(
+			model, _ = run_samantha_eval(  # devuelve el modelo (puede volver de CPU)
 				model=model,
 				current_checkpoint_path=current_checkpoint_path,
 				target_milestone=milestone_name,
@@ -1207,6 +1242,7 @@ def run_school_training():
 				base_dir=base_dir,
 				epoch=epoch,
 			)
+			train_model = _maybe_compile(model)
 		epochs_trained += 1
 
 	# Guardar modelo final definitivo
