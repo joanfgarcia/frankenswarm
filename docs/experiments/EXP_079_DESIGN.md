@@ -86,6 +86,54 @@ real quedan bajo vigilancia (val_loss vs tendencia + ∇STE) con rollback de un 
 Batch >64, vocabulary gating (cambio aparte, condiciones en
 `Aleth_Core/bitnet_next_architecture_plan.md` §2), cambios de currículum (D3).
 
-## 5. Resultados Tier 2
+## 5. Resultados Tier 2 (ejecutado 27/28-jul-2026, 21:07-23:45)
 
-*(pendiente de ejecución — logs por brazo en `storage/benchmarks/bf16_scratch/arm_*.log`)*
+Tres brazos × 160 épocas completadas, una neurogénesis 128→256 por brazo, run
+vivo intacto (huella md5 verificada entre brazos). Curvas completas:
+`storage/benchmarks/bf16_scratch/tier2_curves.json` + `arm_*.log`.
+
+### Veredicto por umbral congelado
+
+| Umbral | arm_bf16 (B) | arm_bf16_compile (C) |
+|---|---|---|
+| Convergencia ≤ 0.05/época | ✅ media 0.0032, p95 0.0098, peor 0.017 (ép.66), **0 épocas fuera** | ✅ media 0.0027, p95 0.0076, peor 0.014, **0 fuera** |
+| Neurogénesis ±3 épocas | ❌ **época 80 vs 75 (+5)** — ver análisis | ✅ época 75 (±0) |
+| Velocidad ≤ 0.8× | ✅ 47 min vs 80 min (**0.59×**) | ✅ 31 min (**0.39×**) |
+| ∇STE > 0, misma magnitud | ✅ min 5.6e-3, mediana 1.4e-2 (A: 4.6e-3 / 1.4e-2) | ✅ min 5.1e-3, mediana 1.3e-2 |
+| Batería (sin degradación) | ✅ perfil idéntico a A (2/5, mismos exámenes) | ✅ ídem |
+| Cualitativa (sin colapso) | ✅ "the cat sleeps", "she wanted to go" | ✅ ídem |
+
+**Val loss final (época 160): A 3.7338 · B 3.7348 · C 3.7343** — indistinguibles
+(Δ < 0.001, un orden de magnitud bajo el umbral).
+
+### Análisis del único fallo literal (neurogénesis de B en +5)
+
+El disparador de plateau es un contador discreto sobre mejoras del orden de
+`min_delta=0.01`: con diferencias de val_loss de ~0.003 entre brazos, una sola
+época que cruce el umbral por 0.001 resetea el contador y desplaza el disparo.
+No es una diferencia de calidad: tras su neurogénesis, B re-converge con A a
+<0.01 desde la época 90 y termina a 0.001 del control. Se registra como
+**sensibilidad del trigger, no degradación** — y es irrelevante para la
+adopción porque C (la config que se despliega, que incluye BF16) cumple el
+±3 con desviación cero.
+
+### Observación colateral (fuera del A/B)
+
+La batería M1 suspende a los TRES brazos por igual (grammar 0.000, min_len
+~0.1): los datos de examen de la batería parecen anteriores a la transición a
+inglés (dd09ba4). No afecta a este experimento (comparación relativa, perfil
+idéntico) pero la batería necesita realineación → tarea aparte registrada.
+
+### DECISIÓN (según el criterio pre-registrado del §3)
+
+**C pasa 6/6 → se adopta BF16 + compile**: la receta del job pasa a
+`--amp auto --compile`. El run vivo (epoch 998) se reanuda con esa
+configuración, con las primeras ~100 épocas bajo vigilancia (val_loss vs
+tendencia previa + ∇STE) y rollback documentado: quitar `--compile` y/o
+`--amp off` — el checkpoint es FP32 en todos los casos.
+
+**Números finales que respaldan la decisión** (Tier 1 + Tier 2): 3.7× de
+velocidad y −40% VRAM a dims grandes, 2.6× de velocidad de época medida
+end-to-end a dims pequeñas, margen de 3.9 GB para el stage 8, y coste de
+calidad de convergencia: **indistinguible de cero** (Δval final < 0.001 tras
+160 épocas y una neurogénesis).

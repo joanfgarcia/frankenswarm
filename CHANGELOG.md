@@ -2,6 +2,25 @@
 
 ## [Unreleased]
 
+### ✅ EXP_079 Tier 2 — el 32→16 no cuesta calidad (2026-07-28, madrugada)
+
+- **[RESULT] A/B/C from-scratch completado** (3 × 160 épocas + una neurogénesis
+  128→256 por brazo, seed 770, sandboxes; run vivo intacto, md5 verificado):
+  val_loss final **3.7338 (FP32) vs 3.7348 (BF16) vs 3.7343 (BF16+compile)** —
+  |Δ| medio por época 0.003 contra un umbral de 0.05, **cero épocas fuera**;
+  batería y muestras cualitativas idénticas entre brazos; 160 épocas en
+  80/47/**31** min (compile = **2.6×** end-to-end). Único fallo literal de la
+  matriz: la neurogénesis de B saltó en +5 épocas (sensibilidad del contador de
+  plateau cerca de `min_delta`, no degradación; C clavó el ±0). Detalle completo
+  y análisis en `docs/experiments/EXP_079_DESIGN.md` §5; DL-002 actualizada.
+- **[ADOPTED] `--amp auto --compile` en `configs/jobs/school.yaml`** según el
+  criterio pre-registrado (C pasa 6/6). Rollback documentado: quitar flags, el
+  checkpoint es FP32 siempre.
+- **[⚠️ HALLAZGO COLATERAL] `milestone_battery.py` suspende a cualquier
+  checkpoint reciente por igual** (grammar 0.000 en los tres brazos): sus datos
+  de examen parecen anteriores a la transición a inglés. Tarea de realineación
+  registrada — no afecta al A/B (comparación relativa).
+
 ### 🧪 EXP_079 — los números detrás de BF16 (2026-07-27, tarde)
 
 - **[NEW] `docs/DECISION_LOG.md`** — registro de decisiones de calado (DL-NNN).

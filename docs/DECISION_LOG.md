@@ -33,9 +33,15 @@ a 6.9 GB en FP32. ∇STE de la misma magnitud en las 8 configuraciones. Proyecci
 completa: `docs/experiments/EXP_079_DESIGN.md` §2 +
 `storage/benchmarks/tier1_step_bench.json`.
 
-**Pendiente que gatea la adopción.** Calidad de convergencia: Tier 2 de EXP_079
-(A/B/C from-scratch hasta el hito de 2 años, umbrales pre-registrados y congelados).
-Si falla, resultado negativo documentado y el run sigue en FP32.
+**Pendiente que gateaba la adopción → RESUELTO (28-jul-2026).** Tier 2 de EXP_079
+ejecutado (A/B/C from-scratch, 160 épocas + neurogénesis 128→256 por brazo, misma
+semilla): coste de calidad **indistinguible de cero** — val_loss final 3.7338 (FP32)
+vs 3.7348 (BF16) vs 3.7343 (BF16+compile), |Δ| medio por época 0.003 con umbral en
+0.05 y cero épocas fuera; batería y muestras idénticas entre brazos; épocas 2.6×
+más rápidas end-to-end (80→31 min por 160 épocas). Único fallo literal: la
+neurogénesis de B disparó en +5 épocas (sensibilidad del contador de plateau, no
+degradación — análisis en EXP_079 §5). **Adoptado: `--amp auto --compile` en la
+receta.** El run vivo se reanuda con vigilancia de ~100 épocas y rollback de un flag.
 
 **Salvaguardas.** `--state_dir` (sandboxes; las rutas dejaron de estar hardcodeadas),
 `--seed`, prohibido `--reset_state` en benchmarks, md5 del checkpoint vivo verificado

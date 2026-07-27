@@ -16,7 +16,10 @@ priority: 5
 
 # `cwd` se omite a propósito: se resuelve a la raíz del proyecto que aloja
 # esta receta, así el fichero es portable entre máquinas.
-step_command: .venv/bin/python src/bitnet/training/train_sovereign_school.py --batch_size 64 --max_epochs_per_run 1 --amp auto
+# --amp auto --compile: adoptados por EXP_079 (docs/experiments/EXP_079_DESIGN.md §5,
+# DL-002): 2.6-3.7× de velocidad, −40% VRAM, coste de calidad indistinguible de cero.
+# Rollback: quitar --compile y/o poner --amp off (el checkpoint es FP32 siempre).
+step_command: .venv/bin/python src/bitnet/training/train_sovereign_school.py --batch_size 64 --max_epochs_per_run 1 --amp auto --compile
 env:
   PYTHONPATH: .
 
