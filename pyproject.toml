@@ -8,6 +8,15 @@ dependencies = [
     "pyswip"
 ]
 
+[project.optional-dependencies]
+opt8bit = [
+    "bitsandbytes>=0.44.0"
+]
+dev = [
+    "ruff",
+    "pytest"
+]
+
 [tool.ruff]
 line-length = 150
 target-version = "py312"

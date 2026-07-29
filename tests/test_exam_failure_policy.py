@@ -13,7 +13,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from src.bitnet.training.train_sovereign_school import EXAM_MAX_FAILURES, plan_exam_failure
+from src.bitnet.training.modules.state_manager import EXAM_MAX_FAILURES, plan_exam_failure
 
 STAGE_7 = {"stage_idx": 6, "name": "secondary_7", "dim": 896, "age": 7, "start_epoch": 897, "end_epoch": 1120, "epochs": 224}
 

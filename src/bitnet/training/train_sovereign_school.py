@@ -1,107 +1,19 @@
-import hashlib
 import json
 import os
-import re
 
 import numpy as np
 import torch
 import torch.nn.functional as F  # noqa: N812
 
-from src.bitnet.vocab.dictionary_tool import SovereignDictionary
 from src.bitnet.model.modeling_bitnet import BitNet4LayerModel
-
-
-def _compute_corpus_hash(base_dir: str, n_stories: int) -> str:
-	"""Hash de los inputs del corpus para invalidar caché si cambian."""
-	h = hashlib.sha256()
-	for path in [
-		os.path.join(base_dir, "configs", "expanded_glyphs.json"),
-		os.path.join(base_dir, "configs", "tiny_dialogues_large_en.json"),
-		os.path.join(base_dir, "configs", "school_curriculum_structured_en.json"),
-	]:
-		with open(path, "rb") as f:
-			h.update(f.read())
-	h.update(str(n_stories).encode())
-	return h.hexdigest()[:16]
-
-
-def _load_tokenized_cache(cache_path: str, expected_hash: str) -> dict | None:
-	"""Carga caché tokenizado si existe y el hash coincide."""
-	if not os.path.exists(cache_path):
-		return None
-	with open(cache_path, "r") as f:
-		data = json.load(f)
-	if data.get("hash") != expected_hash:
-		return None
-	return data
-
-
-def _save_tokenized_cache(cache_path: str, data: dict) -> None:
-	"""Guarda caché tokenizado a disco."""
-	with open(cache_path, "w") as f:
-		json.dump(data, f)
-
-
-def generate_question_variations(q_content: str) -> list[str]:
-	variations = [q_content]
-	
-	# Variación 1: cambiar determinantes (el -> un, la -> una, los -> unos, las -> unas)
-	v1 = q_content
-	v1 = re.sub(r"\bel\b", "un", v1)
-	v1 = re.sub(r"\bla\b", "una", v1)
-	v1 = re.sub(r"\blos\b", "unos", v1)
-	v1 = re.sub(r"\blas\b", "unas", v1)
-	if v1 != q_content:
-		variations.append(v1)
-		
-	# Variación 2: eliminar determinantes al inicio
-	v2 = re.sub(r"^(el|la|los|las|un|una|unos|unas)\s+", "", q_content)
-	if v2 != q_content:
-		variations.append(v2)
-
-	# Variación 3: si tiene "entonces", crear versión sin "entonces"
-	if "entonces" in q_content:
-		v3 = q_content.replace("entonces", "").replace("  ", " ")
-		variations.append(v3)
-		if v1 != q_content:
-			v1_no_entonces = v1.replace("entonces", "").replace("  ", " ")
-			variations.append(v1_no_entonces)
-			
-	# Variación 4: eliminar tildes
-	def remove_accents(text):
-		accents = {'á':'a', 'é':'e', 'í':'i', 'ó':'o', 'ú':'u', 'ñ':'ñ'}
-		return "".join(accents.get(c, c) for c in text)
-	
-	v4 = remove_accents(q_content)
-	if v4 != q_content:
-		variations.append(v4)
-		
-	# Variaciones combinadas
-	for v in list(variations):
-		v_no_accent = remove_accents(v)
-		if v_no_accent != v:
-			variations.append(v_no_accent)
-
-	return list(set(variations))
-
-
-def tokenize(text: str, word_to_idx: dict) -> list[int]:
-	words = re.findall(r"[a-zA-ZáéíóúüñÁÉÍÓÚÜÑ_<>'\-]+", text.lower())
-	return [word_to_idx.get(w, 1) for w in words]  # 1 is <unk>
-
-
-def format_and_tokenize_dialogue(dialogue, word_to_idx):
-	dialogue_tokens = []
-	for turn in dialogue:
-		# Support both English (me/you) and Spanish (yo/tú) speaker prefixes
-		match = re.match(r"^(yo|tú|me|you)\s*:\s*(.*)$", turn, re.IGNORECASE)
-		if match:
-			speaker = match.group(1).lower()
-			content = match.group(2)
-			turn_words = [speaker] + re.findall(r"[a-zA-ZáéíóúüñÁÉÍÓÚÜÑ_<>'\-]+", content.lower())
-			turn_tokens = [word_to_idx.get(w, 1) for w in turn_words]
-			dialogue_tokens.extend(turn_tokens)
-	return dialogue_tokens
+from src.bitnet.training.modules.corpus import compute_corpus_hash, load_tokenized_cache, save_tokenized_cache
+from src.bitnet.training.modules.exam_compiler import compile_exam_sequences_for_age
+from src.bitnet.training.modules.partitioner import compile_stage_dataset, partition_corpus_by_mlu
+from src.bitnet.training.modules.stage_config import get_next_dim, get_stage_config, get_stage_info
+from src.bitnet.training.modules.state_manager import EXAM_PAUSE_EXIT_CODE, EvalResult, run_samantha_eval, trigger_neurogenesis
+from src.bitnet.training.modules.strategy import select_strategy
+from src.bitnet.training.modules.tokenization import format_and_tokenize_dialogue, tokenize
+from src.bitnet.vocab.dictionary_tool import SovereignDictionary
 
 
 def evaluate_exam(model, exam_subject_qa, idx_to_word, device):
@@ -157,424 +69,6 @@ EXAM_REMEDIAL_FRACTION = 0.25  # fracción de la etapa que se repasa tras cada s
 EXAM_PAUSE_EXIT_CODE = 78  # contrato con la receta (pause_exit_code): el runner sella PAUSED
 
 
-def plan_exam_failure(state, stage_conf, target_milestone):
-	"""Decide qué hacer con un suspenso: repaso dentro de la etapa o pausa del operador.
-
-	La puerta de la etapa es el EXAMEN, no el contador de épocas: el suspenso
-	retiene la etapa retrocediendo el contador un bloque de repaso, y el examen
-	re-dispara solo al volver a alcanzar end_epoch. Al K-ésimo suspenso del mismo
-	hito, la decisión pasa al operador. Devuelve (nuevo_estado, needs_operator).
-	"""
-	held = dict(state)
-	failures = dict(held.get("exam_failures", {}))
-	failures[target_milestone] = failures.get(target_milestone, 0) + 1
-	needs_operator = failures[target_milestone] >= EXAM_MAX_FAILURES
-
-	rewind = max(8, int(stage_conf["epochs"] * EXAM_REMEDIAL_FRACTION))
-	held["current_epoch"] = stage_conf["end_epoch"] if needs_operator else max(stage_conf["start_epoch"], stage_conf["end_epoch"] - rewind + 1)
-	held["current_stage_idx"] = stage_conf["stage_idx"]
-	held["exam_failures"] = failures
-	return held, needs_operator
-
-
-def run_samantha_eval(
-	model, current_checkpoint_path, target_milestone, save_dir, stage_idx, stage_name, milestones_achieved, state_path, args, device, base_dir, epoch,
-	stage_conf=None,
-):
-	import subprocess
-	import sys
-
-	# Guardar pesos
-	torch.save(model.state_dict(), current_checkpoint_path)
-
-	# 🔀 CPU Offloading para liberar GPU para Samantha
-	print("\n🔀 [CPU-OFFLOAD] Descargando modelo a CPU y limpiando VRAM CUDA...")
-	model = model.cpu()
-	torch.cuda.empty_cache()
-
-	# Obtener edad numérica
-	eval_age = int(target_milestone.split("_")[0])
-
-	# Invocar evaluador
-	eval_cmd = [
-		sys.executable,
-		"scripts/evaluate_samantha_age.py",
-		"--model_path",
-		current_checkpoint_path,
-		"--hidden_dim",
-		str(model.hidden_dim),
-		"--num_layers",
-		str(len(model.core_layers)),
-		"--target_age",
-		str(eval_age),
-		"--device",
-		"cpu",
-	]
-	if args.test_mock:
-		eval_cmd.append("--test_mock")
-
-	print(f"🚀 Iniciando proceso síncrono del evaluador Samantha (Hito target: {eval_age} años)")
-	env = dict(os.environ)
-	project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
-	env["PYTHONPATH"] = project_root + (":" + env["PYTHONPATH"] if "PYTHONPATH" in env else "")
-	eval_res = subprocess.run(eval_cmd, env=env)
-
-	# 🔀 GPU Reload
-	print("🔀 [GPU-RELOAD] Retornando modelo a GPU CUDA...")
-	model = model.to(device)
-
-	# Comprobar si aprobó el hito
-	if eval_res.returncode == 0:
-		print(f"\n🏆 ¡HITO DE EDAD ALCANZADO! El alumno ha superado el hito de {eval_age} años.")
-		if target_milestone not in milestones_achieved:
-			milestones_achieved.append(target_milestone)
-
-		# Avanzar target_milestone y actualizar stage
-		next_milestone = None
-		next_stage_idx = stage_idx
-		if target_milestone == "2_years":
-			next_milestone = "3_years"
-			next_stage_idx = 2
-		elif target_milestone == "3_years":
-			next_milestone = "4_years"
-			next_stage_idx = 3
-		elif target_milestone == "4_years":
-			next_milestone = "5_years"
-			next_stage_idx = 4
-		elif target_milestone == "5_years":
-			next_milestone = "6_years"
-			next_stage_idx = 5
-		elif target_milestone == "6_years":
-			next_milestone = "7_years"
-			next_stage_idx = 6
-		elif target_milestone == "7_years":
-			next_milestone = "8_years"
-			next_stage_idx = 7
-		elif target_milestone == "8_years":
-			next_milestone = "completed"
-			next_stage_idx = 8
-
-		# Escribir actualización de estado
-		with open(state_path, "w", encoding="utf-8") as sf:
-			json.dump(
-				{
-					"current_epoch": epoch + 1,
-					"current_stage_idx": next_stage_idx,
-					"hidden_dim": model.hidden_dim,
-					"num_layers": len(model.core_layers),
-					"consecutive_failures": 0,
-					"target_milestone": next_milestone,
-					"milestones_achieved": milestones_achieved,
-				},
-				sf,
-				indent=4,
-			)
-
-		# Guardar checkpoints fijos
-		checkpoint_milestone_path = os.path.join(save_dir, f"model_milestone_{target_milestone}.pt")
-		torch.save(model.state_dict(), checkpoint_milestone_path)
-		torch.save(model.state_dict(), os.path.join(save_dir, "model_final.pt"))
-		torch.save(model.state_dict(), os.path.join(save_dir, f"model_{stage_name}.pt"))
-
-		# Escribir archivo de señal JSON para avisar al usuario
-		milestone_achieved_path = os.path.join(base_dir, "storage", "checkpoints", "milestone_achieved.json")
-		with open(milestone_achieved_path, "w", encoding="utf-8") as mf:
-			json.dump(
-				{
-					"milestone": target_milestone,
-					"next_milestone": next_milestone,
-					"hidden_dim": model.hidden_dim,
-					"num_layers": len(model.core_layers),
-					"stage": stage_name,
-					"status": "achieved",
-					"model_path": checkpoint_milestone_path,
-				},
-				mf,
-				indent=4,
-			)
-
-		print(f"\n🛑 [PAUSA DE DESARROLLO] Estado guardado en: {state_path}")
-		print(f"🎒 Señal de hito guardada en: {milestone_achieved_path}")
-		print("💬 Por favor, abre el playground interactivo para chatear con el modelo:")
-		print("   PYTHONPATH=. .venv/bin/python playground/chat_school_agent.py\n")
-		print("👋 Pausando el bucle de entrenamiento. ¡Buen trabajo, profesora! Entrenador detenido.")
-		sys.exit(0)
-	else:
-		# Suspenso = repaso, no fallo del sistema. El 29 jul 2026 el sys.exit(1)
-		# bajo el job runner quemó un intento y el reintento automático leyó la
-		# época ya avanzada: transición fantasma a etapa 8 con el examen de 7
-		# años suspendido. Ahora el suspenso REESCRIBE el estado (retiene la
-		# etapa y retrocede al bloque de repaso) y habla códigos que el runner
-		# entiende: 0 = seguir entrenando el repaso; EXAM_PAUSE_EXIT_CODE =
-		# PAUSED para juicio del operador tras EXAM_MAX_FAILURES suspensos.
-		with open(state_path, encoding="utf-8") as sf:
-			held_state = json.load(sf)
-		held_state, needs_operator = plan_exam_failure(held_state, stage_conf, target_milestone)
-		with open(state_path, "w", encoding="utf-8") as sf:
-			json.dump(held_state, sf, indent=4)
-
-		attempt_num = held_state["exam_failures"][target_milestone]
-		milestone_failed_path = os.path.join(base_dir, "storage", "checkpoints", "milestone_failed.json")
-		with open(milestone_failed_path, "w", encoding="utf-8") as mf:
-			json.dump(
-				{
-					"milestone": target_milestone,
-					"attempt": attempt_num,
-					"max_attempts": EXAM_MAX_FAILURES,
-					"status": "needs_operator" if needs_operator else "remedial",
-					"resume_epoch": held_state["current_epoch"],
-					"stage": stage_name,
-				},
-				mf,
-				indent=4,
-			)
-
-		print(f"\n❌ [EXAMEN SUSPENDIDO] El alumno ha suspendido el hito de {eval_age} años (intento {attempt_num}/{EXAM_MAX_FAILURES}).")
-		print(f"📋 Señal de suspenso guardada en: {milestone_failed_path}")
-		if needs_operator:
-			print("🛑 [PAUSA DEL OPERADOR] Suspensos agotados para este hito: revisa las calificaciones de Samantha y reanuda con `red-pill job resume`.")
-			sys.exit(EXAM_PAUSE_EXIT_CODE)
-		print(f"📚 [REPASO] La etapa se retiene: vuelta a la época {held_state['current_epoch']} y re-examen al alcanzar de nuevo la {stage_conf['end_epoch']}.")
-		sys.exit(0)
-
-	return model, False
-
-
-def partition_corpus_by_mlu(sequences: list[list[int]]) -> tuple:
-	stage_0_1 = []
-	stage_1_2 = []
-	stage_2_3 = []
-	stage_3_4 = []
-	for seq in sequences:
-		length = len(seq)
-		if length <= 3:
-			stage_0_1.append(seq)
-		elif length == 4:
-			stage_1_2.append(seq)
-		elif 5 <= length <= 6:
-			stage_2_3.append(seq)
-		else:
-			stage_3_4.append(seq)
-	return stage_0_1, stage_1_2, stage_2_3, stage_3_4
-
-
-def compile_stage_dataset(base_data: list[list[int]], seq_len: int = 128) -> tuple:
-	padded = []
-	for seq in base_data:
-		if len(seq) < seq_len:
-			seq_padded = seq + [0] * (seq_len - len(seq))
-		else:
-			seq_padded = seq[:seq_len]
-		padded.append(seq_padded)
-
-	import random
-	rng = random.Random(42)
-	rng.shuffle(padded)
-
-	val_size = int(len(padded) * 0.1)
-	train_seqs = padded[val_size:]
-	val_seqs = padded[:val_size]
-
-	return train_seqs, val_seqs
-
-
-def trigger_neurogenesis(model, optimizer, new_dim, glyphs, device, current_checkpoint_path, state_path, epoch, milestones_achieved, target_milestone):
-	from src.bitnet.growth.net2net import net2wider_model
-	import gc
-	print(f"\n🧬 [NEUROGÉNESIS EN CALIENTE] Época {epoch}: Ampliando dimensión oculta del Core: {model.hidden_dim} ➔ {new_dim}...")
-
-	torch.save(model.state_dict(), current_checkpoint_path)
-
-	# 1. CPU Offloading of old model and optimizer to free GPU VRAM
-	model = model.cpu()
-	for state_opt in optimizer.state.values():
-		for k, v in state_opt.items():
-			if isinstance(v, torch.Tensor):
-				state_opt[k] = v.cpu()
-	torch.cuda.empty_cache()
-	gc.collect()
-
-	# 2. Instantiate new model on CPU
-	new_model = BitNet4LayerModel(
-		use_glyphs=True,
-		glyph_table=glyphs,
-		hidden_dim=new_dim,
-		num_layers=len(model.core_layers),
-		use_pos_embedding=True,
-		is_causal=True,
-		max_seq_len=128,
-	).cpu()
-
-	# 3. Instantiate new optimizer on CPU with scaled learning rate
-	lr_scale = 128.0 / new_dim
-	new_optimizer = torch.optim.AdamW(new_model.parameters(), lr=4e-4 * lr_scale, weight_decay=0.05)
-
-	# 4. Perform net2wider mapping on CPU
-	model = net2wider_model(
-		model,
-		new_hidden_dim=new_dim,
-		noise_std=0.01,
-		old_optimizer=optimizer,
-		new_optimizer=new_optimizer
-	)
-
-	# 5. Move new model and optimizer back to active GPU/CPU device
-	model = model.to(device)
-	for state_opt in new_optimizer.state.values():
-		for k, v in state_opt.items():
-			if isinstance(v, torch.Tensor):
-				state_opt[k] = v.to(device)
-
-	# 6. Clean up temporary variables
-	del new_model
-	gc.collect()
-	torch.cuda.empty_cache()
-
-	torch.save(model.state_dict(), current_checkpoint_path)
-	with open(state_path, "w", encoding="utf-8") as sf:
-		json.dump(
-			{
-				"current_epoch": epoch,
-				"hidden_dim": model.hidden_dim,
-				"num_layers": len(model.core_layers),
-				"target_milestone": target_milestone,
-				"milestones_achieved": milestones_achieved,
-			},
-			sf,
-			indent=4,
-		)
-	print(f"🧬 Neurogénesis completada. Nuevos parámetros: {sum(p.numel() for p in model.parameters()):,}\n")
-	return model, new_optimizer
-
-
-def compile_exam_sequences_for_age(age: int, exams_data: dict, word_to_idx: dict, dictionary: SovereignDictionary) -> list[list[int]]:
-	exam_sequences = []
-
-	# 1. Obtener preguntas desde school_exams.json
-	key = None
-	if age in [2, 3, 4]:
-		key = "preschool"
-	elif age in [5, 6]:
-		key = "primary"
-	elif age in [7, 8]:
-		key = "secondary"
-
-	if key:
-		exams_section = exams_data.get(key, {})
-		for subject, qa_pairs in exams_section.items():
-			for qa in qa_pairs:
-				raw_q = qa["question"]
-				raw_a = qa["answer"]
-
-				# Extraer contenido de la pregunta
-				q_match = re.match(r"^(yo|tú|me|you)\s*:\s*(.*)$", raw_q, re.IGNORECASE)
-				q_content = q_match.group(2) if q_match else raw_q
-
-				for var in generate_question_variations(q_content):
-					q_words = re.findall(r"[a-zA-ZáéíóúüñÁÉÍÓÚÜÑ_]+", var.lower())
-					mapped_q = [dictionary.map_to_base_word(w) for w in q_words]
-					mapped_a = dictionary.map_to_base_word(raw_a)
-
-					q_tokens = [word_to_idx.get(w, 1) for w in mapped_q]
-					a_token = word_to_idx.get(mapped_a, 1)
-
-					dialogue_triggers = {"hello", "how are you", "who are you", "what is your name", "where are you from", "what is the bunker", "do you like borges"}
-					if q_content.lower().strip() in dialogue_triggers:
-						tokens = [word_to_idx.get("you", 1)] + q_tokens + [word_to_idx.get("me", 1)] + [a_token]
-					else:
-						tokens = q_tokens + [a_token]
-					exam_sequences.append(tokens)
-
-	# 2. Obtener preguntas específicas de evaluate_samantha_age.py para la edad
-	from scripts.evaluate_samantha_age import AGE_QUESTIONS
-	age_questions = AGE_QUESTIONS.get(age, [])
-	for qa in age_questions:
-		raw_q = qa["question"]
-		raw_a = qa["expected"]
-
-		q_match = re.match(r"^(yo|tú|me|you)\s*:\s*(.*)$", raw_q, re.IGNORECASE)
-		q_content = q_match.group(2) if q_match else raw_q
-
-		for var in generate_question_variations(q_content):
-			q_words = re.findall(r"[a-zA-ZáéíóúüñÁÉÍÓÚÜÑ_]+", var.lower())
-			mapped_q = [dictionary.map_to_base_word(w) for w in q_words]
-			mapped_a = dictionary.map_to_base_word(raw_a)
-
-			q_tokens = [word_to_idx.get(w, 1) for w in mapped_q]
-			a_token = word_to_idx.get(mapped_a, 1)
-
-			dialogue_triggers = {"hello", "how are you", "who are you", "what is your name", "where are you from", "what is the bunker", "do you like borges"}
-			if q_content.lower().strip() in dialogue_triggers:
-				tokens = [word_to_idx.get("you", 1)] + q_tokens + [word_to_idx.get("me", 1)] + [a_token]
-			else:
-				tokens = q_tokens + [a_token]
-			exam_sequences.append(tokens)
-
-	return exam_sequences
-
-
-def get_stage_config(base_epochs=64, stage_scale=0.5):
-	stages = [
-		{"name": "0-1", "dim": 128, "age": None},
-		{"name": "1-2", "dim": 256, "age": 2},
-		{"name": "2-3", "dim": 384, "age": 3},
-		{"name": "3-4", "dim": 512, "age": 4},
-		{"name": "primary_5", "dim": 640, "age": 5},
-		{"name": "primary_6", "dim": 768, "age": 6},
-		{"name": "secondary_7", "dim": 896, "age": 7},
-		{"name": "secondary_8", "dim": 1024, "age": 8},
-	]
-	start_epoch = 1
-	config = []
-	for i, stage in enumerate(stages):
-		epochs_in_stage = int(base_epochs * (1 + i * stage_scale))
-		end_epoch = start_epoch + epochs_in_stage - 1
-		config.append({
-			"stage_idx": i,
-			"name": stage["name"],
-			"dim": stage["dim"],
-			"age": stage["age"],
-			"start_epoch": start_epoch,
-			"end_epoch": end_epoch,
-			"epochs": epochs_in_stage
-		})
-		start_epoch = end_epoch + 1
-	return config
-
-
-def get_next_dim(current_dim, stage_config, current_epoch=None):
-	"""Return the next neurogenesis target dim, or None if already at max.
-
-	Finds the smallest dim in stage_config that is strictly larger than
-	current_dim. If current_epoch is given, respects the dim ceiling of
-	the current stage (the model shouldn't grow beyond its stage's max).
-	"""
-	all_dims = sorted(set(c["dim"] for c in stage_config))
-
-	# If epoch provided, cap at the current stage's dim
-	max_allowed = all_dims[-1]
-	if current_epoch is not None:
-		for config in stage_config:
-			if config["start_epoch"] <= current_epoch <= config["end_epoch"]:
-				max_allowed = config["dim"]
-				break
-
-	for d in all_dims:
-		if d > current_dim and d <= max_allowed:
-			return d
-	return None
-
-
-def oversample_curriculum_for_stage(general_data, curriculum_data, target_ratio=0.20):
-	if len(curriculum_data) == 0:
-		return general_data
-	target_size = int(len(general_data) * target_ratio / (1 - target_ratio))
-	multiplier = target_size // len(curriculum_data)
-	remainder = target_size % len(curriculum_data)
-	oversampled = curriculum_data * multiplier + curriculum_data[:remainder]
-	return general_data + oversampled
-
-
 def run_school_training():
 	# Announce the GPU claim to red-pill, IF red-pill happens to be around, so its
 	# inference daemon falls back to the CPU worker while we hold the card.
@@ -617,6 +111,7 @@ def run_school_training():
 	parser.add_argument("--state_dir", type=str, default=None, help="Directorio para estado y checkpoints (default: storage/checkpoints/sovereign_school). Un directorio vacío arranca de cero SIN tocar el run vivo — es la vía para benchmarks/sandboxes; --reset_state no hace falta")
 	parser.add_argument("--seed", type=int, default=None, help="Semilla global (torch/numpy/random) para runs comparables. Default: sin fijar (comportamiento histórico)")
 	parser.add_argument("--compile", action="store_true", help="torch.compile(fullgraph=False) sobre el forward de entrenamiento (RFC-VRAM-001 §4.8, D2). EXPERIMENTAL: vigilar que ∇STE no caiga a cero. El checkpoint se guarda siempre desde el modelo sin compilar")
+	parser.add_argument("--opt8bit", type=str, default="off", choices=["on", "off"], help="Activar estados de optimizador 8-bit vía bitsandbytes (ahorra ~75% VRAM para m/v). Requiere bitsandbytes>=0.44.0. Default: off")
 	args, _ = parser.parse_known_args()
 
 	if args.seed is not None:
@@ -799,7 +294,7 @@ def run_school_training():
 	# Particionar currículo estructurado preescolar
 	curr_0_1, curr_1_2, curr_2_3, curr_3_4 = partition_corpus_by_mlu(tokenized_preschool_curriculum)
 
-	print(f"Particiones MLU General:")
+	print("Particiones MLU General:")
 	print(f"  - 0-1 Año (MLU <= 2): {len(gen_0_1)} secuencias")
 	print(f"  - 1-2 Años (MLU = 3): {len(gen_1_2)} secuencias")
 	print(f"  - 2-3 Años (MLU 4-5): {len(gen_2_3)} secuencias")
@@ -831,7 +326,7 @@ def run_school_training():
 		if not getattr(args, "force_stage_compile", False) and os.path.exists(stage_file):
 			try:
 				print(f"⚡ [CACHÉ ETAPA] Cargando dataset pre-compilado de la etapa {stage_idx} desde {stage_file}...")
-				with open(stage_file, "r", encoding="utf-8") as f:
+				with open(stage_file, encoding="utf-8") as f:
 					data = json.load(f)
 					gen_data = data.get("general", [])
 					curr_data = data.get("curriculum", [])
@@ -999,8 +494,12 @@ def run_school_training():
 	n_params = sum(p.numel() for p in model.parameters())
 	print(f"Modelo instanciado. Total parámetros: {n_params:,}")
 
+	# Seleccionar estrategia de entrenamiento según flags
+	strategy = select_strategy(args.amp, args.opt8bit)
+	print(f"🎯 [STRATEGY] Estrategia seleccionada: {strategy.name}")
+
 	lr_scale = 128.0 / model.hidden_dim
-	optimizer = torch.optim.AdamW(model.parameters(), lr=4e-4 * lr_scale, weight_decay=0.05)
+	optimizer = strategy.create_optimizer(model, lr_scale)
 
 	# ── torch.compile selectivo (RFC-VRAM-001 §4.8, D2 — experimental) ──
 	# El wrapper compilado se usa SOLO para los forwards; guardado, neurogénesis
@@ -1205,15 +704,17 @@ def run_school_training():
 					model, optimizer = trigger_neurogenesis(
 						model, optimizer, next_dim, glyphs, device,
 						current_checkpoint_path, state_path, epoch,
-						milestones_achieved, target_milestone
+						milestones_achieved, target_milestone,
+						strategy=strategy
 					)
 					train_model = _maybe_compile(model)
 					neurogenesis_history.append({
 						"epoch": epoch, "old_dim": old_dim, "new_dim": next_dim,
 						"val_loss_at_trigger": val_loss,
 					})
-					best_val_loss = float("inf")  # reset tras crecer
-					epochs_without_improvement = 0
+					# F3 FIX: Do NOT reset best_val_loss / epochs_without_improvement
+					# after neurogenesis. The plateau state is part of the training
+					# record and must survive growth transitions.
 				else:
 					print(f"  ⚠️ [PLATEAU] val_loss estancada {epochs_without_improvement} épocas pero ya en dim máximo para esta etapa ({model.hidden_dim})")
 

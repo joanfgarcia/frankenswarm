@@ -216,7 +216,7 @@ def net2wider_model(
 	device = next(old_model.parameters()).device
 
 	if use_glyphs:
-		glyph_table = old_model.glyph_embedding.glyph_table.cpu().numpy()
+		glyph_table = old_model.glyph_embedding.glyph_table.cpu().float().numpy()
 		vocab_embeddings = None
 	else:
 		glyph_table = None
