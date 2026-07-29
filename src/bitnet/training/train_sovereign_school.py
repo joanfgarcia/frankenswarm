@@ -712,9 +712,9 @@ def run_school_training():
 						"epoch": epoch, "old_dim": old_dim, "new_dim": next_dim,
 						"val_loss_at_trigger": val_loss,
 					})
-					# F3 FIX: Do NOT reset best_val_loss / epochs_without_improvement
-					# after neurogenesis. The plateau state is part of the training
-					# record and must survive growth transitions.
+					# F3: Reset plateau monitor — fresh window for new dim
+					best_val_loss = float("inf")
+					epochs_without_improvement = 0
 				else:
 					print(f"  ⚠️ [PLATEAU] val_loss estancada {epochs_without_improvement} épocas pero ya en dim máximo para esta etapa ({model.hidden_dim})")
 

@@ -302,6 +302,9 @@ def trigger_neurogenesis(model, optimizer, new_dim, glyphs, device, current_chec
 		"target_milestone": target_milestone,
 		"milestones_achieved": milestones_achieved,
 	})
+	# F3: Reset plateau monitor after neurogrowth — fresh window for new dim
+	current_state["best_val_loss"] = float("inf")
+	current_state["epochs_without_improvement"] = 0
 	with open(state_path, "w", encoding="utf-8") as sf:
 		json.dump(current_state, sf, indent=4)
 	print(f"🧬 Neurogénesis completada. Nuevos parámetros: {sum(p.numel() for p in model.parameters()):,}\n")
