@@ -1,6 +1,6 @@
 [project]
 name = "frankenswarm"
-version = "0.2.0"
+version = "0.3.1"
 description = "Heterogeneous Hardware MoE"
 readme = "README.md"
 requires-python = ">=3.12"
@@ -21,4 +21,5 @@ indent-style = "tab"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+pythonpath = ["."]
 

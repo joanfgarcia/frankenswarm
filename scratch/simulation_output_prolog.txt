@@ -1,0 +1,244 @@
+Loading 3 agents for experiment 'EXP_073_test_run'...
+Loaded weights from /home/joan/Documents/IA/frankenswarm/storage/experiments/EXP_073_test_run/best_agent_a.pt
+Loaded weights from /home/joan/Documents/IA/frankenswarm/storage/experiments/EXP_073_test_run/best_agent_b.pt
+Loaded weights from /home/joan/Documents/IA/frankenswarm/storage/experiments/EXP_073_test_run/best_agent_c.pt
+
+══════════════════════════════════════════════════════════════════════
+🏟️  SIMULACIÓN EN LA ARENA COOPERATIVA (3 AGENTES)
+  Nico (Agente A) en montaña
+  Sofi (Agente B) en lago
+  Hugo (Agente C) en pradera
+  Configuración: configs/experiments/EXP_073_test_run.json
+  Metabolismo (Hambre): 3.50/tick
+  Capacidad de recursos: 5.0 | Recuperación: +0.20/tick
+  Multiplicadores Depredador: chance=1.00, daño=1.00
+  Multiplicadores Clima: chance=1.00, daño=1.00
+  Frecuencia Presa: cada 15 ticks
+  Samantha disponible: False
+══════════════════════════════════════════════════════════════════════
+
+[Tick 001] ───────────────────────────────────────────────────────
+  Mundo: Bosque: [🍖: 5.0/5.0] | Río: [🍖: 5.0/5.0, 💧: 5.0/5.0] | Lago: [💧: 5.0/5.0] | 🎯 Sin presa
+  Nico (A): Loc: montaña  | Hambre:  60.0 | Sed:  80.0 | Salud: 100.0 | Energía:  80.0 | Emo: ira | Mochila: [🍖: 0/1, 💧: 0/1]
+            Estima a Sofi (B): [Loc: lago     | Hambre:  60.0 | Sed:  80.0 | Salud: 100.0 | Emo: alegría]
+            Estima a Hugo (c): [Loc: pradera  | Hambre:  60.0 | Sed:  80.0 | Salud: 100.0 | Emo: alegría]
+  Sofi (B): Loc: lago     | Hambre:  60.0 | Sed:  80.0 | Salud: 100.0 | Energía:  80.0 | Emo: ira | Mochila: [🍖: 0/1, 💧: 0/1]
+            Estima a Nico (A): [Loc: montaña  | Hambre:  60.0 | Sed:  80.0 | Salud: 100.0 | Emo: alegría]
+            Estima a Hugo (C): [Loc: pradera  | Hambre:  60.0 | Sed:  80.0 | Salud: 100.0 | Emo: alegría]
+  Hugo (C): Loc: pradera  | Hambre:  60.0 | Sed:  80.0 | Salud: 100.0 | Energía:  80.0 | Emo: ira | Mochila: [🍖: 0/1, 💧: 0/1]
+            Estima a Nico (A): [Loc: montaña  | Hambre:  60.0 | Sed:  80.0 | Salud: 100.0 | Emo: alegría]
+            Estima a Sofi (B): [Loc: lago     | Hambre:  60.0 | Sed:  80.0 | Salud: 100.0 | Emo: alegría]
+  Percepción Nico: [piedra, noche, agua, noche, RcvLoc: agua, RcvWhat: agua]
+  Percepción Sofi: [agua, tormenta, agua, noche, RcvLoc: piedra, RcvWhat: agua]
+  Percepción Hugo: [tierra, noche, agua, noche, RcvLoc: piedra, RcvWhat: agua]
+  👉 Nico (A) decide COMER: no hay comida aquí ni en mochila
+  👉 Sofi (B) decide LUCHAR: no hay amenaza | tormenta
+  👉 Hugo (C) decide MOVER: se mueve a bosque
+
+[Tick 002] ───────────────────────────────────────────────────────
+  Mundo: Bosque: [🍖: 5.0/5.0] | Río: [🍖: 5.0/5.0, 💧: 5.0/5.0] | Lago: [💧: 5.0/5.0] | 🎯 Sin presa
+  Nico (A): Loc: montaña  | Hambre:  56.5 | Sed:  73.0 | Salud: 100.0 | Energía:  78.0 | Emo: ira | Mochila: [🍖: 0/1, 💧: 0/1]
+            Estima a Sofi (B): [Loc: lago     | Hambre:  56.5 | Sed:  73.0 | Salud: 100.0 | Emo: ira]
+            Estima a Hugo (c): [Loc: pradera  | Hambre:  56.5 | Sed:  73.0 | Salud: 100.0 | Emo: ira]
+  Sofi (B): Loc: lago     | Hambre:  56.5 | Sed:  73.0 | Salud:  88.0 | Energía:  74.0 | Emo: ira | Mochila: [🍖: 0/1, 💧: 0/1]
+            Estima a Nico (A): [Loc: montaña  | Hambre:  56.5 | Sed:  73.0 | Salud: 100.0 | Emo: ira]
+            Estima a Hugo (C): [Loc: pradera  | Hambre:  56.5 | Sed:  73.0 | Salud: 100.0 | Emo: ira]
+  Hugo (C): Loc: bosque   | Hambre:  56.5 | Sed:  73.0 | Salud: 100.0 | Energía:  74.0 | Emo: ira | Mochila: [🍖: 0/1, 💧: 0/1]
+            Estima a Nico (A): [Loc: montaña  | Hambre:  56.5 | Sed:  73.0 | Salud: 100.0 | Emo: ira]
+            Estima a Sofi (B): [Loc: lago     | Hambre:  56.5 | Sed:  73.0 | Salud: 100.0 | Emo: ira]
+  Percepción Nico: [piedra, noche, agua, noche, RcvLoc: agua, RcvWhat: agua]
+  Percepción Sofi: [agua, comida, agua, noche, RcvLoc: piedra, RcvWhat: agua]
+  Percepción Hugo: [bosque, comida, agua, noche, RcvLoc: piedra, RcvWhat: agua]
+  👉 Nico (A) decide COMER: no hay comida aquí ni en mochila
+  👉 Sofi (B) decide LUCHAR: no hay amenaza
+  👉 Hugo (C) decide MOVER: se mueve a ruinas
+
+[Tick 003] ───────────────────────────────────────────────────────
+  Mundo: Bosque: [🍖: 5.0/5.0] | Río: [🍖: 5.0/5.0, 💧: 5.0/5.0] | Lago: [💧: 5.0/5.0] | 🎯 Sin presa
+  Nico (A): Loc: montaña  | Hambre:  53.0 | Sed:  66.0 | Salud: 100.0 | Energía:  76.0 | Emo: ira | Mochila: [🍖: 0/1, 💧: 0/1]
+            Estima a Sofi (B): [Loc: lago     | Hambre:  53.0 | Sed:  66.0 | Salud: 100.0 | Emo: ira]
+            Estima a Hugo (c): [Loc: pradera  | Hambre:  53.0 | Sed:  66.0 | Salud: 100.0 | Emo: ira]
+  Sofi (B): Loc: lago     | Hambre:  53.0 | Sed:  66.0 | Salud:  88.0 | Energía:  72.0 | Emo: ira | Mochila: [🍖: 0/1, 💧: 0/1]
+            Estima a Nico (A): [Loc: montaña  | Hambre:  53.0 | Sed:  66.0 | Salud: 100.0 | Emo: ira]
+            Estima a Hugo (C): [Loc: pradera  | Hambre:  53.0 | Sed:  66.0 | Salud: 100.0 | Emo: ira]
+  Hugo (C): Loc: ruinas   | Hambre:  53.0 | Sed:  66.0 | Salud: 100.0 | Energía:  68.0 | Emo: ira | Mochila: [🍖: 0/1, 💧: 0/1]
+            Estima a Nico (A): [Loc: montaña  | Hambre:  53.0 | Sed:  66.0 | Salud: 100.0 | Emo: ira]
+            Estima a Sofi (B): [Loc: lago     | Hambre:  53.0 | Sed:  66.0 | Salud: 100.0 | Emo: ira]
+  Percepción Nico: [piedra, tormenta, agua, noche, RcvLoc: agua, RcvWhat: agua]
+  Percepción Sofi: [agua, comida, agua, noche, RcvLoc: piedra, RcvWhat: agua]
+  Percepción Hugo: [cueva, tormenta, agua, noche, RcvLoc: piedra, RcvWhat: agua]
+  👉 Nico (A) decide COMER: no hay comida aquí ni en mochila | tormenta
+  👉 Sofi (B) decide LUCHAR: no hay amenaza
+  👉 Hugo (C) decide MOVER: se mueve a bosque
+
+[Tick 004] ───────────────────────────────────────────────────────
+  Mundo: Bosque: [🍖: 5.0/5.0] | Río: [🍖: 5.0/5.0, 💧: 5.0/5.0] | Lago: [💧: 5.0/5.0] | 🎯 Sin presa
+  Nico (A): Loc: montaña  | Hambre:  49.5 | Sed:  59.0 | Salud:  88.0 | Energía:  70.0 | Emo: ira | Mochila: [🍖: 0/1, 💧: 0/1]
+            Estima a Sofi (B): [Loc: lago     | Hambre:  49.5 | Sed:  59.0 | Salud: 100.0 | Emo: ira]
+            Estima a Hugo (c): [Loc: pradera  | Hambre:  49.5 | Sed:  59.0 | Salud: 100.0 | Emo: ira]
+  Sofi (B): Loc: lago     | Hambre:  49.5 | Sed:  59.0 | Salud:  88.0 | Energía:  70.0 | Emo: ira | Mochila: [🍖: 0/1, 💧: 0/1]
+            Estima a Nico (A): [Loc: montaña  | Hambre:  49.5 | Sed:  59.0 | Salud: 100.0 | Emo: ira]
+            Estima a Hugo (C): [Loc: pradera  | Hambre:  49.5 | Sed:  59.0 | Salud: 100.0 | Emo: ira]
+  Hugo (C): Loc: bosque   | Hambre:  49.5 | Sed:  59.0 | Salud: 100.0 | Energía:  62.0 | Emo: miedo | Mochila: [🍖: 0/1, 💧: 0/1]
+            Estima a Nico (A): [Loc: montaña  | Hambre:  49.5 | Sed:  59.0 | Salud: 100.0 | Emo: ira]
+            Estima a Sofi (B): [Loc: lago     | Hambre:  49.5 | Sed:  59.0 | Salud: 100.0 | Emo: ira]
+  Percepción Nico: [piedra, noche, agua, noche, RcvLoc: agua, RcvWhat: agua]
+  Percepción Sofi: [agua, comida, agua, noche, RcvLoc: piedra, RcvWhat: agua]
+  Percepción Hugo: [bosque, comida, agua, noche, RcvLoc: piedra, RcvWhat: agua]
+  👉 Nico (A) decide COMER: no hay comida aquí ni en mochila
+  👉 Sofi (B) decide LUCHAR: no hay amenaza
+  👉 Hugo (C) decide MOVER: se mueve a ruinas
+
+[Tick 005] ───────────────────────────────────────────────────────
+  Mundo: Bosque: [🍖: 5.0/5.0] | Río: [🍖: 5.0/5.0, 💧: 5.0/5.0] | Lago: [💧: 5.0/5.0] | 🎯 Sin presa
+  Nico (A): Loc: montaña  | Hambre:  46.0 | Sed:  52.0 | Salud:  88.0 | Energía:  68.0 | Emo: ira | Mochila: [🍖: 0/1, 💧: 0/1]
+            Estima a Sofi (B): [Loc: lago     | Hambre:  46.0 | Sed:  52.0 | Salud: 100.0 | Emo: ira]
+            Estima a Hugo (c): [Loc: pradera  | Hambre:  46.0 | Sed:  52.0 | Salud: 100.0 | Emo: ira]
+  Sofi (B): Loc: lago     | Hambre:  46.0 | Sed:  52.0 | Salud:  88.0 | Energía:  68.0 | Emo: ira | Mochila: [🍖: 0/1, 💧: 0/1]
+            Estima a Nico (A): [Loc: montaña  | Hambre:  46.0 | Sed:  52.0 | Salud: 100.0 | Emo: ira]
+            Estima a Hugo (C): [Loc: pradera  | Hambre:  46.0 | Sed:  52.0 | Salud: 100.0 | Emo: ira]
+  Hugo (C): Loc: ruinas   | Hambre:  46.0 | Sed:  52.0 | Salud: 100.0 | Energía:  56.0 | Emo: ira | Mochila: [🍖: 0/1, 💧: 0/1]
+            Estima a Nico (A): [Loc: montaña  | Hambre:  46.0 | Sed:  52.0 | Salud: 100.0 | Emo: ira]
+            Estima a Sofi (B): [Loc: lago     | Hambre:  46.0 | Sed:  52.0 | Salud: 100.0 | Emo: ira]
+  Percepción Nico: [piedra, depredador, agua, noche, RcvLoc: agua, RcvWhat: agua]
+  Percepción Sofi: [agua, comida, agua, noche, RcvLoc: piedra, RcvWhat: agua]
+  Percepción Hugo: [cueva, comida, agua, noche, RcvLoc: piedra, RcvWhat: agua]
+  👉 Nico (A) decide DORMIR: duerme pero depredador ataca!
+  👉 Sofi (B) decide LUCHAR: no hay amenaza
+  👉 Hugo (C) decide MOVER: se mueve a bosque
+
+[Tick 006] ───────────────────────────────────────────────────────
+  Mundo: Bosque: [🍖: 5.0/5.0] | Río: [🍖: 5.0/5.0, 💧: 5.0/5.0] | Lago: [💧: 5.0/5.0] | 🎯 Sin presa
+  Nico (A): Loc: montaña  | Hambre:  44.2 | Sed:  48.5 | Salud:  53.0 | Energía:  81.0 | Emo: miedo | Mochila: [🍖: 0/1, 💧: 0/1]
+            Estima a Sofi (B): [Loc: lago     | Hambre:  42.5 | Sed:  45.0 | Salud: 100.0 | Emo: ira]
+            Estima a Hugo (c): [Loc: pradera  | Hambre:  42.5 | Sed:  45.0 | Salud: 100.0 | Emo: ira]
+  Sofi (B): Loc: lago     | Hambre:  42.5 | Sed:  45.0 | Salud:  88.0 | Energía:  66.0 | Emo: ira | Mochila: [🍖: 0/1, 💧: 0/1]
+            Estima a Nico (A): [Loc: montaña  | Hambre:  42.5 | Sed:  45.0 | Salud: 100.0 | Emo: ira]
+            Estima a Hugo (C): [Loc: pradera  | Hambre:  42.5 | Sed:  45.0 | Salud: 100.0 | Emo: ira]
+  Hugo (C): Loc: bosque   | Hambre:  42.5 | Sed:  45.0 | Salud: 100.0 | Energía:  50.0 | Emo: ira | Mochila: [🍖: 0/1, 💧: 0/1]
+            Estima a Nico (A): [Loc: montaña  | Hambre:  42.5 | Sed:  45.0 | Salud: 100.0 | Emo: ira]
+            Estima a Sofi (B): [Loc: lago     | Hambre:  42.5 | Sed:  45.0 | Salud: 100.0 | Emo: ira]
+  Percepción Nico: [piedra, tormenta, agua, noche, RcvLoc: agua, RcvWhat: agua]
+  Percepción Sofi: [agua, comida, agua, noche, RcvLoc: piedra, RcvWhat: agua]
+  Percepción Hugo: [bosque, comida, agua, noche, RcvLoc: piedra, RcvWhat: agua]
+  👉 Nico (A) decide COMER: no hay comida aquí ni en mochila | tormenta
+  👉 Sofi (B) decide LUCHAR: no hay amenaza
+  👉 Hugo (C) decide MOVER: se mueve a ruinas
+
+[Tick 007] ───────────────────────────────────────────────────────
+  Mundo: Bosque: [🍖: 5.0/5.0] | Río: [🍖: 5.0/5.0, 💧: 5.0/5.0] | Lago: [💧: 5.0/5.0] | 🎯 Sin presa
+  Nico (A): Loc: montaña  | Hambre:  40.8 | Sed:  41.5 | Salud:  41.0 | Energía:  75.0 | Emo: ira | Mochila: [🍖: 0/1, 💧: 0/1]
+            Estima a Sofi (B): [Loc: lago     | Hambre:  39.0 | Sed:  38.0 | Salud: 100.0 | Emo: ira]
+            Estima a Hugo (c): [Loc: pradera  | Hambre:  39.0 | Sed:  38.0 | Salud: 100.0 | Emo: ira]
+  Sofi (B): Loc: lago     | Hambre:  39.0 | Sed:  38.0 | Salud:  88.0 | Energía:  64.0 | Emo: ira | Mochila: [🍖: 0/1, 💧: 0/1]
+            Estima a Nico (A): [Loc: montaña  | Hambre:  39.0 | Sed:  38.0 | Salud: 100.0 | Emo: ira]
+            Estima a Hugo (C): [Loc: pradera  | Hambre:  39.0 | Sed:  38.0 | Salud: 100.0 | Emo: ira]
+  Hugo (C): Loc: ruinas   | Hambre:  39.0 | Sed:  38.0 | Salud: 100.0 | Energía:  44.0 | Emo: ira | Mochila: [🍖: 0/1, 💧: 0/1]
+            Estima a Nico (A): [Loc: montaña  | Hambre:  39.0 | Sed:  38.0 | Salud: 100.0 | Emo: ira]
+            Estima a Sofi (B): [Loc: lago     | Hambre:  39.0 | Sed:  38.0 | Salud: 100.0 | Emo: ira]
+  Percepción Nico: [piedra, noche, agua, noche, RcvLoc: agua, RcvWhat: agua]
+  Percepción Sofi: [agua, comida, agua, noche, RcvLoc: piedra, RcvWhat: agua]
+  Percepción Hugo: [cueva, tormenta, agua, noche, RcvLoc: piedra, RcvWhat: agua]
+  👉 Nico (A) decide COMER: no hay comida aquí ni en mochila
+  👉 Sofi (B) decide LUCHAR: no hay amenaza
+  👉 Hugo (C) decide MOVER: se mueve a bosque
+
+[Tick 008] ───────────────────────────────────────────────────────
+  Mundo: Bosque: [🍖: 5.0/5.0] | Río: [🍖: 5.0/5.0, 💧: 5.0/5.0] | Lago: [💧: 5.0/5.0] | 🎯 Sin presa
+  Nico (A): Loc: montaña  | Hambre:  37.2 | Sed:  34.5 | Salud:  41.0 | Energía:  73.0 | Emo: ira | Mochila: [🍖: 0/1, 💧: 0/1]
+            Estima a Sofi (B): [Loc: lago     | Hambre:  35.5 | Sed:  31.0 | Salud: 100.0 | Emo: ira]
+            Estima a Hugo (c): [Loc: pradera  | Hambre:  35.5 | Sed:  31.0 | Salud: 100.0 | Emo: ira]
+  Sofi (B): Loc: lago     | Hambre:  35.5 | Sed:  31.0 | Salud:  88.0 | Energía:  62.0 | Emo: ira | Mochila: [🍖: 0/1, 💧: 0/1]
+            Estima a Nico (A): [Loc: montaña  | Hambre:  35.5 | Sed:  31.0 | Salud: 100.0 | Emo: ira]
+            Estima a Hugo (C): [Loc: pradera  | Hambre:  35.5 | Sed:  31.0 | Salud: 100.0 | Emo: ira]
+  Hugo (C): Loc: bosque   | Hambre:  35.5 | Sed:  31.0 | Salud: 100.0 | Energía:  38.0 | Emo: miedo | Mochila: [🍖: 0/1, 💧: 0/1]
+            Estima a Nico (A): [Loc: montaña  | Hambre:  35.5 | Sed:  31.0 | Salud: 100.0 | Emo: ira]
+            Estima a Sofi (B): [Loc: lago     | Hambre:  35.5 | Sed:  31.0 | Salud: 100.0 | Emo: ira]
+  Percepción Nico: [piedra, tormenta, agua, noche, RcvLoc: agua, RcvWhat: agua]
+  Percepción Sofi: [agua, comida, agua, noche, RcvLoc: piedra, RcvWhat: agua]
+  Percepción Hugo: [bosque, tormenta, agua, noche, RcvLoc: piedra, RcvWhat: agua]
+  👉 Nico (A) decide COMER: no hay comida aquí ni en mochila | tormenta
+  👉 Sofi (B) decide LUCHAR: no hay amenaza
+  👉 Hugo (C) decide MOVER: se mueve a ruinas | tormenta
+
+[Tick 009] ───────────────────────────────────────────────────────
+  Mundo: Bosque: [🍖: 5.0/5.0] | Río: [🍖: 5.0/5.0, 💧: 5.0/5.0] | Lago: [💧: 5.0/5.0] | 🎯 Sin presa
+  Nico (A): Loc: montaña  | Hambre:  33.8 | Sed:  27.5 | Salud:  29.0 | Energía:  67.0 | Emo: dolor | Mochila: [🍖: 0/1, 💧: 0/1]
+            Estima a Sofi (B): [Loc: lago     | Hambre:  32.0 | Sed:  24.0 | Salud: 100.0 | Emo: ira]
+            Estima a Hugo (c): [Loc: pradera  | Hambre:  32.0 | Sed:  24.0 | Salud: 100.0 | Emo: ira]
+  Sofi (B): Loc: lago     | Hambre:  32.0 | Sed:  24.0 | Salud:  88.0 | Energía:  60.0 | Emo: ira | Mochila: [🍖: 0/1, 💧: 0/1]
+            Estima a Nico (A): [Loc: montaña  | Hambre:  32.0 | Sed:  24.0 | Salud: 100.0 | Emo: ira]
+            Estima a Hugo (C): [Loc: pradera  | Hambre:  32.0 | Sed:  24.0 | Salud: 100.0 | Emo: ira]
+  Hugo (C): Loc: ruinas   | Hambre:  32.0 | Sed:  24.0 | Salud:  88.0 | Energía:  28.0 | Emo: ira | Mochila: [🍖: 0/1, 💧: 0/1]
+            Estima a Nico (A): [Loc: montaña  | Hambre:  32.0 | Sed:  24.0 | Salud: 100.0 | Emo: ira]
+            Estima a Sofi (B): [Loc: lago     | Hambre:  32.0 | Sed:  24.0 | Salud: 100.0 | Emo: ira]
+  Percepción Nico: [piedra, noche, agua, noche, RcvLoc: agua, RcvWhat: agua]
+  Percepción Sofi: [agua, comida, agua, noche, RcvLoc: piedra, RcvWhat: agua]
+  Percepción Hugo: [cueva, depredador, agua, noche, RcvLoc: piedra, RcvWhat: agua]
+  👉 Nico (A) decide LUCHAR: no hay amenaza
+  👉 Sofi (B) decide LUCHAR: no hay amenaza
+  👉 Hugo (C) decide MOVER: se mueve a pantano
+
+[Tick 010] ───────────────────────────────────────────────────────
+  Mundo: Bosque: [🍖: 5.0/5.0] | Río: [🍖: 5.0/5.0, 💧: 5.0/5.0] | Lago: [💧: 5.0/5.0] | 🎯 Sin presa
+  Nico (A): Loc: montaña  | Hambre:  30.2 | Sed:  20.5 | Salud:  29.0 | Energía:  65.0 | Emo: dolor | Mochila: [🍖: 0/1, 💧: 0/1]
+            Estima a Sofi (B): [Loc: lago     | Hambre:  28.5 | Sed:  17.0 | Salud: 100.0 | Emo: dolor]
+            Estima a Hugo (c): [Loc: pradera  | Hambre:  28.5 | Sed:  17.0 | Salud: 100.0 | Emo: dolor]
+  Sofi (B): Loc: lago     | Hambre:  28.5 | Sed:  17.0 | Salud:  88.0 | Energía:  58.0 | Emo: dolor | Mochila: [🍖: 0/1, 💧: 0/1]
+            Estima a Nico (A): [Loc: montaña  | Hambre:  28.5 | Sed:  17.0 | Salud: 100.0 | Emo: dolor]
+            Estima a Hugo (C): [Loc: pradera  | Hambre:  28.5 | Sed:  17.0 | Salud: 100.0 | Emo: dolor]
+  Hugo (C): Loc: pantano  | Hambre:  28.5 | Sed:  17.0 | Salud:  88.0 | Energía:  22.0 | Emo: dolor | Mochila: [🍖: 0/1, 💧: 0/1]
+            Estima a Nico (A): [Loc: montaña  | Hambre:  28.5 | Sed:  17.0 | Salud: 100.0 | Emo: dolor]
+            Estima a Sofi (B): [Loc: lago     | Hambre:  28.5 | Sed:  17.0 | Salud: 100.0 | Emo: dolor]
+  Percepción Nico: [piedra, noche, agua, noche, RcvLoc: agua, RcvWhat: agua]
+  Percepción Sofi: [agua, comida, agua, noche, RcvLoc: piedra, RcvWhat: agua]
+  Percepción Hugo: [agua, depredador, agua, noche, RcvLoc: piedra, RcvWhat: agua]
+  👉 Nico (A) decide LUCHAR: no hay amenaza
+  👉 Sofi (B) decide VER: observa el entorno
+  👉 Hugo (C) decide COMER: Hugo no sabe recolectar comida del suelo | depredador ataca
+
+[Tick 011] ───────────────────────────────────────────────────────
+  Mundo: Bosque: [🍖: 5.0/5.0] | Río: [🍖: 5.0/5.0, 💧: 5.0/5.0] | Lago: [💧: 5.0/5.0] | 🎯 Sin presa
+  Nico (A): Loc: montaña  | Hambre:  26.8 | Sed:  13.5 | Salud:  29.0 | Energía:  63.0 | Emo: dolor | Mochila: [🍖: 0/1, 💧: 0/1]
+            Estima a Sofi (B): [Loc: lago     | Hambre:  25.0 | Sed:  10.0 | Salud: 100.0 | Emo: dolor]
+            Estima a Hugo (c): [Loc: pradera  | Hambre:  25.0 | Sed:  10.0 | Salud: 100.0 | Emo: dolor]
+  Sofi (B): Loc: lago     | Hambre:  25.0 | Sed:  10.0 | Salud:  88.0 | Energía:  55.0 | Emo: dolor | Mochila: [🍖: 0/1, 💧: 0/1]
+            Estima a Nico (A): [Loc: montaña  | Hambre:  25.0 | Sed:  10.0 | Salud: 100.0 | Emo: dolor]
+            Estima a Hugo (C): [Loc: pradera  | Hambre:  25.0 | Sed:  10.0 | Salud: 100.0 | Emo: dolor]
+  Hugo (C): Loc: pantano  | Hambre:  25.0 | Sed:  10.0 | Salud:  68.0 | Energía:  20.0 | Emo: dolor | Mochila: [🍖: 0/1, 💧: 1/1]
+            Estima a Nico (A): [Loc: montaña  | Hambre:  25.0 | Sed:  10.0 | Salud: 100.0 | Emo: dolor]
+            Estima a Sofi (B): [Loc: lago     | Hambre:  25.0 | Sed:  10.0 | Salud: 100.0 | Emo: dolor]
+  Percepción Nico: [piedra, noche, agua, noche, RcvLoc: agua, RcvWhat: agua]
+  Percepción Sofi: [agua, comida, agua, noche, RcvLoc: piedra, RcvWhat: agua]
+  Percepción Hugo: [agua, comida, agua, agua, RcvLoc: piedra, RcvWhat: agua]
+  👉 Nico (A) decide LUCHAR: no hay amenaza
+  👉 Sofi (B) decide VER: observa el entorno
+  👉 Hugo (C) decide COMER: Hugo no sabe recolectar comida del suelo
+
+[Tick 012] ───────────────────────────────────────────────────────
+  Mundo: Bosque: [🍖: 5.0/5.0] | Río: [🍖: 5.0/5.0, 💧: 5.0/5.0] | Lago: [💧: 5.0/5.0] | 🎯 Presa en río (10t)
+  Nico (A): Loc: montaña  | Hambre:  23.2 | Sed:   6.5 | Salud:  29.0 | Energía:  61.0 | Emo: dolor | Mochila: [🍖: 0/1, 💧: 0/1]
+            Estima a Sofi (B): [Loc: lago     | Hambre:  21.5 | Sed:   3.0 | Salud: 100.0 | Emo: dolor]
+            Estima a Hugo (c): [Loc: pradera  | Hambre:  21.5 | Sed:   3.0 | Salud: 100.0 | Emo: dolor]
+  Sofi (B): Loc: lago     | Hambre:  21.5 | Sed:   3.0 | Salud:  88.0 | Energía:  52.0 | Emo: dolor | Mochila: [🍖: 0/1, 💧: 0/1]
+            Estima a Nico (A): [Loc: montaña  | Hambre:  21.5 | Sed:   3.0 | Salud: 100.0 | Emo: dolor]
+            Estima a Hugo (C): [Loc: pradera  | Hambre:  21.5 | Sed:   3.0 | Salud: 100.0 | Emo: dolor]
+  Hugo (C): Loc: pantano  | Hambre:  21.1 | Sed:   2.3 | Salud:  68.0 | Energía:  17.8 | Emo: dolor | Mochila: [🍖: 0/1, 💧: 1/1]
+            Estima a Nico (A): [Loc: montaña  | Hambre:  21.5 | Sed:   3.0 | Salud: 100.0 | Emo: dolor]
+            Estima a Sofi (B): [Loc: lago     | Hambre:  21.5 | Sed:   3.0 | Salud: 100.0 | Emo: dolor]
+  Percepción Nico: [piedra, noche, agua, noche, RcvLoc: agua, RcvWhat: agua]
+  Percepción Sofi: [agua, depredador, agua, noche, RcvLoc: piedra, RcvWhat: agua]
+  Percepción Hugo: [agua, depredador, agua, agua, RcvLoc: piedra, RcvWhat: agua]
+  👉 Nico (A) decide LUCHAR: no hay amenaza
+  👉 Sofi (B) decide VER: observa el entorno | depredador ataca
+  👉 Hugo (C) decide COMER: Hugo no sabe recolectar comida del suelo | depredador ataca
+
+☠️  La simulación ha terminado en el tick 13 porque uno de los agentes ha muerto.
+
+══════════════════════════════════════════════════════════════════════
+📊 RESULTADOS FINALES DE LA SIMULACIÓN
+  Duración: 12 ticks
+  Nico vivo: False (Salud: 29.0)
+  Sofi viva: False (Salud: 68.0)
+  Hugo vivo: False (Salud: 48.0)
+══════════════════════════════════════════════════════════════════════

@@ -25,15 +25,31 @@ Frankenswarm is a unified project for **energy-sovereign edge intelligence**. It
 
 ---
 
+## Why Bit? (Positioning)
+
+*Why grow a 2.4M-parameter ternary organism when Qwen3-0.6B already runs at 96 tok/s on the same NPU?* Because **Bit does not compete on tasks — Bit is an observable organism**, and this project sits in a market segment opposite to frontier AI:
+
+1. **A microscope, not an engine.** Every weight is auditable, every growth event is logged. We study *how* capabilities appear — which pain triggered neurogenesis, which curriculum stage unlocked composition. A pretrained model arrives as a fossil; Bit arrives as a seed. Big labs won't build this: their economics reward selling scale, not understanding growth.
+2. **Sovereignty from the first token.** No upstream weights, no undisclosed corpus, no inherited license or alignment residue. Small-and-borrowed is not small-and-owned.
+3. **Radical frugality.** ~586KB targets the always-on 2W sentinel niche where even 0.6B models are an order of magnitude too heavy.
+
+And the hypothesis underneath it all: **everyday AI does not need quantum physics.** Most daily human-AI companionship needs language, common ground, and calibrated honesty — a modest mind that *knows what it doesn't know* (that's what the metacognitive loop is for). That may be enough for the 99% of daily use — and enough as the lingua franca of **intra-AI communication**, where tiny agents coordinating through a shared vocabulary need mutual intelligibility, not brilliance.
+
+**The staged bet (current sequencing).** Phase A (MoE) is deliberately parked until Bit completes the developmental curriculum through the 8-year-old milestone. Then we re-instantiate the survival agents — **Nico, Sofy and Hugo** — *from Bit's base brain*: no survival knowledge, but language and comprehension. If agents that understand and communicate can adapt and evolve in the jungle, the thesis holds: **cognition does not require scale; it requires structure.**
+
+---
+
 ## Energy Sovereignty
 
 By keeping the power-hungry discrete GPU (80W+) in suspension and routing routine triage or low-complexity queries to specialized local micro-experts running on the NPU (2W), Frankenswarm achieves up to **200x energy efficiency gains** over cloud models and **40x** over local GPU-only execution.
 
 | Inference Strategy | Energy per 1,000 Queries | Relative Efficiency |
 |--------------------|:------------------------:|:-------------------:|
-| All-Cloud (GPT-4)  | ~5 - 10 kWh              | 1x (Baseline)       |
-| All-CUDA (Local GPU) | ~2.2 kWh                | ~3.4x               |
-| **Frankenswarm Cascade** | **~0.05 kWh**       | **~150x - 200x**    |
+| All-Cloud (GPT-4, *estimated*¹) | ~5 - 10 kWh | 1x (Baseline) |
+| All-CUDA (Local GPU, measured) | ~2.2 kWh | ~3.4x |
+| **Frankenswarm Cascade** (measured) | **~0.05 kWh** | **~150x - 200x** |
+
+¹ Cloud figures are third-party estimates (per-query datacenter energy is not publicly disclosed); local rows are measured on the Strix Point testbed below.
 
 ---
 
@@ -109,8 +125,10 @@ By sticking to standard python-based orchestrations and standardized formats lik
 | **Phase A** | Prolog Gate (SWI-Prolog intent router) | ✅ Done |
 | **Phase B** | BitNet 1.58b (Ternary Signaling Game) | ✅ Done (Survival Arena & Neurogenesis) |
 | **Phase B** | Minion Swarm Scheduler & TUI | ✅ Done (cgroups background training & Control TUI) |
-| **Phase A** | Aggregator (multi-expert consensus) | 🔲 Planned |
-| **Phase A** | LoRA Specialization & Distillation | 🔲 Planned |
+| **Phase B** | Sovereign School (Piaget curriculum → 8-year milestone) | 🔄 In progress (current frontier, with Tensors-as-API dispatch) |
+| **Phase B** | Jungle Reboot (Nico, Sofy & Hugo from Bit's base brain) | 🔜 Next (after the 8-year milestone) |
+| **Phase A** | Aggregator (multi-expert consensus) | ⏸️ Parked deliberately until Bit is capable (see "Why Bit?") |
+| **Phase A** | LoRA Specialization & Distillation | ⏸️ Parked deliberately until Bit is capable (see "Why Bit?") |
 
 → See [ROADMAP.md](docs/ROADMAP.md) for the full plan.
 
@@ -119,6 +137,7 @@ By sticking to standard python-based orchestrations and standardized formats lik
 ## Docs
 
 * [PAPER_DRAFT.md](docs/PAPER_DRAFT.md) — The active research paper draft.
+* [TRAINING_BIT.md](docs/TRAINING_BIT.md) — **How to train Bit**: standalone runner (no red-pill needed) or deferred via the red-pill queue.
 * [BIT_THE_CREATURE.md](docs/BIT_THE_CREATURE.md) — An educational story introducing Bit, the creature that learned to grow under pain.
 * [ARCHITECTURE.md](docs/ARCHITECTURE.md) — Full system design, Lisp thesis, lifecycle diagrams.
 * [EXPERTS_ROSTER.md](docs/EXPERTS_ROSTER.md) — Expert ↔ silicon bindings with benchmarks.
@@ -155,15 +174,31 @@ Frankenswarm es un proyecto unificado para la **soberanía energética en inteli
 
 ---
 
+## ¿Por qué Bit? (Posicionamiento)
+
+*¿Por qué criar un organismo ternario de 2.4M de parámetros cuando Qwen3-0.6B ya corre a 96 tok/s en la misma NPU?* Porque **Bit no compite en tareas — Bit es un organismo observable**, y este proyecto ocupa un segmento de mercado opuesto al de la IA frontera:
+
+1. **Un microscopio, no un motor.** Cada peso es auditable, cada evento de crecimiento queda registrado. Estudiamos *cómo* aparecen las capacidades — qué dolor disparó la neurogénesis, qué etapa del currículo desbloqueó la composición. Un modelo preentrenado llega como un fósil; Bit llega como una semilla. Los grandes laboratorios no van a construir esto: su economía premia vender escala, no entender el crecimiento.
+2. **Soberanía desde el primer token.** Sin pesos heredados, sin corpus opaco, sin licencias ni residuos de alineamiento ajenos. Pequeño-y-prestado no es pequeño-y-propio.
+3. **Frugalidad radical.** ~586KB apunta al nicho del centinela always-on a 2W, donde incluso un 0.6B pesa un orden de magnitud de más.
+
+Y la hipótesis que lo sostiene todo: **la IA de a pie no necesita física cuántica.** La mayoría del acompañamiento diario humano-IA requiere lenguaje, sentido común y honestidad calibrada — una mente modesta que *sabe lo que no sabe* (para eso existe el bucle metacognitivo). Con eso puede bastar para el 99% del día a día — y como lengua franca de la **comunicación intra-IA**, donde dos agentes diminutos coordinándose a través de un vocabulario común necesitan inteligibilidad mutua, no brillantez.
+
+**La apuesta por etapas (secuencia actual).** La Fase A (MoE) está aparcada deliberadamente hasta que Bit complete el currículo evolutivo hasta el hito de los 8 años. Entonces re-instanciaremos a los agentes de supervivencia — **Nico, Sofy y Hugo** — *desde el cerebro base de Bit*: sin saber nada de supervivencia, pero con lenguaje y comprensión. Si agentes que entienden y se comunican son capaces de desenvolverse y evolucionar en la jungla, la tesis se sostiene: **la cognición no requiere escala; requiere estructura.**
+
+---
+
 ## Soberanía Energética
 
 Al mantener la GPU dedicada (80W+) en suspensión y enrutar las consultas rutinarias de clasificación o baja complejidad a los micro-expertos locales que se ejecutan en la NPU (2W), Frankenswarm consigue una eficiencia energética de hasta **200 veces superior** frente a modelos en la nube y **40 veces** en comparación con el uso local exclusivo de GPU.
 
 | Estrategia de Inferencia | Energía por 1,000 Consultas | Eficiencia Relativa |
 |--------------------------|:---------------------------:|:-------------------:|
-| Nube (GPT-4)             | ~5 - 10 kWh                 | 1x (Línea Base)     |
-| CUDA Puro (GPU Local)    | ~2.2 kWh                    | ~3.4x               |
-| **Cascada Frankenswarm** | **~0.05 kWh**               | **~150x - 200x**    |
+| Nube (GPT-4, *estimado*¹) | ~5 - 10 kWh                | 1x (Línea Base)     |
+| CUDA Puro (GPU Local, medido) | ~2.2 kWh               | ~3.4x               |
+| **Cascada Frankenswarm** (medido) | **~0.05 kWh**      | **~150x - 200x**    |
+
+¹ Las cifras de nube son estimaciones de terceros (el consumo por consulta de los datacenters no es público); las filas locales están medidas en el banco de pruebas Strix Point de abajo.
 
 ---
 
@@ -239,8 +274,10 @@ Al mantenernos fieles al estándar de orquestación en Python y formatos unifica
 | **Fase A** | Prolog Gate (enrutador de SWI-Prolog) | ✅ Completado |
 | **Fase B** | BitNet 1.58b (Juego de Señalización Ternaria) | ✅ Completado (Arena de Supervivencia y Neurogénesis) |
 | **Fase B** | Programador de Miniones & TUI | ✅ Completado (entrenamiento en segundo plano cgroups y TUI de control) |
-| **Fase A** | Agregador (consenso multi-experto) | 🔲 Planificado |
-| **Fase A** | Especialización LoRA y Destilación | 🔲 Planificado |
+| **Fase B** | Escuela Soberana (currículo Piaget → hito de 8 años) | 🔄 En curso (frente actual, con despacho Tensors-as-API) |
+| **Fase B** | Reinicio de la Jungla (Nico, Sofy y Hugo desde el cerebro base de Bit) | 🔜 Siguiente (tras el hito de 8 años) |
+| **Fase A** | Agregador (consenso multi-experto) | ⏸️ Aparcado deliberadamente hasta tener un Bit capaz (ver "¿Por qué Bit?") |
+| **Fase A** | Especialización LoRA y Destilación | ⏸️ Aparcado deliberadamente hasta tener un Bit capaz (ver "¿Por qué Bit?") |
 
 → Ver [ROADMAP.md](docs/ROADMAP.md) (en inglés) para el plan completo.
 

@@ -1,0 +1,181 @@
+Loading agents for experiment 'EXP_050_arena_listener'...
+Loaded weights from /home/joan/Documents/IA/frankenswarm/storage/experiments/EXP_050_arena_listener/best_agent_a.pt
+Loaded weights from /home/joan/Documents/IA/frankenswarm/storage/experiments/EXP_050_arena_listener/best_agent_b.pt
+
+══════════════════════════════════════════════════════════════════════
+🏟️  SIMULACIÓN EN LA ARENA COOPERATIVA
+  Nico (Agente A) en pantano
+  Sofi (Agente B) en pradera
+  Samantha disponible: False
+══════════════════════════════════════════════════════════════════════
+
+[Tick 001] ───────────────────────────────────────────────────────
+  Mundo: Comida: ❌ no hay comida | Spawn en CD: 4
+  Nico (A): Loc: pantano  | Hambre:  60.0 | Salud: 100.0 | Energía:  80.0 | Emo: ira
+  Sofi (B): Loc: pradera  | Hambre:  60.0 | Salud: 100.0 | Energía:  80.0 | Emo: ira
+  Percepción Nico: [agua, tormenta, agua, agua, RcvLoc: noche, RcvWhat: noche]
+  Percepción Sofi: [tierra, noche, agua, tierra, RcvLoc: noche, RcvWhat: noche]
+  👉 Nico (A) decide BEBER: bebe agua | tormenta
+  👉 Sofi (B) decide COMER: no hay comida aquí
+
+[Tick 002] ───────────────────────────────────────────────────────
+  Mundo: Comida: ❌ no hay comida | Spawn en CD: 3
+  Nico (A): Loc: pantano  | Hambre:  64.5 | Salud:  91.0 | Energía:  74.0 | Emo: ira
+  Sofi (B): Loc: pradera  | Hambre:  56.5 | Salud: 100.0 | Energía:  78.0 | Emo: ira
+  Percepción Nico: [agua, agua, agua, agua, RcvLoc: noche, RcvWhat: noche]
+  Percepción Sofi: [tierra, noche, agua, tierra, RcvLoc: noche, RcvWhat: noche]
+  👉 Nico (A) decide BEBER: bebe agua
+  👉 Sofi (B) decide COMER: no hay comida aquí
+
+[Tick 003] ───────────────────────────────────────────────────────
+  Mundo: Comida: ❌ no hay comida | Spawn en CD: 2
+  Nico (A): Loc: pantano  | Hambre:  69.0 | Salud:  94.0 | Energía:  72.0 | Emo: ira
+  Sofi (B): Loc: pradera  | Hambre:  53.0 | Salud: 100.0 | Energía:  76.0 | Emo: ira
+  Percepción Nico: [agua, depredador, agua, agua, RcvLoc: noche, RcvWhat: noche]
+  Percepción Sofi: [tierra, noche, agua, tierra, RcvLoc: noche, RcvWhat: noche]
+  👉 Nico (A) decide BEBER: bebe agua | depredador ataca
+  👉 Sofi (B) decide COMER: no hay comida aquí
+
+[Tick 004] ───────────────────────────────────────────────────────
+  Mundo: Comida: ❌ no hay comida | Spawn en CD: 1
+  Nico (A): Loc: pantano  | Hambre:  73.5 | Salud:  77.0 | Energía:  70.0 | Emo: miedo
+  Sofi (B): Loc: pradera  | Hambre:  49.5 | Salud: 100.0 | Energía:  74.0 | Emo: ira
+  Percepción Nico: [agua, depredador, agua, agua, RcvLoc: noche, RcvWhat: noche]
+  Percepción Sofi: [tierra, noche, agua, tierra, RcvLoc: noche, RcvWhat: noche]
+  👉 Nico (A) decide BEBER: bebe agua | depredador ataca
+  👉 Sofi (B) decide COMER: no hay comida aquí
+
+[Tick 005] ───────────────────────────────────────────────────────
+  Mundo: Comida: 🍖 en bosque (dura 6) | Spawn en CD: 8
+  Nico (A): Loc: pantano  | Hambre:  78.0 | Salud:  60.0 | Energía:  68.0 | Emo: miedo
+  Sofi (B): Loc: pradera  | Hambre:  46.0 | Salud: 100.0 | Energía:  72.0 | Emo: ira
+  Percepción Nico: [agua, agua, agua, agua, RcvLoc: noche, RcvWhat: noche]
+  Percepción Sofi: [tierra, noche, agua, tierra, RcvLoc: noche, RcvWhat: noche]
+  👉 Nico (A) decide BEBER: bebe agua
+  👉 Sofi (B) decide COMER: no hay comida aquí
+
+[Tick 006] ───────────────────────────────────────────────────────
+  Mundo: Comida: 🍖 en bosque (dura 5) | Spawn en CD: 8
+  Nico (A): Loc: pantano  | Hambre:  82.5 | Salud:  63.0 | Energía:  66.0 | Emo: ira
+  Sofi (B): Loc: pradera  | Hambre:  42.5 | Salud: 100.0 | Energía:  70.0 | Emo: ira
+  Percepción Nico: [agua, agua, agua, agua, RcvLoc: noche, RcvWhat: noche]
+  Percepción Sofi: [tierra, noche, agua, tierra, RcvLoc: noche, RcvWhat: noche]
+  👉 Nico (A) decide BEBER: bebe agua
+  👉 Sofi (B) decide COMER: no hay comida aquí
+
+[Tick 007] ───────────────────────────────────────────────────────
+  Mundo: Comida: 🍖 en bosque (dura 4) | Spawn en CD: 8
+  Nico (A): Loc: pantano  | Hambre:  87.0 | Salud:  66.0 | Energía:  64.0 | Emo: ira
+  Sofi (B): Loc: pradera  | Hambre:  39.0 | Salud: 100.0 | Energía:  68.0 | Emo: ira
+  Percepción Nico: [agua, agua, agua, agua, RcvLoc: noche, RcvWhat: noche]
+  Percepción Sofi: [tierra, noche, agua, tierra, RcvLoc: noche, RcvWhat: noche]
+  👉 Nico (A) decide BEBER: bebe agua
+  👉 Sofi (B) decide COMER: no hay comida aquí
+
+[Tick 008] ───────────────────────────────────────────────────────
+  Mundo: Comida: 🍖 en bosque (dura 3) | Spawn en CD: 8
+  Nico (A): Loc: pantano  | Hambre:  91.5 | Salud:  69.0 | Energía:  62.0 | Emo: ira
+  Sofi (B): Loc: pradera  | Hambre:  35.5 | Salud: 100.0 | Energía:  66.0 | Emo: ira
+  Percepción Nico: [agua, tormenta, agua, agua, RcvLoc: noche, RcvWhat: noche]
+  Percepción Sofi: [tierra, noche, agua, tierra, RcvLoc: noche, RcvWhat: noche]
+  👉 Nico (A) decide DORMIR: duerme y descansa | tormenta
+  👉 Sofi (B) decide COMER: no hay comida aquí
+
+[Tick 009] ───────────────────────────────────────────────────────
+  Mundo: Comida: 🍖 en bosque (dura 2) | Spawn en CD: 8
+  Nico (A): Loc: pantano  | Hambre:  88.0 | Salud:  60.0 | Energía:  91.0 | Emo: ira
+  Sofi (B): Loc: pradera  | Hambre:  32.0 | Salud: 100.0 | Energía:  64.0 | Emo: ira
+  Percepción Nico: [agua, depredador, agua, agua, RcvLoc: noche, RcvWhat: noche]
+  Percepción Sofi: [tierra, depredador, agua, tierra, RcvLoc: noche, RcvWhat: noche]
+  👉 Nico (A) decide BEBER: bebe agua | depredador ataca
+  👉 Sofi (B) decide BEBER: no hay agua aquí | depredador ataca
+
+[Tick 010] ───────────────────────────────────────────────────────
+  Mundo: Comida: 🍖 en bosque (dura 1) | Spawn en CD: 8
+  Nico (A): Loc: pantano  | Hambre:  92.5 | Salud:  43.0 | Energía:  89.0 | Emo: miedo
+  Sofi (B): Loc: pradera  | Hambre:  28.5 | Salud:  80.0 | Energía:  62.0 | Emo: miedo
+  Percepción Nico: [agua, agua, agua, agua, RcvLoc: noche, RcvWhat: noche]
+  Percepción Sofi: [tierra, noche, agua, tierra, RcvLoc: noche, RcvWhat: noche]
+  👉 Nico (A) decide DORMIR: duerme y descansa
+  👉 Sofi (B) decide COMER: no hay comida aquí
+
+[Tick 011] ───────────────────────────────────────────────────────
+  Mundo: Comida: ❌ no hay comida | Spawn en CD: 7
+  Nico (A): Loc: pantano  | Hambre:  89.0 | Salud:  46.0 | Energía: 100.0 | Emo: ira
+  Sofi (B): Loc: pradera  | Hambre:  25.0 | Salud:  80.0 | Energía:  60.0 | Emo: ira
+  Percepción Nico: [agua, agua, agua, agua, RcvLoc: noche, RcvWhat: noche]
+  Percepción Sofi: [tierra, noche, agua, tierra, RcvLoc: noche, RcvWhat: noche]
+  👉 Nico (A) decide DORMIR: duerme y descansa
+  👉 Sofi (B) decide COMER: no hay comida aquí
+
+[Tick 012] ───────────────────────────────────────────────────────
+  Mundo: Comida: ❌ no hay comida | Spawn en CD: 6
+  Nico (A): Loc: pantano  | Hambre:  85.5 | Salud:  49.0 | Energía: 100.0 | Emo: ira
+  Sofi (B): Loc: pradera  | Hambre:  21.5 | Salud:  80.0 | Energía:  58.0 | Emo: ira
+  Percepción Nico: [agua, depredador, agua, agua, RcvLoc: noche, RcvWhat: noche]
+  Percepción Sofi: [tierra, noche, agua, tierra, RcvLoc: noche, RcvWhat: noche]
+  👉 Nico (A) decide BEBER: bebe agua | depredador ataca
+  👉 Sofi (B) decide COMER: no hay comida aquí
+
+[Tick 013] ───────────────────────────────────────────────────────
+  Mundo: Comida: ❌ no hay comida | Spawn en CD: 5
+  Nico (A): Loc: pantano  | Hambre:  90.0 | Salud:  32.0 | Energía:  98.0 | Emo: miedo
+  Sofi (B): Loc: pradera  | Hambre:  18.0 | Salud:  80.0 | Energía:  56.0 | Emo: hambre
+  Percepción Nico: [agua, agua, agua, agua, RcvLoc: noche, RcvWhat: noche]
+  Percepción Sofi: [tierra, noche, agua, tierra, RcvLoc: noche, RcvWhat: noche]
+  👉 Nico (A) decide BEBER: bebe agua
+  👉 Sofi (B) decide COMER: no hay comida aquí
+
+[Tick 014] ───────────────────────────────────────────────────────
+  Mundo: Comida: ❌ no hay comida | Spawn en CD: 4
+  Nico (A): Loc: pantano  | Hambre:  94.5 | Salud:  35.0 | Energía:  96.0 | Emo: ira
+  Sofi (B): Loc: pradera  | Hambre:  14.5 | Salud:  80.0 | Energía:  54.0 | Emo: hambre
+  Percepción Nico: [agua, agua, agua, agua, RcvLoc: noche, RcvWhat: noche]
+  Percepción Sofi: [tierra, tormenta, agua, tierra, RcvLoc: noche, RcvWhat: noche]
+  👉 Nico (A) decide BEBER: bebe agua
+  👉 Sofi (B) decide COMER: no hay comida aquí | tormenta
+
+[Tick 015] ───────────────────────────────────────────────────────
+  Mundo: Comida: ❌ no hay comida | Spawn en CD: 3
+  Nico (A): Loc: pantano  | Hambre:  99.0 | Salud:  38.0 | Energía:  94.0 | Emo: ira
+  Sofi (B): Loc: pradera  | Hambre:  11.0 | Salud:  68.0 | Energía:  48.0 | Emo: hambre
+  Percepción Nico: [agua, agua, agua, agua, RcvLoc: noche, RcvWhat: noche]
+  Percepción Sofi: [tierra, noche, agua, tierra, RcvLoc: noche, RcvWhat: noche]
+  👉 Nico (A) decide DORMIR: duerme y descansa
+  👉 Sofi (B) decide COMER: no hay comida aquí
+
+[Tick 016] ───────────────────────────────────────────────────────
+  Mundo: Comida: ❌ no hay comida | Spawn en CD: 2
+  Nico (A): Loc: pantano  | Hambre:  95.5 | Salud:  41.0 | Energía: 100.0 | Emo: ira
+  Sofi (B): Loc: pradera  | Hambre:   7.5 | Salud:  68.0 | Energía:  46.0 | Emo: hambre
+  Percepción Nico: [agua, agua, agua, agua, RcvLoc: noche, RcvWhat: noche]
+  Percepción Sofi: [tierra, noche, agua, tierra, RcvLoc: noche, RcvWhat: noche]
+  👉 Nico (A) decide BEBER: bebe agua
+  👉 Sofi (B) decide COMER: no hay comida aquí
+
+[Tick 017] ───────────────────────────────────────────────────────
+  Mundo: Comida: ❌ no hay comida | Spawn en CD: 1
+  Nico (A): Loc: pantano  | Hambre: 100.0 | Salud:  44.0 | Energía:  98.0 | Emo: ira
+  Sofi (B): Loc: pradera  | Hambre:   4.0 | Salud:  68.0 | Energía:  44.0 | Emo: hambre
+  Percepción Nico: [agua, agua, agua, agua, RcvLoc: noche, RcvWhat: noche]
+  Percepción Sofi: [tierra, noche, agua, tierra, RcvLoc: noche, RcvWhat: noche]
+  👉 Nico (A) decide BEBER: bebe agua
+  👉 Sofi (B) decide COMER: no hay comida aquí
+
+[Tick 018] ───────────────────────────────────────────────────────
+  Mundo: Comida: 🍖 en ruinas (dura 6) | Spawn en CD: 10
+  Nico (A): Loc: pantano  | Hambre: 100.0 | Salud:  47.0 | Energía:  96.0 | Emo: ira
+  Sofi (B): Loc: pradera  | Hambre:   0.5 | Salud:  68.0 | Energía:  42.0 | Emo: hambre
+  Percepción Nico: [agua, agua, agua, agua, RcvLoc: noche, RcvWhat: noche]
+  Percepción Sofi: [tierra, noche, agua, tierra, RcvLoc: noche, RcvWhat: noche]
+  👉 Nico (A) decide DORMIR: duerme y descansa
+  👉 Sofi (B) decide COMER: no hay comida aquí
+
+☠️  La simulación ha terminado en el tick 19 porque uno de los agentes ha muerto.
+
+══════════════════════════════════════════════════════════════════════
+📊 RESULTADOS FINALES DE LA SIMULACIÓN
+  Duración: 18 ticks
+  Nico vivo: False (Salud: 50.0)
+  Sofi viva: False (Salud: 68.0)
+══════════════════════════════════════════════════════════════════════

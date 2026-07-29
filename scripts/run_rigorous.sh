@@ -94,7 +94,7 @@ for SEED in "${SEEDS[@]}"; do
     echo "  Random agent, seed $SEED..."
     .venv/bin/python -c "
 import random
-from src.bitnet.minimal_world import MinimalWorld, ACTIONS
+from src.bitnet.worlds.minimal_world import MinimalWorld, ACTIONS
 
 random.seed($SEED)
 world = MinimalWorld(seed=$SEED)

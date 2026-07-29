@@ -1,0 +1,43 @@
+{
+	"experiment_id": "EXP_073_long_run",
+	"seed": 42,
+	"model": {
+		"hidden_dim": 256,
+		"num_layers": 3,
+		"use_pos_embedding": true
+	},
+	"resonance": {
+		"max_resonance_steps": 5,
+		"n_think": 2,
+		"n_verify": 2
+	},
+	"emotion": {
+		"mode": "first_only",
+		"dim": 64
+	},
+	"world": {
+		"max_ticks": 200,
+		"food_interval": 12,
+		"food_duration": 8,
+		"hunger_rate": 1.5,
+		"resource_capacity": 10.0,
+		"resource_recovery": 0.5,
+		"predator_chance_multiplier": 0.1,
+		"predator_damage_multiplier": 0.1,
+		"storm_chance_multiplier": 0.1,
+		"storm_damage_multiplier": 0.1,
+		"prey_spawn_interval": 15
+	},
+	"growth": {
+		"factor": 1.5,
+		"max_width": 648,
+		"patience": 50
+	},
+	"unfreeze_backbone": true,
+	"communication": {
+		"enabled": true
+	},
+	"meta": {
+		"description": "Evaluation of EXP_073_long_run under Easy settings to check coordination and survival capacity"
+	}
+}

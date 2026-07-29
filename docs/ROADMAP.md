@@ -111,6 +111,24 @@ Scale the orchestration to multi-agent, collaborative routing architectures.
 
 ---
 
+## Current Sequencing (2026-07-03)
+
+> **The staged bet — Bit first, MoE later.** Phases 2.5 and 3 (Cage, Aggregator) and the
+> Phase-A specialization track are **parked deliberately**, not stalled. Rationale (see
+> "Why Bit?" in the README and §1.1 of the paper): the physical MoE is the deployment
+> target for self-growing agents, so it is pointless to polish the skeleton before the
+> pilot exists. The sequence is:
+>
+> 1. **Sovereign School** — train Bit through the Piaget curriculum up to the 8-year
+>    milestone (current frontier, together with Tensors-as-API dispatch).
+> 2. **Jungle Reboot** — re-instantiate the survival agents (**Nico, Sofy & Hugo**) from
+>    Bit's base brain: zero survival knowledge, full language and comprehension. Test
+>    whether developmental competence transfers to embodied evolution.
+> 3. **Unpark Phase A** — deploy the resulting agents over the heterogeneous MoE.
+>
+> This sequence *is* the thesis experiment: cognition does not require scale; it
+> requires structure — curriculum, pressure, and the ability to grow.
+
 ## Status Summary
 
 | Phase | Status | Stage | Hardware |

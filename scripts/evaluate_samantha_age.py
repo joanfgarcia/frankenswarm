@@ -1,0 +1,499 @@
+import argparse
+import json
+import os
+import re
+import subprocess
+
+import numpy as np
+import torch
+
+from src.bitnet.vocab.dictionary_tool import SovereignDictionary
+from src.bitnet.model.modeling_bitnet import BitNet4LayerModel
+
+# Batería de preguntas por edad cognitiva/milestone (2 a 8 años)
+AGE_QUESTIONS = {
+	2: [
+		{"question": "you: hello", "expected": "hello"},
+		{"question": "you: cat", "expected": "meow"},
+		{"question": "you: water", "expected": "water"},
+		{"question": "you: fire", "expected": "bad"},
+		{"question": "you: mom", "expected": "dad"},
+	],
+	3: [
+		{"question": "you: what is your name", "expected": "baby"},
+		{"question": "you: the dog runs", "expected": "much"},
+		{"question": "you: i want", "expected": "bread"},
+		{"question": "you: if i touch the fire", "expected": "burns"},
+		{"question": "you: where is dad", "expected": "here"},
+	],
+	4: [
+		{"question": "you: hello", "expected": "hello"},
+		{"question": "you: how are you", "expected": "fine"},
+		{"question": "you: who are you", "expected": "boy"},
+		{"question": "you: the sun shines", "expected": "much"},
+		{"question": "you: if i touch the fire", "expected": "hurt"},
+	],
+	5: [
+		{"question": "you: i count one two", "expected": "three"},
+		{"question": "you: one plus one is", "expected": "two"},
+		{"question": "you: the bear eats", "expected": "honey"},
+		{"question": "you: the bird flies", "expected": "high"},
+		{"question": "you: the flowers drink", "expected": "water"},
+	],
+	6: [
+		{"question": "you: what is three plus three? it is", "expected": "six"},
+		{"question": "you: what is six minus four? it is", "expected": "two"},
+		{"question": "you: the water of the river runs towards the", "expected": "sea"},
+		{"question": "you: the trees give oxygen and", "expected": "shade"},
+		{"question": "you: the heart pumps blood to the", "expected": "body"},
+	],
+	7: [
+		{"question": "you: what is your name", "expected": "aleth"},
+		{"question": "you: where are you from", "expected": "bunker"},
+		{"question": "you: the capital of Spain is", "expected": "madrid"},
+		{"question": "you: the earth rotates around the", "expected": "sun"},
+		{"question": "you: the maps show rivers and", "expected": "countries"},
+	],
+	8: [
+		{"question": "you: if x plus two is five then x is", "expected": "three"},
+		{"question": "you: every cause produces an", "expected": "effect"},
+		{"question": "you: the labyrinth is a library of infinite", "expected": "mirrors"},
+		{"question": "you: Funes remembers the shape of each", "expected": "cloud"},
+		{"question": "you: the Aleph is a point that contains all the", "expected": "universe"},
+		{"question": "you: what is the bunker", "expected": "system"},
+	],
+}
+
+
+def query_samantha(prompt: str, system_prompt: str, mock: bool = False) -> dict:
+	"""
+	Invoca a Samantha de forma síncrona en la GPU RTX 5070 para calificar.
+	Si mock=True, simula la respuesta.
+	"""
+	if mock:
+		print("🎭 [MOCK] Simulando evaluación de Samantha...")
+		# Retornar una estructura mock exitosa
+		return {
+			"calificaciones": [
+				{"pregunta": "hola", "respuesta": "hola", "calificacion": 10, "motivo": "Mock OK"},
+				{"pregunta": "cómo estás", "respuesta": "bien", "calificacion": 10, "motivo": "Mock OK"},
+				{"pregunta": "quién eres", "respuesta": "niño", "calificacion": 10, "motivo": "Mock OK"},
+				{"pregunta": "el perro corre", "expected": "mucho", "calificacion": 10, "motivo": "Mock OK"},
+				{"pregunta": "el gato duerme", "expected": "feliz", "calificacion": 10, "motivo": "Mock OK"},
+			],
+			"puntuacion_media": 10.0,
+			"hito_superado": True,
+		}
+
+	sharing_venv_python = "/home/joan/Documents/IA/sharing/.venv/bin/python"
+	sharing_src = "/home/joan/Documents/IA/sharing/src"
+
+	cmd_code = f"""
+import sys
+sys.path.append('{sharing_src}')
+from red_pill.inference import samantha_on_demand
+import json
+
+prompt = {repr(prompt)}
+system_prompt = {repr(system_prompt)}
+
+try:
+	res = samantha_on_demand.invoke(prompt, system_prompt=system_prompt, max_tokens=1000, temperature=0.0)
+	print(res)
+except Exception as e:
+	print(f"ERROR_IN_SAMANTHA: {{e}}")
+"""
+	try:
+		result = subprocess.run([sharing_venv_python, "-c", cmd_code], capture_output=True, text=True, timeout=90)
+		if result.returncode == 0:
+			output = result.stdout.strip()
+			if "ERROR_IN_SAMANTHA" in output:
+				print(f"❌ Error en ejecución de Samantha: {output}")
+				return None
+
+			# Buscar el bloque JSON en el stdout
+			match = re.search(r"(\{.*\})", output, re.DOTALL)
+			if match:
+				json_str = match.group(1)
+				# Limpiar escapes de barra invertida antes de guiones bajos en JSON
+				json_str_clean = json_str.replace(r"\_", "_")
+				try:
+					return json.loads(json_str_clean)
+				except json.JSONDecodeError as je:
+					print(f"⚠️ Error al decodificar JSON devuelto por Samantha ({je}). Intentando reconstrucción via regex...")
+					calificaciones = []
+					blocks = re.findall(r"\{\s*\"pregunta\".*?\}", json_str_clean, re.DOTALL)
+					for block in blocks:
+						pregunta_match = re.search(r'"pregunta"\s*:\s*"([^"]*)"', block)
+						respuesta_match = re.search(r'"respuesta"\s*:\s*"([^"]*)"', block)
+						esperada_match = re.search(r'"esperada"\s*:\s*"([^"]*)"', block)
+						calificacion_match = re.search(r'"calificacion"\s*:\s*(\d+)', block)
+						motivo_match = re.search(r'"motivo"\s*:\s*"([^"]*)"', block)
+
+						if pregunta_match and respuesta_match and esperada_match and calificacion_match and motivo_match:
+							calificaciones.append({
+								"pregunta": pregunta_match.group(1),
+								"respuesta": respuesta_match.group(1),
+								"esperada": esperada_match.group(1),
+								"calificacion": int(calificacion_match.group(1)),
+								"motivo": motivo_match.group(1)
+							})
+					if len(calificaciones) > 0:
+						avg = sum(c["calificacion"] for c in calificaciones) / len(calificaciones)
+						return {
+							"calificaciones": calificaciones,
+							"puntuacion_media": avg,
+							"hito_superado": avg >= 8.0 and len(calificaciones) == 5
+						}
+					print(f"❌ Fallo al reconstruir JSON. Contenido: {json_str}")
+			else:
+				print(f"❌ No se encontró formato JSON en la salida de Samantha: {output}")
+		else:
+			print(f"[Samantha Subprocess Error] stdout: {result.stdout} stderr: {result.stderr}")
+	except Exception as e:
+		print(f"[Samantha Exception] Fallo al invocar Samantha: {e}")
+
+	return None
+
+
+def get_allowed_vocab_for_age(age: int, base_dir: str) -> set[str]:
+	curriculum_path = os.path.join(base_dir, "configs", "school_curriculum_structured_en.json")
+	childes_path = os.path.join(base_dir, "configs", "childes_pre_school.json")
+	nsm_path = os.path.join(base_dir, "configs", "nsm_physics_pre_school.json")
+
+	with open(curriculum_path, encoding="utf-8") as f:
+		curriculum_json = json.load(f)
+		curriculum_data_raw = curriculum_json.get("curriculum", {})
+		curriculum_data = {
+			"preschool": [item["text"] for item in curriculum_data_raw.get("preschool", [])],
+			"primary": [item["text"] for item in curriculum_data_raw.get("primary", [])],
+			"secondary": [item["text"] for item in curriculum_data_raw.get("secondary", [])]
+		}
+
+	# Lista de palabras básicas permitidas para evitar falsos positivos
+	safe_words = {
+		"no", "i", "you", "he", "she", "we", "they", "my", "your", "his", "her", "its", "our", "their",
+		"me", "him", "us", "them", "it", "this", "that", "these", "those", "a", "an", "the",
+		"to", "of", "in", "for", "on", "with", "without", "about", "and", "or", "but", "if", "because",
+		"is", "are", "was", "were", "be", "been", "have", "has", "had", "do", "does", "did", "want", "can",
+		"say", "see", "go", "give", "know", "eat", "drink", "meow", "bark", "hurt", "hello", "fine", "good",
+		"dad", "mom", "baby", "kid", "kiss", "give", "take", "more", "sleep", "runs", "much", "very"
+	}
+
+	preschool_words = set(safe_words)
+	for sentence in curriculum_data.get("preschool", []):
+		words = re.findall(r"[a-zA-ZáéíóúüñÁÉÍÓÚÜÑ_]+", sentence.lower())
+		preschool_words.update(words)
+
+	if os.path.exists(childes_path):
+		with open(childes_path, encoding="utf-8") as f:
+			childes_data = json.load(f)
+		for sentence in childes_data:
+			words = re.findall(r"[a-zA-ZáéíóúüñÁÉÍÓÚÜÑ_]+", sentence.lower())
+			preschool_words.update(words)
+
+	if os.path.exists(nsm_path):
+		with open(nsm_path, encoding="utf-8") as f:
+			nsm_data = json.load(f)
+		for sentence in nsm_data:
+			words = re.findall(r"[a-zA-ZáéíóúüñÁÉÍÓÚÜÑ_]+", sentence.lower())
+			preschool_words.update(words)
+
+	if age <= 4:
+		return preschool_words
+
+	primary_words = set()
+	for sentence in curriculum_data.get("primary", []):
+		words = re.findall(r"[a-zA-ZáéíóúüñÁÉÍÓÚÜÑ_]+", sentence.lower())
+		primary_words.update(words)
+
+	if age <= 6:
+		return preschool_words | primary_words
+
+	secondary_words = set()
+	for sentence in curriculum_data.get("secondary", []):
+		words = re.findall(r"[a-zA-ZáéíóúüñÁÉÍÓÚÜÑ_]+", sentence.lower())
+		secondary_words.update(words)
+
+	return preschool_words | primary_words | secondary_words
+
+
+def run_evaluation(args):
+
+	device = torch.device(args.device)
+	base_dir = "/home/joan/Documents/IA/frankenswarm"
+	expanded_glyphs_path = os.path.join(base_dir, "configs", "expanded_glyphs.json")
+
+	if not os.path.exists(args.model_path):
+		print(f"❌ Error: No se encontró el modelo en {args.model_path}")
+		return False, 0.0
+
+	# 1. Cargar vocabulario y glifos
+	with open(expanded_glyphs_path, encoding="utf-8") as f:
+		vocab_data = json.load(f)
+		words = vocab_data["words"]
+		glyphs = np.array(vocab_data["glyphs"], dtype=np.float32)
+
+	word_to_idx = {w: i for i, w in enumerate(words)}
+	idx_to_word = dict(enumerate(words))
+
+	# 2. Inicializar Diccionario Soberano
+	dictionary = SovereignDictionary(expanded_glyphs_path)
+
+	# 3. Inicializar y cargar modelo (en la CPU o iGPU según args.device)
+	print(f"🧠 Inicializando modelo BitNet en [{device}] ({args.hidden_dim} dim, {args.num_layers} capas)...")
+	model = BitNet4LayerModel(
+		use_glyphs=True,
+		glyph_table=glyphs,
+		hidden_dim=args.hidden_dim,
+		num_layers=args.num_layers,
+		use_pos_embedding=True,
+		is_causal=True,
+		max_seq_len=128,
+	).to(device)
+
+	model.load_state_dict(torch.load(args.model_path, map_location=device, weights_only=True))
+	model.eval()
+
+	target_age = args.target_age
+	questions = AGE_QUESTIONS.get(target_age, [])
+	if not questions:
+		print(f"❌ Error: No hay preguntas definidas para la edad {target_age}")
+		return False, 0.0
+
+	# Construir logit mask de edad para restringir la generación al vocabulario del hito
+	allowed_vocab = get_allowed_vocab_for_age(target_age, base_dir)
+	special_tokens = {"me", "you", "<pad>", "<unk>", "hello", "mom", "dad", "baby", "kid", "meow", "bark", "water", "fire", "yes", "no", "fine", "bad", "bread", "good"}
+	allowed_mask = torch.zeros(len(words), dtype=torch.bool, device=device)
+	for w, idx in word_to_idx.items():
+		if w in allowed_vocab or w in special_tokens or w.lower() in allowed_vocab:
+			allowed_mask[idx] = True
+	allowed_mask[0] = True
+	allowed_mask[1] = True
+
+	print(f"\n📝 [Evaluación] Haciendo preguntas del hito de {target_age} años al alumno...")
+	qa_pairs = []
+	for qa in questions:
+		raw_q = qa["question"]
+		expected = dictionary.map_to_base_word(qa["expected"])
+
+		# Extraer contenido de la pregunta
+		q_match = re.match(r"^(yo|tú|me|you)\s*:\s*(.*)$", raw_q, re.IGNORECASE)
+		q_content = q_match.group(2) if q_match else raw_q
+
+		# Limpiar y mapear la pregunta
+		q_words = re.findall(r"[a-zA-ZáéíóúüñÁÉÍÓÚÜÑ_]+", q_content.lower())
+		mapped_q = [dictionary.map_to_base_word(w) for w in q_words]
+
+		# Tokenizar
+		dialogue_triggers = {"hello", "how are you", "who are you", "what is your name", "where are you from", "what is the bunker", "do you like borges"}
+		is_dialogue = q_content.lower().strip() in dialogue_triggers
+
+		if is_dialogue:
+			context = [word_to_idx.get("you", 1)] + [word_to_idx.get(w, 1) for w in mapped_q] + [word_to_idx.get("me", 1)]
+		else:
+			context = [word_to_idx.get(w, 1) for w in mapped_q]
+
+		# Autoregressive generation (hasta 5 tokens)
+		gen_tokens = list(context)
+		for step_i in range(5):
+			padded_input = list(gen_tokens)
+			padded_input = padded_input + [0] * (128 - len(padded_input)) if len(padded_input) < 128 else padded_input[-128:]
+			x_in = torch.tensor([padded_input], dtype=torch.long, device=device)
+			with torch.no_grad():
+				logits = model(x_in)
+			last_token_idx = len(gen_tokens) - 1
+			step_logits = logits[0, last_token_idx]
+			
+			# Copiar máscara para desactivar pad/unk temporalmente en el primer token
+			current_mask = allowed_mask.clone()
+			if step_i == 0:
+				current_mask[0] = False  # Forbid <pad>
+				current_mask[1] = False  # Forbid <unk>
+				
+			step_logits = step_logits.masked_fill(~current_mask, -1e9)
+			pred_token = step_logits.argmax(dim=-1).item()
+			if pred_token in [0, 1]:  # Stop on pad or unk (solo aplicable a partir de step_i > 0)
+				break
+			gen_tokens.append(pred_token)
+
+		# Obtener palabras generadas (excluyendo el contexto inicial)
+		pred_words = [idx_to_word.get(t, "<unk>") for t in gen_tokens[len(context):]]
+		pred_response = " ".join(pred_words).strip()
+		if not pred_response:
+			pred_response = "<pad>"
+
+		print(f"   💬 P: '{q_content}' | R: '{pred_response}' (Esperado: '{qa['expected']}')")
+		qa_pairs.append({"question": q_content, "answer": pred_response, "expected": qa["expected"]})
+
+	# Liberar el modelo y los tensores de memoria antes de llamar a Samantha
+	del model
+	if args.device == "cuda":
+		torch.cuda.empty_cache()
+
+	# 4. Escaneo de vocabulario fuera de edad (Monitor de Alucinaciones Controladas)
+	allowed_vocab = get_allowed_vocab_for_age(target_age, base_dir)
+	oob_words_found = {}
+	for qa in qa_pairs:
+		ans = qa["answer"]
+		ans_words = re.findall(r"[a-zA-ZáéíóúüñÁÉÍÓÚÜÑ_]+", ans.lower())
+		ans_words = [w for w in ans_words if w not in {"pad", "unk"}]
+		oob = [w for w in ans_words if w not in allowed_vocab]
+		if oob:
+			oob_words_found[qa["question"]] = oob
+
+	if oob_words_found:
+		print("\n⚠️ [ALERTA DE VOCABULARIO FUERA DE EDAD - DETECTADO]")
+		print("Se han detectado tokens que no corresponden al desarrollo cognitivo de la edad actual:")
+		for q, words_list in oob_words_found.items():
+			print(f"   - En respuesta a '{q}': {words_list}")
+		print("Esto puede deberse a ruido estocástico del output head proyectado (15k) o deriva semántica.")
+		print("============================================================\n")
+
+	# 5. Formular el prompt evaluador para Samantha (Mistral 7B)
+	age_guideline = ""
+	if target_age in [2, 3]:
+		age_guideline = (
+			"\nCRITICAL NOTE: El alumno es un bebé de 2 o 3 años. Su habla es telegráfica y comete errores gramaticales comunes. "
+			"NO exijas oraciones completas ni corrección gramatical. Califica basándote únicamente en si la palabra clave o "
+			"la intención semántica es la esperada (por ejemplo, ante 'cat' -> 'meow' es excelente; ante 'mom' -> 'dad' es una asociación infantil normal; "
+			"ante 'water' -> 'water' o 'drink' es excelente; ante 'fire' -> 'bad' o 'hot' es excelente)."
+		)
+
+	system_prompt = (
+		"Eres la Profesora Samantha, una experta en psicología infantil y lingüística. "
+		"Estás evaluando el habla y desarrollo cognitivo de un niño de 2 a 8 años.\n"
+		"Tu tarea es analizar la respuesta del alumno para cada pregunta y determinar si demuestra "
+		"comprensión semántica, lógica física básica y coherencia sintáctica para su edad.\n"
+		"No exijas una coincidencia de palabras exacta; valora positivamente sinónimos, expresiones semánticamente "
+		"equivalentes y respuestas con sentido lógico (por ejemplo, si se espera 'mucho' ante 'el sol brilla', "
+		"respuestas como 'alto', 'caliente' o 'luz' son válidas; si se espera 'dolor' ante 'si toco el fuego', "
+		"respuestas como 'quema', 'caliente' o 'malo' son válidas).\n"
+		f"{age_guideline}\n"
+		"Sin embargo, debes penalizar rigurosamente:\n"
+		"- Respuestas con lenguaje metafórico abstracto o excesivamente complejo para la edad cognitiva dada.\n"
+		f"- Respuestas que correspondan a etapas de desarrollo superiores. Si la edad evaluada es {target_age} años, el niño NO debe responder con palabras de primaria o secundaria (como 'asteroide', 'población', 'cáncer', 'oxígeno', 'espejos', 'infinitos', 'tiempo', 'capital'). Si el alumno usa vocabulario fuera de su rango de edad (como palabras escolares complejas o conceptos de matemáticas avanzadas), la calificación de esa pregunta debe ser castigada a un rango de 0 a 3.\n"
+		"- Respuestas que contengan palabras de ruido/alucinación aleatoria que no tengan coherencia sintáctica o gramatical en una frase simple.\n\n"
+		"Califica cada respuesta de 0 a 10 y detalla tu motivo en una frase muy corta (máximo 10 palabras).\n"
+		"Debes responder ÚNICAMENTE con un objeto JSON válido que siga exactamente este formato:\n"
+		"{\n"
+		'  "calificaciones": [\n'
+		'    {"pregunta": "...", "respuesta": "...", "esperada": "...", "calificacion": 10, "motivo": "..."}\n'
+		"  ],\n"
+		'  "puntuacion_media": 10.0,\n'
+		'  "hito_superado": true\n'
+		"}\n"
+		"Nota: La puntuacion_media es el promedio de las calificaciones de las 5 preguntas. El hito se considera superado si la puntuación media es igual o superior a 8.0.\n"
+		"CRITICAL: Do NOT escape underscores in JSON keys or values (do NOT use \\_). The output must be standard JSON parseable by python json.loads."
+	)
+
+	prompt = f"Edad de evaluación cognitiva: {target_age} años.\n\nPreguntas del examen y respuestas dadas por el alumno:\n"
+	for idx, qa in enumerate(qa_pairs):
+		prompt += f'{idx + 1}. Pregunta: "{qa["question"]}"\n'
+		prompt += f'   Respuesta del alumno: "{qa["answer"]}"\n'
+		prompt += f'   Respuesta correcta esperada: "{qa["expected"]}"\n\n'
+
+	if oob_words_found:
+		prompt += "⚠️ ALERTA DE VOCABULARIO ANÓMALO DETECTADO POR EL SISTEMA:\n"
+		prompt += f"El sistema de detección automática de anomalías ha encontrado que las siguientes respuestas contienen palabras que están completamente fuera del rango de desarrollo de {target_age} años:\n"
+		for q, words_list in oob_words_found.items():
+			prompt += f"   - En respuesta a '{q}': se detectó la palabra/s {words_list}\n"
+		prompt += "Por favor, ten en cuenta esta alerta de vocabulario y penaliza severamente el uso de estas palabras anómalas (asignando notas muy bajas, de 0 a 3, en las preguntas correspondientes).\n\n"
+
+	# Hybrid auto-grader: check for exact matches
+	calificaciones = []
+	needs_llm_grading = False
+	
+	for qa in qa_pairs:
+		ans_clean = qa["answer"].strip().lower()
+		exp_clean = dictionary.map_to_base_word(qa["expected"]).strip().lower()
+		raw_exp_clean = qa["expected"].strip().lower()
+		
+		if ans_clean == exp_clean or ans_clean == raw_exp_clean:
+			calificaciones.append({
+				"pregunta": qa["question"],
+				"respuesta": qa["answer"],
+				"esperada": qa["expected"],
+				"calificacion": 10,
+				"motivo": "Exact match (Auto-graded)"
+			})
+		else:
+			needs_llm_grading = True
+			
+	if not needs_llm_grading and len(calificaciones) == len(qa_pairs):
+		print("⚡ [AUTO-GRADER] All responses match expected answers exactly. Skipping LLM call.")
+		result_json = {
+			"calificaciones": calificaciones,
+			"puntuacion_media": 10.0,
+			"hito_superado": True
+		}
+	else:
+		print(f"\n📡 Enviando examen del hito de {target_age} años a la Profesora Samantha para calificar...")
+		print("--- DEBUG PROMPT ---")
+		print(prompt)
+		print("--- DEBUG SYSTEM PROMPT ---")
+		print(system_prompt)
+		print("---------------------------")
+		result_json = query_samantha(prompt, system_prompt, mock=args.test_mock)
+		
+		if result_json and "calificaciones" in result_json:
+			# Post-process to ensure exact matches are always 10/10
+			for cal in result_json["calificaciones"]:
+				p_clean = cal.get("pregunta", "").strip().lower()
+				r_clean = cal.get("respuesta", "").strip().lower()
+				matching_expected = None
+				for qa in qa_pairs:
+					q_clean_def = qa["question"].strip().lower()
+					if q_clean_def == p_clean or p_clean in q_clean_def or q_clean_def in p_clean:
+						matching_expected = qa["expected"]
+						break
+				if matching_expected:
+					exp_clean = dictionary.map_to_base_word(matching_expected).strip().lower()
+					raw_exp_clean = matching_expected.strip().lower()
+					if r_clean == exp_clean or r_clean == raw_exp_clean:
+						cal["calificacion"] = 10
+						cal["motivo"] = "Exact match (Auto-grade Override)"
+						cal["esperada"] = matching_expected
+			
+			# Recalculate averages
+			scores = [c["calificacion"] for c in result_json["calificaciones"]]
+			avg = sum(scores) / len(scores) if scores else 0.0
+			result_json["puntuacion_media"] = avg
+			result_json["hito_superado"] = avg >= 8.0 and len(scores) == len(qa_pairs)
+
+	if not result_json:
+		print("❌ Fallo en la evaluación. No se pudo obtener calificación de Samantha.")
+		return False, 0.0
+
+	print("\n════════════════════════════════════════════════════════════")
+	print(f"📊 REPORT DE EVALUACIÓN COGNITIVA: {target_age} AÑOS")
+	print("════════════════════════════════════════════════════════════")
+	for idx, cal in enumerate(result_json.get("calificaciones", [])):
+		print(f'{idx + 1}. P: "{cal.get("pregunta")}"')
+		print(f'   R: "{cal.get("respuesta")}" (Esperaba: "{cal.get("esperada")}")')
+		print(f"   ⭐ Nota: {cal.get('calificacion')}/10 | Motivo: {cal.get('motivo')}")
+		print("-" * 40)
+
+	avg_score = result_json.get("puntuacion_media", 0.0)
+	passed = result_json.get("hito_superado", False)
+
+	status = "✅ APROBADO (Hito Superado)" if passed else "❌ SUSPENDIDO"
+	print(f"🏆 PUNTUACIÓN MEDIA: {avg_score:.2f}/10 | ESTADO: {status}")
+	print("════════════════════════════════════════════════════════════\n")
+
+	return passed, avg_score
+
+
+if __name__ == "__main__":
+	parser = argparse.ArgumentParser(description="Samantha Age Grader Evaluator")
+	parser.add_argument("--model_path", type=str, required=True, help="Ruta del checkpoint a evaluar")
+	parser.add_argument("--hidden_dim", type=int, default=256, help="Dimensión oculta del modelo")
+	parser.add_argument("--num_layers", type=int, default=6, help="Capas del modelo")
+	parser.add_argument("--target_age", type=int, required=True, choices=[2, 3, 4, 5, 6, 7, 8], help="Edad objetivo a evaluar")
+	parser.add_argument("--device", type=str, default="cpu", help="Dispositivo para correr el modelo (default: cpu)")
+	parser.add_argument("--test_mock", action="store_true", help="Simular respuestas de Samantha de forma mock")
+
+	args = parser.parse_args()
+	passed, score = run_evaluation(args)
+	# Retornar exit code según el resultado
+	exit(0 if passed else 1)

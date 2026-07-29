@@ -1,8 +1,8 @@
 import torch
 
-from src.bitnet.modeling_bitnet import BitLinear, BitNet4LayerModel
-from src.bitnet.train_populora import svd_crossover
-from src.bitnet.translator import SovereignTranslator
+from src.bitnet.model.modeling_bitnet import BitLinear, BitNet4LayerModel
+from lab.experiments.train_populora import svd_crossover
+from src.bitnet.translation.translator import SovereignTranslator
 
 
 def test_translator_encode_decode():
@@ -87,7 +87,7 @@ def test_svd_crossover():
 
 def test_dataset_breeder_3d():
 	"""Verifica que ReferentialDatasetBreeder genera lotes 3D correctos."""
-	from src.bitnet.dataset_breeder import ReferentialDatasetBreeder
+	from src.bitnet.data.dataset_breeder import ReferentialDatasetBreeder
 
 	translator = SovereignTranslator()
 	breeder = ReferentialDatasetBreeder(translator)

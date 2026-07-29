@@ -73,3 +73,23 @@ def test_prolog_router_retro_compatibility():
 	# Entrada general (semántica por similitud a "saludo cordial")
 	node_gen_sem = route("Te envío un saludo cordial")
 	assert node_gen_sem == NodeTarget.DEFAULT
+
+
+def test_routing_survives_a_dead_translator(monkeypatch):
+	"""El camino semántico es infraestructura OPCIONAL: si cae, el router sigue.
+
+	Regresión del 27-07-2026: `transformers` quedó inservible en el venv (conflicto
+	huggingface-hub entre fastembed y transformers 5.x), el `except` lo tragaba en
+	silencio y TODA tarea sin keyword acababa en default_node. Las reglas
+	deterministas (RULE 2) tienen que bastar para lo nombrable.
+	"""
+	import src.router.swi_prolog_router as router
+
+	def _dead_translator():
+		raise ImportError("cannot import name 'is_offline_mode' from 'huggingface_hub'")
+
+	monkeypatch.setattr(router, "get_translator", _dead_translator)
+
+	assert router.route("Resuelve el cálculo usando lógica matemática") == NodeTarget.REASON
+	assert router.route("Por favor escribe una función def sumar(a, b): return a + b") == NodeTarget.CODE
+	assert router.route("Hola Frankenswarm, ¿cómo te encuentras hoy?") == NodeTarget.DEFAULT

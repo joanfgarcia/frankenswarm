@@ -7,9 +7,13 @@ This handles dynamic fact asserting and logical enrouting.
 
 from __future__ import annotations
 
+import contextlib
+import logging
 import os
 import sys
 from enum import StrEnum
+
+logger = logging.getLogger(__name__)
 
 # ===========================================================================
 # PYSWIP / DYNAMIC LIBRARY TOLERANCE LOADER
@@ -102,20 +106,16 @@ def route_semantic(domain: str, length: int, latency: str = "normal") -> tuple[N
 	results_expert = list(prolog.query("route_expert(Node)"))
 	if results_expert:
 		target_str = results_expert[0]["Node"]
-		try:
+		with contextlib.suppress(ValueError):
 			node_target = NodeTarget(target_str)
-		except ValueError:
-			pass
 
 	# Query hardware target node (silicon)
 	silicon_target = SiliconTarget.CPU
 	results_silicon = list(prolog.query("route_silicon(Silicon)"))
 	if results_silicon:
 		silicon_str = results_silicon[0]["Silicon"]
-		try:
+		with contextlib.suppress(ValueError):
 			silicon_target = SiliconTarget(silicon_str)
-		except ValueError:
-			pass
 
 	return node_target, silicon_target
 
@@ -125,22 +125,32 @@ def route(task: str) -> NodeTarget:
 	Evaluates the Prolog rules to determine the expert node.
 	Provides backwards compatibility with the original route(task: str) signature.
 	"""
-	# Deterministic pre-checks for high-confidence structural keywords
+	# Deterministic pre-checks for high-confidence structural keywords.
+	# RULE 2 (CONVENTIONS.md) applies with force here: routing is classification,
+	# so anything nameable by a keyword must NOT depend on the embedding path.
+	# That path is optional infrastructure and can be unavailable (see below);
+	# when it is, only these rules stand between a task and a wrong expert.
 	if any(kw in task for kw in ("def ", "class ", "import ", "return ", "```python")) or any(kw in task for kw in ("SELECT ", "INSERT ", "UPDATE ", "CREATE TABLE")):
 		domain = "code_python"
-	elif any(kw in task.lower() for kw in ("why ", "explain ", "what is ", "how does ")) or any(kw in task.lower() for kw in ("suma", "resta", "multiplica", ">", "<", "igual", "verdad", "falsedad")):
+	elif any(kw in task.lower() for kw in ("why ", "explain ", "what is ", "how does ")) or any(
+		kw in task.lower()
+		for kw in ("suma", "resta", "multiplica", "divide", "calcula", "cálculo", "calculo", "resuelve", "ecuación", "ecuacion", "demuestra", "lógica", "logica", "matemátic", "matematic", ">", "<", "igual", "verdad", "falsedad")
+	):
 		domain = "logic_math"
 	elif any(kw in task.lower() for kw in ("hola", "buenos días", "buenos dias", "saludo")):
 		domain = "general"
 	else:
-		# Fallback to semantic domain classification
-
+		# Fallback to semantic domain classification.
+		# The failure is logged rather than swallowed: without it, a dead
+		# translator looks exactly like a working one that finds everything
+		# "general", and every unmatched task silently lands on default_node.
 		try:
 			translator = get_translator()
 			vector = translator.encode(task)
 			hints = translator.decode(vector, top_k=1)
 			raw_domain = hints[0][0].lower() if hints else "general"
-		except Exception:
+		except Exception as e:
+			logger.warning(f"[Router] Semantic classification unavailable ({type(e).__name__}: {e}); falling back to 'general'. Keyword rules are now the only routing signal.")
 			raw_domain = "general"
 
 		# Map raw concepts to rules domains

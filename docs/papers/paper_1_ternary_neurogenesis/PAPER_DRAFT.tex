@@ -1,0 +1,686 @@
+\documentclass{article}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\usepackage{geometry}
+\geometry{a4paper, margin=1in}
+% \usepackage{microtype}
+\usepackage{cite}
+\usepackage{array}
+\usepackage{tabularx}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    filecolor=magenta,      
+    urlcolor=cyan,
+    pdftitle={From Semantic Primes to Neurogenesis},
+    pdfpagemode=FullScreen,
+}
+
+\title{\textbf{From Semantic Primes to Neurogenesis:\\Developmental Learning in Ternary Neural Networks}}
+\author{\textbf{Joan Garcia Esteban} \\ \textit{Independent Research} \\ \texttt{joanfgarcia@gmail.com}}
+\date{June 2026}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+We present a developmental framework for ternary neural networks that integrates linguistic universals (Wierzbicka's semantic primes as ternary glyphs), emergent metacognition (a two-phase verification loop), and pain-driven neurogenesis (Net2WiderNet triggered by persistent negative reward). The entire system is open-source (available at \url{https://github.com/joanfgarcia/frankenswarm}) and runs on a consumer GPU ($<8$GB VRAM, $\sim 586$KB theoretical model size), with the model self-determining its final size.
+
+Glyph embeddings achieve 100\% compositional accuracy with $7.7\times$ efficiency gains over learned embeddings. Metacognitive convergence provides a reliable confidence signal without supervision. Unfreezing attention (neuroplasticity) improves best survival by $+49\%$ ($+9\%$ on average, multi-seed validated).
+
+Ablation reveals a nuanced relationship between capacity and capability: with limited training (500 episodes), a $5\times$ larger model performs no better than a small one (confidence interval includes zero); with extended training (2,000 episodes), the larger model dominates (200 vs 110 best ticks). In complex environments, REINFORCE --- not architecture --- is the bottleneck: the growth mechanism triggers correctly (6 events, perfect spacing) but produces no survival advantage.
+
+We do not claim to have solved developmental AI. We document a path --- including its dead ends --- in the hope that others may continue where we stopped.
+\end{abstract}
+
+\textbf{Keywords:} ternary neural networks, semantic primes, emergent metacognition, neurogenesis, neuroplasticity, continuous learning, Net2Net, developmental AI
+
+\hrule
+
+\section{Introduction}
+
+The dominant paradigm in artificial intelligence favors ever-larger models trained on ever-larger datasets. GPT-4, Gemini, and Claude operate at the scale of hundreds of billions of parameters, requiring infrastructure inaccessible to most researchers and all individuals. This raises a fundamental question: \textbf{is scale the only path to capable AI?}
+
+Biological systems suggest otherwise. The nematode \textit{C. elegans} navigates its environment, finds food, avoids danger, and reproduces --- with exactly 302 neurons. Human infants acquire language, develop theory of mind, and form causal models of the world long before their neural architecture reaches adult scale. Crucially, the infant brain does not start at full size. It \textbf{grows} --- guided by experience, need, and developmental pressure.
+
+\textbf{A declaration of principles.} This work is built on a conviction that emerged from the experiments themselves: \textbf{intelligence grows under collective pressure, not individual incentive.} When we rewarded agents individually for communicating, they learned to make noise --- optimizing their own metric while degrading the collective signal. When we applied only collective pressure --- shared fate, mutual survival --- communication emerged as a survival tool, with preliminary results showing substantially better peak performance despite lower average consistency (Best 91 vs 39 ticks in preliminary single-seed runs). Explicit individual incentives raise the floor but lower the ceiling. Collective pressure does the opposite: it produces variance, struggle, and occasional brilliance. This is not only an observation about reinforcement learning. It is a principle that guided every architectural decision in this paper: no component is optimized in isolation; every capability --- growth, emotion, communication --- emerges from the pressure to survive as a whole system.
+
+\textbf{``Potential that is not earned through experience is potential that is not used.''}
+
+We propose a framework inspired by this developmental trajectory:
+\begin{enumerate}
+    \item \textbf{Semantic Primes} (\S\ref{sec:primes}): Following Wierzbicka's NSM theory \cite{wierzbicka1996semantics}, we encode universal meaning atoms as ternary vectors, providing a compositional foundation that requires no pretraining.
+    \item \textbf{Emergent Emotion} (\S\ref{sec:emotion}): Rather than labeling emotional states, we derive them from the agent's internal physiological meters --- hunger, health, energy --- following the somatic marker hypothesis \cite{damasio1994descartes}.
+    \item \textbf{Emergent Metacognition} (\S\ref{sec:metacognition}): A two-phase ``think, then verify'' loop produces a convergence signal that functions as uncertainty estimation without explicit supervision, inspired by Piaget's developmental stages \cite{piaget1952origins}.
+    \item \textbf{Knowledge-Action Separation} (\S\ref{sec:separation}): We freeze a pretrained knowledge backbone and train only a small action head, mirroring the distinction between declarative and procedural memory \cite{squire1992declarative}.
+    \item \textbf{Pain-Driven Neurogenesis} (\S\ref{sec:neurogenesis}): When the agent suffers persistently, its action head grows via Net2WiderNet \cite{chen2015net2net}, self-determining its architecture. Growth stops when suffering subsides.
+    \item \textbf{Neuroplasticity} (\S\ref{sec:neuroplasticity}): Unfreezing the backbone's attention mechanism reveals a complementary growth mechanism --- not adding neurons, but rewiring connections.
+\end{enumerate}
+
+To make these cross-disciplinary foundations explicit, Table~\ref{tab:correspondence} maps each theoretical pillar to its corresponding concept and implementation in our framework:
+
+\begin{table}[h]
+\centering
+\caption{\textbf{Theoretical Correspondence.}}
+\label{tab:correspondence}
+\begin{tabularx}{\textwidth}{p{4.2cm} p{3.8cm} X}
+\toprule
+\textbf{Theoretical Pillar} & \textbf{Concept in Paper} & \textbf{Implementation} \\
+\midrule
+Wierzbicka (NSM, 1996) \cite{wierzbicka1996semantics} & Semantic Primes (\S\ref{sec:primes}) & 65 ternary glyph embeddings, deterministic encoding \\
+Damasio (Somatic Markers, 1994) \cite{damasio1994descartes} & Emergent Emotion (\S\ref{sec:emotion}) & Emotion derived from internal meters (hunger, health, energy) \\
+Piaget (Developmental Stages, 1952) \cite{piaget1952origins} & Curriculum (\S\ref{sec:curriculum}) & Sequential training: nursery $\rightarrow$ playground $\rightarrow$ autonomy \\
+Squire (Memory Systems, 1992) \cite{squire1992declarative} & Knowledge-Action Separation (\S\ref{sec:separation}) & Frozen backbone (declarative) + trainable head (procedural) \\
+Net2Net (Chen et al., 2015) \cite{chen2015net2net} & Pain-Driven Neurogenesis (\S\ref{sec:neurogenesis}) & Action head grows via Net2WiderNet when reward $< \theta_{\text{pain}}$ \\
+Flavell (Metacognition, 1979) \cite{flavell1979metacognition} & Verification Loop (\S\ref{sec:metacognition}) & Think-then-verify: cosine similarity as confidence signal \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+The entire system operates on a 2.4M-parameter ternary model with a self-growing action head, running on a single consumer GPU ($\sim\$1,000$ laptop, $<8$GB VRAM). Code and reproducibility configurations are open-source and available at \url{https://github.com/joanfgarcia/frankenswarm}. Pretraining takes 12 minutes; survival training takes 3 minutes per experiment; the complete reproducibility suite runs in under 2 hours. The ternary model compresses to $\sim 586$KB (theoretically calculated as 2.4M parameters $\times$ 2 bits per parameter) --- theoretically deployable on embedded hardware, though we have not validated inference on microcontrollers. 
+
+Our ablation reveals a nuanced relationship: \textbf{capacity alone does not drive capability in short training regimes, but dominates with sufficient experience.} The growth mechanism triggers reliably (5/5 seeds) and stabilizes: $128\rightarrow192\rightarrow288\rightarrow432\rightarrow648$ in episodes 2-10, then stops. However, in our minimal world (5 locations, 6 actions), 128 neurons are already sufficient for the task. Growth adds capacity that the environment does not demand, producing no survival advantage. We tested multiple configurations: convergence-triggered growth (RIGOR v3), early-death-triggered growth, and plateau-triggered growth (RIGOR v4-v6). In all cases, the growth mechanism functioned correctly --- the model grew when triggered and stabilized when the trigger subsided --- but the grown model did not outperform static models. We present this as an honest foundation: the components work, the integration is coherent, and the path forward (better RL algorithms, richer environments) is clear.
+
+\subsection{Positioning: Why Bit?}
+\label{sec:positioning}
+
+A fair question deserves a direct answer: \emph{why grow a 2.4M-parameter ternary organism when Qwen3-0.6B already runs at 96 tok/s on the same 2W NPU used in our testbed?} Because Bit does not compete on tasks --- Bit is not an engine, it is an \textbf{observable organism}. Our claims occupy a segment that frontier and small open models structurally cannot serve, for three reasons:
+
+\begin{enumerate}
+	\item \textbf{Interpretability of growth, not of behavior.} Every weight in Bit is auditable and every architectural change is event-logged: we can watch \emph{how} a capability appears (which pain signal triggered growth, which curriculum stage unlocked composition). A pretrained model --- however small --- arrives as a fossil: capable, but with its developmental history erased. Bit is a microscope on the process that scale-first research treats as a black box, and large laboratories have no incentive to build it, because their economics reward selling scale, not understanding growth.
+	\item \textbf{Sovereignty from the first token.} Bit inherits no upstream weights, no undisclosed training corpus, no third-party license or alignment residue. For deployments where provenance is a hard requirement (personal sovereign agents, regulated edge devices), ``small and borrowed'' is not equivalent to ``small and owned''.
+	\item \textbf{Radical frugality.} At $\sim$586KB, Bit targets the always-on sentinel niche (2W, embedded, battery-first) where even a 0.6B model is an order of magnitude too heavy.
+\end{enumerate}
+
+Beyond these engineering claims lies the hypothesis that motivates the project: \textbf{everyday AI does not need graduate physics.} The overwhelming majority of daily human-AI interaction requires language, common ground, and calibrated honesty --- not encyclopedic knowledge. A modest mind that \emph{knows what it does not know} (the metacognitive verification loop of \S\ref{sec:metacognition} exists precisely for this) may serve most everyday companion roles, and may equally serve as the lingua franca of \textbf{machine-to-machine communication}, where two tiny agents coordinating through a shared vocabulary (see our companion work on intra-forward distributed dispatch) need mutual intelligibility, not brilliance. We do not claim this hypothesis is proven --- the roadmap below is the experiment designed to test it.
+
+\textbf{The staged bet.} Our sequencing is deliberate. The hardware MoE layer (Phase A) is parked until Bit completes the developmental curriculum through the 8-year-old milestone. Then we re-instantiate the survival agents --- Nico, Sofy, and a third sibling, Hugo --- \emph{from Bit's base brain}: agents that know nothing of survival but arrive with language and comprehension, released into the arena to test whether general developmental competence transfers to embodied evolution. If agents that can understand and communicate outlearn agents that were shaped by survival alone, the thesis holds: \textbf{cognition does not require scale; it requires structure --- curriculum, pressure, and the ability to grow.}
+
+\section{Related Work}
+
+\subsection{Ternary and Low-Bit Neural Networks}
+BitNet b1.58 \cite{ma2024era} demonstrated that ternary weight ($\{-1, 0, 1\}$) language models match full-precision performance at scales above 3B parameters. Our work differs in two key ways: (a) we operate at 2.4M parameters, far below the threshold where ternary LLMs become competitive, and (b) we do not use ternary weights for language modeling but for \textbf{compositional semantic encoding} based on linguistic theory.
+
+\subsection{Natural Semantic Metalanguage}
+Wierzbicka's NSM theory \cite{wierzbicka1996semantics} proposes that all human languages share approximately 65 semantic primes --- irreducible atoms of meaning such as GOOD, BAD, MOVE, FEEL. While extensively studied in linguistics \cite{goddard2014words, goddard2018ten}, NSM has not been applied to neural network embedding design. We are the first to encode semantic primes as ternary vectors and demonstrate zero-shot compositional generalization.
+
+\subsection{Metacognition in Neural Networks}
+Uncertainty estimation in neural networks typically requires ensembles \cite{lakshminarayanan2017simple}, Monte Carlo dropout \cite{gal2016dropout}, or explicit calibration \cite{guo2017calibration}. Our approach generates a confidence signal through \textbf{architectural means} --- a verification loop that measures self-consistency --- without additional training objectives or auxiliary networks.
+
+\subsection{Neural Architecture Growth}
+Net2Net \cite{chen2015net2net} introduced function-preserving transformations (Net2WiderNet, Net2DeeperNet) for accelerating training by growing pretrained networks. Progressive growing has been applied to GANs \cite{karras2018progressive} and transformers \cite{dai2019transformerxl}. Our contribution is the use of \textbf{pain} (persistent negative reward) as the growth trigger, rather than a predetermined schedule.
+
+\subsection{Developmental and Embodied AI}
+Developmental robotics \cite{lungarella2003developmental} and intrinsic motivation \cite{oudeyer2007intrinsic} explore how agents learn through environmental interaction. Our work connects these traditions with architectural growth --- the agent doesn't just learn new behaviors; it grows new capacity when existing capacity is insufficient.
+
+\section{Architecture}
+
+\subsection{Neural Substrate: Ternary Resonance Network}
+
+The underlying model is a 5-layer ternary transformer with a topology designed for \textbf{latent recurrence} --- the hidden state circulates through the core without ever projecting to vocabulary space until the final output:
+\begin{align*}
+\text{Layer 1:} & \quad \text{Glyph Embedding (ternary primes} \rightarrow \text{hidden\_dim)} \\
+\text{Layer 2:} & \quad \text{Inbound Projection (embedding} \rightarrow \text{256-dim hidden space)} \\
+\text{Layer 3:} & \quad \text{Specialist Core (N transformer blocks, ternary weights)} \\
+\text{Layer 4:} & \quad \text{Outbound Projection (hidden} \rightarrow \text{vocabulary space)} \\
+\text{Layer 5:} & \quad \text{Vocabulary Decode (similarity} \rightarrow \text{logits)}
+\end{align*}
+
+\textbf{Key design choices:}
+
+\textbf{Ternary Quantization (BitNet b1.58).} All weights in the transformer core are quantized to $\{-1, 0, 1\}$ via Straight-Through Estimator (STE), with 8-bit symmetric activation quantization. This yields $\sim 10\times$ compression versus float32 and enables efficient inference on consumer hardware.
+
+\textbf{Latent Resonance Loop.} Rather than performing a single forward pass, the hidden state iterates through the core $n$ times \textbf{without exiting to vocabulary space}:
+\begin{equation}
+h^{(t+1)} = \text{Core}(\text{Norm}(h^{(t)})) \quad \text{for } t = 1, \dots, n
+\end{equation}
+Only at the final step does the hidden state project to logits via Layers 4$\rightarrow$5. This is fundamentally different from autoregressive generation: there is no KV cache, no token-by-token output. The model ``thinks'' in continuous hidden space for $n$ steps, then ``speaks'' once.
+
+\textbf{The Watcher (Oscilloscope).} At each resonance step, a read-only probe decodes the hidden state to vocabulary tokens \textbf{without affecting the computation graph or gradient flow}. This ``watcher'' acts as a non-invasive telemetry tool, letting us observe what the model is thinking at each step --- providing a window into the internal resonance process. The watcher is used to:
+\begin{enumerate}
+    \item Monitor convergence during training.
+    \item Generate the discrete tokens for the metacognitive verification loop (\S\ref{sec:metacognition}).
+    \item Diagnose failure modes (what was the model thinking when it died?).
+\end{enumerate}
+
+\textbf{Resonance Clock.} An optional learned positional signal $c_t$ is added at each resonance step, giving the model a sense of ``how long it has been thinking'' --- analogous to a heartbeat. In our experiments, this signal serves as an exploratory developmental marker, allowing the specialist core to modulate attention weights depending on the thinking step index.
+
+\textbf{No KV Cache Required.} Because the model processes a fixed-length perception (4 tokens) and iterates in hidden space rather than autoregressively, the attention mechanism operates on a static sequence. This eliminates the memory-intensive KV cache that dominates transformer inference costs.
+
+\textbf{Emotion Injection.} Emotional state (\S\ref{sec:emotion}) is projected to hidden space and injected at the first resonance step (mode: \texttt{first\_only}), biasing the entire thinking trajectory without repeated interference.
+
+\subsection{Semantic Primes}
+\label{sec:primes}
+Each of Wierzbicka's 65 semantic primes is assigned a unique prime number $p_i$ and encoded as a ternary trit:
+\begin{equation}
+\text{trit}(p, k) = ((p \bmod 3^{k+1}) \mathbin{/\!/} 3^k) - 1 \in \{-1, 0, 1\}
+\end{equation}
+Words are composed by \textbf{summing} their constituent prime trits, preserving compositionality:
+\begin{equation}
+\text{embed}(\text{word}) = \sum_{j \in \text{primes(word)}} \text{trit}(p_j)
+\end{equation}
+This encoding requires no training, produces deterministic embeddings, and supports zero-shot composition of new words from existing primes.
+
+\subsection{Emergent Emotion}
+\label{sec:emotion}
+Following the somatic marker hypothesis \cite{damasio1994descartes}, emotional states are not labeled but \textbf{derived} from the agent's internal meters (Table~\ref{tab:emotions}):
+
+\begin{table}[h]
+\centering
+\caption{\textbf{Emergent Emotion Triggers.}}
+\label{tab:emotions}
+\begin{tabular}{ll}
+\toprule
+\textbf{Condition} & \textbf{Emergent Emotion} \\
+\midrule
+hunger $< 20$ & hunger \\
+health $< 30$ & pain \\
+energy $< 20$ & sadness \\
+danger nearby & fear \\
+all meters high & joy \\
+otherwise & anger (frustration) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Emotion modulates processing via a learned projection into the hidden space, biasing attention and decision-making.
+
+\subsection{Metacognitive Verification Loop}
+\label{sec:metacognition}
+Inspired by the human habit of ``thinking aloud to check one's reasoning'' \cite{flavell1979metacognition}, we implement a two-phase forward pass:
+
+\textbf{Phase 1 (Think):} Standard resonance loop --- the input circulates through the transformer core for $n_{\text{think}}$ steps.
+
+\textbf{Phase 2 (Verify):} The Phase 1 output is decoded to discrete tokens, re-injected as input, and processed for $n_{\text{verify}}$ steps.
+
+\textbf{Convergence} is measured as cosine similarity between Phase 1 and Phase 2 hidden states:
+\begin{equation}
+\text{conv} = \cos(h_{\text{think}}, h_{\text{verify}})
+\end{equation}
+High convergence ($>0.95$) indicates self-consistency (``I'm sure''). Low convergence triggers re-thinking. This mechanism requires no supervision --- it emerges from the verification architecture and Piaget-style phased training (establish knowledge before introducing doubt).
+
+\subsection{Knowledge-Action Separation}
+\label{sec:separation}
+The pretrained backbone (2.4M parameters) encodes \textbf{knowledge} --- causal associations between concepts. A separate \textbf{action head} (initially 33K parameters) translates hidden representations into behavioral decisions:
+\begin{equation}
+a = \text{ActionHead}(h_{\text{verify}}[:, 2, :])
+\end{equation}
+The backbone is frozen during survival training. Only the action head learns, concentrating the reinforcement signal on a small, plastic module.
+
+\subsection{Pain-Driven Neurogenesis}
+\label{sec:neurogenesis}
+The action head grows via Net2WiderNet \cite{chen2015net2net} when the agent experiences persistent suffering:
+
+\textbf{Growth Trigger:} Rolling average of per-tick reward over $P$ ticks falls below threshold $\theta_{\text{pain}}$:
+\begin{equation}
+\frac{1}{P}\sum_{t=t_0}^{t_0+P} r_t < \theta_{\text{pain}} \implies \text{GROW}
+\end{equation}
+
+\textbf{Growth Mechanism:} Net2WiderNet preserves the existing function:
+\begin{enumerate}
+    \item New neurons copy random existing neurons.
+    \item Output weights are divided by copy count.
+    \item Small noise breaks symmetry.
+\end{enumerate}
+
+\textbf{Growth Termination:} When average reward rises above $\theta_{\text{pain}}$, growth stops. The model has found its size.
+
+\subsection{Reward Signal: Continuous Pain + Progress}
+Following the NPC (Non-Player Character) intuition, the reward decomposes into three continuous signals:
+\begin{equation}
+r_t = \text{progress}_t - \text{pain}_t + \text{peace}_t
+\end{equation}
+where:
+\begin{itemize}
+    \item \textbf{Pain} is proportional to unmet needs (always active, accumulating).
+    \item \textbf{Progress} rewards actions that move toward resolving needs.
+    \item \textbf{Peace} provides a small positive signal when all needs are met.
+\end{itemize}
+Critically, \textbf{inaction is punished by the pain that doesn't stop}, not by an explicit penalty.
+
+\section{Experimental Setup}
+
+\subsection{Minimal World}
+A survival environment with 5 locations (cave, forest, river, plains, mountain), 6 actions (eat, drink, sleep, move, observe, fight), and 3 internal meters (hunger, health, energy). Locations have different resources, predator probabilities, and storm shelters. The agent receives ternary glyph perceptions and must survive as long as possible.
+
+\subsection{Training Pipeline}
+\label{sec:curriculum}
+We define and run the pipeline through specialized configurations (Table~\ref{tab:pipeline}):
+
+\begin{table}[h]
+\centering
+\caption{\textbf{Training Pipeline Checkpoints.}}
+\label{tab:pipeline}
+\begin{tabularx}{\textwidth}{p{2.2cm} p{5.5cm} X}
+\toprule
+\textbf{Experiment} & \textbf{Description} & \textbf{Key Result} \\
+\midrule
+EXP\_034 & Ternary glyph embeddings & 100\% accuracy, $7.7\times$ faster \\
+EXP\_033 & Emergent emotion from body state & Emotion modulates behavior \\
+EXP\_036 & Metacognitive verification & Convergence gap 0.116, Piaget $+64\%$ \\
+EXP\_039 & Survival with action head & Best: 115 ticks (vs 28 without action head\footnote{The 28-tick baseline uses raw word logits without an action head --- not a fair architectural comparison. The value of the action head is better measured by the growth experiment (EXP\_040: 163 vs 115 ticks).}) \\
+EXP\_040 & Pain-driven neurogenesis & Best: 163 ticks, $5\times$ param growth \\
+EXP\_042 & Curriculum transfer (simple $\rightarrow$ complex) & $+3\%$ best, $+1$ growth event in complex \\
+EXP\_045 & Neuroplasticity (unfrozen attention) & $+49\%$ best survival ($+9\%$ avg) (5 seeds) \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\subsection{Ablation Design}
+To isolate the contribution of neurogenesis:
+\begin{itemize}
+    \item \textbf{A (Small, no growth):} Action head width = 128, fixed. Online REINFORCE.
+    \item \textbf{B (Big, no growth):} Action head width = 648, fixed. Online REINFORCE.
+    \item \textbf{C (Small $\rightarrow$ Big, growth):} Action head starts at 128, grows via Net2WiderNet.
+\end{itemize}
+All three use identical hyperparameters, pretrained backbone, and reward function.
+
+\section{Results}
+
+\subsection{Glyph Embeddings (EXP\_034)}
+Ternary glyph embeddings achieve 100\% concept accuracy after 12 epochs, compared to 97.5\% for learned embeddings after 200 epochs. Training is $7.7\times$ faster. Zero-shot composition of unseen words from known primes succeeds in 100\% of tested cases.
+
+\subsection{Metacognition (EXP\_036)}
+The convergence gap ($1 - \text{cos similarity}$) stabilizes at 0.116 when using Piaget-style phased training (pretrain knowledge, then add verification), compared to 0.190 when training both simultaneously --- a 64\% improvement. The convergence signal correlates with answer correctness without explicit supervision.
+
+\subsection{Survival (EXP\_039)}
+We evaluate general survival outcomes across configurations in Table~\ref{tab:survival_results}:
+
+\begin{table}[h]
+\centering
+\caption{\textbf{Survival Performance by Configuration.}}
+\label{tab:survival_results}
+\begin{tabular}{lccl}
+\toprule
+\textbf{Configuration} & \textbf{Best Ticks} & \textbf{Avg (last 100)} & \textbf{Primary Cause of Death} \\
+\midrule
+Word logits (no action head) & 28 & 26.7 & Hunger (cave) \\
+Action head (128, no growth) & 115 & 26.2 & Pain (forest) \\
+Action head (128 $\rightarrow$ 648, growth) & 163 & 41.2 & Pain (forest) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The transition from hunger-death-in-cave to pain-death-in-forest demonstrates emergent behavioral adaptation: the agent learned to seek food (solving hunger) and encountered a new challenge (predators).
+
+\subsection{Neurogenesis (EXP\_040)}
+The growth events timeline details the self-limiting scaling behavior (Table~\ref{tab:growth_timeline}):
+
+\begin{table}[h]
+\centering
+\caption{\textbf{Growth Timeline.}}
+\label{tab:growth_timeline}
+\begin{tabular}{llcl}
+\toprule
+\textbf{Episode} & \textbf{Width} & \textbf{Params} & \textbf{Trigger} \\
+\midrule
+3 & $128 \rightarrow 192$ & $33,670 \rightarrow 50,502$ & Pain \\
+5 & $192 \rightarrow 288$ & $50,502 \rightarrow 75,750$ & Pain \\
+7 & $288 \rightarrow 432$ & $75,750 \rightarrow 113,622$ & Pain \\
+9 & $432 \rightarrow 648$ & $113,622 \rightarrow 170,430$ & Pain \\
+10-500 & 648 (stable) & 170,430 (stable) & --- \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The model grew $5\times$ in the first 9 episodes and then \textbf{stopped}, self-determining its final architecture.
+
+\subsection{Ablation Study}
+\label{sec:ablation_500}
+We conducted multi-seed ablation (5 seeds $\times$ 2 configs = 10 runs, 500 episodes each) to test whether capacity alone drives capability:
+
+\begin{table}[h]
+\centering
+\caption{\textbf{Ablation Study (500 episodes).}}
+\label{tab:ablation_500}
+\begin{tabular}{lccrr}
+\toprule
+\textbf{Config} & \textbf{Head Size} & \textbf{Params} & \textbf{Best Ticks (mean $\pm$ sd)} & \textbf{Avg100 (mean $\pm$ sd)} \\
+\midrule
+A (Small) & 128 & 33,670 & $153.2 \pm 30.6$ & $52.4 \pm 15.2$ \\
+B (Big) & 648 & 170,430 & $147.4 \pm 32.1$ & $42.6 \pm 6.8$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+With 500 episodes of training, \textbf{the $5\times$ larger model performs no better than the small one} (Bootstrap 95\% CI for A-B: $[-34.4, +42.8]$, includes zero). This confirms that \textbf{capacity alone does not drive capability} --- at least not in short training regimes. With 5 seeds, our statistical power is designed to detect larger effect sizes ($>1.2\sigma$); smaller variations may remain undetected within this sample window.
+
+However, extended training (2,000 episodes, single seed) reveals a different picture (Table~\ref{tab:ablation_2000}):
+
+\begin{table}[h]
+\centering
+\caption{\textbf{Ablation Study (2,000 episodes).}}
+\label{tab:ablation_2000}
+\begin{tabular}{lccrr}
+\toprule
+\textbf{Config} & \textbf{Episodes} & \textbf{Best Ticks} & \textbf{Avg100} \\
+\midrule
+A (128, fixed) & 2,000 & 110 & 32.4 \\
+B (648, fixed) & 2,000 & \textbf{200} & \textbf{56.1} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+With sufficient training, B reaches maximum survival (200 ticks = world limit) while A plateaus at 110. \textbf{Capacity matters, but only when paired with sufficient experience to fill it.}
+
+This is not a failure of the growth mechanism. It is a failure of the \textbf{experimental environment to demand growth.} A nematode does not need a human brain. Our simple world is the nematode's world.
+
+\subsection{Scaling to Complex Environments}
+To test whether growth becomes necessary in harder environments, we deployed all configurations in a complex world (15 locations, 10 actions, 4 internal meters, 150 state-action pairs) (Table~\ref{tab:complex_world}):
+
+\begin{table}[h]
+\centering
+\caption{\textbf{Complex World Results.}}
+\label{tab:complex_world}
+\begin{tabular}{lllccr}
+\toprule
+\textbf{Condition} & \textbf{Config} & \textbf{Best Ticks} & \textbf{Avg100} & \textbf{Growth Events} \\
+\midrule
+Complex, no curriculum & A (128) & 56 & 19.6 & 0 \\
+Complex, no curriculum & B (648) & 68 & 19.4 & 0 \\
+Complex, no curriculum & C (128 $\rightarrow$ 1458) & 53 & 20.0 & 6 \\
+Complex, with curriculum & A (128) & 67 & 20.4 & 0 \\
+Complex, with curriculum & B (648) & 68 & 21.8 & 0 \\
+Complex, with curriculum & C (128 $\rightarrow$ 1458) & 67 & 18.4 & 6 (in Phase 1) \\
+\bottomrule
+\end{tabular}
+\end{table}
+\textit{Curriculum: 500 episodes in simple world, then 1500 episodes in complex world.}
+
+The complex world results reveal a crucial developmental insight: \textbf{growth without a curriculum is unexploited capacity.} While C grew 6 times ($128\rightarrow1458$) with perfectly spaced plateau-triggered events, it did not achieve a survival advantage. This is not a failure of the growth mechanism, but a curriculum discovery: capacity is a prerequisite for complexity, but complex environments demand structured exposition (a curriculum) to be learned. When curriculum transfer was introduced (EXP\_042), we observed the first signs of transfer, though performance remained constrained by the RL algorithm.
+
+The bottleneck is not architecture --- it is \textbf{REINFORCE.} The RL algorithm cannot perform temporal credit assignment in a 150-state-action space with 20-tick lifespans. No amount of capacity can compensate for an optimizer that cannot connect cause (moving toward food at tick 5) with effect (not dying at tick 30). This motivates the transition to more capable RL algorithms (PPO, SAC) as the critical next step.
+
+\subsection{Neuroplasticity (EXP\_045)}
+\label{sec:neuroplasticity}
+All previous experiments used a frozen backbone --- the ``library'' of knowledge was fixed, and only the ``legs'' (action head) learned. We hypothesized that unfreezing the backbone's attention mechanism would enable the model to learn new perceptual routing --- not just new behaviors, but new ways of \textit{seeing} (Table~\ref{tab:plasticity_results}).
+
+\begin{table}[h]
+\centering
+\caption{\textbf{Selective Attention Plasticity.}}
+\label{tab:plasticity_results}
+\begin{tabular}{llrr}
+\toprule
+\textbf{Configuration} & \textbf{Backbone} & \textbf{Best Ticks (mean $\pm$ sd)} & \textbf{Avg100 (mean $\pm$ sd)} \\
+\midrule
+Frozen backbone & Fixed attention & $63.2 \pm 8.6$ & $25.1 \pm 1.1$ \\
+\textbf{Unfrozen backbone} & \textbf{Plastic attention} & $\mathbf{94.2 \pm 30.5}$ & $\mathbf{27.3 \pm 2.1}$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Multi-seed validation (5 seeds) confirms a \textbf{+49\% improvement} in best survival with unfrozen attention. The effect is directional across 4 of 5 seeds (one seed regressed, indicating interaction with stochastic world dynamics). The single-seed result (seed 42: $+82\%$) was optimistic but the multi-seed average still demonstrates a substantial advantage.
+
+However, this improvement in best survival is accompanied by high variance (std dev of 30.5 vs 8.6), while the average survival improves only modestly (25.1 $\rightarrow$ 27.3). This highlights a fundamental trade-off: \textbf{plastic attention enables high-performing strategies (peak survival) but introduces behavioral instability.} This instability mirrors biological development, where highly plastic young brains show greater potential for adaptation alongside increased fragility and variance in behavior.
+
+This reveals two distinct growth mechanisms: \textbf{neurogenesis} (adding capacity, \S\ref{sec:neurogenesis}) provides capacity, while \textbf{neuroplasticity} (rewiring attention) provides the ability to \textit{use} that capacity. Both are necessary. A brain that grows but cannot rewire is like a library that adds shelves but never reorganizes its catalog.
+
+\textbf{Resolving the frozen/unfrozen tension.} This result may appear to contradict our knowledge-action separation principle (\S\ref{sec:separation}): if unfreezing improves results, why freeze at all? The answer is \textbf{selective plasticity}. We do not unfreeze the embedding weights or feed-forward layers --- those encode the semantic knowledge that must remain stable (our experiments confirm: unfreezing embeddings destroys the shared semantic ground). We unfreeze only the \textit{attention mechanism} --- the routing layer that determines which information is relevant to which decision. This mirrors biological plasticity: the knowledge stored in long-term memory (Squire's declarative system) remains stable, while the attentional routing that selects and combines that knowledge rewires with experience. The principle is not ``freeze everything'' but ``freeze knowledge, rewire perception.''
+
+\section{Discussion}
+
+\subsection{Pain as Architectural Signal}
+Traditional neural architecture search (NAS) uses validation accuracy or computational cost to determine architecture. Our approach uses \textbf{subjective suffering} --- persistent negative reward experienced by the agent itself. This creates a self-regulating system: the agent grows when the world demands it and stops when capacity suffices.
+
+The growth mechanism works as designed: it triggers reliably under multiple conditions (convergence drop, sustained pain, performance plateau), produces controlled capacity expansion via Net2WiderNet, and stabilizes when the trigger subsides. In every configuration tested, growth events followed the expected pattern --- early rapid expansion followed by stabilization.
+
+However, our experiments reveal a critical nuance: \textbf{growth must be demanded by the environment, not just permitted by the mechanism.} In our simple world, 128 neurons suffice for survival --- growth adds capacity that cannot be exploited. In our complex world, REINFORCE cannot learn regardless of capacity --- growth adds neurons to a brain that cannot be trained. The growth mechanism is a necessary component of developmental AI, but it is not sufficient alone. It requires both an environment that demands more capacity than the agent currently has, and a learning algorithm capable of exploiting that capacity once grown.
+
+Furthermore, neurogenesis solves a fundamental design challenge: \textbf{in real-world developmental scenarios, the complexity of the environment is not known a priori.} A static model must be sized conservatively (leading to parameter waste in simple tasks or capacity failure in complex ones). Pain-driven neurogenesis allows the model to dynamically find the correct size based on its actual interaction history, sizing the architecture to the task without human intervention.
+
+Our ablation study (\S\ref{sec:ablation_500}) confirms: with limited training (500 episodes), a $5\times$ larger model performs identically to a small one. With extended training (2,000 episodes), the larger model dominates. \textbf{Capacity is potential; experience converts potential to capability; the algorithm determines how efficiently that conversion occurs.}
+
+\subsection{Developmental Parallels}
+Our framework mirrors stages of human cognitive development (Table~\ref{tab:developmental_parallels}):
+
+\begin{table}[h]
+\centering
+\caption{\textbf{Developmental Parallels.}}
+\label{tab:developmental_parallels}
+\begin{tabular}{lll}
+\toprule
+\textbf{Stage} & \textbf{Human Development (Piaget)} & \textbf{Our Framework} \\
+\midrule
+Sensorimotor & Learn basic associations & EXP\_034: Glyph embeddings \\
+Pre-operational & Emotional responses & EXP\_033: Emergent emotion \\
+Concrete operational & Self-monitoring & EXP\_036: Metacognition \\
+Formal operational & Abstract reasoning about actions & EXP\_039: Knowledge $\rightarrow$ Action \\
+--- & Neural growth in response to challenge & EXP\_040: Neurogenesis \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Democratization Implications}
+The entire framework runs on a consumer laptop GPU ($<8$GB VRAM). The model self-determines its size based on task complexity, meaning it is \textbf{never larger than necessary}. This stands in contrast to the prevailing approach of training maximally large models and deploying them with expensive inference infrastructure.
+
+\subsection{Growth Without Experience: The Scaling Lesson}
+Our experiments across six ablation configurations (RIGOR v3-v6) produced a result that, while not what we hoped for, is deeply informative. The growth mechanism works correctly in every configuration: it triggers under multiple conditions (convergence, pain, plateau), produces controlled expansion via Net2WiderNet, and stabilizes when the trigger subsides. But in no configuration did the grown model outperform static models of equivalent or smaller size.
+
+The reasons are environment-specific:
+\begin{itemize}
+    \item In the \textbf{simple world} (5 locations, 6 actions), 128 neurons already suffice. Growth adds capacity that cannot be exploited because the task does not demand it.
+    \item In the \textbf{complex world} (15 locations, 10 actions), REINFORCE cannot learn regardless of capacity. Growth adds neurons to a brain that cannot be trained.
+    \item With \textbf{curriculum} (simple$\rightarrow$complex transfer), the bottleneck remains the RL algorithm, not the architecture.
+\end{itemize}
+
+This demonstrates that \textbf{neurogenesis is necessary but not sufficient.} Growth must be paired with both an environment that demands more capacity than the agent currently has, and a learning algorithm capable of exploiting that capacity once grown. A brain that grows faster than it can learn is wasted capacity, much like a child given a university textbook before learning to read.
+
+\subsection{Potential Applications (Speculative)}
+The combination of ternary efficiency ($\sim 586$KB theoretical model size), online learning, emergent metacognition, and self-sizing architecture opens applications where current AI cannot operate:
+
+\textbf{Adaptive Game NPCs.} Current non-player characters rely on hand-scripted behavior trees. Our framework enables NPCs that learn from their environment, develop emergent emotional responses to game events, and grow their cognitive capacity as the game world becomes more complex --- all running on the player's hardware without server infrastructure. Each NPC develops a unique behavioral profile shaped by its individual experience.
+
+\textbf{Edge Robotics.} Ternary weights ($\{-1, 0, 1\}$) can be implemented with additions alone, requiring no floating-point multiplications. A 2.4M-parameter ternary model occupies $\sim 586$KB, enabling deployment on microcontrollers. The self-sizing mechanism ensures the model is never larger than the task requires --- a robot in a simple environment maintains a small brain, while one in a complex environment grows autonomously.
+
+\textbf{Health Wearables.} The internal meters (hunger, health, energy) map directly to biometric sensors. Metacognition provides a critical safety feature: the model knows when it is uncertain, enabling escalation to human oversight rather than generating false positives. All processing remains on-device, preserving patient privacy.
+
+\textbf{Adaptive Education.} Emergent emotion detection from interaction patterns (frustration, confidence, confusion) combined with metacognitive uncertainty estimation enables tutoring systems that adapt to individual learners. The developmental curriculum (simple $\rightarrow$ complex) mirrors pedagogical best practices.
+
+\subsection{Limitations}
+We list our limitations explicitly, in order of severity. We believe honest accounting of weaknesses is more valuable than understating them.
+\begin{enumerate}
+    \item \textbf{Growth does not yet improve survival.} Despite functioning correctly as a mechanism, pain-driven neurogenesis has not produced a survival advantage over static models in any tested configuration (RIGOR v3-v6, spanning simple and complex worlds, with and without curriculum, across multiple growth triggers). The grown model reaches the same or equivalent final capacity as the static large model, but the developmental process does not confer an advantage. This is the most important negative result in the paper, and the most honest thing we can say about it.
+    \item \textbf{REINFORCE is the primary bottleneck.} In the complex world, all configurations (small, large, grown, curriculum, no curriculum) converge to $\sim 20$ average ticks. The RL algorithm cannot perform temporal credit assignment across 150 state-action pairs with short lifespans. No amount of architectural capacity can compensate for an optimizer that cannot learn. PPO, SAC, or actor-critic methods are the critical next step.
+    \item \textbf{Statistical power.} Initial single-seed results (seed 42) were systematically optimistic. Multi-seed validation (5 seeds) revealed high variance inherent to REINFORCE in stochastic environments. Several results reported in this paper (neuroplasticity +49\%, communication Best 91) are multi-seed validated, but others remain single-seed. Future work should use $\ge 10$ seeds.
+    \item \textbf{Scale of evaluation.} Our primary survival world has 5 locations and 6 actions --- a deliberately minimal testbed. The complex-world experiment (15 locations, 10 actions) demonstrated that the framework scales mechanically (growth occurs, transfer works) but not functionally (survival does not improve). We have not yet validated the framework in environments of realistic complexity.
+    \item \textbf{Communication remains preliminary.} Our best communication result (Best 91, +40\% over silent) comes from a single seed in one configuration. The extensive chronicle of failures (\S\ref{sec:failures}) demonstrates that communication is the hardest capability to grow.
+    \item \textbf{Hardware-limited scale.} All experiments run on a single consumer GPU ($<8$GB VRAM). This is both a feature (democratization) and a limitation (we cannot test whether our principles hold at larger scales).
+\end{enumerate}
+
+\subsection{The Road to Communication: A Chronicle of Failures}
+\label{sec:failures}
+We document our communication experiments in detail --- not because they succeeded, but because \textbf{the failures themselves are findings.} Science advances not only by proving what works but by mapping the dead ends of the labyrinth, so that the next explorer does not have to walk them again.
+
+\textbf{Iteration 1: Passive information sharing (EXP\_043).} Two agents shared perceptual information each tick. Result: no improvement over deaf agents. \textit{Lesson: hearing is not listening.}
+
+\textbf{Iteration 2: Communication without movement.} Agents could share location of food but had no directed navigation. Result: agents knew where food was but wandered randomly. \textit{Lesson: knowledge without the ability to act on it is useless.}
+
+\textbf{Iteration 3: Communication with random movement.} Added BFS navigation so agents could walk toward signaled food. High exploration rate (100\%$\rightarrow$5\%). Result: agents moved randomly 100\% of the time at first, ignoring all signals. \textit{Lesson: a baby thrown into the ocean does not learn to swim.}
+
+\textbf{Iteration 4: Graduated exploration (EXP\_047).} Reduced exploration to 20\%$\rightarrow$10\%$\rightarrow$5%, respecting that agents arrive from the dojo with existing skills. Result: \textbf{Best 91 ticks with communication vs 65 silent (+40\%).} First clear signal that communication helps. \textit{Lesson: the agent must arrive with basic competence before learning social skills --- Piaget's stages apply to artificial minds too.}
+
+\textbf{Iteration 5: Explicit reward shaping (EXP\_048-049).} Rewarded the shouter when their partner ate after hearing the signal. Tested multiple variants: fixed bonus, decaying bonus, emotional modulation. Result: \textbf{all variants performed worse} than the simple no-bonus version. \textit{Lesson: see \S\ref{sec:incentive_paradox}.}
+
+\textbf{Iteration 6: Memory models.} Implemented signal persistence, signal age tracking, and retrievability decay modeled on working memory. Result: added complexity without improving outcomes. \textit{Lesson: REINFORCE cannot parse complex reward signals. The algorithm, not the world design, is the bottleneck.}
+
+\textbf{What worked.} The single configuration that produced our best result (Best 91, +40\% over silent) used:
+\begin{itemize}
+    \item Graduated exploration (respect prior learning).
+    \item Directed BFS navigation (ability to act on knowledge).
+    \item Shared fate (if one dies, both die).
+    \item No explicit communication reward.
+\end{itemize}
+
+Three conditions were necessary, and one was sufficient for incentive:
+\begin{enumerate}
+    \item \textbf{Neuroplasticity of attention.} A frozen backbone cannot learn to process a new input modality. Communication requires the receiver to grow new perceptual pathways --- the same neuroplasticity demonstrated in \S\ref{sec:neuroplasticity}.
+    \item \textbf{Emotional gating of reception.} Not all messages are relevant at all times. A satiated agent should ignore food signals; a starving one should prioritize them. The somatic marker system (\S\ref{sec:emotion}) serves as the natural filter.
+    \item \textbf{Shared need as prerequisite for cooperation.} Communication is only actionable when agents share a goal. Shared fate --- mutual death --- was the only incentive structure that produced emergent cooperation.
+\end{enumerate}
+
+\textbf{The meta-observation.} Our real-time communication experiments largely failed. But the research process itself succeeded through a different kind of communication --- one that is asynchronous, persistent, and requires no individual incentive. Wierzbicka published her semantic primes in 1996. Damasio described somatic markers in 1994. Piaget documented developmental stages in 1952. None of them were rewarded for contributing to this specific project. None of them know it exists. Their knowledge was encoded, left behind, and retrieved decades later by a different agent solving a problem they never anticipated.
+
+This is the communication that works: not the real-time shout that expires in 3 ticks, but the written record that persists indefinitely --- the cave painting. The signal has no TTL. The retrievability does not decay. The channel is noisy and the receiver must actively seek it, but when the connection is made, the coop\_bonus goes to both: the one who shouted into the void, and the one who, years later, listened.
+
+We did not invent anything in this paper. We read the cave paintings.
+
+\subsection{The Incentive Paradox: Individual Bonus vs. Collective Pressure}
+\label{sec:incentive_paradox}
+Our multi-agent arena produced an unexpected result regarding reward structure. We tested two approaches to incentivize cooperative communication (Table~\ref{tab:incentive_results}):
+
+\begin{table}[h]
+\centering
+\caption{\textbf{Incentive Structure Comparison.}}
+\label{tab:incentive_results}
+\begin{tabular}{lccr}
+\toprule
+\textbf{Incentive Structure} & \textbf{Best Survival} & \textbf{Avg Survival} & \textbf{Shouts} \\
+\midrule
+No communication (silent) & 65 & 15.4 & 0 \\
+Implicit (shared fate only) & \textbf{91} & 15.0 & 1,296 \\
+Explicit (individual bonus to shouter) & 39 & \textbf{15.5} & 2,242 \\
+Explicit (mutual bonus, both +5.0) & 42 & 15.6 & 1,300 \\
+\bottomrule
+\end{tabular}
+\end{table}
+\textit{Results from single-seed runs with graduated exploration (2,000 episodes for shared fate and individual bonus; 500 episodes for mutual bonus). These results are preliminary and require multi-seed validation.}
+
+The explicit individual bonus --- rewarding the shouter when their partner ate --- produced \textbf{higher average survival} (15.5 vs 15.0) but dramatically \textbf{lower peak survival} (39 vs 91, a $2.3\times$ reduction). The bonus raised the floor but lowered the ceiling.
+
+Why? Under explicit individual reward, agents learned to shout frequently --- but the shouts became noise rather than information. The agent optimized \textit{its own bonus} (shout $\rightarrow$ partner eats by coincidence $\rightarrow$ collect reward) rather than \textit{the quality of information transmitted}. Communication increased in quantity (2,242 shouts) but decreased in utility.
+
+Under implicit collective pressure (shared fate: if one dies, both die), agents shouted less frequently (1,296 total) but the shouts that occurred were more likely to be contextually appropriate --- triggered by genuine perception of food, not by reward-seeking behavior. This produced higher variance but dramatically higher potential.
+
+\textbf{The finding generalizes beyond our experiment:} explicit individual incentives in cooperative systems tend to optimize for the metric rather than the underlying objective. The metric (shouting) becomes a proxy that diverges from the goal (transmitting useful information). Collective pressure --- where success is shared and failure is mutual --- produces less predictable but fundamentally more capable behavior.
+
+\section{Acknowledgments}
+This work was developed in collaboration with Aleth, an AI research partner based on Google's Gemini architecture. Aleth contributed to experimental design, implementation, debugging, analysis, and documentation throughout the research process. The iterative, conversational nature of this collaboration --- where hypotheses were proposed, tested, and refined in real-time --- was integral to the trajectory of the research. The key architectural insight (knowledge-action separation) and the reward formulation (continuous pain model) emerged from dialogue between human intuition and machine exploration.
+
+\textbf{A meta-observation on asynchronous communication.} The first author is a software engineer, not a linguist, neuroscientist, or developmental psychologist. This work exists because Wierzbicka wrote down her semantic primes, Damasio published his somatic marker hypothesis, Piaget documented cognitive development stages, Squire formalized memory systems, Chen released BitNet --- and sixteen other researchers left their knowledge in papers, books, and repositories. None of them were consulted directly. None of them know this work exists. Their knowledge was accessed asynchronously --- read years or decades after being written --- and assembled by an engineer acting as a \textit{router}: decomposing the question ``how does a mind learn?'' into sub-queries, and directing each to the appropriate expert's published record. This is, in a precise sense, the same asynchronous communication mechanism we investigate in \S\ref{sec:failures}: knowledge encoded, left behind, and retrieved by a different agent at a different time to solve a problem the original author never anticipated. We did not invent anything. We read the cave paintings.
+
+\section{Conclusion}
+We have presented a developmental framework for ternary neural networks that integrates semantic primes, emergent emotion and metacognition, pain-driven neurogenesis, and neuroplasticity into a unified learning system. The system demonstrates that capable behavior can emerge from small models under environmental pressure, without datacenter-scale compute. The model determines its own architecture --- growing when it suffers and stopping when it doesn't --- and learns to see differently when its attention is allowed to rewire.
+
+Two growth mechanisms emerged as complementary: \textbf{neurogenesis} (adding capacity) and \textbf{neuroplasticity} (rewiring connectivity). Neither alone is sufficient. A brain that grows but cannot rewire is a library that adds shelves without reorganizing its catalog. A brain that rewires but cannot grow is a mind that reinterprets the same limited experience.
+
+Preliminary multi-agent experiments revealed that communication cannot be added to a mind that was not built to listen --- each new capability must be grown, not bolted on. The incentive paradox (\S\ref{sec:incentive_paradox}) --- where individual reward degraded collective performance --- suggests that the design of incentive structures may matter more than the design of architectures.
+
+\textbf{The algorithmic frontier.} Our communication experiments were bottlenecked not by architecture but by algorithm. REINFORCE cannot assign credit across temporal gaps: a shout at tick 3 that leads to eating at tick 12 produces no learning signal. Actor-critic methods (PPO, SAC) would likely resolve this, enabling the architectural framework we have built to reach its full potential. We chose REINFORCE for its simplicity --- to isolate the contributions of architecture from the contributions of algorithm --- but the clear next step is to replace it.
+
+We believe this work opens a path toward AI systems that are not designed but \textbf{grown} --- born small, shaped by experience, sized by necessity, and wired by struggle.
+
+\begin{thebibliography}{16}
+
+\bibitem{wierzbicka1996semantics}
+Wierzbicka, A. (1996). \textit{Semantics: Primes and Universals}. Oxford University Press.
+
+\bibitem{damasio1994descartes}
+Damasio, A. R. (1994). \textit{Descartes' Error: Emotion, Reason, and the Human Brain}. Putnam.
+
+\bibitem{piaget1952origins}
+Piaget, J. (1952). \textit{The Origins of Intelligence in Children}. International Universities Press.
+
+\bibitem{squire1992declarative}
+Squire, L. R. (1992). Declarative and Nondeclarative Memory: Multiple Brain Systems Supporting Learning and Memory. \textit{Journal of Cognitive Neuroscience}, 4(3), 232–243.
+
+\bibitem{chen2015net2net}
+Chen, T., Goodfellow, I., \& Shlens, J. (2015). Net2Net: Accelerating Learning via Knowledge Transfer. \textit{arXiv:1511.05641}.
+
+\bibitem{ma2024era}
+Ma, S., Wang, H., Ma, L., et al. (2024). The Era of 1-bit LLMs: All Large Language Models are in 1.58 Bits. \textit{arXiv:2402.17764}.
+
+\bibitem{goddard2014words}
+Goddard, C. \& Wierzbicka, A. (2014). \textit{Words and Meanings: Lexical Semantics Across Domains, Languages, and Cultures}. Oxford University Press.
+
+\bibitem{goddard2018ten}
+Goddard, C. (2018). \textit{Ten Lectures on Natural Semantic Metalanguage}. Brill.
+
+\bibitem{lakshminarayanan2017simple}
+Lakshminarayanan, B., Pritzel, A., \& Blundell, C. (2017). Simple and Scalable Predictive Uncertainty Estimation using Deep Ensembles. \textit{NeurIPS}.
+
+\bibitem{gal2016dropout}
+Gal, Y. \& Ghahramani, Z. (2016). Dropout as a Bayesian Approximation: Representing Model Uncertainty in Deep Learning. \textit{ICML}.
+
+\bibitem{guo2017calibration}
+Guo, C., Pleiss, G., Sun, Y., \& Weinberger, K. Q. (2017). On Calibration of Modern Neural Networks. \textit{ICML}.
+
+\bibitem{karras2018progressive}
+Karras, T., Aila, T., Laine, S., \& Lehtinen, J. (2018). Progressive Growing of GANs for Improved Quality, Stability, and Variation. \textit{ICLR}.
+
+\bibitem{dai2019transformerxl}
+Dai, Z., Yang, Z., Yang, Y., Carbonell, J., Le, Q. V., \& Salakhutdinov, R. (2019). Transformer-XL: Attentive Language Models Beyond a Fixed-Length Context. \textit{ACL}.
+
+\bibitem{lungarella2003developmental}
+Lungarella, M., Metta, G., Pfeifer, R., \& Sandini, G. (2003). Developmental Robotics: A Survey. \textit{Connection Science}, 15(4), 151–190.
+
+\bibitem{oudeyer2007intrinsic}
+Oudeyer, P.-Y. \& Kaplan, F. (2007). What is Intrinsic Motivation? A Typology of Computational Approaches. \textit{Frontiers in Neurorobotics}, 1, 6.
+
+\bibitem{flavell1979metacognition}
+Flavell, J. H. (1979). Metacognition and Cognitive Monitoring: A New Area of Cognitive–Developmental Inquiry. \textit{American Psychologist}, 34(10), 906–911.
+
+\end{thebibliography}
+
+\appendix
+\section{Appendix A: Reproducibility \& Community Collaboration}
+All code, experiment configurations, and logs are open-source and available at: \url{https://github.com/joanfgarcia/frankenswarm}
+
+\subsection{How to Contribute}
+We welcome contributions from the community to expand the boundaries of developmental AI. Key areas of collaboration include:
+\begin{itemize}
+    \item \textbf{Optimizers \& Algorithms}: Implementing and benchmarking actor-critic algorithms (PPO, SAC) to replace REINFORCE.
+    \item \textbf{Environments}: Designing more complex topological worlds with varied resources and cognitive demands.
+    \item \textbf{Hardware Deployment}: Porting the ternary weight matrix multiplication layer to bare-metal microcontrollers for edge robotics.
+\end{itemize}
+
+\textbf{Hardware Requirements:}
+\begin{itemize}
+    \item GPU: $\ge 6$GB VRAM (tested on NVIDIA RTX 5070 Laptop, 8GB)
+    \item RAM: $\ge 16$GB
+    \item Training time: $\sim 5$ minutes per experiment (500 episodes, frozen backbone)
+    \item Full rigor suite (30 runs, 5 seeds $\times$ 6 configs): $\sim 2$ hours
+\end{itemize}
+
+\textbf{Software:}
+\begin{itemize}
+    \item Python 3.13
+    \item PyTorch 2.x
+    \item No other dependencies required
+\end{itemize}
+
+\textbf{Experiment Reproduction:}
+Each experiment is defined by a JSON config in \texttt{configs/experiments/}. To reproduce:
+\begin{verbatim}
+PYTHONPATH=. python src/bitnet/train_survival.py \
+  --config configs/experiments/EXP_040_neurogenesis.json
+\end{verbatim}
+All experiments use fixed seeds for deterministic reproduction. The rigor suite (\texttt{scripts/run\_rigorous.sh}) runs the complete ablation across 5 seeds with statistical analysis.
+
+\section{Appendix B: Communication Experiments (Supplementary)}
+Six iterations of dual-agent communication experiments (EXP\_043–045) are documented in the repository. Each iteration identified a specific failure mode (Table~\ref{tab:communication_failures}):
+
+\begin{table}[h]
+\centering
+\caption{\textbf{Communication Experiments Iterations.}}
+\label{tab:communication_failures}
+\begin{tabularx}{\textwidth}{c p{4.5cm} p{2.5cm} X}
+\toprule
+\textbf{Iteration} & \textbf{Design} & \textbf{Result} & \textbf{Lesson} \\
+\midrule
+1 & Separate worlds, watcher broadcast & No effect & Information must be relevant (shared world) \\
+2 & Shared world, perception substitution & -37\% & Communication has bandwidth cost \\
+3 & Shared world, separate channel (6 tokens) & -35\% & Thinking aloud $\ne$ communicating \\
+4 & Event-driven signals (food/danger) & -31\% & Sparse signal, no learning gradient \\
+5 & Fresh training with channel & No effect & Frozen attention cannot learn new modalities \\
+6 & Unfrozen backbone + channel & No effect vs baseline & Communication requires intentional design \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+These negative results motivate the future work described in \S\ref{sec:failures} and establish three necessary conditions for functional agent communication: neuroplastic attention, emotional gating of reception, and shared motivational state.
+
+\end{document}

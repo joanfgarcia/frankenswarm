@@ -9,8 +9,8 @@ import torch
 # Añadir el directorio raíz de frankenswarm al path para poder importar
 sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 
-from src.bitnet.modeling_bitnet import BitNet4LayerModel
-from src.bitnet.translator import SovereignTranslator
+from src.bitnet.model.modeling_bitnet import BitNet4LayerModel
+from src.bitnet.translation.translator import SovereignTranslator
 
 
 def print_header(title: str):
@@ -150,10 +150,7 @@ def inspect_linguistics(model: torch.nn.Module, translator: SovereignTranslator)
 		if has_pos:
 			# Si tiene pos embedding pero no hay config, decidimos por codificación de relaciones
 			tids_gt = translator.encode(">")
-			if tids_gt:
-				specimen_type = "relational_logic"
-			else:
-				specimen_type = "arithmetic"
+			specimen_type = "relational_logic" if tids_gt else "arithmetic"
 
 	device = next(model.parameters()).device
 	model.eval()

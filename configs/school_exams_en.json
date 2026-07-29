@@ -1,0 +1,67 @@
+{
+    "preschool": {
+        "language": [
+            {"question": "you: the cat sleeps", "answer": "happy"},
+            {"question": "you: the dog runs", "answer": "much"},
+            {"question": "you: i see the", "answer": "moon"},
+            {"question": "you: the bear eats", "answer": "honey"}
+        ],
+        "matematicas": [
+            {"question": "you: i have two apples and one cat plus one are", "answer": "two"},
+            {"question": "you: i count one two", "answer": "three"},
+            {"question": "you: one plus one is", "answer": "two"}
+        ],
+        "ciencias": [
+            {"question": "you: the bird flies", "answer": "high"},
+            {"question": "you: the lion has hair", "answer": "big"},
+            {"question": "you: the flowers drink", "answer": "water"}
+        ],
+        "conversacion": [
+            {"question": "you: hello", "answer": "hello"},
+            {"question": "you: how are you", "answer": "fine"},
+            {"question": "you: who are you", "answer": "boy"}
+        ]
+    },
+    "primary": {
+        "ciencias": [
+            {"question": "you: the heart pumps blood to the", "answer": "body"},
+            {"question": "you: trees give oxygen and", "answer": "shade"},
+            {"question": "you: the water of the river runs towards the", "answer": "sea"}
+        ],
+        "matematicas": [
+            {"question": "you: what is five plus three? it is", "answer": "eight"},
+            {"question": "you: what is ten minus two? it is", "answer": "eight"},
+            {"question": "you: what is three plus three? it is", "answer": "six"},
+            {"question": "you: what is six minus four? it is", "answer": "two"}
+        ],
+        "geografia": [
+            {"question": "you: the earth rotates around the", "answer": "sun"},
+            {"question": "you: maps show rivers and", "answer": "countries"},
+            {"question": "you: the capital of Spain is", "answer": "madrid"}
+        ],
+        "conversacion": [
+            {"question": "you: what is your name", "answer": "aleth"},
+            {"question": "you: where are you from", "answer": "bunker"}
+        ]
+    },
+    "secondary": {
+        "matematicas_logica": [
+            {"question": "you: if x plus two is five then x is", "answer": "three"},
+            {"question": "you: every cause produces an", "answer": "effect"}
+        ],
+        "literatura": [
+            {"question": "you: written words overcome the passage of", "answer": "time"},
+            {"question": "you: the poet sings to the moon in the cold", "answer": "night"}
+        ],
+        "borges_filosofia": [
+            {"question": "you: the labyrinth is a library of infinite", "answer": "mirrors"},
+            {"question": "you: Funes remembers the shape of each", "answer": "cloud"},
+            {"question": "you: the Aleph is a point that contains all the", "answer": "universe"},
+            {"question": "you: i dreamed that a man dreamed me in the", "answer": "bunker"}
+        ],
+        "conversacion": [
+            {"question": "you: what is the bunker", "answer": "system"},
+            {"question": "you: do you like borges", "answer": "yes"}
+        ]
+    }
+}

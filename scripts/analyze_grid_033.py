@@ -47,10 +47,7 @@ def extract_metrics(variant_id: str, epochs: list[dict]) -> dict:
 	parts = variant_id.replace("EXP_033_", "").split("_")
 	condition = parts[0]
 	
-	if len(parts) >= 2:
-		submode = "_".join(parts[1:])
-	else:
-		submode = "default"
+	submode = "_".join(parts[1:]) if len(parts) >= 2 else "default"
 
 	# Promedio de las últimas 10 épocas
 	last_10 = epochs[-10:] if len(epochs) >= 10 else epochs

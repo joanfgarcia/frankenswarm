@@ -403,10 +403,7 @@ def main():
 	for axis_name, axis_values in GRID_AXES.items():
 		print(f"   {axis_name}:")
 		for val in axis_values:
-			if axis_name == "n_steps":
-				matching = [m for m in ok_sorted if m["depth"] == val]
-			else:
-				matching = [m for m in ok_sorted if m.get(axis_name) == val]
+			matching = [m for m in ok_sorted if m["depth"] == val] if axis_name == "n_steps" else [m for m in ok_sorted if m.get(axis_name) == val]
 			if matching:
 				avg = sum(m["acc_joint_final"] for m in matching) / len(matching)
 				print(f"     {val:>8}: {avg:.1f}%")

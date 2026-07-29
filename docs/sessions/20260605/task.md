@@ -1,0 +1,9 @@
+- `[x]` Add Tech Tree, observation (`que_observar/14`), and action evaluation (`evaluar_intento/16`) rules to `src/bitnet/cooperative_rules.pl`.
+- `[x]` Update `CoopAgentState` in `src/bitnet/cooperative_world.py` to initialize `skill_experience` dictionary.
+- `[x]` Update `get_valid_actions_mask` in `src/bitnet/cooperative_world.py` to be permissive for action attempts.
+- `[x]` Update `act()` in `src/bitnet/cooperative_world.py` to query Prolog for action evaluation and observation learning.
+- `[x]` Update `get_reward()` in `src/bitnet/cooperative_world.py` to handle rewards and penalties based on Prolog's classification.
+- `[x]` Add new supervised scenarios in `src/bitnet/dojo_populora.py` to train observation and valid/invalid attempts.
+- `[x]` Create unit tests in `tests/test_prolog_discovery.py` validating the Prolog predicates and Python integration.
+- `[x]` Verify tests pass and run a short simulation check.
+- `[x]` Launch a new training run or arena simulation.

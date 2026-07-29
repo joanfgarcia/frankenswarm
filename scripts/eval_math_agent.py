@@ -3,9 +3,9 @@ import os
 
 import torch
 
-from src.bitnet.dataset_breeder import MathDatasetBreeder
-from src.bitnet.modeling_bitnet import BitNet4LayerModel
-from src.bitnet.translator import SovereignTranslator
+from src.bitnet.data.dataset_breeder import MathDatasetBreeder
+from src.bitnet.model.modeling_bitnet import BitNet4LayerModel
+from src.bitnet.translation.translator import SovereignTranslator
 
 
 def eval_agent(experiment_id: str = "EXP_012"):
@@ -108,30 +108,29 @@ def eval_agent(experiment_id: str = "EXP_012"):
 			correct_joint += 1
 
 		# Mostrar algunas muestras para ver el dialecto emergente
-		if samples_logged < 15 or not joint_ok:
-			if samples_logged < 20:
-				# Decodificar el mensaje intermedio
-				message_tokens = []
-				for step in range(4):
-					token_idx = torch.argmax(message[0, step, :]).item()
-					message_tokens.append(translator.decode([token_idx]))
+		if (samples_logged < 15 or not joint_ok) and samples_logged < 20:
+			# Decodificar el mensaje intermedio
+			message_tokens = []
+			for step in range(4):
+				token_idx = torch.argmax(message[0, step, :]).item()
+				message_tokens.append(translator.decode([token_idx]))
 
-				sample_a_name = breeder.get_operand_name(a)
-				sample_op_name = breeder.get_operator_name(op)
-				sample_b_name = breeder.get_operand_name(b)
-				sample_r_name = breeder.get_operand_name(r)
+			sample_a_name = breeder.get_operand_name(a)
+			sample_op_name = breeder.get_operator_name(op)
+			sample_b_name = breeder.get_operand_name(b)
+			sample_r_name = breeder.get_operand_name(r)
 
-				pred_a_name = translator.decode([pred_a_id])
-				pred_op_name = translator.decode([pred_op_id])
-				pred_b_name = translator.decode([pred_b_id])
-				pred_r_name = translator.decode([pred_r_id])
+			pred_a_name = translator.decode([pred_a_id])
+			pred_op_name = translator.decode([pred_op_id])
+			pred_b_name = translator.decode([pred_b_id])
+			pred_r_name = translator.decode([pred_r_id])
 
-				status_icon = "✅" if joint_ok else "❌"
-				print(f"  {status_icon} Target: {sample_a_name} {sample_op_name} {sample_b_name} = {sample_r_name}")
-				print(f"    - Canal:  [{' '.join(message_tokens)}]")
-				print(f"    - Predic: {pred_a_name} {pred_op_name} {pred_b_name} = {pred_r_name}")
-				print()
-				samples_logged += 1
+			status_icon = "✅" if joint_ok else "❌"
+			print(f"  {status_icon} Target: {sample_a_name} {sample_op_name} {sample_b_name} = {sample_r_name}")
+			print(f"    - Canal:  [{' '.join(message_tokens)}]")
+			print(f"    - Predic: {pred_a_name} {pred_op_name} {pred_b_name} = {pred_r_name}")
+			print()
+			samples_logged += 1
 
 	total = len(equations)
 	print("=" * 65)

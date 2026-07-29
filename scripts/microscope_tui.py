@@ -13,8 +13,8 @@ sys.path.append(base_dir)
 
 import microscope
 
-from src.bitnet.modeling_bitnet import BitNet4LayerModel
-from src.bitnet.translator import SovereignTranslator
+from src.bitnet.model.modeling_bitnet import BitNet4LayerModel
+from src.bitnet.translation.translator import SovereignTranslator
 
 # Códigos ANSI para colores
 C_RESET = "\033[0m"
@@ -409,6 +409,102 @@ def show_inbox():
 				pass
 
 
+def run_arena_launcher():
+	exp_config_dir = os.path.join(base_dir, "configs", "experiments")
+	configs = []
+	if os.path.exists(exp_config_dir):
+		for f in os.listdir(exp_config_dir):
+			if f.endswith(".json"):
+				configs.append(f)
+	configs.sort()
+
+	while True:
+		clear_screen()
+		print(f"{C_BOLD}{C_CYAN}================================================================================")
+		print("🏟️                 LANZADOR DE SIMULACIÓN DE LA ARENA COOPERATIVA               ")
+		print(f"================================================================================{C_RESET}")
+		print(f"{C_BOLD}Selecciona una configuración ecológica para la Arena:{C_RESET}\n")
+
+		for idx, config_file in enumerate(configs, 1):
+			print(f"  [{C_GREEN}{idx}{C_RESET}] {config_file}")
+		
+		print(f"\n  [{C_RED}B{C_RESET}] Volver al menú principal")
+
+		choice = input(f"\n{C_YELLOW}Introduce número o letra de tu elección: {C_RESET}").strip()
+
+		if choice.upper() == "B":
+			return
+
+		try:
+			idx_choice = int(choice)
+			if 1 <= idx_choice <= len(configs):
+				selected_config = configs[idx_choice - 1]
+				config_path = os.path.join("configs", "experiments", selected_config)
+				
+				# Pedir parámetros extra
+				ticks_str = input(f"{C_YELLOW}Número de ticks de simulación (default 100): {C_RESET}").strip()
+				ticks = int(ticks_str) if ticks_str else 100
+				
+				greedy_str = input(f"{C_YELLOW}¿Usar selección de acción codiciosa (greedy) (y/N)?: {C_RESET}").strip().upper()
+				greedy = greedy_str == "Y"
+				
+				seed_str = input(f"{C_YELLOW}Semilla aleatoria (default 1337): {C_RESET}").strip()
+				seed = int(seed_str) if seed_str else 1337
+
+				# Ejecutar
+				clear_screen()
+				print(f"{C_GREEN}Iniciando simulación con {selected_config} ({ticks} ticks, semilla {seed})...{C_RESET}\n")
+				cmd = [sys.executable, "src/bitnet/run_arena_simulation.py", "--config", config_path, "--ticks", str(ticks), "--seed", str(seed)]
+				if greedy:
+					cmd.append("--greedy")
+				
+				# Ejecutar simulación de forma interactiva en la terminal
+				subprocess.run(cmd, cwd=base_dir)
+				
+				input(f"\n{C_YELLOW}Simulación finalizada. Presiona Enter para continuar...{C_RESET}")
+				return
+		except Exception as e:
+			print(f"{C_RED}Error: {e}{C_RESET}")
+			time.sleep(2)
+
+
+def run_swarm_chat_launcher():
+	clear_screen()
+	print(f"{C_BOLD}{C_CYAN}================================================================================")
+	print("💬                     LANZADOR DE SWARM CHAT AUTÓNOMO                          ")
+	print(f"================================================================================{C_RESET}\n")
+
+	try:
+		temp_str = input(f"{C_YELLOW}Temperatura de muestreo (default 0.7): {C_RESET}").strip()
+		temp = float(temp_str) if temp_str else 0.7
+
+		penalty_str = input(f"{C_YELLOW}Penalización por repetición (default 1.2): {C_RESET}").strip()
+		penalty = float(penalty_str) if penalty_str else 1.2
+
+		turns_str = input(f"{C_YELLOW}Número de turnos (default 12): {C_RESET}").strip()
+		turns = int(turns_str) if turns_str else 12
+
+		max_len_str = input(f"{C_YELLOW}Longitud máxima por respuesta (default 12): {C_RESET}").strip()
+		max_len = int(max_len_str) if max_len_str else 12
+
+		# Ejecutar
+		clear_screen()
+		print(f"{C_GREEN}Iniciando diálogo de Nico y Sofi... (Temp={temp}, Penalty={penalty}){C_RESET}\n")
+		cmd = [
+			sys.executable, "src/bitnet/run_swarm_chat.py",
+			"--temp", str(temp),
+			"--penalty", str(penalty),
+			"--turns", str(turns),
+			"--len", str(max_len)
+		]
+		subprocess.run(cmd, cwd=base_dir)
+		
+		input(f"\n{C_YELLOW}Diálogo finalizado. Presiona Enter para continuar...{C_RESET}")
+	except Exception as e:
+		print(f"{C_RED}Error: {e}{C_RESET}")
+		time.sleep(2)
+
+
 def main():
 	translator = SovereignTranslator()
 	vocab_embeddings = translator.get_concept_embeddings()
@@ -416,13 +512,15 @@ def main():
 	while True:
 		clear_screen()
 		print(f"{C_BOLD}{C_CYAN}================================================================================")
-		print("🔬                 SIETCH LABORATORY PANEL DE CONTROL (v1.1)                    ")
+		print("🔬                 SIETCH LABORATORY PANEL DE CONTROL (v1.2)                    ")
 		print(f"================================================================================{C_RESET}")
 		print(f"{C_BOLD}Selecciona el módulo operacional:{C_RESET}\n")
 
 		print(f"  [{C_GREEN}1{C_RESET}] 🔬 Microscopio Cognitivo (Inspección clínica de especímenes)")
 		print(f"  [{C_GREEN}2{C_RESET}] 🎛️  Orquestador de Experimentos (Cola y telemetría de Miniones)")
 		print(f"  [{C_GREEN}3{C_RESET}] 📨 Buzón del Sietch (Reportes leídos de .inbox/)")
+		print(f"  [{C_GREEN}4{C_RESET}] 🏟️  Simulador de la Arena (Ejecutar simulación cooperativa Nico, Sofy y Hugo)")
+		print(f"  [{C_GREEN}5{C_RESET}] 💬 Swarm Chat Launcher (Poner a conversar a Nico y Sofi)")
 		print(f"  [{C_RED}Q{C_RESET}] Salir del laboratorio")
 
 		choice = input(f"\n{C_YELLOW}Introduce opción: {C_RESET}").strip().upper()
@@ -436,6 +534,10 @@ def main():
 			show_orchestrator()
 		elif choice == "3":
 			show_inbox()
+		elif choice == "4":
+			run_arena_launcher()
+		elif choice == "5":
+			run_swarm_chat_launcher()
 
 
 if __name__ == "__main__":

@@ -1,5 +1,5 @@
-from src.bitnet.dataset_breeder import MathDatasetBreeder
-from src.bitnet.translator import SovereignTranslator
+from src.bitnet.data.dataset_breeder import MathDatasetBreeder
+from src.bitnet.translation.translator import SovereignTranslator
 
 
 def test_math_breeder_equations():
