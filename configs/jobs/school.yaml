@@ -25,6 +25,12 @@ env:
 
 checkpoint_file: storage/checkpoints/sovereign_school/school_state.json
 
+# Un examen suspendido NO es un fallo del job: 1º-2º suspenso = repaso (exit 0,
+# la etapa se retiene y el contador retrocede al bloque de repaso); al 3º del
+# mismo hito el trainer sale con 78 y el runner sella PAUSED con el checkpoint
+# intacto — revisar las calificaciones de Samantha y `red-pill job resume`.
+pause_exit_code: 78
+
 # El script guarda el estado al final de CADA época (verificado 27-jul-2026):
 # current_epoch, current_stage_idx y milestones_achieved ya existen ahí, así que
 # la supervisión no exige tocar el entrenamiento.

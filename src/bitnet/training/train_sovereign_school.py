@@ -152,8 +152,34 @@ def evaluate_exam(model, exam_subject_qa, idx_to_word, device):
 	return all_passed, results
 
 
+EXAM_MAX_FAILURES = 3  # suspensos del MISMO hito antes de ceder la decisión al operador
+EXAM_REMEDIAL_FRACTION = 0.25  # fracción de la etapa que se repasa tras cada suspenso
+EXAM_PAUSE_EXIT_CODE = 78  # contrato con la receta (pause_exit_code): el runner sella PAUSED
+
+
+def plan_exam_failure(state, stage_conf, target_milestone):
+	"""Decide qué hacer con un suspenso: repaso dentro de la etapa o pausa del operador.
+
+	La puerta de la etapa es el EXAMEN, no el contador de épocas: el suspenso
+	retiene la etapa retrocediendo el contador un bloque de repaso, y el examen
+	re-dispara solo al volver a alcanzar end_epoch. Al K-ésimo suspenso del mismo
+	hito, la decisión pasa al operador. Devuelve (nuevo_estado, needs_operator).
+	"""
+	held = dict(state)
+	failures = dict(held.get("exam_failures", {}))
+	failures[target_milestone] = failures.get(target_milestone, 0) + 1
+	needs_operator = failures[target_milestone] >= EXAM_MAX_FAILURES
+
+	rewind = max(8, int(stage_conf["epochs"] * EXAM_REMEDIAL_FRACTION))
+	held["current_epoch"] = stage_conf["end_epoch"] if needs_operator else max(stage_conf["start_epoch"], stage_conf["end_epoch"] - rewind + 1)
+	held["current_stage_idx"] = stage_conf["stage_idx"]
+	held["exam_failures"] = failures
+	return held, needs_operator
+
+
 def run_samantha_eval(
-	model, current_checkpoint_path, target_milestone, save_dir, stage_idx, stage_name, milestones_achieved, state_path, args, device, base_dir, epoch
+	model, current_checkpoint_path, target_milestone, save_dir, stage_idx, stage_name, milestones_achieved, state_path, args, device, base_dir, epoch,
+	stage_conf=None,
 ):
 	import subprocess
 	import sys
@@ -274,11 +300,42 @@ def run_samantha_eval(
 		print("👋 Pausando el bucle de entrenamiento. ¡Buen trabajo, profesora! Entrenador detenido.")
 		sys.exit(0)
 	else:
-		print(f"\n❌ [EXAMEN SUSPENDIDO] El alumno ha suspendido el examen del hito de {eval_age} años.")
-		print(f"🛑 [PAUSA DE REVISIÓN] Estado guardado en: {state_path}")
-		print("💬 Por favor, revisa las calificaciones de Samantha arriba.")
-		print("👋 Deteniendo el entrenamiento para análisis y revisión manual.")
-		sys.exit(1)
+		# Suspenso = repaso, no fallo del sistema. El 29 jul 2026 el sys.exit(1)
+		# bajo el job runner quemó un intento y el reintento automático leyó la
+		# época ya avanzada: transición fantasma a etapa 8 con el examen de 7
+		# años suspendido. Ahora el suspenso REESCRIBE el estado (retiene la
+		# etapa y retrocede al bloque de repaso) y habla códigos que el runner
+		# entiende: 0 = seguir entrenando el repaso; EXAM_PAUSE_EXIT_CODE =
+		# PAUSED para juicio del operador tras EXAM_MAX_FAILURES suspensos.
+		with open(state_path, encoding="utf-8") as sf:
+			held_state = json.load(sf)
+		held_state, needs_operator = plan_exam_failure(held_state, stage_conf, target_milestone)
+		with open(state_path, "w", encoding="utf-8") as sf:
+			json.dump(held_state, sf, indent=4)
+
+		attempt_num = held_state["exam_failures"][target_milestone]
+		milestone_failed_path = os.path.join(base_dir, "storage", "checkpoints", "milestone_failed.json")
+		with open(milestone_failed_path, "w", encoding="utf-8") as mf:
+			json.dump(
+				{
+					"milestone": target_milestone,
+					"attempt": attempt_num,
+					"max_attempts": EXAM_MAX_FAILURES,
+					"status": "needs_operator" if needs_operator else "remedial",
+					"resume_epoch": held_state["current_epoch"],
+					"stage": stage_name,
+				},
+				mf,
+				indent=4,
+			)
+
+		print(f"\n❌ [EXAMEN SUSPENDIDO] El alumno ha suspendido el hito de {eval_age} años (intento {attempt_num}/{EXAM_MAX_FAILURES}).")
+		print(f"📋 Señal de suspenso guardada en: {milestone_failed_path}")
+		if needs_operator:
+			print("🛑 [PAUSA DEL OPERADOR] Suspensos agotados para este hito: revisa las calificaciones de Samantha y reanuda con `red-pill job resume`.")
+			sys.exit(EXAM_PAUSE_EXIT_CODE)
+		print(f"📚 [REPASO] La etapa se retiene: vuelta a la época {held_state['current_epoch']} y re-examen al alcanzar de nuevo la {stage_conf['end_epoch']}.")
+		sys.exit(0)
 
 	return model, False
 
@@ -1204,10 +1261,24 @@ def run_school_training():
 
 		# Guardar checkpoint y actualizar estado para la siguiente época
 		torch.save(model.state_dict(), current_checkpoint_path)
+
+		# ¿Es esta época una frontera de examen? Se calcula ANTES de escribir el
+		# estado: en frontera, current_epoch NO cruza (se persiste `epoch`, no
+		# epoch+1) — solo el veredicto del examen mueve el contador. Sin esto, un
+		# crash o un suspenso a mitad de examen dejaba el estado ya en la etapa
+		# siguiente y el reintento ejecutaba una transición fantasma con
+		# neurogénesis incluida (época 1121 / etapa 8, 29 jul 2026).
+		current_stage_conf = None
+		for config in stage_config:
+			if config["start_epoch"] <= epoch <= config["end_epoch"]:
+				current_stage_conf = config
+				break
+		exam_boundary = bool(current_stage_conf and epoch == current_stage_conf["end_epoch"] and current_stage_conf["age"] is not None)
+
 		with open(state_path, "w", encoding="utf-8") as sf:
 			json.dump(
 				{
-					"current_epoch": epoch + 1,
+					"current_epoch": epoch if exam_boundary else epoch + 1,
 					"current_stage_idx": stage_idx,
 					"hidden_dim": model.hidden_dim,
 					"num_layers": len(model.core_layers),
@@ -1223,13 +1294,7 @@ def run_school_training():
 			)
 
 		# Evaluar Samantha al final de cada hito
-		current_stage_conf = None
-		for config in stage_config:
-			if config["start_epoch"] <= epoch <= config["end_epoch"]:
-				current_stage_conf = config
-				break
-
-		if current_stage_conf and epoch == current_stage_conf["end_epoch"] and current_stage_conf["age"] is not None:
+		if exam_boundary:
 			eval_age = current_stage_conf["age"]
 			milestone_name = f"{eval_age}_years"
 			print(f"\n🎓 [EXAMEN DE GRADUACIÓN] Iniciando evaluación con la Profesora Samantha para el hito de {eval_age} años...")
@@ -1246,6 +1311,7 @@ def run_school_training():
 				device=device,
 				base_dir=base_dir,
 				epoch=epoch,
+				stage_conf=current_stage_conf,
 			)
 			train_model = _maybe_compile(model)
 		epochs_trained += 1
