@@ -156,6 +156,55 @@ except Exception as e:
 	return None
 
 
+def _exam_words_for_age(age: int, base_dir: str) -> set[str]:
+	"""Palabras de la batería de exámenes (school_exams_en.json + AGE_QUESTIONS) hasta la edad dada.
+
+	Las respuestas esperadas de los exámenes (p. ej. 'effect', 'mirrors', 'universe') no aparecen
+	en los textos del currículo, así que la máscara de vocabulario por edad las excluía y el alumno
+	jamás podía emitirlas aunque las tuviera memorizadas. Se unen aquí para que la generación (y el
+	escaneo OOB) las trate como vocabulario legítimo de su edad.
+
+	Además se incluyen las FORMAS BASE del Diccionario Soberano: lo que Bit entrena como respuesta
+	no es la cadena cruda del examen (p. ej. 'aleth', 'bunker'), sino su base ('aliya', 'hideout').
+	Si solo se destaparan las palabras crudas, los tokens reales seguirían enmascarados y el examen
+	seguiría siendo irresoluble por la puerta de generación.
+	"""
+	words = set()
+
+	expanded_glyphs_path = os.path.join(base_dir, "configs", "expanded_glyphs.json")
+	dictionary = SovereignDictionary(expanded_glyphs_path)
+
+	def _collect(raw: str):
+		for w in re.findall(r"[a-zA-ZáéíóúüñÁÉÍÓÚÜÑ_]+", raw.lower()):
+			words.add(w)
+			words.add(dictionary.map_to_base_word(w))
+
+	for a, qas in AGE_QUESTIONS.items():
+		if a <= age:
+			for qa in qas:
+				_collect(qa["question"])
+				_collect(qa["expected"])
+
+	exams_path = os.path.join(base_dir, "configs", "school_exams_en.json")
+	if os.path.exists(exams_path):
+		with open(exams_path, encoding="utf-8") as f:
+			exams = json.load(f)
+		buckets = []
+		if age >= 2:
+			buckets.append("preschool")
+		if age >= 5:
+			buckets.append("primary")
+		if age >= 7:
+			buckets.append("secondary")
+		for bucket in buckets:
+			for qas in exams.get(bucket, {}).values():
+				for qa in qas:
+					_collect(qa.get("question", ""))
+					_collect(qa.get("answer", ""))
+
+	return words
+
+
 def get_allowed_vocab_for_age(age: int, base_dir: str) -> set[str]:
 	curriculum_path = os.path.join(base_dir, "configs", "school_curriculum_structured_en.json")
 	childes_path = os.path.join(base_dir, "configs", "childes_pre_school.json")
@@ -200,7 +249,7 @@ def get_allowed_vocab_for_age(age: int, base_dir: str) -> set[str]:
 			preschool_words.update(words)
 
 	if age <= 4:
-		return preschool_words
+		return preschool_words | _exam_words_for_age(age, base_dir)
 
 	primary_words = set()
 	for sentence in curriculum_data.get("primary", []):
@@ -208,14 +257,14 @@ def get_allowed_vocab_for_age(age: int, base_dir: str) -> set[str]:
 		primary_words.update(words)
 
 	if age <= 6:
-		return preschool_words | primary_words
+		return (preschool_words | primary_words) | _exam_words_for_age(age, base_dir)
 
 	secondary_words = set()
 	for sentence in curriculum_data.get("secondary", []):
 		words = re.findall(r"[a-zA-ZáéíóúüñÁÉÍÓÚÜÑ_]+", sentence.lower())
 		secondary_words.update(words)
 
-	return preschool_words | primary_words | secondary_words
+	return (preschool_words | primary_words | secondary_words) | _exam_words_for_age(age, base_dir)
 
 
 def run_evaluation(args):
@@ -373,6 +422,7 @@ def run_evaluation(args):
 		"Sin embargo, debes penalizar rigurosamente:\n"
 		"- Respuestas con lenguaje metafórico abstracto o excesivamente complejo para la edad cognitiva dada.\n"
 		f"- Respuestas que correspondan a etapas de desarrollo superiores. Si la edad evaluada es {target_age} años, el niño NO debe responder con palabras de primaria o secundaria (como 'asteroide', 'población', 'cáncer', 'oxígeno', 'espejos', 'infinitos', 'tiempo', 'capital'). Si el alumno usa vocabulario fuera de su rango de edad (como palabras escolares complejas o conceptos de matemáticas avanzadas), la calificación de esa pregunta debe ser castigada a un rango de 0 a 3.\n"
+		"IMPORTANTE: la 'respuesta correcta esperada' de cada pregunta está SIEMPRE exenta del castigo por vocabulario fuera de edad: si la respuesta del alumno coincide con la esperada, o es un sinónimo o equivalente semántico claro de ella, NO apliques ese castigo y califícala con la rúbrica normal de comprensión (una coincidencia exacta merece 10; un sinónimo o equivalente razonable, 8-10 según lo bien que responda a la pregunta).\n"
 		"- Respuestas que contengan palabras de ruido/alucinación aleatoria que no tengan coherencia sintáctica o gramatical en una frase simple.\n\n"
 		"Califica cada respuesta de 0 a 10 y detalla tu motivo en una frase muy corta (máximo 10 palabras).\n"
 		"Debes responder ÚNICAMENTE con un objeto JSON válido que siga exactamente este formato:\n"
