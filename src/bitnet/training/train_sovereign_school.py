@@ -1,5 +1,6 @@
 import json
 import os
+import re
 
 import numpy as np
 import torch
@@ -197,8 +198,8 @@ def run_school_training():
 	# 3. Caché de corpus tokenizado
 	tokenized_cache_path = os.path.join(base_dir, "storage", "datasets", "tokenized_corpus.json")
 	n_stories = 100000
-	corpus_hash = _compute_corpus_hash(base_dir, n_stories)
-	cached = None if args.force_tokenize else _load_tokenized_cache(tokenized_cache_path, corpus_hash)
+	corpus_hash = compute_corpus_hash(base_dir, n_stories)
+	cached = None if args.force_tokenize else load_tokenized_cache(tokenized_cache_path, corpus_hash)
 
 	if cached:
 		print("⚡ Caché tokenizado encontrado — cargando directamente...")
@@ -267,7 +268,7 @@ def run_school_training():
 		tokenized_secondary = [seq for seq in tokenized_secondary if len(seq) >= 2]
 
 		# Guardar caché
-		_save_tokenized_cache(tokenized_cache_path, {
+		save_tokenized_cache(tokenized_cache_path, {
 			"hash": corpus_hash,
 			"tiny_stories": tiny_stories_tokenized,
 			"dialogues": tokenized_dialogues,
@@ -456,6 +457,7 @@ def run_school_training():
 			"target_milestone": target_milestone,
 			"milestones_achieved": milestones_achieved,
 			"curriculum_hash": curriculum_hash,
+			"exam_failures": {},
 		}
 		with open(state_path, "w", encoding="utf-8") as f:
 			json.dump(
@@ -469,6 +471,7 @@ def run_school_training():
 	best_val_loss = state.get("best_val_loss", float("inf")) if os.path.exists(state_path) and not args.reset_state else float("inf")
 	epochs_without_improvement = state.get("epochs_without_improvement", 0) if os.path.exists(state_path) and not args.reset_state else 0
 	neurogenesis_history = state.get("neurogenesis_history", []) if os.path.exists(state_path) and not args.reset_state else []
+	exam_failures = state.get("exam_failures", {})
 	print(f"📊 Plateau monitor: patience={args.patience}, min_delta={args.min_delta}, best_val_loss={best_val_loss:.4f}, epochs_stale={epochs_without_improvement}")
 
 	if current_epoch > max_epochs:
@@ -789,6 +792,7 @@ def run_school_training():
 					"best_val_loss": best_val_loss,
 					"epochs_without_improvement": epochs_without_improvement,
 					"neurogenesis_history": neurogenesis_history,
+					"exam_failures": exam_failures,
 				},
 				sf,
 				indent=4,
