@@ -10,8 +10,8 @@ from src.bitnet.model.modeling_bitnet import BitNet4LayerModel
 from src.bitnet.training.modules.corpus import compute_corpus_hash, load_tokenized_cache, save_tokenized_cache
 from src.bitnet.training.modules.exam_compiler import compile_exam_sequences_for_age
 from src.bitnet.training.modules.partitioner import compile_stage_dataset, partition_corpus_by_mlu
-from src.bitnet.training.modules.stage_config import get_next_dim, get_stage_config, get_stage_info
-from src.bitnet.training.modules.state_manager import EXAM_PAUSE_EXIT_CODE, EvalResult, run_samantha_eval, trigger_neurogenesis
+from src.bitnet.training.modules.stage_config import get_next_dim, get_stage_config
+from src.bitnet.training.modules.state_manager import run_samantha_eval, trigger_neurogenesis
 from src.bitnet.training.modules.strategy import select_strategy
 from src.bitnet.training.modules.tokenization import format_and_tokenize_dialogue, tokenize
 from src.bitnet.vocab.dictionary_tool import SovereignDictionary
@@ -95,10 +95,17 @@ def run_school_training():
 		print(f"⚠️ [GPU-RESERVE] No se pudo registrar la reserva de GPU: {re_err}")
 
 	import argparse
+
 	parser = argparse.ArgumentParser(description="School Training Loop")
 	parser.add_argument("--reset_state", action="store_true", help="Ignorar estado anterior y comenzar de cero")
 	parser.add_argument("--test_mock", action="store_true", help="Simular evaluaciones de Samantha")
-	parser.add_argument("--curriculum_mode", type=str, default="mixed", choices=["mixed", "childes_only", "structured_only"], help="Modo de currículo de entrenamiento")
+	parser.add_argument(
+		"--curriculum_mode",
+		type=str,
+		default="mixed",
+		choices=["mixed", "childes_only", "structured_only"],
+		help="Modo de currículo de entrenamiento",
+	)
 	parser.add_argument("--base_epochs", type=int, default=64, help="Número de épocas base por etapa")
 	parser.add_argument("--stage_scale", type=float, default=0.5, help="Escala de crecimiento de épocas por dificultad")
 	parser.add_argument("--batch_size", type=int, default=64, help="Batch size for training")
@@ -106,17 +113,46 @@ def run_school_training():
 	parser.add_argument("--min_delta", type=float, default=0.01, help="Mejora mínima de val_loss para considerar progreso")
 	parser.add_argument("--force_download", action="store_true", help="Forzar re-descarga de TinyStories desde HF Hub (ignora caché local)")
 	parser.add_argument("--force_tokenize", action="store_true", help="Forzar re-tokenización del corpus (ignora caché local)")
-	parser.add_argument("--force_stage_compile", action="store_true", help="Forzar re-compilación del dataset por etapa (ignora caché local de etapa)")
+	parser.add_argument(
+		"--force_stage_compile", action="store_true", help="Forzar re-compilación del dataset por etapa (ignora caché local de etapa)"
+	)
 	parser.add_argument("--max_epochs_per_run", type=int, default=None, help="Límite de épocas a entrenar en esta ejecución")
-	parser.add_argument("--amp", type=str, default="auto", choices=["auto", "bf16", "off"], help="Mixed precision BF16 vía autocast (RFC-VRAM-001 fase 1). Los pesos maestros y el checkpoint siguen en FP32: --amp off revierte sin conversión alguna. 'auto' = bf16 si la GPU lo soporta")
-	parser.add_argument("--state_dir", type=str, default=None, help="Directorio para estado y checkpoints (default: storage/checkpoints/sovereign_school). Un directorio vacío arranca de cero SIN tocar el run vivo — es la vía para benchmarks/sandboxes; --reset_state no hace falta")
-	parser.add_argument("--seed", type=int, default=None, help="Semilla global (torch/numpy/random) para runs comparables. Default: sin fijar (comportamiento histórico)")
-	parser.add_argument("--compile", action="store_true", help="torch.compile(fullgraph=False) sobre el forward de entrenamiento (RFC-VRAM-001 §4.8, D2). EXPERIMENTAL: vigilar que ∇STE no caiga a cero. El checkpoint se guarda siempre desde el modelo sin compilar")
-	parser.add_argument("--opt8bit", type=str, default="off", choices=["on", "off"], help="Activar estados de optimizador 8-bit vía bitsandbytes (ahorra ~75% VRAM para m/v). Requiere bitsandbytes>=0.44.0. Default: off")
+	parser.add_argument(
+		"--amp",
+		type=str,
+		default="auto",
+		choices=["auto", "bf16", "off"],
+		help="Mixed precision BF16 vía autocast (RFC-VRAM-001 fase 1). Los pesos maestros y el checkpoint siguen en FP32: --amp off revierte sin conversión alguna. 'auto' = bf16 si la GPU lo soporta",
+	)
+	parser.add_argument(
+		"--state_dir",
+		type=str,
+		default=None,
+		help="Directorio para estado y checkpoints (default: storage/checkpoints/sovereign_school). Un directorio vacío arranca de cero SIN tocar el run vivo — es la vía para benchmarks/sandboxes; --reset_state no hace falta",
+	)
+	parser.add_argument(
+		"--seed",
+		type=int,
+		default=None,
+		help="Semilla global (torch/numpy/random) para runs comparables. Default: sin fijar (comportamiento histórico)",
+	)
+	parser.add_argument(
+		"--compile",
+		action="store_true",
+		help="torch.compile(fullgraph=False) sobre el forward de entrenamiento (RFC-VRAM-001 §4.8, D2). EXPERIMENTAL: vigilar que ∇STE no caiga a cero. El checkpoint se guarda siempre desde el modelo sin compilar",
+	)
+	parser.add_argument(
+		"--opt8bit",
+		type=str,
+		default="off",
+		choices=["on", "off"],
+		help="Activar estados de optimizador 8-bit vía bitsandbytes (ahorra ~75% VRAM para m/v). Requiere bitsandbytes>=0.44.0. Default: off",
+	)
 	args, _ = parser.parse_known_args()
 
 	if args.seed is not None:
 		import random as _random
+
 		_random.seed(args.seed)
 		np.random.seed(args.seed)
 		torch.manual_seed(args.seed)
@@ -190,7 +226,7 @@ def run_school_training():
 		curriculum_data = {
 			"preschool": [item["text"] for item in curriculum_data_raw.get("preschool", [])],
 			"primary": [item["text"] for item in curriculum_data_raw.get("primary", [])],
-			"secondary": [item["text"] for item in curriculum_data_raw.get("secondary", [])]
+			"secondary": [item["text"] for item in curriculum_data_raw.get("secondary", [])],
 		}
 
 	print(f"Diálogos cargados: {len(dialogue_list)}")
@@ -208,7 +244,9 @@ def run_school_training():
 		tokenized_preschool_curriculum = cached["preschool_curriculum"]
 		tokenized_primary = cached["primary"]
 		tokenized_secondary = cached["secondary"]
-		print(f"  ✓ {len(tiny_stories_tokenized):,} secuencias TinyStories + {len(tokenized_dialogues):,} diálogos + {len(tokenized_preschool_curriculum):,} preescolar + {len(tokenized_primary):,} primaria + {len(tokenized_secondary):,} secundaria")
+		print(
+			f"  ✓ {len(tiny_stories_tokenized):,} secuencias TinyStories + {len(tokenized_dialogues):,} diálogos + {len(tokenized_preschool_curriculum):,} preescolar + {len(tokenized_primary):,} primaria + {len(tokenized_secondary):,} secundaria"
+		)
 	else:
 		tiny_stories_cache = os.path.join(base_dir, "storage", "datasets", "tiny_stories")
 		os.makedirs(tiny_stories_cache, exist_ok=True)
@@ -236,7 +274,7 @@ def run_school_training():
 		tiny_stories_tokenized = []
 		for i in range(n_stories):
 			text = ts_dataset[i]["text"]
-			sentences = re.split(r'[.!?]+', text)
+			sentences = re.split(r"[.!?]+", text)
 			for sent in sentences:
 				sent = sent.strip()
 				if len(sent) < 5:
@@ -268,17 +306,21 @@ def run_school_training():
 		tokenized_secondary = [seq for seq in tokenized_secondary if len(seq) >= 2]
 
 		# Guardar caché
-		save_tokenized_cache(tokenized_cache_path, {
-			"hash": corpus_hash,
-			"tiny_stories": tiny_stories_tokenized,
-			"dialogues": tokenized_dialogues,
-			"preschool_curriculum": tokenized_preschool_curriculum,
-			"primary": tokenized_primary,
-			"secondary": tokenized_secondary,
-		})
+		save_tokenized_cache(
+			tokenized_cache_path,
+			{
+				"hash": corpus_hash,
+				"tiny_stories": tiny_stories_tokenized,
+				"dialogues": tokenized_dialogues,
+				"preschool_curriculum": tokenized_preschool_curriculum,
+				"primary": tokenized_primary,
+				"secondary": tokenized_secondary,
+			},
+		)
 		print(f"💾 Caché tokenizado guardado en {tokenized_cache_path}")
 		del ts_dataset
 		import gc
+
 		gc.collect()
 
 	# El corpus preescolar principal son las TinyStories tokenizadas
@@ -302,21 +344,19 @@ def run_school_training():
 	print(f"  - 3-4 Años (MLU 6+): {len(gen_3_4)} secuencias")
 
 	# Dividir currículo en mitades
-	primary_half1 = tokenized_primary[:len(tokenized_primary)//2]
-	primary_half2 = tokenized_primary[len(tokenized_primary)//2:]
+	primary_half1 = tokenized_primary[: len(tokenized_primary) // 2]
+	primary_half2 = tokenized_primary[len(tokenized_primary) // 2 :]
 
-	secondary_half1 = tokenized_secondary[:len(tokenized_secondary)//2]
-	secondary_half2 = tokenized_secondary[len(tokenized_secondary)//2:]
+	secondary_half1 = tokenized_secondary[: len(tokenized_secondary) // 2]
 
 	# Porcentaje de diálogos (40% primaria, 50% secundaria)
 	primary_dialogues_total = tokenized_dialogues[num_dialogues : num_dialogues + int(len(tokenized_dialogues) * 0.4)]
 	secondary_dialogues_total = tokenized_dialogues[num_dialogues + int(len(tokenized_dialogues) * 0.4) :]
 
-	primary_dialogues_half1 = primary_dialogues_total[:len(primary_dialogues_total)//2]
-	primary_dialogues_half2 = primary_dialogues_total[len(primary_dialogues_total)//2:]
+	primary_dialogues_half1 = primary_dialogues_total[: len(primary_dialogues_total) // 2]
+	primary_dialogues_half2 = primary_dialogues_total[len(primary_dialogues_total) // 2 :]
 
-	secondary_dialogues_half1 = secondary_dialogues_total[:len(secondary_dialogues_total)//2]
-	secondary_dialogues_half2 = secondary_dialogues_total[len(secondary_dialogues_total)//2:]
+	secondary_dialogues_half1 = secondary_dialogues_total[: len(secondary_dialogues_total) // 2]
 
 	stage_cache_dir = os.path.join(base_dir, "storage", "datasets", "stage_cache")
 	os.makedirs(stage_cache_dir, exist_ok=True)
@@ -472,10 +512,12 @@ def run_school_training():
 	epochs_without_improvement = state.get("epochs_without_improvement", 0) if os.path.exists(state_path) and not args.reset_state else 0
 	neurogenesis_history = state.get("neurogenesis_history", []) if os.path.exists(state_path) and not args.reset_state else []
 	exam_failures = state.get("exam_failures", {})
-	print(f"📊 Plateau monitor: patience={args.patience}, min_delta={args.min_delta}, best_val_loss={best_val_loss:.4f}, epochs_stale={epochs_without_improvement}")
+	print(
+		f"📊 Plateau monitor: patience={args.patience}, min_delta={args.min_delta}, best_val_loss={best_val_loss:.4f}, epochs_stale={epochs_without_improvement}"
+	)
 
 	if current_epoch > max_epochs:
-		print(f"🏆 ¡El currículo escolar soberano completo (Ages 0-8) ya está completado con éxito (época {current_epoch-1})!")
+		print(f"🏆 ¡El currículo escolar soberano completo (Ages 0-8) ya está completado con éxito (época {current_epoch - 1})!")
 		return
 
 	# Inicializar modelo
@@ -518,7 +560,6 @@ def run_school_training():
 
 	train_model = _maybe_compile(model)
 
-	seq_len = 128
 	batch_size = args.batch_size
 
 	def get_stage_info(ep):
@@ -528,13 +569,13 @@ def run_school_training():
 		return stage_config[-1]["stage_idx"], stage_config[-1]["name"]
 
 	active_stage_idx = -1
-	x_train = None
 	x_val = None
 
-	epochs_trained = 0
-	for epoch in range(current_epoch, max_epochs + 1):
+	for epochs_trained, epoch in enumerate(range(current_epoch, max_epochs + 1)):
 		if args.max_epochs_per_run is not None and epochs_trained >= args.max_epochs_per_run:
-			print(f"🛑 [PAUSA PLANIFICADA] Alcanzado el límite de {args.max_epochs_per_run} épocas por ejecución. Deteniendo para guardar checkpoint.")
+			print(
+				f"🛑 [PAUSA PLANIFICADA] Alcanzado el límite de {args.max_epochs_per_run} épocas por ejecución. Deteniendo para guardar checkpoint."
+			)
 			break
 
 		# Cargar/procesar dataset para la etapa
@@ -542,13 +583,13 @@ def run_school_training():
 		if stage_idx != active_stage_idx:
 			print(f"\n🎒 [CAMBIO DE ETAPA] Época {epoch}: Compilando dataset para la etapa {stage_name}...")
 			general_data, curriculum_data = compile_data_for_stage(stage_idx)
-			
+
 			train_gen, val_gen = compile_stage_dataset(general_data, seq_len=128)
 			train_curr, val_curr = compile_stage_dataset(curriculum_data, seq_len=128)
-			
+
 			x_train_gen = torch.tensor(train_gen, dtype=torch.long)
 			x_train_curr = torch.tensor(train_curr, dtype=torch.long)
-			
+
 			# Combine validation directly
 			val_seqs = val_gen + val_curr
 			x_val = torch.tensor(val_seqs, dtype=torch.long) if len(val_seqs) > 0 else None
@@ -562,24 +603,22 @@ def run_school_training():
 		if epoch <= 10:
 			current_lr = min_lr + (peak_lr - min_lr) * (epoch - 1) / 9.0
 			for g in optimizer.param_groups:
-				g['lr'] = current_lr
+				g["lr"] = current_lr
 			print(f"📈 [WARMUP] Época {epoch}: Estableciendo learning rate a {current_lr:.2e}")
 		else:
 			import math
+
 			stage_idx, stage_name = get_stage_info(epoch)
 			current_stage_conf = stage_config[stage_idx]
 			stage_epochs = current_stage_conf["epochs"]
 			stage_elapsed = epoch - current_stage_conf["start_epoch"]
 
-			if stage_idx == 0:
-				progress = max(0.0, min(1.0, (epoch - 10) / (stage_epochs - 10)))
-			else:
-				progress = max(0.0, min(1.0, stage_elapsed / stage_epochs))
+			progress = max(0.0, min(1.0, (epoch - 10) / (stage_epochs - 10))) if stage_idx == 0 else max(0.0, min(1.0, stage_elapsed / stage_epochs))
 
 			cosine_decay = 0.5 * (1.0 + math.cos(math.pi * progress))
 			current_lr = min_lr + (peak_lr - min_lr) * cosine_decay
 			for g in optimizer.param_groups:
-				g['lr'] = current_lr
+				g["lr"] = current_lr
 
 		# Annealing de temperatura Gumbel
 		tau = max(0.1, 1.0 - (1.0 - 0.1) * ((epoch - 1) / 127.0))
@@ -590,13 +629,13 @@ def run_school_training():
 			torch.cuda.reset_peak_memory_stats()
 
 		# Subsamplear solo general y concatenar con currículo/exámenes completos
-		MAX_GEN_SEQS_PER_EPOCH = 15000
-		if x_train_gen.size(0) > MAX_GEN_SEQS_PER_EPOCH:
-			subsample_idx = torch.randperm(x_train_gen.size(0))[:MAX_GEN_SEQS_PER_EPOCH]
+		max_gen_seqs_per_epoch = 15000
+		if x_train_gen.size(0) > max_gen_seqs_per_epoch:
+			subsample_idx = torch.randperm(x_train_gen.size(0))[:max_gen_seqs_per_epoch]
 			x_gen_sub = x_train_gen[subsample_idx]
 		else:
 			x_gen_sub = x_train_gen
-			
+
 		x_epoch = torch.cat([x_gen_sub, x_train_curr], dim=0)
 		permutation = torch.randperm(x_epoch.size(0))
 
@@ -689,7 +728,9 @@ def run_school_training():
 		ste_grad = model.core_layers[0].attn.q_proj.weight.grad
 		ste_txt = f" | ∇STE: {ste_grad.norm().item():.3e}" if ste_grad is not None else ""
 
-		print(f"  [Época {epoch:2d}] Loss: {epoch_loss:.4f} | Val Loss: {val_loss:.4f} | lr: {optimizer.param_groups[0]['lr']:.2e} | tau: {tau:.4f} | dim: {model.hidden_dim}{vram_txt}{ste_txt}")
+		print(
+			f"  [Época {epoch:2d}] Loss: {epoch_loss:.4f} | Val Loss: {val_loss:.4f} | lr: {optimizer.param_groups[0]['lr']:.2e} | tau: {tau:.4f} | dim: {model.hidden_dim}{vram_txt}{ste_txt}"
+		)
 
 		# ── Neurogénesis dirigida por dolor (plateau de val_loss) ──
 		if x_val is not None and val_loss > 0:
@@ -702,24 +743,39 @@ def run_school_training():
 			if epochs_without_improvement >= args.patience:
 				next_dim = get_next_dim(model.hidden_dim, stage_config, current_epoch=epoch)
 				if next_dim is not None:
-					print(f"\n🧬 [PLATEAU DETECTADO] val_loss estancada {args.patience} épocas (best={best_val_loss:.4f}) → neurogénesis {model.hidden_dim} → {next_dim}")
+					print(
+						f"\n🧬 [PLATEAU DETECTADO] val_loss estancada {args.patience} épocas (best={best_val_loss:.4f}) → neurogénesis {model.hidden_dim} → {next_dim}"
+					)
 					old_dim = model.hidden_dim
 					model, optimizer = trigger_neurogenesis(
-						model, optimizer, next_dim, glyphs, device,
-						current_checkpoint_path, state_path, epoch,
-						milestones_achieved, target_milestone,
-						strategy=strategy
+						model,
+						optimizer,
+						next_dim,
+						glyphs,
+						device,
+						current_checkpoint_path,
+						state_path,
+						epoch,
+						milestones_achieved,
+						target_milestone,
+						strategy=strategy,
 					)
 					train_model = _maybe_compile(model)
-					neurogenesis_history.append({
-						"epoch": epoch, "old_dim": old_dim, "new_dim": next_dim,
-						"val_loss_at_trigger": val_loss,
-					})
+					neurogenesis_history.append(
+						{
+							"epoch": epoch,
+							"old_dim": old_dim,
+							"new_dim": next_dim,
+							"val_loss_at_trigger": val_loss,
+						}
+					)
 					# F3: Reset plateau monitor — fresh window for new dim
 					best_val_loss = float("inf")
 					epochs_without_improvement = 0
 				else:
-					print(f"  ⚠️ [PLATEAU] val_loss estancada {epochs_without_improvement} épocas pero ya en dim máximo para esta etapa ({model.hidden_dim})")
+					print(
+						f"  ⚠️ [PLATEAU] val_loss estancada {epochs_without_improvement} épocas pero ya en dim máximo para esta etapa ({model.hidden_dim})"
+					)
 
 		# Muestreo cualitativo en consola (coherencia semántica) con logit mask de edad
 		print("  🔍 [Muestra cualitativa] Generación del modelo:")
@@ -731,8 +787,28 @@ def run_school_training():
 		eval_age = current_stage_conf["age"] if current_stage_conf["age"] is not None else 2
 
 		from scripts.evaluate_samantha_age import get_allowed_vocab_for_age
+
 		allowed_vocab = get_allowed_vocab_for_age(eval_age, base_dir)
-		special_tokens = {"yo", "tú", "<pad>", "<unk>", "hola", "mamá", "papá", "nene", "nena", "miau", "guau", "agua", "fuego", "sí", "no", "bien", "mal", "pan"}
+		special_tokens = {
+			"yo",
+			"tú",
+			"<pad>",
+			"<unk>",
+			"hola",
+			"mamá",
+			"papá",
+			"nene",
+			"nena",
+			"miau",
+			"guau",
+			"agua",
+			"fuego",
+			"sí",
+			"no",
+			"bien",
+			"mal",
+			"pan",
+		}
 		allowed_mask = torch.zeros(vocab_size, dtype=torch.bool, device=device)
 		for w, idx in word_to_idx.items():
 			if w in allowed_vocab or w in special_tokens or w.lower() in allowed_vocab:
@@ -803,7 +879,7 @@ def run_school_training():
 			eval_age = current_stage_conf["age"]
 			milestone_name = f"{eval_age}_years"
 			print(f"\n🎓 [EXAMEN DE GRADUACIÓN] Iniciando evaluación con la Profesora Samantha para el hito de {eval_age} años...")
-			model, _ = run_samantha_eval(  # devuelve el modelo (puede volver de CPU)
+			eval_result = run_samantha_eval(  # devuelve el modelo (puede volver de CPU)
 				model=model,
 				current_checkpoint_path=current_checkpoint_path,
 				target_milestone=milestone_name,
@@ -818,8 +894,8 @@ def run_school_training():
 				epoch=epoch,
 				stage_conf=current_stage_conf,
 			)
+			model = eval_result.model
 			train_model = _maybe_compile(model)
-		epochs_trained += 1
 
 	# Guardar modelo final definitivo
 	final_path = os.path.join(save_dir, "model_final.pt")
