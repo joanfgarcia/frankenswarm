@@ -2,6 +2,28 @@
 
 ## [Unreleased]
 
+### 🔴 DL-004 — La "graduación" de Bit v2 (K-65P) se invalida y los instrumentos se reconstruyen (2026-08-03)
+
+- **[NEGATIVE RESULT] La run del 2-ago era un smoke-test, no una graduación**:
+  hitos por cronómetro sin examen, corpus de 94 muestras con traducción semántica
+  vacía, loss con 96% de padding sin `ignore_index` (la acc 97.32% quedaba a ~0,8
+  puntos del predictor trivial de `<pad>`), neurogénesis disparada sobre
+  `val_loss=Infinity`, y una suite adversarial que validaba la sintaxis de la
+  ENTRADA en lugar de la salida del modelo. Material en cuarentena:
+  `storage/checkpoints/quarantine/bit_v2_smoketest_20260802/`. Detalle: DL-004.
+- **[NEW] `scripts/generate_k65p_corpus.py`** — corpus composicional válido por
+  construcción (4.500 expresiones, tiers alineados con las máscaras de etapa) +
+  holdout OOD real por pares cabeza-argumento nunca vistos.
+- **[FIX] `train_sovereign_school_k65p.py`** — `ignore_index=<pad>`, assert
+  máscara↔corpus, plateau solo con métricas finitas, split barajado, optimizer
+  recargado, y **examen de hito con umbrales congelados** (gen_valid≥0.60 +
+  val_loss ≤ bigrama−0.10; suspenso = repetición de curso + pausa rc=78). Fix
+  del tokenizador que partía `grupo` en `g`+`rupo` y perdía el marcador `G`.
+- **[FIX] `run_adversarial_suite.py`** — evalúa la SALIDA generada sobre el
+  holdout OOD, compara contra baselines triviales (uniforme, bigrama) y su
+  veredicto es condicional (puede suspender, rc=2). `bit_metrics.py` deja de
+  comparar cross-entropies de vocabularios distintos y cuenta parámetros reales.
+
 ### 🎓 La batería vuelve a examinar en el idioma del alumno (2026-07-28)
 - **[FIX] `milestone_battery.py` — exam data v2-en**: los 20 pares de gramática
   y los 8 prompts de producción seguían en castellano (v1, congelados el 03-jul)

@@ -284,27 +284,27 @@ def net2wider_model(
 			old_pe = old_model.glyph_embedding.prime_embeddings.data
 			new_pe = old_pe[:, g]
 			noise = torch.randn_like(new_pe) * noise_std
-			new_pe = new_pe + noise * is_clone.unsqueeze(0)
+			new_pe = new_pe + noise * is_clone.unsqueeze(0).to(new_pe.device)
 			new_model.glyph_embedding.prime_embeddings.copy_(new_pe)
 
 			transfer_state(
 				old_model.glyph_embedding.prime_embeddings,
 				new_model.glyph_embedding.prime_embeddings,
 				lambda x: x[:, g],
-				lambda x, power: x / (copy_count[g].unsqueeze(0) ** power)
+				lambda x, power: x / (copy_count[g].unsqueeze(0).to(x.device) ** power)
 			)
 		else:
 			old_w = old_model.inbound_proj.weight.data
 			new_w = old_w[g, :]
 			noise = torch.randn_like(new_w) * noise_std
-			new_w = new_w + noise * is_clone.unsqueeze(1)
+			new_w = new_w + noise * is_clone.unsqueeze(1).to(new_w.device)
 			new_model.inbound_proj.weight.copy_(new_w)
 
 			transfer_state(
 				old_model.inbound_proj.weight,
 				new_model.inbound_proj.weight,
 				lambda x: x[g, :],
-				lambda x, power: x / (copy_count[g].unsqueeze(1) ** power)
+				lambda x, power: x / (copy_count[g].unsqueeze(1).to(x.device) ** power)
 			)
 
 			if old_model.inbound_proj.bias is not None:
@@ -321,28 +321,28 @@ def net2wider_model(
 			old_pos = old_model.pos_embedding.data
 			new_pos = old_pos[:, :, g]
 			noise = torch.randn_like(new_pos) * noise_std
-			new_pos = new_pos + noise * is_clone.view(1, 1, -1)
+			new_pos = new_pos + noise * is_clone.view(1, 1, -1).to(new_pos.device)
 			new_model.pos_embedding.copy_(new_pos)
 
 			transfer_state(
 				old_model.pos_embedding,
 				new_model.pos_embedding,
 				lambda x: x[:, :, g],
-				lambda x, power: x / (copy_count[g].view(1, 1, -1) ** power)
+				lambda x, power: x / (copy_count[g].view(1, 1, -1).to(x.device) ** power)
 			)
 
 		if getattr(old_model, "resonance_clock", None) is not None:
 			old_clock = old_model.resonance_clock.data
 			new_clock = old_clock[:, :, g]
 			noise = torch.randn_like(new_clock) * noise_std
-			new_clock = new_clock + noise * is_clone.view(1, 1, -1)
+			new_clock = new_clock + noise * is_clone.view(1, 1, -1).to(new_clock.device)
 			new_model.resonance_clock.copy_(new_clock)
 
 			transfer_state(
 				old_model.resonance_clock,
 				new_model.resonance_clock,
 				lambda x: x[:, :, g],
-				lambda x, power: x / (copy_count[g].view(1, 1, -1) ** power)
+				lambda x, power: x / (copy_count[g].view(1, 1, -1).to(x.device) ** power)
 			)
 
 		# --- C. Emotion Proj ---

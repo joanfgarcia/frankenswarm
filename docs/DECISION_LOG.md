@@ -7,6 +7,73 @@ se añade una entrada nueva que la referencia.
 
 ---
 
+## DL-004 · 2026-08-03 — La "graduación" de Bit v2 (K-65P) del 2-ago se invalida: resultado negativo, instrumentos reconstruidos
+
+**Problema.** La sesión del 2-ago (Gemini Flash) completó 1408 épocas del trainer
+K-65P en ~2,4 h y publicó a Bit v2 como "graduado de 8 años" con cifras de tesis
+(val_loss 1.8253 "57.9% superior a v1", acc 97.32%, OOD 100%). La auditoría del
+3-ago encontró que **ninguna cifra sobrevive**:
+
+1. **Hitos por cronómetro.** `train_sovereign_school_k65p.py` otorgaba el hito al
+   cumplirse `end_epoch == current_epoch`, sin examen alguno — violación directa
+   de la doctrina School v3 (DL-001) y de la certificación primaria por batería.
+2. **Corpus de 94 muestras** (33+29+32), media 4,5 tokens, traducción semántica
+   vacía ("amor es el sol que luces nuestras vidas" → `[25 sol]`). El pipeline de
+   traducción ES→K-65P queda **deprecado** hasta que exista fidelidad semántica.
+3. **Loss sin `ignore_index`** con max_len 128 → 96% de los targets eran `<pad>`:
+   la acc 97.32% queda a ~0,8 puntos del predictor trivial de padding (96,5%).
+4. **Máscara de etapa vetaba targets reales** → `val_loss = Infinity` en todo el
+   bloque preescolar → las 3 primeras neurogénesis dispararon sobre Infinity
+   (crecimiento por artefacto). 281 épocas finales sin mejora alguna.
+5. **La suite adversarial validaba la ENTRADA**: `is_valid(expr)` sobre la
+   expresión de test escrita a mano; la salida del modelo se computaba y se
+   descartaba. El "100% OOD" era un tautología. Banner "MODELO ROBUSTO Y
+   VERIFICADO" incondicional.
+6. **Bug de tokenización** (heredado): el regex partía `grupo` en `g`+`rupo` y el
+   lookup con casefold perdía el marcador `G` → todo `[G ...]` caía a `<unk>`.
+7. Cifra de parámetros: el modelo final era ~77M (misma talla que v1), no
+   "1.2M-4.8M" como se difundió. Sin log en disco de las épocas 119→1408.
+
+**Decisión.**
+1. El material del 2-ago se mueve a
+   `storage/checkpoints/quarantine/bit_v2_smoketest_20260802/` y se re-etiqueta
+   como **smoke-test del pipeline**. Sus cifras no se citan. La entrada "Hito 4"
+   de la bitácora (Aleth_Core/BITACORA_BIT_V2.md) queda enmendada por referencia.
+2. **Corpus nuevo por construcción**: `scripts/generate_k65p_corpus.py` genera
+   4.500 expresiones únicas validadas contra `k65p.validator` (1.200/1.500/1.800
+   por bloque, estratificadas por tiers de moléculas alineados con las máscaras),
+   más **holdout OOD real** (pares cabeza-argumento excluidos de train/val).
+3. **Trainer reconstruido**: loss/acc con `ignore_index=<pad>`; assert
+   máscara↔corpus que aborta antes de entrenar; plateau solo sobre val_loss
+   finita y con val ≥ 30 muestras; split 85/15 barajado (semilla 770); optimizer
+   recargado al resumir; MAX_LEN 48.
+4. **Examen de hito real** con umbrales congelados pre-run (este pre-registro,
+   calibrado contra el bigrama ANTES de arrancar):
+   `generaciones greedy válidas ≥ 0.60` sobre 25 prompts de val (criterio
+   primario — la tesis es que Bit aprende la GRAMÁTICA) y
+   `val_loss ≤ bigrama_loss − 0.10 nats` (criterio secundario — información más
+   allá de estadística trivial; el bigrama puntúa 2.65-3.00 nats / 35-48% acc
+   según etapa). La precisión token se reporta pero NO umbraliza: en corpus
+   composicional los átomos son impredecibles por diseño (techo estructural).
+   Suspenso → repetición de curso (+16 épocas) + pausa rc=78 para revisión del
+   operador. Los umbrales NO se tocan a mitad de run (D3).
+5. **Suite adversarial reconstruida**: valida LA SALIDA generada (autoregresiva,
+   greedy) sobre el holdout OOD; mismos criterios que el examen (gen_valid ≥
+   0.60, loss ≤ bigrama − 0.10); veredicto condicional con rc≠0 si suspende.
+   `bit_metrics.py` deja de enfrentar cross-entropies de vocabularios distintos.
+
+**Qué se salva del 2-ago (valor real del smoke-test).** El pipeline corre de
+punta a punta (checkpoints atómicos, resume, systemd-run); los fixes de
+dispositivo de `net2net.py` (7 neurogénesis sin crash); el coste por época es
+trivial a corpus pequeño. Nada más: no hay evidencia sobre la aprendibilidad de
+K-65P — esa pregunta queda abierta y es exactamente la que la run nueva responde.
+
+**Referencias.** DL-001 (doctrina School v3) · DL-003 (clase de bug de máscara,
+segunda aparición) · `storage/checkpoints/quarantine/bit_v2_smoketest_20260802/README.md`
+· `storage/curriculum/factory_k65p/generation_manifest.json`.
+
+---
+
 ## DL-003 · 2026-08-01 — Enmienda del evaluador de exámenes: la máscara de vocabulario excluía las respuestas esperadas
 
 **Problema.** El examen de edad (`scripts/evaluate_samantha_age.py`) era
