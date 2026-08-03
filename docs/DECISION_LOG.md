@@ -7,6 +7,50 @@ se añade una entrada nueva que la referencia.
 
 ---
 
+## DL-006 · 2026-08-03 — Protocolo adaptativo: la edad se mide en hitos superados, no en épocas; y nace el brazo Bit v0 (embedding estándar)
+
+**Problema.** El calendario de v1 (1408 épocas fijas) aplicado a v2 sobreentrena
+por construcción: v2 alcanza su óptimo de generalización en ~10-15 épocas por
+etapa y las ~270 restantes degradan el val (2.32 → 3.39 en la run DL-005) mientras
+la neurogénesis por plateau le regala capacidad que invierte en memorizar.
+Además, "mismas épocas" nunca fue "mismo tratamiento" entre tareas de escalas
+distintas: el confound estaba en el diseño original, no en la corrección.
+
+**Decisión (ratificada por el operador).**
+1. **Protocolo adaptativo, idéntico para todos los brazos** — lo constante es la
+   regla pedagógica, no el calendario: cada etapa entrena hasta plateau
+   (`patience=15`, tope de seguridad 200 ép.); el examen de hito se hace sobre el
+   **mejor checkpoint** de la etapa (no el último, que ya derrapó); aprobado →
+   avanza desde ese mejor checkpoint; suspenso → **neurogénesis solo como
+   remediación** (hasta el techo de dim de la etapa) y repetición; sin techo →
+   pausa rc=78. Umbrales de examen DL-004 intactos.
+2. **Brazo Bit v0 (`--embedding standard`)**: tabla one-hot congelada +
+   proyecciones entrenables ≡ embedding estándar entrenado desde cero (el
+   enfoque actual de la industria), mismo corpus/escuela/exámenes que v2. La
+   matriz pasa a 2×2: {embedding: glyph, standard} × {lenguaje: K-65P, inglés};
+   el brazo control v1-inglés bajo estas mismas reglas queda planificado.
+3. Comparación entre brazos SOLO por métricas normalizadas: épocas-hasta-hito,
+   params-al-aprobar, margen sobre su propio bigrama, gen_valid OOD.
+
+**Evidencia (sandbox, seed 770, corpus idéntico).**
+- **Bit v2 (glyph): GRADUADO 7/7 hitos en 157 épocas, todo a 128d (1,26M
+  params), cero suspensos** — gen_valid 0.80-1.00, val 2.14-2.34 vs oráculo
+  2.09. El calendario clásico usaba 1408 épocas y crecía a 1024d (77M) para
+  esta misma tarea: 9× más épocas y 61× más parámetros sin necesidad.
+- **Bit v0 (standard): 6/7 en 148 épocas**, mejor val_loss que v2 en todas las
+  etapas (2.00-2.17 — ajusta mejor la distribución), pero **suspendió 8_years
+  por gen_valid 0.52 < 0.60** justo en la etapa de anidamiento profundo y
+  conectores; la remediación (128→256d) reanudó y mejora. Conjetura de una
+  semilla, pendiente de réplica: *el prior composicional de los glifos compra
+  robustez gramatical generativa; el embedding libre compra ajuste
+  distribucional.* Exactamente la disyuntiva que la tesis quiere medir.
+
+**Referencias.** DL-004 (umbrales congelados) · DL-005 (fix de glifos) ·
+`train_sovereign_school_k65p.py` (`--embedding`, protocolo) · runner
+`train_school_k65p.sh` (`EMBEDDING`, `STATE_DIR`).
+
+---
+
 ## DL-005 · 2026-08-03 — El glifo cero hacía la sintaxis inaprendible: firmas ternarias para tokens estructurales y fin del aliasing símbolo/dígito
 
 **Problema.** La primera run con instrumentos DL-004 suspendió el examen de

@@ -1,26 +1,29 @@
-"""Entrenador Soberano de Bit v2 (Formación Nativa K-65P) — Escuela v3, instrumentos DL-004.
+"""Entrenador Soberano de Bit sobre K-65P — Escuela v3, protocolo adaptativo DL-006.
 
-Entrena a Bit v2 sobre expresiones K-65P generadas composicionalmente
-(storage/curriculum/factory_k65p/<stage>.jsonl), aplicando:
-- Curriculum-Gated Softmax (logit_mask por etapa) con ASSERT de consistencia
-  máscara↔corpus: ningún target real puede estar vetado (bug raíz de DL-004).
-- Loss y precisión con ignore_index=<pad> (el padding no puntúa).
-- Neurogénesis dirigida por plateau SOLO sobre val_loss finita.
-- Examen de hito (gate real, umbrales congelados pre-run): un hito NO se
-  otorga por cronómetro; exige val_loss finita, precisión token (sin pads)
-  y tasa de generaciones sintácticamente válidas. Suspenso → repetición de
-  curso (retention) + pausa con exit code 78 para revisión del operador.
-- Checkpoints atómicos por época con estado del optimizer RECARGADO al resumir.
+Brazos experimentales sobre el MISMO corpus, escuela y exámenes:
+- --embedding glyph    → Bit v2 (embedding composicional de primos, GlyphEmbedding)
+- --embedding standard → Bit v0 (tabla one-hot congelada + proyecciones entrenables,
+                         matemáticamente equivalente a nn.Embedding + cabeza lineal:
+                         el enfoque estándar actual)
 
-Umbrales de examen congelados (pre-registro DL-004, 2026-08-03 — NO tocar a mitad de run):
-	EXAM_MIN_GEN_VALID = 0.60   (fracción de generaciones greedy válidas según k65p.validator;
-	                             criterio primario: la tesis es que Bit aprende la GRAMÁTICA)
-	EXAM_BIGRAM_MARGIN = 0.10   (val_loss del modelo debe ser ≤ bigrama_loss − margen;
-	                             criterio secundario: información más allá de estadística trivial)
-	EXAM_N_PROMPTS = 25         (prefijos de val usados como prompts)
-La precisión next-token (sin pads) se REPORTA pero no umbraliza: en un corpus
-composicional los átomos concretos son impredecibles por diseño (techo estructural
-~50-65%; el bigrama ya puntúa 35-48%), así que un umbral absoluto mediría ruido.
+Protocolo adaptativo (DL-006 — la edad se mide en hitos superados, no en épocas):
+- Cada etapa entrena HASTA PLATEAU (patience épocas sin mejora de val_loss) o hasta
+  el tope de seguridad (max_stage_epochs). El calendario fijo de v1 (1408 épocas)
+  queda retirado para este brazo: sobreentrenaba por construcción (DL-005 §evidencia).
+- Al plateau, el examen de hito se hace sobre el MEJOR checkpoint de la etapa
+  (best-val), no sobre el último (que ya derrapó).
+- Aprobado → avanza de etapa DESDE el mejor checkpoint. Suspenso → neurogénesis
+  como remediación (si el techo de dim de la etapa lo permite) y repite; sin techo
+  disponible → pausa rc=78 para revisión del operador.
+- La neurogénesis ya NO se dispara por aburrimiento a mitad de etapa: solo como
+  respuesta a un examen suspendido. (En v2 el plateau significa "corpus digerido",
+  no "necesito más neuronas"; dárselas solo aceleraba la memorización.)
+
+Umbrales de examen congelados (pre-registro DL-004, intactos):
+	EXAM_MIN_GEN_VALID = 0.60   (generaciones greedy válidas según k65p.validator)
+	EXAM_BIGRAM_MARGIN = 0.10   (val_loss ≤ bigrama_loss − margen)
+La precisión next-token se reporta pero no umbraliza (techo estructural en corpus
+composicional; el oráculo del generador marca 2.09 nats/token en preescolar).
 """
 
 import argparse
@@ -55,7 +58,7 @@ except ImportError:
 
 from src.bitnet.growth.net2net import net2wider_model
 from src.bitnet.model.modeling_bitnet import BitNet4LayerModel
-from src.bitnet.training.modules.stage_config import get_next_dim, get_stage_config
+from src.bitnet.training.modules.stage_config import get_stage_config
 
 DEFAULT_STATE_DIR = base_dir / "storage" / "checkpoints" / "sovereign_school_k65p"
 
@@ -63,26 +66,17 @@ EXAM_PAUSE_EXIT_CODE = 78
 EXAM_MIN_GEN_VALID = 0.60
 EXAM_BIGRAM_MARGIN = 0.10
 EXAM_N_PROMPTS = 25
-RETENTION_EPOCHS = 16
 MAX_LEN = 48
-MIN_VAL_SAMPLES_FOR_GROWTH = 30
 
+# Solo nombres, edades y techos de dim; los rangos de épocas del calendario v1 se ignoran (DL-006).
 STAGE_CONFIG = get_stage_config(base_epochs=64, stage_scale=0.5)
+ALL_DIMS = sorted({c["dim"] for c in STAGE_CONFIG})
 
-
-def get_stage_info_for_epoch(epoch: int) -> dict:
-	for cfg in STAGE_CONFIG:
-		if cfg["start_epoch"] <= epoch <= cfg["end_epoch"]:
-			return cfg
-	return STAGE_CONFIG[-1]
-
-
-# Firmas ternarias (trit −1) para los tokens estructurales. Sin esto, los seis
-# especiales comparten el glifo todo-ceros → embedding CERO idéntico → el modelo
-# no puede distinguir '[' de ']' ni a la entrada ni a la salida: la sintaxis es
-# inaprendible por construcción (hallazgo DL-005, destapado por el examen de hito).
-# <pad> conserva el glifo cero a propósito: jamás es target (ignore_index) y la
-# generación para por balance de corchetes, no por emitir pad.
+# Firmas ternarias (trit −1) para los tokens estructurales (DL-005). Sin esto los
+# seis especiales comparten el glifo todo-ceros → embedding CERO idéntico → '[' y
+# ']' indistinguibles: sintaxis inaprendible por construcción. <pad> conserva el
+# glifo cero a propósito: jamás es target (ignore_index) y la generación para por
+# balance de corchetes, no por emitir pad.
 STRUCT_TRITS = {"<unk>": 4, "<stop>": 3, "[": 0, "]": 1, "G": 2}
 
 
@@ -97,8 +91,7 @@ def build_k65p_vocab_and_glyphs() -> tuple[dict[str, int], dict[int, str], np.nd
 		glyphs_list.append(g)
 
 	# Primos SOLO en forma canónica (dígito). La forma símbolo compartía glifo
-	# idéntico con el dígito → logits empatados y precisión estructuralmente ~0
-	# (aliasing DL-005). El corpus canónico usa dígitos; los símbolos sobraban.
+	# idéntico con el dígito → logits empatados (aliasing DL-005).
 	for pid, _row in enumerate(PRIMES):
 		g_sym = [0] * N_PRIMES
 		g_sym[pid] = 1
@@ -123,6 +116,36 @@ def build_k65p_vocab_and_glyphs() -> tuple[dict[str, int], dict[int, str], np.nd
 	glyph_table = np.array(final_glyphs, dtype=np.float32)
 
 	return word_to_idx, idx_to_word, glyph_table
+
+
+def build_model(embedding_mode: str, hidden_dim: int, glyph_table: np.ndarray, num_layers: int = 6) -> BitNet4LayerModel:
+	"""Fábrica de los brazos experimentales: v2 (glyph) y v0 (standard)."""
+	if embedding_mode == "glyph":
+		return BitNet4LayerModel(
+			use_glyphs=True,
+			glyph_table=glyph_table,
+			hidden_dim=hidden_dim,
+			num_layers=num_layers,
+			use_pos_embedding=True,
+			is_causal=True,
+			max_seq_len=128,
+		)
+	if embedding_mode == "standard":
+		# Tabla one-hot CONGELADA (buffer) + inbound/outbound entrenables ≡ embedding
+		# estándar entrenado desde cero (cada token = una columna libre de inbound_proj)
+		# con cabeza de salida lineal. La doctrina EXP_005b (tabla congelada) se cumple
+		# trivialmente: la identidad no tiene nada que aprender.
+		vocab_size = glyph_table.shape[0]
+		return BitNet4LayerModel(
+			vocab_embeddings=np.eye(vocab_size, dtype=np.float32),
+			use_glyphs=False,
+			hidden_dim=hidden_dim,
+			num_layers=num_layers,
+			use_pos_embedding=True,
+			is_causal=True,
+			max_seq_len=128,
+		)
+	raise ValueError(f"embedding_mode desconocido: {embedding_mode!r}")
 
 
 def tokenize_k65p(text: str, word_to_idx: dict[str, int], max_len: int = MAX_LEN) -> list[int]:
@@ -231,11 +254,7 @@ def assert_mask_covers_dataset(
 	stage_name: str,
 	pad_idx: int,
 ) -> None:
-	"""Gate DL-004: la máscara de etapa jamás puede vetar un target real del corpus.
-
-	El bug raíz de la run del 2-ago: targets con logit −inf → loss infinita →
-	neurogénesis disparada por artefacto. Aquí se aborta ANTES de entrenar.
-	"""
+	"""Gate DL-004: la máscara de etapa jamás puede vetar un target real del corpus."""
 	banned = (logit_mask == float("-inf")).nonzero(as_tuple=True)[0]
 	banned_set = set(banned.tolist())
 	for ds in datasets:
@@ -244,8 +263,7 @@ def assert_mask_covers_dataset(
 		if conflict:
 			words = sorted(idx_to_word[i] for i in conflict)
 			print(f"✗ INCONSISTENCIA MÁSCARA↔CORPUS en etapa '{stage_name}': "
-				f"los tokens {words} aparecen en el corpus pero la máscara los veta. "
-				f"Regenera el corpus con los tiers correctos o corrige la máscara. Abortando.")
+				f"los tokens {words} aparecen en el corpus pero la máscara los veta. Abortando.")
 			sys.exit(1)
 
 
@@ -261,7 +279,7 @@ def greedy_generate(
 	open_idx: int | None = None,
 	close_idx: int | None = None,
 ) -> list[int]:
-	"""Decodificación greedy autoregresiva. Para al cerrar el árbol ([...] balanceado), en <stop>/<pad> o al agotar longitud."""
+	"""Decodificación greedy autoregresiva. Para al cerrar el árbol, en <stop>/<pad> o al agotar longitud."""
 	ids = list(prompt_ids)
 	balance = sum(1 if i == open_idx else -1 if i == close_idx else 0 for i in ids)
 	for _ in range(max_new_tokens):
@@ -350,7 +368,7 @@ def run_milestone_exam(
 	batch_size,
 	milestone: str,
 ) -> dict:
-	"""Examen de hito con umbrales congelados. Devuelve el acta del examen."""
+	"""Examen de hito con umbrales congelados (DL-004). Devuelve el acta del examen."""
 	pad_idx = word_to_idx["<pad>"]
 	val_loss, token_acc = evaluate_model(model, val_dataset, logit_mask, vocab_size, pad_idx, batch_size)
 	bigram_loss, bigram_acc = bigram_baseline(train_dataset.cpu(), val_dataset.cpu(), vocab_size, pad_idx)
@@ -395,19 +413,9 @@ def run_milestone_exam(
 	}
 
 
-def trigger_k65p_neurogenesis(model, optimizer, new_dim, glyph_table, device):
-	"""Amplía la dimensión oculta del modelo vía Net2WiderNet preservando funciones aprendidas."""
-	print(f"\n🧬 [NEUROGÉNESIS Net2WiderNet] Ampliando dimensión oculta: {model.hidden_dim} ➔ {new_dim}d...")
-
-	new_model = BitNet4LayerModel(
-		use_glyphs=True,
-		glyph_table=glyph_table,
-		hidden_dim=new_dim,
-		num_layers=len(model.core_layers),
-		use_pos_embedding=True,
-		is_causal=True,
-		max_seq_len=128,
-	).cpu()
+def trigger_k65p_neurogenesis(model, optimizer, new_dim, device):
+	"""Amplía la dimensión oculta vía Net2WiderNet preservando funciones (ambos modos de embedding)."""
+	print(f"\n🧬 [NEUROGÉNESIS Net2WiderNet — remediación post-examen] {model.hidden_dim}d ➔ {new_dim}d...")
 
 	model = model.cpu()
 	for state_opt in optimizer.state.values():
@@ -415,8 +423,11 @@ def trigger_k65p_neurogenesis(model, optimizer, new_dim, glyph_table, device):
 			if isinstance(v, torch.Tensor):
 				state_opt[k] = v.cpu()
 
+	dummy = build_model("glyph" if model.use_glyphs else "standard", new_dim,
+		model.glyph_embedding.glyph_table.cpu().numpy() if model.use_glyphs else np.eye(model.vocab_size, dtype=np.float32))
 	lr_scale = 128.0 / new_dim
-	new_optimizer = torch.optim.AdamW(new_model.parameters(), lr=1e-4 * lr_scale, weight_decay=0.01)
+	new_optimizer = torch.optim.AdamW(dummy.parameters(), lr=1e-4 * lr_scale, weight_decay=0.01)
+	del dummy
 
 	model = net2wider_model(
 		model,
@@ -427,12 +438,35 @@ def trigger_k65p_neurogenesis(model, optimizer, new_dim, glyph_table, device):
 	)
 
 	model = model.to(device)
-	del new_model
 	if torch.cuda.is_available():
 		torch.cuda.empty_cache()
 
-	print(f"✓ Neurogénesis Net2WiderNet completada. Nuevos parámetros: {sum(p.numel() for p in model.parameters()):,}\n")
+	print(f"✓ Neurogénesis completada. Parámetros: {sum(p.numel() for p in model.parameters()):,}\n")
 	return model, new_optimizer
+
+
+def save_checkpoint(path: Path, model, optimizer, epoch: int, val_loss: float) -> None:
+	torch.save({
+		"epoch": epoch,
+		"model_state_dict": model.state_dict(),
+		"optimizer_state_dict": optimizer.state_dict(),
+		"loss": val_loss,
+	}, path)
+
+
+def load_weights(path: Path, model, optimizer, device) -> bool:
+	try:
+		checkpoint = torch.load(path, map_location=device, weights_only=True)
+		model.load_state_dict(checkpoint["model_state_dict"])
+		if optimizer is not None and "optimizer_state_dict" in checkpoint:
+			try:
+				optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
+			except Exception as exc:
+				print(f"⚠️ Optimizer no recargado (se reinicia AdamW): {exc}")
+		return True
+	except Exception as exc:
+		print(f"⚠️ Error cargando checkpoint {path.name}: {exc}")
+		return False
 
 
 def run_school_training_k65p():
@@ -446,12 +480,14 @@ def run_school_training_k65p():
 	except Exception:
 		pass
 
-	parser = argparse.ArgumentParser(description="School Training Loop K-65P")
+	parser = argparse.ArgumentParser(description="School Training Loop K-65P (protocolo adaptativo DL-006)")
 	parser.add_argument("--batch_size", type=int, default=32, help="Tamaño de lote")
 	parser.add_argument("--max_epochs_per_run", type=int, default=1, help="Épocas por ejecución de paso atómico")
-	parser.add_argument("--patience", type=int, default=15, help="Épocas sin mejora para gatillar neurogénesis")
+	parser.add_argument("--patience", type=int, default=15, help="Épocas sin mejora de val para cerrar la etapa (plateau)")
 	parser.add_argument("--min_delta", type=float, default=0.005, help="Delta mínimo para considerar mejora")
+	parser.add_argument("--max_stage_epochs", type=int, default=200, help="Tope de seguridad de épocas por etapa")
 	parser.add_argument("--seed", type=int, default=770, help="Semilla global (split, init, shuffle)")
+	parser.add_argument("--embedding", choices=["glyph", "standard"], default="glyph", help="Brazo: glyph=Bit v2, standard=Bit v0")
 	parser.add_argument("--state_dir", type=str, default=str(DEFAULT_STATE_DIR), help="Directorio de estado/checkpoints (sandboxing)")
 	parser.add_argument("--reset_state", action="store_true", help="Reiniciar entrenamiento desde cero")
 	args = parser.parse_args()
@@ -459,6 +495,7 @@ def run_school_training_k65p():
 	state_dir = Path(args.state_dir)
 	state_file = state_dir / "school_state_k65p.json"
 	model_current_path = state_dir / "model_current_k65p.pt"
+	model_best_path = state_dir / "model_best_k65p.pt"
 	state_dir.mkdir(parents=True, exist_ok=True)
 
 	torch.manual_seed(args.seed)
@@ -473,89 +510,65 @@ def run_school_training_k65p():
 
 	if state_file.exists() and not args.reset_state:
 		state = json.loads(state_file.read_text(encoding="utf-8"))
+		if state.get("embedding_mode", "glyph") != args.embedding:
+			print(f"✗ El estado en {state_dir} es del brazo '{state.get('embedding_mode')}' y pediste '{args.embedding}'. "
+				f"Usa otro --state_dir o --reset_state.")
+			sys.exit(1)
 	else:
 		state = {
+			"protocol": "adaptive_dl006",
+			"embedding_mode": args.embedding,
 			"current_epoch": 0,
+			"epoch_in_stage": 0,
 			"current_stage_idx": 0,
-			"hidden_dim": 128,  # Arrancar estrictamente en 128d (Etapa 0-1)
+			"hidden_dim": 128,
 			"num_layers": 6,
 			"target_milestone": "in_progress",
 			"milestones_achieved": [],
-			"best_val_loss": float("inf"),
-			"epochs_without_improvement": 0,
-			"retention_epochs": 0,
+			"best_stage_val_loss": float("inf"),
+			"epochs_since_best": 0,
+			"stage_history": [],
 			"neurogenesis_history": [],
 			"exam_history": [],
 			"exam_failures": {},
 			"seed": args.seed,
 		}
 
-	for key, default in (("neurogenesis_history", []), ("exam_history", []), ("exam_failures", {}), ("retention_epochs", 0)):
-		state.setdefault(key, default)
-
-	effective_epoch = state["current_epoch"] + 1 - state["retention_epochs"]
-	st_cfg = get_stage_info_for_epoch(max(1, effective_epoch))
-	state["current_stage_idx"] = st_cfg["stage_idx"]
-
-	model = BitNet4LayerModel(
-		use_glyphs=True,
-		glyph_table=glyph_table,
-		hidden_dim=state["hidden_dim"],
-		num_layers=state["num_layers"],
-		use_pos_embedding=True,
-		is_causal=True,
-		max_seq_len=128,
-	).to(device)
-
+	model = build_model(state["embedding_mode"], state["hidden_dim"], glyph_table, state["num_layers"]).to(device)
 	lr_scale = 128.0 / model.hidden_dim
 	optimizer = torch.optim.AdamW(model.parameters(), lr=1e-4 * lr_scale, weight_decay=0.01)
 
 	if model_current_path.exists() and not args.reset_state:
-		try:
-			checkpoint = torch.load(model_current_path, map_location=device, weights_only=True)
-			model.load_state_dict(checkpoint["model_state_dict"])
-			if "optimizer_state_dict" in checkpoint:
-				try:
-					optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
-				except Exception as exc:
-					print(f"⚠️ Optimizer no recargado (se reinicia AdamW): {exc}")
-		except Exception as exc:
-			print(f"⚠️ Error cargando checkpoint: {exc}")
+		load_weights(model_current_path, model, optimizer, device)
 
-	print(f"⚡ Dispositivo: {device} | Vocab K-65P: {vocab_size} tokens | Glifos: {glyph_table.shape} | Semilla: {args.seed}")
-	print(f"📖 Estado: Época {state['current_epoch']}, Etapa {st_cfg['stage_idx']} ({st_cfg['name']}), Dim {model.hidden_dim}d, Retención {state['retention_epochs']} ép.")
+	st_cfg = STAGE_CONFIG[state["current_stage_idx"]]
+	n_params = sum(p.numel() for p in model.parameters())
+	print(f"⚡ Brazo: {state['embedding_mode']} | Dispositivo: {device} | Vocab: {vocab_size} | Params: {n_params:,} | Semilla: {args.seed}")
+	print(f"📖 Estado: Época {state['current_epoch']} (etapa {st_cfg['name']}: {state['epoch_in_stage']} ép., best={state['best_stage_val_loss']:.4f}), Dim {model.hidden_dim}d")
 
-	train_dataset, val_dataset, val_exprs = load_dataset_stage(st_cfg["name"], word_to_idx, seed=args.seed)
-	logit_mask = build_stage_logit_mask(st_cfg["stage_idx"], vocab_size, word_to_idx)
-	assert_mask_covers_dataset([train_dataset, val_dataset], logit_mask, idx_to_word, st_cfg["name"], pad_idx)
-	train_dataset = train_dataset.to(device)
-	val_dataset = val_dataset.to(device)
-	logit_mask = logit_mask.to(device)
+	def load_stage(idx: int):
+		cfg = STAGE_CONFIG[idx]
+		tr, va, ve = load_dataset_stage(cfg["name"], word_to_idx, seed=args.seed)
+		mask = build_stage_logit_mask(cfg["stage_idx"], vocab_size, word_to_idx)
+		assert_mask_covers_dataset([tr, va], mask, idx_to_word, cfg["name"], pad_idx)
+		return cfg, tr.to(device), va.to(device), ve, mask.to(device)
+
+	st_cfg, train_dataset, val_dataset, val_exprs, logit_mask = load_stage(state["current_stage_idx"])
 
 	epochs_run = 0
-	target_epochs = args.max_epochs_per_run
+	while epochs_run < args.max_epochs_per_run:
+		if state["target_milestone"] == "completed":
+			print("🎓 Escuela completada: nada que entrenar.")
+			break
 
-	while epochs_run < target_epochs:
 		state["current_epoch"] += 1
+		state["epoch_in_stage"] += 1
 		epochs_run += 1
 
-		effective_epoch = state["current_epoch"] - state["retention_epochs"]
-		st_cfg = get_stage_info_for_epoch(max(1, effective_epoch))
-		if state["current_stage_idx"] != st_cfg["stage_idx"]:
-			state["current_stage_idx"] = st_cfg["stage_idx"]
-			# NOTA: Transición de etapa NO gatilla neurogénesis; solo el plateau (patience) la exige.
-			train_dataset, val_dataset, val_exprs = load_dataset_stage(st_cfg["name"], word_to_idx, seed=args.seed)
-			logit_mask = build_stage_logit_mask(st_cfg["stage_idx"], vocab_size, word_to_idx)
-			assert_mask_covers_dataset([train_dataset, val_dataset], logit_mask, idx_to_word, st_cfg["name"], pad_idx)
-			train_dataset = train_dataset.to(device)
-			val_dataset = val_dataset.to(device)
-			logit_mask = logit_mask.to(device)
-
-		# Entrenar una época
+		# ── Entrenar una época ──
 		model.train()
 		total_loss = 0.0
 		total_real_tokens = 0
-
 		perm = torch.randperm(len(train_dataset))
 		shuffled_data = train_dataset[perm]
 
@@ -563,92 +576,111 @@ def run_school_training_k65p():
 			batch = shuffled_data[i : i + args.batch_size]
 			if len(batch) == 0:
 				continue
-
 			x = batch[:, :-1]
 			y = batch[:, 1:]
-
 			optimizer.zero_grad()
 			logits = model(x)
 			masked_logits = logits + logit_mask.view(1, 1, -1)
-
 			flat_y = y.reshape(-1)
 			loss = F.cross_entropy(masked_logits.reshape(-1, vocab_size), flat_y, ignore_index=pad_idx)
 			loss.backward()
 			torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
 			optimizer.step()
-
 			n_real = int((flat_y != pad_idx).sum().item())
 			total_loss += loss.item() * n_real
 			total_real_tokens += n_real
 
 		train_loss = total_loss / max(1, total_real_tokens)
-
 		val_loss, val_acc = evaluate_model(model, val_dataset, logit_mask, vocab_size, pad_idx, args.batch_size)
-		print(f"▶ [Época {state['current_epoch']}/1408] Etapa {st_cfg['stage_idx']+1}/8 ({st_cfg['name']}) | Dim: {model.hidden_dim}d | Train Loss: {train_loss:.4f} | Val Loss: {val_loss:.4f} | Val Acc (sin pads): {val_acc:.4f}")
+		print(f"▶ [Época {state['current_epoch']} | etapa {st_cfg['name']} ép.{state['epoch_in_stage']}] Dim: {model.hidden_dim}d | Train: {train_loss:.4f} | Val: {val_loss:.4f} | Acc: {val_acc:.4f}")
 
-		# ── Monitor de Plateau: EXCLUSIVO activador de Neurogénesis (solo métricas finitas) ──
-		if not math.isfinite(val_loss):
-			print("⚠️ val_loss no finita: el plateau NO avanza (esto sería el bug DL-004; revisar máscara/corpus).")
-		elif val_loss < state["best_val_loss"] - args.min_delta:
-			state["best_val_loss"] = val_loss
-			state["epochs_without_improvement"] = 0
+		# ── Seguimiento del mejor checkpoint de la etapa ──
+		if math.isfinite(val_loss) and val_loss < state["best_stage_val_loss"] - args.min_delta:
+			state["best_stage_val_loss"] = val_loss
+			state["epochs_since_best"] = 0
+			save_checkpoint(model_best_path, model, optimizer, state["current_epoch"], val_loss)
 		else:
-			state["epochs_without_improvement"] += 1
+			state["epochs_since_best"] += 1
 
-		if state["epochs_without_improvement"] >= args.patience:
-			if len(val_dataset) < MIN_VAL_SAMPLES_FOR_GROWTH:
-				print(f"⚠️ Plateau con val de {len(val_dataset)} muestras (<{MIN_VAL_SAMPLES_FOR_GROWTH}): señal no fiable, neurogénesis VETADA.")
-				state["epochs_without_improvement"] = 0
-			else:
-				next_dim = get_next_dim(model.hidden_dim, STAGE_CONFIG, current_epoch=max(1, effective_epoch))
-				if next_dim is not None and next_dim <= 1024:
-					old_dim = model.hidden_dim
-					print(f"\n🧬 [PLATEAU] val_loss estancada {state['epochs_without_improvement']} épocas (best={state['best_val_loss']:.4f}) ➔ Neurogénesis {old_dim}d ➔ {next_dim}d")
-					model, optimizer = trigger_k65p_neurogenesis(model, optimizer, next_dim, glyph_table, device)
-					state["hidden_dim"] = next_dim
-					state["best_val_loss"] = float("inf")
-					state["epochs_without_improvement"] = 0
-					state["neurogenesis_history"].append({
-						"epoch": state["current_epoch"],
-						"old_dim": old_dim,
-						"new_dim": next_dim,
-						"reason": "plateau",
-						"val_loss": val_loss,
-					})
+		# ── ¿Fin de etapa? (plateau o tope de seguridad) ──
+		stage_end = (
+			state["epochs_since_best"] >= args.patience
+			or state["epoch_in_stage"] >= args.max_stage_epochs
+		)
 
-		# ── Examen de hito: el diploma se gana, no se cumple por cronómetro ──
 		exam_pause = False
-		if st_cfg["end_epoch"] == effective_epoch and st_cfg["age"]:
-			m_name = f"{st_cfg['age']}_years"
-			if m_name not in state["milestones_achieved"]:
-				print(f"\n📝 [EXAMEN DE HITO {m_name}] Umbrales congelados: gen_valid≥{EXAM_MIN_GEN_VALID}, val_loss ≤ bigrama − {EXAM_BIGRAM_MARGIN}")
+		if stage_end:
+			reason = "plateau" if state["epochs_since_best"] >= args.patience else "max_stage_epochs"
+			print(f"\n🏁 Fin de etapa {st_cfg['name']} por {reason} tras {state['epoch_in_stage']} épocas (best val={state['best_stage_val_loss']:.4f}).")
+
+			# El examen y el avance parten del MEJOR checkpoint de la etapa, no del último.
+			if model_best_path.exists():
+				load_weights(model_best_path, model, optimizer, device)
+
+			advance = False
+			if st_cfg["age"]:
+				m_name = f"{st_cfg['age']}_years"
+				print(f"📝 [EXAMEN DE HITO {m_name} sobre best-val] Umbrales congelados: gen_valid≥{EXAM_MIN_GEN_VALID}, val_loss ≤ bigrama − {EXAM_BIGRAM_MARGIN}")
 				exam = run_milestone_exam(
 					model, train_dataset, val_dataset, val_exprs, logit_mask, vocab_size,
 					word_to_idx, idx_to_word, device, args.batch_size, m_name,
 				)
 				exam["epoch"] = state["current_epoch"]
+				exam["epochs_in_stage"] = state["epoch_in_stage"]
+				exam["hidden_dim"] = model.hidden_dim
 				state["exam_history"].append(exam)
 				summary = (f"gen_valid={exam['gen_valid_rate']}, val_loss={exam['val_loss']:.4f} vs bigrama={exam['bigram_loss']}, "
 					f"acc={exam['token_acc_no_pad']} (informativa)")
 				if exam["passed"]:
+					print(f"🎓 ¡Hito {m_name} APROBADO en {state['epoch_in_stage']} épocas con {model.hidden_dim}d! {summary}")
 					state["milestones_achieved"].append(m_name)
-					print(f"🎓 ¡Hito {m_name} APROBADO! {summary}")
-					if m_name == "8_years":
-						state["target_milestone"] = "completed"
+					advance = True
 				else:
 					state["exam_failures"][m_name] = state["exam_failures"].get(m_name, 0) + 1
-					state["retention_epochs"] += RETENTION_EPOCHS
-					exam_pause = True
-					print(f"✗ Hito {m_name} SUSPENDIDO ({summary}). "
-						f"Repetición de curso: +{RETENTION_EPOCHS} épocas de {st_cfg['name']}. Pausa para revisión del operador (rc={EXAM_PAUSE_EXIT_CODE}).")
+					# Remediación DL-006: la neurogénesis SOLO responde a un suspenso.
+					next_dim = next((d for d in ALL_DIMS if d > model.hidden_dim and d <= st_cfg["dim"]), None)
+					if next_dim is not None:
+						old_dim = model.hidden_dim
+						print(f"✗ Hito {m_name} SUSPENDIDO ({summary}). Remediación: neurogénesis y repetición de etapa.")
+						model, optimizer = trigger_k65p_neurogenesis(model, optimizer, next_dim, device)
+						state["hidden_dim"] = next_dim
+						state["neurogenesis_history"].append({
+							"epoch": state["current_epoch"],
+							"old_dim": old_dim,
+							"new_dim": next_dim,
+							"reason": f"exam_failed:{m_name}",
+							"val_loss": exam["val_loss"],
+						})
+						save_checkpoint(model_best_path, model, optimizer, state["current_epoch"], float("inf"))
+					else:
+						print(f"✗ Hito {m_name} SUSPENDIDO ({summary}) y sin techo de dim disponible en la etapa. "
+							f"Pausa para revisión del operador (rc={EXAM_PAUSE_EXIT_CODE}).")
+						exam_pause = True
+			else:
+				print(f"✓ Etapa {st_cfg['name']} (guardería, sin examen) superada por plateau.")
+				advance = True
 
-		torch.save({
-			"epoch": state["current_epoch"],
-			"model_state_dict": model.state_dict(),
-			"optimizer_state_dict": optimizer.state_dict(),
-			"loss": val_loss,
-		}, model_current_path)
+			if advance:
+				state["stage_history"].append({
+					"stage": st_cfg["name"],
+					"epochs": state["epoch_in_stage"],
+					"best_val_loss": state["best_stage_val_loss"],
+					"hidden_dim": model.hidden_dim,
+				})
+				if state["current_stage_idx"] + 1 < len(STAGE_CONFIG):
+					state["current_stage_idx"] += 1
+					st_cfg, train_dataset, val_dataset, val_exprs, logit_mask = load_stage(state["current_stage_idx"])
+					print(f"➡️ Avanza a la etapa {st_cfg['name']} desde el mejor checkpoint.")
+				else:
+					state["target_milestone"] = "completed"
+					print("🎓 ¡ESCUELA COMPLETADA! Todos los hitos aprobados con examen.")
 
+			if advance or (st_cfg["age"] and not exam_pause):
+				state["epoch_in_stage"] = 0
+				state["best_stage_val_loss"] = float("inf")
+				state["epochs_since_best"] = 0
+
+		save_checkpoint(model_current_path, model, optimizer, state["current_epoch"], val_loss)
 		state_file.write_text(json.dumps(state, indent=4, ensure_ascii=False), encoding="utf-8")
 
 		if exam_pause:

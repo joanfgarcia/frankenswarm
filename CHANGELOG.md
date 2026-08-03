@@ -2,6 +2,21 @@
 
 ## [Unreleased]
 
+### 🎓 DL-006 — Protocolo adaptativo + brazo Bit v0: la edad se mide en hitos, no en épocas (2026-08-03)
+
+- **[NEW] Protocolo adaptativo en `train_sovereign_school_k65p.py`**: etapas por
+  plateau (no cronómetro), examen sobre el mejor checkpoint, avance desde best,
+  neurogénesis SOLO como remediación de examen suspendido. El calendario de 1408
+  épocas de v1 queda retirado para K-65P (sobreentrenaba por construcción).
+- **[NEW] Brazo `--embedding standard` (Bit v0)**: one-hot congelado +
+  proyecciones ≡ embedding estándar, mismo corpus/exámenes. Matriz 2×2 con la
+  tesis: {glyph, standard} × {K-65P, inglés}.
+- **[RESULT sandbox, seed 770]**: v2 (glyph) **graduado 7/7 en 157 épocas a 128d
+  (1,26M params), cero suspensos**; v0 (standard) 6/7 con mejor val_loss pero
+  suspenso de 8_years por gen_valid 0.52 (anidamiento profundo) → remediación
+  128→256d en curso. Conjetura a replicar: glifos ⇒ robustez gramatical;
+  embedding libre ⇒ ajuste distribucional.
+
 ### 🧬 DL-005 — El glifo cero hacía la sintaxis K-65P inaprendible (2026-08-03)
 
 - **[ROOT CAUSE] El examen de hito DL-004 suspendió a la primera run y destapó

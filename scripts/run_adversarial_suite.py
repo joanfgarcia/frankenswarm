@@ -33,11 +33,11 @@ if k65p_src.exists():
 
 from k65p.validator import is_valid
 
-from src.bitnet.model.modeling_bitnet import BitNet4LayerModel
 from src.bitnet.training.train_sovereign_school_k65p import (
 	MAX_LEN,
 	bigram_baseline,
 	build_k65p_vocab_and_glyphs,
+	build_model,
 	build_stage_logit_mask,
 	detokenize_k65p,
 	evaluate_model,
@@ -74,15 +74,8 @@ def main() -> None:
 	vocab_size = len(word_to_idx)
 	pad_idx = word_to_idx["<pad>"]
 
-	model = BitNet4LayerModel(
-		use_glyphs=True,
-		glyph_table=glyph_table,
-		hidden_dim=state["hidden_dim"],
-		num_layers=state.get("num_layers", 6),
-		use_pos_embedding=True,
-		is_causal=True,
-		max_seq_len=128,
-	).to(device)
+	embedding_mode = state.get("embedding_mode", "glyph")
+	model = build_model(embedding_mode, state["hidden_dim"], glyph_table, state.get("num_layers", 6)).to(device)
 	checkpoint = torch.load(ckpt_path, map_location=device, weights_only=True)
 	sd = checkpoint["model_state_dict"] if isinstance(checkpoint, dict) and "model_state_dict" in checkpoint else checkpoint
 	model.load_state_dict(sd)
@@ -163,14 +156,17 @@ def main() -> None:
 	results["attack2"] = {"gen_valid_rate": gen_valid_rate, "ood_loss": ood_loss, "ood_acc": ood_acc, "gap": gap, "pass": ood_pass}
 	results["pass"] &= ood_pass
 
-	# ── ATAQUE 3: ruido en glifos (precisión sin pads) ──
-	print("\n🔴 ATAQUE 3: Robustez al ruido en glifos (corrupción de la matriz de primos)")
-	orig = model.glyph_embedding.prime_embeddings.data.clone()
-	for noise_std in (0.0, 0.1, 0.25, 0.5):
-		model.glyph_embedding.prime_embeddings.data = orig + torch.randn_like(orig) * noise_std
-		n_loss, n_acc = evaluate_model(model, val_t, logit_mask, vocab_size, pad_idx, batch_size=32)
-		print(f"    • Ruido σ={noise_std:.2f} ➔ loss={n_loss:.4f} | acc (sin pads)={n_acc*100:.2f}%")
-	model.glyph_embedding.prime_embeddings.data = orig
+	# ── ATAQUE 3: ruido en glifos (precisión sin pads) — solo brazo glyph ──
+	if embedding_mode == "glyph":
+		print("\n🔴 ATAQUE 3: Robustez al ruido en glifos (corrupción de la matriz de primos)")
+		orig = model.glyph_embedding.prime_embeddings.data.clone()
+		for noise_std in (0.0, 0.1, 0.25, 0.5):
+			model.glyph_embedding.prime_embeddings.data = orig + torch.randn_like(orig) * noise_std
+			n_loss, n_acc = evaluate_model(model, val_t, logit_mask, vocab_size, pad_idx, batch_size=32)
+			print(f"    • Ruido σ={noise_std:.2f} ➔ loss={n_loss:.4f} | acc (sin pads)={n_acc*100:.2f}%")
+		model.glyph_embedding.prime_embeddings.data = orig
+	else:
+		print("\n🔴 ATAQUE 3: omitido — el brazo 'standard' (Bit v0) no tiene matriz de primos que corromper.")
 
 	# ── Veredicto global CONDICIONAL ──
 	print("\n" + "═" * 80)

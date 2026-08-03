@@ -52,7 +52,7 @@ def get_latest_log_metrics() -> tuple[float | None, float | None, float | None]:
 		return None, None, None
 
 	last_train, last_val, last_acc = None, None, None
-	pattern = re.compile(r"Train Loss: ([\d\.]+|inf|nan) \| Val Loss: ([\d\.]+|inf|nan)(?: \| Val Acc \(sin pads\): ([\d\.]+))?")
+	pattern = re.compile(r"Train: ([\d\.]+|inf|nan) \| Val: ([\d\.]+|inf|nan)(?: \| Acc: ([\d\.]+))?")
 	with open(logs[0], encoding="utf-8", errors="ignore") as f:
 		for line in f:
 			m = pattern.search(line)
@@ -89,27 +89,32 @@ def main():
 	neuro_history = state.get("neurogenesis_history", [])
 	exam_history = state.get("exam_history", [])
 	exam_failures = state.get("exam_failures", {})
-	retention = state.get("retention_epochs", 0)
-	best_val = state.get("best_val_loss")
+	stage_history = state.get("stage_history", [])
+	embedding_mode = state.get("embedding_mode", "glyph")
+	epoch_in_stage = state.get("epoch_in_stage", 0)
+	best_val = state.get("best_stage_val_loss", state.get("best_val_loss"))
 
 	train_loss, val_loss, val_acc = get_latest_log_metrics()
 	n_params = count_checkpoint_params(state_dir / "model_current_k65p.pt")
 
-	total_epochs = 1408 + retention
-	pct = min(1.0, current_epoch / max(1, total_epochs))
+	arm = "Bit v2 (glyph)" if embedding_mode == "glyph" else "Bit v0 (standard)"
+	pct = len(milestones) / 7.0
 	bar = "█" * int(round(30 * pct)) + "░" * (30 - int(round(30 * pct)))
 
-	print(" 🎓 Estado de la Escuela Bit v2:")
-	print(f"    • Época               : {current_epoch} / {total_epochs}" + (f" (incluye {retention} ép. de repetición)" if retention else ""))
-	print(f"    • Progreso            : [{bar}] {pct*100:.1f}%")
-	print(f"    • Etapa               : {current_stage_idx + 1}/8 — {STAGE_NAMES[min(current_stage_idx, 7)]}")
-	print(f"    • Hitos APROBADOS     : {', '.join(milestones) if milestones else 'ninguno todavía (los hitos se examinan, no se regalan)'}")
+	print(f" 🎓 Estado de la Escuela — {arm} · protocolo adaptativo DL-006:")
+	print(f"    • Hitos APROBADOS     : {len(milestones)}/7 [{bar}] — {', '.join(milestones) if milestones else 'ninguno todavía (se examinan, no se regalan)'}")
+	print(f"    • Época global        : {current_epoch} (la edad se mide en hitos, no en épocas)")
+	print(f"    • Etapa actual        : {current_stage_idx + 1}/8 — {STAGE_NAMES[min(current_stage_idx, 7)]} (ép. {epoch_in_stage} en etapa)")
 	if exam_failures:
 		print(f"    • Exámenes suspendidos: {json.dumps(exam_failures, ensure_ascii=False)}")
 	dim_str = f"{hidden_dim}d"
 	if n_params:
 		dim_str += f" | {n_params/1e6:.2f}M params reales (contados del checkpoint)"
 	print(f"    • Dimensión oculta    : {dim_str}")
+	if stage_history:
+		print("\n 🏁 Etapas superadas (épocas hasta aprobar — métrica comparativa entre brazos):")
+		for s in stage_history:
+			print(f"    • {s['stage']:12s}: {s['epochs']:4d} ép. | best val {s['best_val_loss']:.4f} | {s['hidden_dim']}d")
 
 	print("\n 📉 Métricas (pads EXCLUIDOS de loss y precisión):")
 	if train_loss is not None:
