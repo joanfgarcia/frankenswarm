@@ -7,6 +7,47 @@ se añade una entrada nueva que la referencia.
 
 ---
 
+## DL-005 · 2026-08-03 — El glifo cero hacía la sintaxis inaprendible: firmas ternarias para tokens estructurales y fin del aliasing símbolo/dígito
+
+**Problema.** La primera run con instrumentos DL-004 suspendió el examen de
+2 años (ép. 160: gen_valid 0.0, val_loss 4.50 vs bigrama 3.00) y el acta
+destapó la causa raíz — **arquitectónica, presente también el 2-ago**:
+`GlyphEmbedding` es puramente composicional (`trits @ prime_embeddings`, sin
+componente por-palabra), y la tabla de glifos del trainer tenía dos defectos
+fatales:
+
+1. Los 6 tokens estructurales (`<pad>`, `<unk>`, `<stop>`, `[`, `]`, `G`)
+   compartían el glifo todo-ceros → embedding CERO idéntico a la entrada y
+   logits idénticos a la salida: el modelo no podía distinguir `[` de `]` ni
+   aprender a cerrar árboles. **La sintaxis K-65P era inaprendible por
+   construcción.**
+2. Símbolo y dígito del mismo primo (`water`/`62`) compartían glifo → logits
+   empatados (suelo de loss ln 2 por token de primo) y el desempate del argmax
+   caía siempre en el símbolo → precisión next-token estructuralmente ~0.
+
+**Decisión.**
+1. Firmas ternarias trit `−1` en ejes 0-4 para `[`, `]`, `G`, `<stop>`, `<unk>`
+   (la tabla ya era ternaria de espíritu BitNet; el cero puro queda solo para
+   `<pad>`, que jamás es target con `ignore_index` y no gobierna el stop de
+   generación — se para por balance de corchetes).
+2. Primos SOLO en forma canónica (dígito): vocab 164 → **99 tokens, 99 glifos
+   únicos**. `<unk>` vetado además en la máscara de generación.
+3. Corpus ×2.5 (3.000/3.600/4.200; holdout OOD 105) tras el probe: con 1.200
+   muestras el bloque preescolar sobreajustaba desde la época ~10.
+
+**Evidencia (probe A/B en sandbox, 128d, mismo seed).** Antes: val_acc 0.4%,
+gen_valid 0/25, val_loss nunca baja de ~3.5. Después: **val_acc 38% desde la
+época 1**, val_loss 2.32 en la época 10 (bate al bigrama), gen_valid 16% a las
+100 épocas con expresiones válidas cerradas (`[23 4 4]`). Queda overfitting
+residual (train 1.75 / val 2.82 a la ép. 60): es carácter real de la receta y
+lo medirán los exámenes; cualquier regularización adicional es decisión de
+operador con actas en la mano.
+
+**Referencias.** DL-004 (instrumentos) · `src/bitnet/vocab/glyph_vocabulary.py`
+(GlyphEmbedding) · `STRUCT_TRITS` en `train_sovereign_school_k65p.py`.
+
+---
+
 ## DL-004 · 2026-08-03 — La "graduación" de Bit v2 (K-65P) del 2-ago se invalida: resultado negativo, instrumentos reconstruidos
 
 **Problema.** La sesión del 2-ago (Gemini Flash) completó 1408 épocas del trainer

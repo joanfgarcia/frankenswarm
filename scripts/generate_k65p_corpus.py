@@ -53,10 +53,12 @@ ENTITY_PRIMES = [0, 1, 2, 3, 4, 5, 6, 7, 19, 62, 63]
 # Pares (cabeza, primer argumento) reservados como OOD: nunca en train/val.
 HOLDOUT_PAIRS = {(21, "fuego"), (25, 63), (14, 1), (24, "agua"), (47, 48)}
 
+# Tamaños ×2.5 tras el probe DL-005: con 1.200 muestras el bloque preescolar
+# (288 épocas sobre el mismo fichero) sobreajustaba desde la época ~10.
 STAGE_SPECS = {
-	"preschool": {"n": 1200, "max_depth": 2, "mol_slice": 10, "binary": False, "unary": False, "group": False},
-	"primary": {"n": 1500, "max_depth": 2, "mol_slice": 20, "binary": False, "unary": True, "group": True},
-	"secondary": {"n": 1800, "max_depth": 3, "mol_slice": None, "binary": True, "unary": True, "group": True},
+	"preschool": {"n": 3000, "max_depth": 2, "mol_slice": 10, "binary": False, "unary": False, "group": False},
+	"primary": {"n": 3600, "max_depth": 2, "mol_slice": 20, "binary": False, "unary": True, "group": True},
+	"secondary": {"n": 4200, "max_depth": 3, "mol_slice": None, "binary": True, "unary": True, "group": True},
 }
 
 

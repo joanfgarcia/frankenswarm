@@ -77,19 +77,31 @@ def get_stage_info_for_epoch(epoch: int) -> dict:
 	return STAGE_CONFIG[-1]
 
 
+# Firmas ternarias (trit −1) para los tokens estructurales. Sin esto, los seis
+# especiales comparten el glifo todo-ceros → embedding CERO idéntico → el modelo
+# no puede distinguir '[' de ']' ni a la entrada ni a la salida: la sintaxis es
+# inaprendible por construcción (hallazgo DL-005, destapado por el examen de hito).
+# <pad> conserva el glifo cero a propósito: jamás es target (ignore_index) y la
+# generación para por balance de corchetes, no por emitir pad.
+STRUCT_TRITS = {"<unk>": 4, "<stop>": 3, "[": 0, "]": 1, "G": 2}
+
+
 def build_k65p_vocab_and_glyphs() -> tuple[dict[str, int], dict[int, str], np.ndarray]:
 	lexicon = load_lexicon()
 	tokens = ["<pad>", "<unk>", "<stop>", "[", "]", "G"]
-	glyphs_list = [[0] * N_PRIMES for _ in range(len(tokens))]
+	glyphs_list = []
+	for t in tokens:
+		g = [0] * N_PRIMES
+		if t in STRUCT_TRITS:
+			g[STRUCT_TRITS[t]] = -1
+		glyphs_list.append(g)
 
-	for pid, row in enumerate(PRIMES):
-		symbol = row[0].lower()
+	# Primos SOLO en forma canónica (dígito). La forma símbolo compartía glifo
+	# idéntico con el dígito → logits empatados y precisión estructuralmente ~0
+	# (aliasing DL-005). El corpus canónico usa dígitos; los símbolos sobraban.
+	for pid, _row in enumerate(PRIMES):
 		g_sym = [0] * N_PRIMES
 		g_sym[pid] = 1
-
-		tokens.append(symbol)
-		glyphs_list.append(g_sym)
-
 		tokens.append(str(pid))
 		glyphs_list.append(g_sym)
 
@@ -188,8 +200,10 @@ def load_dataset_stage(
 
 
 def build_stage_logit_mask(stage_idx: int, vocab_size: int, word_to_idx: dict[str, int]) -> torch.Tensor:
+	# <unk> vetado: el corpus no lo contiene (verificado por assert) y emitirlo
+	# en generación es ruido puro. <pad> se permite como señal implícita de stop.
 	mask = torch.full((vocab_size,), float("-inf"))
-	allowed = {"<pad>", "<unk>", "<stop>", "[", "]", "G"}
+	allowed = {"<pad>", "<stop>", "[", "]", "G"}
 
 	for pid, row in enumerate(PRIMES):
 		allowed.add(row[0].lower())

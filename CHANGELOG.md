@@ -2,6 +2,18 @@
 
 ## [Unreleased]
 
+### 🧬 DL-005 — El glifo cero hacía la sintaxis K-65P inaprendible (2026-08-03)
+
+- **[ROOT CAUSE] El examen de hito DL-004 suspendió a la primera run y destapó
+  el defecto real**: los 6 tokens estructurales compartían el glifo todo-ceros
+  (embedding idéntico → `[` y `]` indistinguibles) y símbolo/dígito del mismo
+  primo empataban logits. La sintaxis era inaprendible por construcción —
+  también el 2-ago.
+- **[FIX] Firmas ternarias (trit −1) para `[`, `]`, `G`, `<stop>`, `<unk>`** y
+  primos solo en forma canónica: vocab 164 → 99 tokens con 99 glifos únicos.
+  Probe A/B: val_acc 0.4% → 38%, gen_valid 0% → 16% (100 ép.), val_loss bate
+  al bigrama. Corpus ×2.5 (10.800 exprs + 105 OOD) contra el overfitting.
+
 ### 🔴 DL-004 — La "graduación" de Bit v2 (K-65P) se invalida y los instrumentos se reconstruyen (2026-08-03)
 
 - **[NEGATIVE RESULT] La run del 2-ago era un smoke-test, no una graduación**:
