@@ -289,19 +289,35 @@ def run_evaluation(args):
 	# 2. Inicializar Diccionario Soberano
 	dictionary = SovereignDictionary(expanded_glyphs_path)
 
-	# 3. Inicializar y cargar modelo (en la CPU o iGPU según args.device)
-	print(f"🧠 Inicializando modelo BitNet en [{device}] ({args.hidden_dim} dim, {args.num_layers} capas)...")
-	model = BitNet4LayerModel(
-		use_glyphs=True,
-		glyph_table=glyphs,
-		hidden_dim=args.hidden_dim,
-		num_layers=args.num_layers,
-		use_pos_embedding=True,
-		is_causal=True,
-		max_seq_len=128,
-	).to(device)
+	# 3. Inicializar y cargar modelo (en la CPU o iGPU según args.device).
+	# El modo de embedding se detecta por las claves del checkpoint: los brazos
+	# estándar DL-006 (use_glyphs=False, tabla one-hot congelada) no tienen
+	# glyph_embedding y reconstruirlos como glifos rompería el load_state_dict.
+	state_dict = torch.load(args.model_path, map_location=device, weights_only=True)
+	ckpt_uses_glyphs = any(k.startswith("glyph_embedding.") for k in state_dict)
+	print(f"🧠 Inicializando modelo BitNet en [{device}] ({args.hidden_dim} dim, {args.num_layers} capas, embedding={'glyph' if ckpt_uses_glyphs else 'standard'})...")
+	if ckpt_uses_glyphs:
+		model = BitNet4LayerModel(
+			use_glyphs=True,
+			glyph_table=glyphs,
+			hidden_dim=args.hidden_dim,
+			num_layers=args.num_layers,
+			use_pos_embedding=True,
+			is_causal=True,
+			max_seq_len=128,
+		).to(device)
+	else:
+		model = BitNet4LayerModel(
+			use_glyphs=False,
+			vocab_embeddings=np.eye(len(words), dtype=np.float32),
+			hidden_dim=args.hidden_dim,
+			num_layers=args.num_layers,
+			use_pos_embedding=True,
+			is_causal=True,
+			max_seq_len=128,
+		).to(device)
 
-	model.load_state_dict(torch.load(args.model_path, map_location=device, weights_only=True))
+	model.load_state_dict(state_dict)
 	model.eval()
 
 	target_age = args.target_age

@@ -158,6 +158,15 @@ def run_school_training():
 		"LR: warmup 10 épocas y luego constante (el coseno necesita longitud de etapa conocida).",
 	)
 	parser.add_argument("--max_stage_epochs", type=int, default=200, help="(--adaptive) Tope de seguridad de épocas por etapa")
+	parser.add_argument(
+		"--embedding",
+		type=str,
+		default="glyph",
+		choices=["glyph", "standard"],
+		help="Brazo de embedding (DL-006): glyph = composicional de primos (v1 clásico); "
+		"standard = tabla one-hot congelada + proyecciones entrenables ≡ nn.Embedding estándar "
+		"(brazo control 'inglés + estándar'). El evaluador de Samantha detecta el modo por el checkpoint.",
+	)
 	args, _ = parser.parse_known_args()
 
 	if args.seed is not None:
@@ -530,16 +539,29 @@ def run_school_training():
 		print(f"🏆 ¡El currículo escolar soberano completo (Ages 0-8) ya está completado con éxito (época {current_epoch - 1})!")
 		return
 
-	# Inicializar modelo
-	model = BitNet4LayerModel(
-		use_glyphs=True,
-		glyph_table=glyphs,
-		hidden_dim=hidden_dim,
-		num_layers=num_layers,
-		use_pos_embedding=True,
-		is_causal=True,
-		max_seq_len=128,
-	).to(device)
+	# Inicializar modelo según el brazo de embedding (DL-006)
+	if args.embedding == "glyph":
+		model = BitNet4LayerModel(
+			use_glyphs=True,
+			glyph_table=glyphs,
+			hidden_dim=hidden_dim,
+			num_layers=num_layers,
+			use_pos_embedding=True,
+			is_causal=True,
+			max_seq_len=128,
+		).to(device)
+	else:
+		# Tabla one-hot CONGELADA + inbound/outbound entrenables ≡ embedding estándar
+		# entrenado desde cero (cada token = una columna libre de inbound_proj).
+		model = BitNet4LayerModel(
+			use_glyphs=False,
+			vocab_embeddings=np.eye(vocab_size, dtype=np.float32),
+			hidden_dim=hidden_dim,
+			num_layers=num_layers,
+			use_pos_embedding=True,
+			is_causal=True,
+			max_seq_len=128,
+		).to(device)
 	if os.path.exists(current_checkpoint_path) and not args.reset_state:
 		model.load_state_dict(torch.load(current_checkpoint_path, map_location=device, weights_only=True))
 		print(f"🧠 Pesos cargados del checkpoint activo: {current_checkpoint_path}")
@@ -583,6 +605,10 @@ def run_school_training():
 	# en hitos superados, no en épocas. Misma regla pedagógica que v2/v0.
 	# ══════════════════════════════════════════════════════════════════════
 	if args.adaptive:
+		if state.get("embedding_mode", args.embedding) != args.embedding:
+			print(f"✗ El estado en {save_dir} es del brazo '{state.get('embedding_mode')}' y pediste '{args.embedding}'. Usa otro --state_dir.")
+			import sys as _sys
+			_sys.exit(1)
 		best_ckpt_path = os.path.join(save_dir, "model_best.pt")
 		a_stage_idx = state.get("current_stage_idx", 0)
 		a_epoch_in_stage = state.get("epoch_in_stage", 0)
@@ -601,6 +627,7 @@ def run_school_training():
 			with open(state_path, "w", encoding="utf-8") as sf:
 				json.dump({
 					"protocol": "adaptive_dl006",
+					"embedding_mode": args.embedding,
 					"current_epoch": a_global_epoch + 1,
 					"current_stage_idx": a_stage_idx,
 					"epoch_in_stage": a_epoch_in_stage,

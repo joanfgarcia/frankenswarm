@@ -251,16 +251,28 @@ def trigger_neurogenesis(model, optimizer, new_dim, glyphs, device, current_chec
 	torch.cuda.empty_cache()
 	gc.collect()
 
-	# 2. Instantiate new model on CPU
-	new_model = BitNet4LayerModel(
-		use_glyphs=True,
-		glyph_table=glyphs,
-		hidden_dim=new_dim,
-		num_layers=len(model.core_layers),
-		use_pos_embedding=True,
-		is_causal=True,
-		max_seq_len=128,
-	).cpu()
+	# 2. Instantiate new model on CPU — respetando el modo de embedding del alumno
+	# (brazo estándar DL-006: use_glyphs=False con tabla one-hot congelada).
+	if getattr(model, "use_glyphs", True):
+		new_model = BitNet4LayerModel(
+			use_glyphs=True,
+			glyph_table=glyphs,
+			hidden_dim=new_dim,
+			num_layers=len(model.core_layers),
+			use_pos_embedding=True,
+			is_causal=True,
+			max_seq_len=128,
+		).cpu()
+	else:
+		new_model = BitNet4LayerModel(
+			use_glyphs=False,
+			vocab_embeddings=model.vocab_embeddings.cpu().numpy(),
+			hidden_dim=new_dim,
+			num_layers=len(model.core_layers),
+			use_pos_embedding=True,
+			is_causal=True,
+			max_seq_len=128,
+		).cpu()
 
 	# 3. Instantiate new optimizer on CPU with scaled learning rate
 	lr_scale = 128.0 / new_dim
