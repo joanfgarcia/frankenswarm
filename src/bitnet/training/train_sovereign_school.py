@@ -148,6 +148,16 @@ def run_school_training():
 		choices=["on", "off"],
 		help="Activar estados de optimizador 8-bit vía bitsandbytes (ahorra ~75% VRAM para m/v). Requiere bitsandbytes>=0.44.0. Default: off",
 	)
+	parser.add_argument(
+		"--adaptive",
+		action="store_true",
+		help="Protocolo adaptativo DL-006 (brazo control v1): cada etapa entrena hasta plateau, "
+		"el examen de Samantha se hace sobre el MEJOR checkpoint de la etapa, aprobado→avanza, "
+		"suspenso→neurogénesis como remediación (techo de dim por etapa) o pausa rc=78. "
+		"El calendario fijo de épocas y la neurogénesis por plateau a mitad de etapa quedan desactivados. "
+		"LR: warmup 10 épocas y luego constante (el coseno necesita longitud de etapa conocida).",
+	)
+	parser.add_argument("--max_stage_epochs", type=int, default=200, help="(--adaptive) Tope de seguridad de épocas por etapa")
 	args, _ = parser.parse_known_args()
 
 	if args.seed is not None:
@@ -567,6 +577,207 @@ def run_school_training():
 			if config["start_epoch"] <= ep <= config["end_epoch"]:
 				return config["stage_idx"], config["name"]
 		return stage_config[-1]["stage_idx"], stage_config[-1]["name"]
+
+	# ══════════════════════════════════════════════════════════════════════
+	# Protocolo adaptativo DL-006 (brazo control v1-inglés): la edad se mide
+	# en hitos superados, no en épocas. Misma regla pedagógica que v2/v0.
+	# ══════════════════════════════════════════════════════════════════════
+	if args.adaptive:
+		best_ckpt_path = os.path.join(save_dir, "model_best.pt")
+		a_stage_idx = state.get("current_stage_idx", 0)
+		a_epoch_in_stage = state.get("epoch_in_stage", 0)
+		a_best_val = state.get("best_stage_val_loss", float("inf"))
+		a_since_best = state.get("epochs_since_best", 0)
+		a_stage_history = state.get("stage_history", [])
+		a_global_epoch = state.get("current_epoch", 1) - 1 if "epoch_in_stage" in state else 0
+
+		print(f"🧭 [ADAPTIVE DL-006] Etapa {stage_config[a_stage_idx]['name']} (ép. en etapa: {a_epoch_in_stage}, best={a_best_val:.4f}), época global {a_global_epoch}")
+
+		loaded_stage = -1
+		x_train_gen = x_train_curr = x_val = None
+		epochs_this_run = 0
+
+		def _save_adaptive_state():
+			with open(state_path, "w", encoding="utf-8") as sf:
+				json.dump({
+					"protocol": "adaptive_dl006",
+					"current_epoch": a_global_epoch + 1,
+					"current_stage_idx": a_stage_idx,
+					"epoch_in_stage": a_epoch_in_stage,
+					"best_stage_val_loss": a_best_val,
+					"epochs_since_best": a_since_best,
+					"stage_history": a_stage_history,
+					"hidden_dim": model.hidden_dim,
+					"num_layers": len(model.core_layers),
+					"target_milestone": target_milestone,
+					"milestones_achieved": milestones_achieved,
+					"curriculum_hash": curriculum_hash,
+					"neurogenesis_history": neurogenesis_history,
+					"exam_failures": exam_failures,
+				}, sf, indent=4)
+
+		while target_milestone != "completed":
+			if args.max_epochs_per_run is not None and epochs_this_run >= args.max_epochs_per_run:
+				print(f"🛑 [PAUSA PLANIFICADA] {args.max_epochs_per_run} épocas en esta ejecución.")
+				break
+
+			cfg = stage_config[a_stage_idx]
+			if loaded_stage != a_stage_idx:
+				print(f"\n🎒 [ETAPA ADAPTATIVA] Compilando dataset de {cfg['name']}...")
+				general_data, curriculum_data_st = compile_data_for_stage(a_stage_idx)
+				train_gen, val_gen = compile_stage_dataset(general_data, seq_len=128)
+				train_curr, val_curr = compile_stage_dataset(curriculum_data_st, seq_len=128)
+				x_train_gen = torch.tensor(train_gen, dtype=torch.long)
+				x_train_curr = torch.tensor(train_curr, dtype=torch.long)
+				val_seqs = val_gen + val_curr
+				x_val = torch.tensor(val_seqs, dtype=torch.long) if len(val_seqs) > 0 else None
+				loaded_stage = a_stage_idx
+				print(f"  ✓ Gen: {len(x_train_gen)} | Curr: {len(x_train_curr)} | Val: {len(x_val) if x_val is not None else 0}")
+
+			a_global_epoch += 1
+			a_epoch_in_stage += 1
+			epochs_this_run += 1
+
+			# LR: warmup 10 épocas globales → constante (sin coseno: la etapa no tiene longitud conocida)
+			lr_scale = 128.0 / model.hidden_dim
+			peak_lr = 4e-4 * lr_scale
+			min_lr = 4e-5 * lr_scale
+			current_lr = min_lr + (peak_lr - min_lr) * min(1.0, (a_global_epoch - 1) / 9.0) if a_global_epoch <= 10 else peak_lr
+			for g in optimizer.param_groups:
+				g["lr"] = current_lr
+			tau = max(0.1, 1.0 - (1.0 - 0.1) * ((a_global_epoch - 1) / 127.0))
+
+			model.train()
+			epoch_loss = 0.0
+			max_gen_seqs_per_epoch = 15000
+			if x_train_gen.size(0) > max_gen_seqs_per_epoch:
+				x_gen_sub = x_train_gen[torch.randperm(x_train_gen.size(0))[:max_gen_seqs_per_epoch]]
+			else:
+				x_gen_sub = x_train_gen
+			x_epoch = torch.cat([x_gen_sub, x_train_curr], dim=0)
+			permutation = torch.randperm(x_epoch.size(0))
+
+			for i in range(0, x_epoch.size(0), batch_size):
+				batch_x = x_epoch[permutation[i : i + batch_size]]
+				optimizer.zero_grad()
+				inputs = batch_x[:, :-1].to(device)
+				targets = batch_x[:, 1:].to(device)
+				with autocast_ctx():
+					logits = train_model(inputs, tau=tau)
+					loss_elementwise = F.cross_entropy(logits.reshape(-1, vocab_size), targets.reshape(-1), reduction="none")
+					loss_elementwise = loss_elementwise.reshape(targets.shape)
+					mask = (torch.cumsum((targets == 0).to(torch.int32), dim=-1) <= 1).to(logits.dtype)
+					loss = (loss_elementwise * mask).sum() / mask.sum()
+				loss.backward()
+				torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
+				optimizer.step()
+				epoch_loss += loss.item() * batch_x.size(0)
+			epoch_loss /= x_epoch.size(0)
+
+			val_loss = 0.0
+			if x_val is not None and len(x_val) > 0:
+				model.eval()
+				with torch.no_grad():
+					for vi in range(0, x_val.size(0), batch_size):
+						batch_xv = x_val[vi : vi + batch_size].to(device)
+						inputs_v, targets_v = batch_xv[:, :-1], batch_xv[:, 1:]
+						with autocast_ctx():
+							logits_v = train_model(inputs_v)
+							lve = F.cross_entropy(logits_v.reshape(-1, vocab_size), targets_v.reshape(-1), reduction="none").reshape(targets_v.shape)
+							mv = (torch.cumsum((targets_v == 0).to(torch.int32), dim=-1) <= 1).to(logits_v.dtype)
+							loss_v = (lve * mv).sum() / mv.sum()
+						val_loss += loss_v.item() * batch_xv.size(0)
+					val_loss /= x_val.size(0)
+
+			print(f"  [Ép. {a_global_epoch} | {cfg['name']} ép.{a_epoch_in_stage}] Loss: {epoch_loss:.4f} | Val: {val_loss:.4f} | lr: {current_lr:.2e} | dim: {model.hidden_dim}")
+
+			if val_loss > 0 and val_loss < a_best_val - args.min_delta:
+				a_best_val = val_loss
+				a_since_best = 0
+				torch.save(model.state_dict(), best_ckpt_path)
+			else:
+				a_since_best += 1
+
+			stage_end = a_since_best >= args.patience or a_epoch_in_stage >= args.max_stage_epochs
+			exam_pause = False
+
+			if stage_end:
+				reason = "plateau" if a_since_best >= args.patience else "max_stage_epochs"
+				print(f"\n🏁 [ADAPTIVE] Fin de etapa {cfg['name']} por {reason} tras {a_epoch_in_stage} épocas (best val={a_best_val:.4f}).")
+				if os.path.exists(best_ckpt_path):
+					model.load_state_dict(torch.load(best_ckpt_path, map_location=device, weights_only=True))
+					print("  ↩️ Cargado el MEJOR checkpoint de la etapa para el examen/avance.")
+
+				advance = False
+				if cfg["age"] is not None:
+					milestone_name = f"{cfg['age']}_years"
+					print(f"📝 [EXAMEN sobre best-val] Hito {milestone_name} con la Profesora Samantha...")
+					eval_result = run_samantha_eval(
+						model=model, current_checkpoint_path=current_checkpoint_path,
+						target_milestone=milestone_name, save_dir=save_dir,
+						stage_idx=cfg["stage_idx"], stage_name=cfg["name"],
+						milestones_achieved=milestones_achieved, state_path=state_path,
+						args=args, device=device, base_dir=base_dir,
+						epoch=a_global_epoch, stage_conf=cfg,
+					)
+					model = eval_result.model
+					train_model = _maybe_compile(model)
+					if eval_result.passed:
+						print(f"🎓 [ADAPTIVE] Hito {milestone_name} APROBADO en {a_epoch_in_stage} épocas con {model.hidden_dim}d.")
+						advance = True
+					else:
+						next_dim = get_next_dim(model.hidden_dim, stage_config, current_epoch=cfg["end_epoch"])
+						if next_dim is not None and next_dim <= cfg["dim"]:
+							old_dim = model.hidden_dim
+							print(f"✗ [ADAPTIVE] Hito {milestone_name} SUSPENDIDO. Remediación: neurogénesis {old_dim}→{next_dim} y repetición de etapa.")
+							model, optimizer = trigger_neurogenesis(
+								model, optimizer, next_dim, glyphs, device, current_checkpoint_path,
+								state_path, a_global_epoch, milestones_achieved, target_milestone, strategy=strategy,
+							)
+							train_model = _maybe_compile(model)
+							neurogenesis_history.append({
+								"epoch": a_global_epoch, "old_dim": old_dim, "new_dim": next_dim,
+								"reason": f"exam_failed:{milestone_name}", "val_loss_at_trigger": val_loss,
+							})
+							torch.save(model.state_dict(), best_ckpt_path)
+						else:
+							print(f"✗ [ADAPTIVE] Hito {milestone_name} SUSPENDIDO sin techo de dim disponible. Pausa (rc={EXAM_PAUSE_EXIT_CODE}).")
+							exam_pause = True
+				else:
+					print(f"✓ [ADAPTIVE] Etapa {cfg['name']} (guardería, sin examen) superada por plateau.")
+					advance = True
+
+				if advance:
+					a_stage_history.append({
+						"stage": cfg["name"], "epochs": a_epoch_in_stage,
+						"best_val_loss": a_best_val, "hidden_dim": model.hidden_dim,
+					})
+					if a_stage_idx + 1 < len(stage_config):
+						a_stage_idx += 1
+						next_cfg = stage_config[a_stage_idx]
+						target_milestone = f"{next_cfg['age']}_years" if next_cfg["age"] is not None else target_milestone
+						print(f"➡️ [ADAPTIVE] Avanza a {next_cfg['name']} desde el mejor checkpoint.")
+					else:
+						target_milestone = "completed"
+						print("🎓 [ADAPTIVE] ¡ESCUELA COMPLETADA! Todos los hitos aprobados con examen.")
+
+				if not exam_pause:
+					a_epoch_in_stage = 0
+					a_best_val = float("inf")
+					a_since_best = 0
+
+			torch.save(model.state_dict(), current_checkpoint_path)
+			_save_adaptive_state()
+
+			if exam_pause:
+				import sys as _sys
+				_sys.exit(EXAM_PAUSE_EXIT_CODE)
+
+		if target_milestone == "completed":
+			final_path = os.path.join(save_dir, "model_final.pt")
+			torch.save(model.state_dict(), final_path)
+			print(f"\n🏆 [ADAPTIVE] ¡Escuela completada! Modelo graduado en {final_path}")
+		return
 
 	active_stage_idx = -1
 	x_val = None
