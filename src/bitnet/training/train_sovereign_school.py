@@ -167,6 +167,13 @@ def run_school_training():
 		"standard = tabla one-hot congelada + proyecciones entrenables ≡ nn.Embedding estándar "
 		"(brazo control 'inglés + estándar'). El evaluador de Samantha detecta el modo por el checkpoint.",
 	)
+	parser.add_argument(
+		"--require_gpu",
+		action="store_true",
+		help="Abortar (rc=3) si CUDA no está disponible, en lugar del fallout silencioso a CPU. "
+		"Principio del RFC_SLEEP_JOB_DRIVER aplicado al entrenamiento: entrenar en CPU eterniza "
+		"y esconde averías de driver (incidente 4-ago-2026: driver mismatch → 845% CPU + swap).",
+	)
 	args, _ = parser.parse_known_args()
 
 	if args.seed is not None:
@@ -179,6 +186,11 @@ def run_school_training():
 		print(f"🎲 [SEED] Semilla global fijada: {args.seed}")
 
 	device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+	if args.require_gpu and device.type != "cuda":
+		print("✗ [REQUIRE_GPU] CUDA no disponible (¿driver mismatch? prueba nvidia-smi / reboot). "
+			"Abortando en lugar de entrenar en CPU a escondidas. rc=3")
+		import sys as _sys
+		_sys.exit(3)
 	print("═══ 🏫 Entrenamiento de Currículo Escolar Soberano con Exámenes de Grado ═══")
 	print(f"[Device]: {device}")
 
