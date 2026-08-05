@@ -48,7 +48,7 @@ Matriz 2×2 {embedding} × {lenguaje} — resultados a cierre del día:
 | K-65P + glifos (v2) | 🎓 7/7 hitos | 162 | 256d (1 remediación) | **40/40 = 100%** |
 | K-65P + estándar | 🎓 7/7 hitos | 145 | 128d | 38/40 = 95% |
 | Inglés + glifos (control) | ✅ preescolar completo (2,3,4 años con Samantha real), corte planificado | 309 | 128d | n/a |
-| Inglés + estándar | 🔄 en marcha (2_years aprobado; corte automático en 4_years) | 112+ | 128d | n/a |
+| Inglés + estándar | ✅ preescolar completo (2,3,4 años con Samantha real; corte 5-ago) | 229 | 128d | n/a |
 
 Releases sellados con checksums: `releases/bit_v{2,0}_k65p_adaptive_20260803/`.
 
@@ -105,8 +105,8 @@ Nunca cross-entropy contra cross-entropy (lección del 2-ago).
 
 ## Cola de trabajo (orden acordado)
 
-1. **Cerrar la matriz** (esta noche, automático): corte del brazo
-   inglés+estándar en 4_years → informe comparativo DL-006.
+1. ~~Cerrar la matriz~~ ✅ CERRADA (5-ago) → informe:
+   `docs/sessions/20260805/INFORME_DL006_MATRIZ.md`.
 2. **Réplicas multi-semilla** K-65P (≈15 min/tanda): convertir tendencias en
    datos o enterrarlas.
 3. **Examen M5 — palabra nueva**: inyectar molécula inédita vía
