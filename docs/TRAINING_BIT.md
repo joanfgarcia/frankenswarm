@@ -134,6 +134,38 @@ consolidación de memoria entre a su hora.
 
 ---
 
+## 3.1 Réplicas multi-semilla (K-65P)
+
+La graduación de Bit v2/v0 (DL-006) es una **lectura de una sola semilla** (770):
+la varianza entre runs de una misma configuración es del orden del efecto
+medido, así que la comparación *glifos (v2) vs embedding estándar (v0)* no se
+considera concluyente sin **3+ semillas**. Para eso existen las recetas de
+réplica, versionadas en `configs/jobs/`:
+
+```bash
+# Un job por réplica: 3 semillas × 2 brazos = 6 jobs
+red-pill job submit --recipe school_k65p_glyph_s771     # Bit v2, seed 771
+red-pill job submit --recipe school_k65p_standard_s771  # Bit v0, seed 771
+# ...s772, s773
+```
+
+Cada réplica declara `--seed` y `--state_dir` **propios**
+(`storage/checkpoints/replicates/k65p/{glyph,standard}_sNNN`) para que ninguna
+pise el estado canónico (seed 770). El runner autónomo equivalente acepta las
+mismas variables (`EMBEDDING`, `SEED`, `STATE_DIR`):
+
+```bash
+SEED=771 EMBEDDING=standard STATE_DIR=storage/checkpoints/replicates/k65p/standard_s771 \
+	./scripts/train_school_k65p.sh --status   # o sin --status para entrenar
+```
+
+La receta canónica `school_k65p.yaml` declara el progreso como `bounded` con
+`total: 1600` (máximo teórico del protocolo adaptativo: 8 etapas × 200 épocas
+de tope) — no es un calendario fijo; la escuela termina por **milestone
+`8_years`**, igual que en v1.
+
+---
+
 ## 4. Diagnóstico rápido
 
 | Síntoma | Dónde mirar |

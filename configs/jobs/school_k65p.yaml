@@ -1,0 +1,46 @@
+# Escuela Soberana de Bit v2 (Formación Nativa K-65P) — receta de ejecución diferida (red-pill script_job).
+#
+#   red-pill job submit --recipe school_k65p
+#
+# Protocolo ADAPTATIVO DL-006: cada etapa cierra por plateau (patience=15,
+# tope 200 épocas/etapa), NO por calendario fijo. El `total` del progreso es
+# el máximo TEÓRICO (8 etapas × 200 = 1600) solo para el medidor; la escuela
+# termina por milestone 8_years (clave `completion`, que gana sobre el
+# contador en cualquier modo — ver _evaluate del ScriptJobDriver).
+#
+# Réplicas multi-semilla: usa las recetas school_k65p_glyph_sNNN /
+# school_k65p_standard_sNNN (seeds 771-773) — esta receta canónica apunta al
+# brazo glyph seed 770 ya graduado.
+
+source: script_job
+title: Escuela Soberana Bit v2 (Formación Nativa K-65P)
+priority: 5
+
+step_command: .venv/bin/python src/bitnet/training/train_sovereign_school_k65p.py --batch_size 32 --max_epochs_per_run 1
+env:
+  PYTHONPATH: .
+
+checkpoint_file: storage/checkpoints/sovereign_school_k65p/school_state_k65p.json
+pause_exit_code: 78
+
+progress:
+  mode: bounded
+  current_key: current_epoch
+  total: 1600              # máximo teórico del protocolo adaptativo (8×200)
+  stage_current_key: current_stage_idx
+  stage_total: 8
+  stage_offset: 1
+  stage_label: etapa
+
+completion:
+  key: milestones_achieved
+  contains: 8_years
+
+preflight:
+  vram_unload: true
+  min_free_vram_mb: 3500
+  memory_max: 16G
+
+control:
+  max_step_minutes: 780
+  preemptible: false

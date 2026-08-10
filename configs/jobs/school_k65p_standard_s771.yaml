@@ -1,0 +1,41 @@
+# Réplica multi-semilla de Bit v0 (K-65P, brazo STANDARD) — seed 771.
+#
+#   red-pill job submit --recipe school_k65p_standard_s771
+#
+# Protocolo adaptativo DL-006, umbrales DL-004 intactos, mismo corpus/escuela
+# que la run canónica (seed 770, ya graduada). state_dir PROPIO por réplica:
+# el trainer valida embedding_mode por directorio y no debe pisar el estado
+# canónico. La comparación v2↔v0 solo concluye con 3+ semillas (BITACORA Hito 5).
+
+source: script_job
+title: Réplica K-65P Bit v0 standard (seed 771)
+priority: 5
+
+step_command: .venv/bin/python src/bitnet/training/train_sovereign_school_k65p.py --batch_size 32 --max_epochs_per_run 1 --seed 771 --embedding standard --state_dir storage/checkpoints/replicates/k65p/standard_s771
+env:
+  PYTHONPATH: .
+
+checkpoint_file: storage/checkpoints/replicates/k65p/standard_s771/school_state_k65p.json
+pause_exit_code: 78
+
+progress:
+  mode: bounded
+  current_key: current_epoch
+  total: 1600              # máximo teórico del protocolo adaptativo (8×200)
+  stage_current_key: current_stage_idx
+  stage_total: 8
+  stage_offset: 1
+  stage_label: etapa
+
+completion:
+  key: milestones_achieved
+  contains: 8_years
+
+preflight:
+  vram_unload: true
+  min_free_vram_mb: 3500
+  memory_max: 16G
+
+control:
+  max_step_minutes: 780
+  preemptible: false

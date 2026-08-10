@@ -2,6 +2,26 @@
 
 ## [Unreleased]
 
+### 🧬 Réplicas multi-semilla DL-006 — la comparación v2↔v0 deja de ser anécdota (2026-08-10)
+
+- **[NEW] 6 recetas de réplica K-65P** (`configs/jobs/school_k65p_{glyph,standard}_s{771,772,773}.yaml`):
+  misma semilla canónica → 3 semillas nuevas (771/772/773) × 2 brazos
+  (`--embedding glyph|standard`) bajo el MISMO protocolo adaptativo DL-006 y
+  umbrales DL-004 congelados. Cada réplica usa `--state_dir` propio
+  (`storage/checkpoints/replicates/k65p/...`): el trainer valida `embedding_mode`
+  por directorio y una réplica jamás pisa el estado canónico ni otra réplica.
+  Doctrina (BITACORA Hito 5 / RELEASES_20260803): la lectura de una semilla no
+  concluye — la varianza entre runs es del orden del efecto; con 3+ semillas la
+  conjetura *glifos ⇒ robustez gramatical / embedding libre ⇒ ajuste distribucional*
+  se convierte en dato.
+- **[FIX] `configs/jobs/school_k65p.yaml`**: el `total: 1408` era el calendario
+  fijo de v1, falso para el protocolo adaptativo — ahora `1600` = máximo teórico
+  (8 etapas × 200 tope), y la terminación la gobierna el milestone `8_years`
+  (`completion`), que en cualquier modo gana al contador.
+- **[NEW] `--seed` en `scripts/train_school_k65p.sh`** (env `SEED`, default 770):
+  el runner autónomo propagaba `--embedding` y `--state_dir` pero no la semilla,
+  por lo que las réplicas por CLI eran imposibles.
+
 ### 🎓 DL-006 — Protocolo adaptativo + brazo Bit v0: la edad se mide en hitos, no en épocas (2026-08-03)
 
 - **[NEW] Protocolo adaptativo en `train_sovereign_school_k65p.py`**: etapas por

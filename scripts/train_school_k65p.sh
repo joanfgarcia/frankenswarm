@@ -19,6 +19,7 @@ PYTHON="${PYTHON:-.venv/bin/python}"
 BATCH_SIZE="${BATCH_SIZE:-32}"
 MEMORY_MAX="${MEMORY_MAX:-16G}"
 EMBEDDING="${EMBEDDING:-glyph}"   # glyph = Bit v2 | standard = Bit v0
+SEED="${SEED:-770}"               # semilla global (réplicas multi-semilla)
 STATE_DIR="${STATE_DIR:-storage/checkpoints/sovereign_school_k65p}"
 STATE_FILE="${STATE_DIR}/school_state_k65p.json"
 LOG_DIR="storage/logs"
@@ -77,7 +78,7 @@ limpieza() {
 trap limpieza EXIT INT TERM
 
 una_epoca() {
-	local cmd=("$PYTHON" src/bitnet/training/train_sovereign_school_k65p.py --batch_size "$BATCH_SIZE" --max_epochs_per_run 1 --embedding "$EMBEDDING" --state_dir "$STATE_DIR")
+	local cmd=("$PYTHON" src/bitnet/training/train_sovereign_school_k65p.py --batch_size "$BATCH_SIZE" --max_epochs_per_run 1 --embedding "$EMBEDDING" --seed "$SEED" --state_dir "$STATE_DIR")
 
 	if command -v systemd-run >/dev/null 2>&1; then
 		systemd-inhibit --what=sleep --who="frankenswarm-k65p" --why="entrenando a Bit v2 en K-65P" \
