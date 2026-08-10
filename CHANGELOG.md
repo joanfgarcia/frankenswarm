@@ -2,6 +2,27 @@
 
 ## [Unreleased]
 
+### 🧬 Réplicas multi-semilla DL-006 — resultado: 6/6 graduadas; el ajuste distribucional es conclusivo, la robustez generativa OOD no se replica (2026-08-10)
+
+- **[RESULT] 6/6 réplicas GRADUADAS 7/7 hitos** (seeds 771/772/773 × glyph/
+  standard), protocolo adaptativo DL-006 + umbrales DL-004 congelados. épocas:
+  glyph 164/148/165, standard 148/141/145.
+- **[CONCLUSIÓN — AJUSTE DISTRIBUCIONAL, CONCLUSIVA]**: `standard` bate a
+  `glyph` en val_loss final en TODAS las réplicas (2.007-2.039 vs 2.149-2.162).
+  El embedding libre ajusta mejor la distribución; deja de ser lectura de una
+  semilla.
+- **[CONCLUSIÓN — ROBUSTEZ GENERATIVA OOD, NO SE REPLICA]**: la ventaja
+  gramatical generativa del glyph de la seed 770 (OOD 40/40) era artefacto de
+  semilla. gen_valid OOD varía salvajemente (glyph 40-100%, standard 45-70%) y
+  **3 de 6 réplicas SUSPENDEN la batería adversarial DL-004** (umbral ≥0.60).
+- **[CONCLUSIÓN — SIN COLAPSO DISTRIBUCIONAL]**: el gap OOD−val es pequeño y
+  consistente en las 6 (+0.06 a +0.12 nats). El fallo del attack 2 es de
+  GENERACIÓN greedy (autoregresiva), no de representación: las muestras
+  inválidas son concatenaciones léxicas no-estructurales (`[18 comida dar dar]`),
+  no árboles mal balanceados.
+- **[ACTAS]** `storage/checkpoints/replicates/k65p/<brazo>_sNNN/adversarial_report.json`
+  (attack1+attack2) + `school_state_k65p.json` (exam_history, seed).
+
 ### 🧬 Réplicas multi-semilla DL-006 — la comparación v2↔v0 deja de ser anécdota (2026-08-10)
 
 - **[NEW] 6 recetas de réplica K-65P** (`configs/jobs/school_k65p_{glyph,standard}_s{771,772,773}.yaml`):
