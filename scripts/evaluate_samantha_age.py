@@ -7,8 +7,8 @@ import subprocess
 import numpy as np
 import torch
 
-from src.bitnet.vocab.dictionary_tool import SovereignDictionary
 from src.bitnet.model.modeling_bitnet import BitNet4LayerModel
+from src.bitnet.vocab.dictionary_tool import SovereignDictionary
 
 # Batería de preguntas por edad cognitiva/milestone (2 a 8 años)
 AGE_QUESTIONS = {
@@ -226,7 +226,7 @@ def get_allowed_vocab_for_age(age: int, base_dir: str) -> set[str]:
 		"to", "of", "in", "for", "on", "with", "without", "about", "and", "or", "but", "if", "because",
 		"is", "are", "was", "were", "be", "been", "have", "has", "had", "do", "does", "did", "want", "can",
 		"say", "see", "go", "give", "know", "eat", "drink", "meow", "bark", "hurt", "hello", "fine", "good",
-		"dad", "mom", "baby", "kid", "kiss", "give", "take", "more", "sleep", "runs", "much", "very"
+		"dad", "mom", "baby", "kid", "kiss", "take", "more", "sleep", "runs", "much", "very"
 	}
 
 	preschool_words = set(safe_words)
@@ -340,7 +340,7 @@ def run_evaluation(args):
 	qa_pairs = []
 	for qa in questions:
 		raw_q = qa["question"]
-		expected = dictionary.map_to_base_word(qa["expected"])
+		dictionary.map_to_base_word(qa["expected"])
 
 		# Extraer contenido de la pregunta
 		q_match = re.match(r"^(yo|tú|me|you)\s*:\s*(.*)$", raw_q, re.IGNORECASE)
@@ -475,7 +475,7 @@ def run_evaluation(args):
 		exp_clean = dictionary.map_to_base_word(qa["expected"]).strip().lower()
 		raw_exp_clean = qa["expected"].strip().lower()
 		
-		if ans_clean == exp_clean or ans_clean == raw_exp_clean:
+		if ans_clean in (exp_clean, raw_exp_clean):
 			calificaciones.append({
 				"pregunta": qa["question"],
 				"respuesta": qa["answer"],
@@ -516,7 +516,7 @@ def run_evaluation(args):
 				if matching_expected:
 					exp_clean = dictionary.map_to_base_word(matching_expected).strip().lower()
 					raw_exp_clean = matching_expected.strip().lower()
-					if r_clean == exp_clean or r_clean == raw_exp_clean:
+					if r_clean in (exp_clean, raw_exp_clean):
 						cal["calificacion"] = 10
 						cal["motivo"] = "Exact match (Auto-grade Override)"
 						cal["esperada"] = matching_expected

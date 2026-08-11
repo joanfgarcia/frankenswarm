@@ -17,7 +17,6 @@ Usage:
 import argparse
 import hashlib
 import json
-import os
 import re
 import sys
 from pathlib import Path
@@ -234,7 +233,7 @@ def main():
 
 	overall_pct = (valid_layer3 / total_all * 100) if total_all > 0 else 0
 	print("\n==================================================")
-	print(f"📊 INFORME FINAL DE TRADUCCIÓN Y AUDITORÍA 3-CAPAS:")
+	print("📊 INFORME FINAL DE TRADUCCIÓN Y AUDITORÍA 3-CAPAS:")
 	print(f"   Total Frases Procesadas: {total_all}")
 	print(f"   Capa 1 (Sintaxis RFC-002 + Léxico): {valid_layer1} / {total_all}")
 	print(f"   Capa 2 (Convergencia Round-Trip Inversa): {valid_layer2} / {total_all}")

@@ -1,6 +1,5 @@
 """Tests para el módulo de tokenización."""
 
-import pytest
 
 from src.bitnet.training.modules.tokenization import (
 	format_and_tokenize_dialogue,

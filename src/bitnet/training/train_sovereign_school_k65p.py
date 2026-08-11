@@ -111,14 +111,14 @@ def build_k65p_vocab_and_glyphs(lang: str = "es") -> tuple[dict[str, int], dict[
 	vocab_words = []
 	final_glyphs = []
 	seen = set()
-	for t, g in zip(tokens, glyphs_list):
+	for t, g in zip(tokens, glyphs_list, strict=False):
 		if t not in seen:
 			seen.add(t)
 			vocab_words.append(t)
 			final_glyphs.append(g)
 
 	word_to_idx = {w: i for i, w in enumerate(vocab_words)}
-	idx_to_word = {i: w for i, w in enumerate(vocab_words)}
+	idx_to_word = dict(enumerate(vocab_words))
 	glyph_table = np.array(final_glyphs, dtype=np.float32)
 
 	return word_to_idx, idx_to_word, glyph_table
@@ -163,10 +163,7 @@ def tokenize_k65p(text: str, word_to_idx: dict[str, int], max_len: int = MAX_LEN
 		idx = word_to_idx.get(t, word_to_idx.get(t.casefold(), word_to_idx["<unk>"]))
 		ids.append(idx)
 
-	if len(ids) < max_len:
-		ids = ids + [word_to_idx["<pad>"]] * (max_len - len(ids))
-	else:
-		ids = ids[:max_len]
+	ids = ids + [word_to_idx["<pad>"]] * (max_len - len(ids)) if len(ids) < max_len else ids[:max_len]
 	return ids
 
 
@@ -343,13 +340,13 @@ def bigram_baseline(train_t: torch.Tensor, val_t: torch.Tensor, vocab_size: int,
 	from collections import defaultdict
 	counts = defaultdict(lambda: defaultdict(int))
 	for row in train_t.tolist():
-		for a, b in zip(row[:-1], row[1:]):
+		for a, b in zip(row[:-1], row[1:], strict=False):
 			if b != pad_idx:
 				counts[a][b] += 1
 
 	total_loss, total_correct, total_tokens = 0.0, 0, 0
 	for row in val_t.tolist():
-		for a, b in zip(row[:-1], row[1:]):
+		for a, b in zip(row[:-1], row[1:], strict=False):
 			if b == pad_idx:
 				continue
 			row_counts = counts.get(a, {})

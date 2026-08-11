@@ -1,7 +1,7 @@
 import torch
 
-from src.bitnet.model.modeling_bitnet import BitLinear, BitNet4LayerModel
 from lab.experiments.train_populora import svd_crossover
+from src.bitnet.model.modeling_bitnet import BitLinear, BitNet4LayerModel
 from src.bitnet.translation.translator import SovereignTranslator
 
 

@@ -1,6 +1,5 @@
 """Tests para el módulo de configuración de etapas."""
 
-import pytest
 
 from src.bitnet.training.modules.stage_config import (
 	get_next_dim,

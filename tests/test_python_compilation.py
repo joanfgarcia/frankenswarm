@@ -7,7 +7,6 @@ This catches:
 """
 
 import ast
-import sys
 from pathlib import Path
 
 import pytest
@@ -41,7 +40,7 @@ def compile_file(filepath: Path) -> tuple[bool, str]:
     try:
         source = filepath.read_text(encoding="utf-8")
         # Compile to AST (catches syntax errors)
-        tree = ast.parse(source, filename=str(filepath))
+        ast.parse(source, filename=str(filepath))
         # Also compile to bytecode (catches more issues)
         compile(source, str(filepath), "exec")
         return True, ""

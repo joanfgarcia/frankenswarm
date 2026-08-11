@@ -213,6 +213,7 @@ class TestCalendarTriggerRemoved(unittest.TestCase):
 	def test_no_calendar_trigger_in_training_loop(self):
 		"""The epoch == config['start_epoch'] trigger should not exist in the training loop."""
 		import inspect
+
 		from src.bitnet.training.train_sovereign_school import run_school_training
 
 		source = inspect.getsource(run_school_training)
@@ -225,6 +226,7 @@ class TestCalendarTriggerRemoved(unittest.TestCase):
 	def test_plateau_trigger_exists(self):
 		"""The plateau-based trigger should exist in the training loop."""
 		import inspect
+
 		from src.bitnet.training.train_sovereign_school import run_school_training
 
 		source = inspect.getsource(run_school_training)

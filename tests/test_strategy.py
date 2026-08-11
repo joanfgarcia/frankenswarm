@@ -1,6 +1,5 @@
 """Tests para la estrategia de entrenamiento (IOC)."""
 
-import pytest
 import torch
 
 from src.bitnet.training.modules.strategy import (

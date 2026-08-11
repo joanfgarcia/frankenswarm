@@ -9,7 +9,11 @@ teoremas held-out para el examen gen_true.
 Uso: PYTHONPATH=.:../k65p/src .venv/bin/python scripts/generate_semantic_corpus.py [--seed 770]
 """
 
-import argparse, hashlib, json, random, subprocess, sys
+import argparse
+import hashlib
+import json
+import random
+import sys
 from pathlib import Path
 
 base_dir = Path(__file__).resolve().parents[1]
@@ -20,6 +24,7 @@ if k65p_src.exists():
 
 from k65p.lexicon import molecule_names
 from k65p.validator import is_valid
+
 LANG = "en"
 OUT_DIR = base_dir / "storage" / "curriculum" / "factory_semantic"
 
@@ -206,7 +211,7 @@ def make_record(canonical: str, stage: str, rng: random.Random, ood: bool = Fals
     record = {
         "k65p_canonical": canonical,
         "stage": stage,
-        "provenance": f"semantic_factory_v0",
+        "provenance": "semantic_factory_v0",
         "hash": hashlib.sha256(canonical.encode()).hexdigest()[:16],
     }
     if ood:

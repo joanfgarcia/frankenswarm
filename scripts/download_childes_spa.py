@@ -1,8 +1,10 @@
+import json
 import os
 import re
 import urllib.request
-import json
+
 from src.bitnet.vocab.dictionary_tool import SovereignDictionary
+
 
 def clean_and_extract_words(line: str) -> list[str]:
 	# Quitar signos de puntuación comunes e interrogaciones/exclamaciones
@@ -26,10 +28,10 @@ def run_download_and_mining():
 	url = "https://raw.githubusercontent.com/evaportelance/multilingual-aoa-prediction/main/Data/model_datasets/spa/all_child_directed_data.txt"
 	dest_file = os.path.join(temp_dir, "all_child_directed_data.txt")
 	
-	print(f"📥 Descargando corpus desde GitHub raw...")
+	print("📥 Descargando corpus desde GitHub raw...")
 	try:
 		urllib.request.urlretrieve(url, dest_file)
-		print(f"✓ Descargado con éxito.")
+		print("✓ Descargado con éxito.")
 	except Exception as e:
 		print(f"❌ Error al descargar: {e}")
 		return
@@ -45,7 +47,7 @@ def run_download_and_mining():
 		return mapping_cache[w]
 
 	try:
-		with open(dest_file, "r", encoding="utf-8", errors="ignore") as f:
+		with open(dest_file, encoding="utf-8", errors="ignore") as f:
 			for idx, line in enumerate(f):
 				words = clean_and_extract_words(line)
 				if words:

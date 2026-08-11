@@ -37,7 +37,7 @@ class SovereignDictionary:
 		self.mapping_cache = {}
 		if os.path.exists(self.cache_file):
 			try:
-				with open(self.cache_file, "r", encoding="utf-8") as f:
+				with open(self.cache_file, encoding="utf-8") as f:
 					self.mapping_cache = json.load(f)
 			except Exception:
 				pass

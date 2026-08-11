@@ -22,7 +22,6 @@ import sys
 from pathlib import Path
 
 import torch
-import torch.nn.functional as F  # noqa: N812
 
 base_dir = Path(__file__).resolve().parents[1]
 sys.path.append(str(base_dir))
@@ -34,7 +33,6 @@ if k65p_src.exists():
 from k65p.validator import is_valid
 
 from src.bitnet.training.train_sovereign_school_k65p import (
-	MAX_LEN,
 	bigram_baseline,
 	build_k65p_vocab_and_glyphs,
 	build_model,

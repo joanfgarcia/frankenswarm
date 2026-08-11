@@ -17,10 +17,7 @@ import torch
 
 from src.bitnet.model.modeling_bitnet import BitNet4LayerModel
 from src.bitnet.training.modules.corpus import compute_corpus_hash, load_tokenized_cache, save_tokenized_cache
-from src.bitnet.training.modules.exam_compiler import compile_exam_sequences_for_age
-from src.bitnet.training.modules.partitioner import compile_stage_dataset, partition_corpus_by_mlu
-from src.bitnet.training.modules.stage_config import get_next_dim, get_stage_config, get_stage_info
-from src.bitnet.training.modules.state_manager import EXAM_PAUSE_EXIT_CODE, run_samantha_eval, trigger_neurogenesis
+from src.bitnet.training.modules.stage_config import get_stage_config
 from src.bitnet.training.modules.strategy import select_strategy
 from src.bitnet.training.modules.tokenization import format_and_tokenize_dialogue, tokenize
 from src.bitnet.vocab.dictionary_tool import SovereignDictionary
@@ -262,7 +259,7 @@ class SchoolOrchestrator:
 		print(f"Modelo instanciado. Total parámetros: {n_params:,}")
 
 		lr_scale = 128.0 / model.hidden_dim
-		optimizer = self.strategy.create_optimizer(model, lr_scale)
+		self.strategy.create_optimizer(model, lr_scale)
 
 		# torch.compile
 		def _maybe_compile(m):
@@ -271,13 +268,11 @@ class SchoolOrchestrator:
 			print("🧪 [COMPILE] torch.compile(fullgraph=False) activo — vigilar ∇STE.")
 			return torch.compile(m, fullgraph=False)
 
-		train_model = _maybe_compile(model)
+		_maybe_compile(model)
 
-		seq_len = 128
-		batch_size = self.args.batch_size
 
 		epochs_trained = 0
-		for epoch in range(self.current_epoch, self.max_epochs + 1):
+		for _epoch in range(self.current_epoch, self.max_epochs + 1):
 			if self.args.max_epochs_per_run is not None and epochs_trained >= self.args.max_epochs_per_run:
 				print(f"🛑 [PAUSA PLANIFICADA] Alcanzado el límite de {self.args.max_epochs_per_run} épocas por ejecución. Deteniendo para guardar checkpoint.")
 				break

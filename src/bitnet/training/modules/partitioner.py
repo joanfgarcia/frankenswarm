@@ -19,10 +19,7 @@ def partition_corpus_by_mlu(sequences: list[list[int]]) -> tuple:
 def compile_stage_dataset(base_data: list[list[int]], seq_len: int = 128) -> tuple:
 	padded = []
 	for seq in base_data:
-		if len(seq) < seq_len:
-			seq_padded = seq + [0] * (seq_len - len(seq))
-		else:
-			seq_padded = seq[:seq_len]
+		seq_padded = seq + [0] * (seq_len - len(seq)) if len(seq) < seq_len else seq[:seq_len]
 		padded.append(seq_padded)
 
 	import random

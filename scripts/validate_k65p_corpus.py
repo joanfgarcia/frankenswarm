@@ -96,7 +96,7 @@ def main():
 
 	res = audit_corpus_file(Path(args.file))
 
-	print(f"=== K-65P CORPUS AUDIT REPORT ===")
+	print("=== K-65P CORPUS AUDIT REPORT ===")
 	print(f"Archivo: {res['file']}")
 	print(f"Total registros: {res['total_records']}")
 	print(f"Registros válidos (K-65P): {res['valid_records']}")

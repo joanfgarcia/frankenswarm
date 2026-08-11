@@ -3,7 +3,7 @@ import os
 import re
 import sys
 from collections import Counter
-from datetime import datetime, UTC
+from datetime import UTC, datetime
 
 base_dir = "/home/joan/Documents/IA/frankenswarm"
 sys.path.append(base_dir)

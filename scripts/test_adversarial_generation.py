@@ -5,10 +5,9 @@ tanto con mask de vocabulario (Curriculum-Gated) como sin mask.
 """
 
 import sys
-import json
-import torch
-import torch.nn.functional as F
 from pathlib import Path
+
+import torch
 
 base_dir = Path(__file__).resolve().parents[1]
 sys.path.append(str(base_dir))
@@ -17,13 +16,14 @@ k65p_src = base_dir.parent / "k65p" / "src"
 if k65p_src.exists():
 	sys.path.append(str(k65p_src))
 
+from k65p.validator import is_valid
+
 from src.bitnet.model.modeling_bitnet import BitNet4LayerModel
 from src.bitnet.training.train_sovereign_school_k65p import (
 	build_k65p_vocab_and_glyphs,
-	tokenize_k65p,
 	build_stage_logit_mask,
+	tokenize_k65p,
 )
-from k65p.validator import is_valid
 
 CHECKPOINT_PATH = base_dir / "storage" / "checkpoints" / "releases" / "bit_v2_8yo_graduated_k65p" / "model_final_k65p.pt"
 if not CHECKPOINT_PATH.exists():
@@ -104,7 +104,7 @@ def run_adversarial_generation():
 		print(f"Salida : '{gen_str}'")
 		print(f"Sintaxis K-65P Validada: {'✅ OK' if val_ok else '❌ FAIL'}\n")
 
-	print(f"📊 RESULTADO TEST ADVERSARIAL 2:")
+	print("📊 RESULTADO TEST ADVERSARIAL 2:")
 	print(f"   • Sintaxis Gated   : {valid_syntax_gated} / {len(prompts)} ({valid_syntax_gated/len(prompts)*100:.1f}%)")
 
 if __name__ == "__main__":

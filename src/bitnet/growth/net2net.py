@@ -402,7 +402,7 @@ def net2wider_model(
 			)
 
 		# --- D. Core Layers (Transformer Blocks) ---
-		for l_idx, (old_block, new_block) in enumerate(zip(old_model.core_layers, new_model.core_layers, strict=False)):
+		for _l_idx, (old_block, new_block) in enumerate(zip(old_model.core_layers, new_model.core_layers, strict=False)):
 			new_block.attn_norm.weight.copy_(old_block.attn_norm.weight.data[g])
 			transfer_state(
 				old_block.attn_norm.weight,

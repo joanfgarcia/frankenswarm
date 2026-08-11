@@ -4,7 +4,6 @@ import subprocess
 import sys
 from dataclasses import dataclass, field
 
-
 EXAM_MAX_FAILURES = 3  # suspensos del MISMO hito antes de ceder la decisión al operador
 EXAM_REMEDIAL_FRACTION = 0.25  # fracción de la etapa que se repasa tras cada suspenso
 EXAM_PAUSE_EXIT_CODE = 78  # contrato con la receta (pause_exit_code): el runner sella PAUSED

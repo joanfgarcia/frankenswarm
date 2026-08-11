@@ -10,7 +10,11 @@ Métrica separada para teoremas held-out (nunca en corpus) vs recall (en corpus)
 Uso: PYTHONPATH=.:../k65p/src .venv/bin/python scripts/exam_gen_true.py [--state_dir DIR]
 """
 
-import argparse, json, subprocess, sys, tempfile
+import argparse
+import json
+import subprocess
+import sys
+import tempfile
 from pathlib import Path
 
 base_dir = Path(__file__).resolve().parents[1]

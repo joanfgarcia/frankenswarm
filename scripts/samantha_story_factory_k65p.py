@@ -12,9 +12,7 @@ Usage:
 import argparse
 import hashlib
 import json
-import os
 import random
-import re
 import sys
 from datetime import UTC, datetime
 from pathlib import Path

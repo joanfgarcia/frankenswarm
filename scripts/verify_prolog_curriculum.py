@@ -9,9 +9,7 @@ Usage:
 	PYTHONPATH=.:../k65p/src .venv/bin/python scripts/verify_prolog_curriculum.py
 """
 
-import argparse
 import json
-import os
 import subprocess
 import sys
 from pathlib import Path
@@ -122,7 +120,7 @@ def main():
 		sys.exit(1)
 
 	factory_dir = base_dir / "storage" / "curriculum" / "factory_k65p"
-	jsonl_files = sorted(list(factory_dir.glob("*.jsonl")))
+	jsonl_files = sorted(factory_dir.glob("*.jsonl"))
 
 	if not jsonl_files:
 		print(f"❌ ERROR: No se encontraron archivos JSONL en {factory_dir}")

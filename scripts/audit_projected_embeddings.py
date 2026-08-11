@@ -1,8 +1,10 @@
 import json
 import os
+
+import numpy as np
 import torch
 import torch.nn.functional as F
-import numpy as np
+
 
 def run_audit():
 	print("═══ 🔬 Projected Word Embeddings Auditor ═══")
@@ -32,7 +34,7 @@ def run_audit():
 		glyphs = np.array(vocab_data["glyphs"], dtype=np.float32)
 		
 	word_to_idx = {w: i for i, w in enumerate(words)}
-	idx_to_word = dict(enumerate(words))
+	dict(enumerate(words))
 	vocab_size = len(words)
 	print(f"Loaded vocabulary: {vocab_size} words.")
 	
@@ -125,7 +127,7 @@ def run_audit():
 			
 			# Find matches > 0.85
 			rows, cols = torch.where(block_sims > 0.85)
-			for r, c in zip(rows.tolist(), cols.tolist()):
+			for r, c in zip(rows.tolist(), cols.tolist(), strict=False):
 				global_r = i + r
 				if global_r < c: # Only keep unique pairs and ignore diagonal
 					collisions.append((words[global_r], words[c], block_sims[r, c].item()))

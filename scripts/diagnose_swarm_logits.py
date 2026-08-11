@@ -1,6 +1,7 @@
-import os
 import json
+import os
 import re
+
 import numpy as np
 import torch
 import torch.nn.functional as F
@@ -81,7 +82,7 @@ def main():
 		# Top 5
 		top_5_vals, top_5_indices = torch.topk(probs, 5)
 		top_5_list = []
-		for val, idx in zip(top_5_vals, top_5_indices):
+		for val, idx in zip(top_5_vals, top_5_indices, strict=False):
 			top_5_list.append(f"'{idx_to_word[idx.item()]}': {val.item():.4f}")
 
 		selected_idx = top_5_indices[0].item()
