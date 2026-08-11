@@ -166,7 +166,50 @@ de tope) — no es un calendario fijo; la escuela termina por **milestone
 
 ---
 
-## 4. Diagnóstico rápido
+## 3.2 Escuela Semántica (K-65P con verdad)
+
+El corpus sintáctico `factory_k65p` enseña gramática; el corpus semántico
+`factory_semantic` enseña VERDAD a partir de una KB causal de hechos + reglas
+(69 expresiones en 3 niveles: preschool/primary/secondary). Las expresiones son
+válidas por construcción Y verificables contra la KB vía Prolog (swipl).
+
+```bash
+# Generar el corpus semántico
+PYTHONPATH=.:../k65p/src .venv/bin/python scripts/generate_semantic_corpus.py
+
+# Lanzar la escuela semántica (job diferido)
+red-pill job submit --recipe school_semantic
+```
+
+Cada expresión en el corpus es un hecho o regla de la KB (ej. `[exist fire]`,
+`[if [touch someone fire] [happen [G something bad] someone]]`), con
+variaciones por entidad y pares contrastivos falsos (NOT). Los teoremas
+**held-out** (expresiones de la KB nunca vistas en el corpus) permiten separar
+memoria de razonamiento en el examen.
+
+### Examen gen_true (verdad vía Prolog)
+
+A diferencia de `gen_valid` (sintaxis: ¿es válido?), `gen_true` pregunta: ¿la
+continuación generada se DEMUESTRA de la KB? El puente K-65P → Prolog traduce
+la expresión y swipl la demuestra o la refuta.
+
+```bash
+PYTHONPATH=.:../k65p/src .venv/bin/python scripts/exam_gen_true.py
+```
+
+### Examen M5 (vocabulario en caliente)
+
+El brazo glyph puede registrar palabras nuevas en caliente
+(`register_new_word`) sin reentrenar la tabla — capacidad exclusiva que el
+standard no tiene. El examen M5 inyecta una palabra de prueba con glifo
+compuesto de primos y mide uso inmediato + consolidación:
+
+```bash
+PYTHONPATH=.:../k65p/src .venv/bin/python scripts/exam_m5_hot_word.py \
+    --state_dir storage/checkpoints/replicates/k65p/glyph_s773
+```
+
+---
 
 | Síntoma | Dónde mirar |
 | :--- | :--- |

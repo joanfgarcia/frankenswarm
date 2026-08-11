@@ -2,6 +2,41 @@
 
 ## [Unreleased]
 
+### 🎓 Escuela Semántica — fábrica de corpus causal, gen_true vía Prolog y primera cata (2026-08-11)
+
+- **[NEW] `scripts/generate_semantic_corpus.py`**: fábrica de corpus K-65P con
+  VERDAD por construcción. A diferencia del generador sintáctico
+  (`generate_k65p_corpus.py`), parte de una KB causal de 69 hechos + reglas en
+  3 niveles (preschool/primary/secondary) y genera expresiones válidas Y
+  verdaderas (consistentes con la KB), variaciones por entidad, pares
+  contrastivos falsos (NOT) y teoremas held-out para el examen de reasoning.
+  Produce `factory_semantic/kb.pl` como KB de verdad para el juez Prolog.
+- **[NEW] `scripts/exam_gen_true.py`**: examinador que convierte la continuación
+  generada a Prolog (vía bridge) y comprueba si se DEMUESTRA de la KB compilada
+  con swipl. Sucesor de `gen_valid`: donde el examinador sintáctico preguntaba
+  "¿es válido?", gen_true pregunta "¿es verdad?". Separa teoremas held-out
+  (reasoning) de recall.
+- **[NEW] `scripts/exam_m5_hot_word.py`**: examen de vocabulario en caliente que
+  inyecta una palabra nueva (trueno) con glifo compuesto de primos y mide uso
+  inmediato. 3 pruebas: inyección en frío (composición mueve logit), contraste
+  estructural (NO EVALUABLE sin semántica) y consolidación (≤5 épocas, emisión
+  98.5%). La capacidad de `register_new_word` es real y exclusiva del brazo
+  glyph (el standard no puede por construcción).
+- **[NEW] `configs/jobs/school_semantic.yaml`**: receta `script_job` para la
+  escuela semántica con `--corpus factory_semantic --lang en`. Protocolo
+  adaptativo DL-006, todas las moléculas disponibles desde la etapa 0.
+- **[FEAT] `train_sovereign_school_k65p.py`**: nuevos flags `--corpus`
+  (factory_k65p|factory_semantic) y `--lang` (es|en). El builder de vocabulario
+  añade nombres simbólicos en inglés cuando `lang=en`. La máscara de etapa
+  permite todas las moléculas desde el principio en modo semántico.
+- **[FEAT] `k65p/data/lexicon.json`**: renderings en inglés para las 28
+  moléculas gold. `k65p/src/k65p/lexicon.py`: `molecule_names(lang='en')`.
+- **[CATA 1]**: modelo glyph a 128d, 6/7 hitos en 211 épocas (gen_valid=1.0,
+  val=1.45 vs bigrama=3.06). Falló por corpus secundario insuficiente (20 <
+  mínimo). Umbral bajado a 20; KB secundaria ampliada a 16 expresiones +
+  variaciones 4x = 47 muestras.
+- **[CATA 2]**: en curso — 2_years aprobado en 59 épocas.
+
 ### 🧬 Réplicas multi-semilla DL-006 — resultado: 6/6 graduadas; el ajuste distribucional es conclusivo, la robustez generativa OOD no se replica (2026-08-10)
 
 - **[RESULT] 6/6 réplicas GRADUADAS 7/7 hitos** (seeds 771/772/773 × glyph/

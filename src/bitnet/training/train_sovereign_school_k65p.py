@@ -80,7 +80,7 @@ ALL_DIMS = sorted({c["dim"] for c in STAGE_CONFIG})
 STRUCT_TRITS = {"<unk>": 4, "<stop>": 3, "[": 0, "]": 1, "G": 2}
 
 
-def build_k65p_vocab_and_glyphs() -> tuple[dict[str, int], dict[int, str], np.ndarray]:
+def build_k65p_vocab_and_glyphs(lang: str = "es") -> tuple[dict[str, int], dict[int, str], np.ndarray]:
 	lexicon = load_lexicon()
 	tokens = ["<pad>", "<unk>", "<stop>", "[", "]", "G"]
 	glyphs_list = []
@@ -90,16 +90,22 @@ def build_k65p_vocab_and_glyphs() -> tuple[dict[str, int], dict[int, str], np.nd
 			g[STRUCT_TRITS[t]] = -1
 		glyphs_list.append(g)
 
-	# Primos SOLO en forma canónica (dígito). La forma símbolo compartía glifo
-	# idéntico con el dígito → logits empatados (aliasing DL-005).
-	for pid, _row in enumerate(PRIMES):
+	# Primos en forma canónica + simbólica (sin aliasing: cada primo tiene su
+	# propio glifo; añadir el nombre simbólico no reintroduce el bug DL-005
+	# porque no hay ambigüedad entre primos distintos). La forma simbólica se
+	# añade primero → el token resultante es el nombre legible.
+	for pid, row in enumerate(PRIMES):
 		g_sym = [0] * N_PRIMES
 		g_sym[pid] = 1
+		if lang == "en":
+			tokens.append(row[0].lower())
+			glyphs_list.append(g_sym)
 		tokens.append(str(pid))
 		glyphs_list.append(g_sym)
 
 	for name, entry in sorted(lexicon.items()):
-		tokens.append(name.casefold())
+		mol_name = name.casefold() if lang == "es" else entry.get("en", name).casefold()
+		tokens.append(mol_name)
 		glyphs_list.append(entry["glyph"])
 
 	vocab_words = []
@@ -189,10 +195,11 @@ def load_dataset_stage(
 	word_to_idx: dict[str, int],
 	max_len: int = MAX_LEN,
 	seed: int = 770,
+	corpus: str = "factory_k65p",
 ) -> tuple[torch.Tensor, torch.Tensor, list[str]]:
 	"""Carga el corpus de la etapa. Split train/val 85/15 BARAJADO (semilla fija) y sin duplicados."""
 	ds_name = stage_group_for(stage_name)
-	jsonl_path = base_dir / "storage" / "curriculum" / "factory_k65p" / f"{ds_name}.jsonl"
+	jsonl_path = base_dir / "storage" / "curriculum" / corpus / f"{ds_name}.jsonl"
 
 	samples: list[str] = []
 	seen: set[str] = set()
@@ -206,9 +213,9 @@ def load_dataset_stage(
 						seen.add(expr)
 						samples.append(expr)
 
-	if len(samples) < 40:
-		print(f"✗ Corpus insuficiente para '{ds_name}': {len(samples)} muestras (<40). "
-			f"Genera el corpus primero: scripts/generate_k65p_corpus.py")
+	if len(samples) < 20:
+		print(f"✗ Corpus insuficiente para '{ds_name}': {len(samples)} muestras (<20). "
+			f"Genera el corpus primero: scripts/generate_semantic_corpus.py")
 		sys.exit(1)
 
 	rng = random.Random(seed)
@@ -222,7 +229,7 @@ def load_dataset_stage(
 	return train_t, val_t, val_exprs
 
 
-def build_stage_logit_mask(stage_idx: int, vocab_size: int, word_to_idx: dict[str, int]) -> torch.Tensor:
+def build_stage_logit_mask(stage_idx: int, vocab_size: int, word_to_idx: dict[str, int], lang: str = "es") -> torch.Tensor:
 	# <unk> vetado: el corpus no lo contiene (verificado por assert) y emitirlo
 	# en generación es ruido puro. <pad> se permite como señal implícita de stop.
 	mask = torch.full((vocab_size,), float("-inf"))
@@ -232,13 +239,15 @@ def build_stage_logit_mask(stage_idx: int, vocab_size: int, word_to_idx: dict[st
 		allowed.add(row[0].lower())
 		allowed.add(str(pid))
 
-	molecules = sorted(molecule_names())
-	if stage_idx <= 3:
+	molecules = sorted(molecule_names(lang=lang))
+	# Escuela semántica (en): todas las moléculas desde el principio
+	# Escuela sintáctica (es): desbloqueo progresivo por etapa
+	if lang != "es" or stage_idx >= 6:
+		allowed.update(molecules)
+	elif stage_idx <= 3:
 		allowed.update(molecules[:10])
 	elif stage_idx <= 5:
 		allowed.update(molecules[:20])
-	else:
-		allowed.update(molecules)
 
 	for w in allowed:
 		if w in word_to_idx:
@@ -490,6 +499,8 @@ def run_school_training_k65p():
 	parser.add_argument("--embedding", choices=["glyph", "standard"], default="glyph", help="Brazo: glyph=Bit v2, standard=Bit v0")
 	parser.add_argument("--state_dir", type=str, default=str(DEFAULT_STATE_DIR), help="Directorio de estado/checkpoints (sandboxing)")
 	parser.add_argument("--reset_state", action="store_true", help="Reiniciar entrenamiento desde cero")
+	parser.add_argument("--corpus", type=str, default="factory_k65p", help="Subdirectorio del corpus (factory_k65p | factory_semantic)")
+	parser.add_argument("--lang", type=str, default="es", help="Idioma del lexicon (es | en)")
 	args = parser.parse_args()
 
 	state_dir = Path(args.state_dir)
@@ -502,7 +513,7 @@ def run_school_training_k65p():
 	np.random.seed(args.seed)
 	random.seed(args.seed)
 
-	word_to_idx, idx_to_word, glyph_table = build_k65p_vocab_and_glyphs()
+	word_to_idx, idx_to_word, glyph_table = build_k65p_vocab_and_glyphs(lang=args.lang)
 	vocab_size = len(word_to_idx)
 	pad_idx = word_to_idx["<pad>"]
 
@@ -548,8 +559,8 @@ def run_school_training_k65p():
 
 	def load_stage(idx: int):
 		cfg = STAGE_CONFIG[idx]
-		tr, va, ve = load_dataset_stage(cfg["name"], word_to_idx, seed=args.seed)
-		mask = build_stage_logit_mask(cfg["stage_idx"], vocab_size, word_to_idx)
+		tr, va, ve = load_dataset_stage(cfg["name"], word_to_idx, seed=args.seed, corpus=args.corpus)
+		mask = build_stage_logit_mask(cfg["stage_idx"], vocab_size, word_to_idx, lang=args.lang)
 		assert_mask_covers_dataset([tr, va], mask, idx_to_word, cfg["name"], pad_idx)
 		return cfg, tr.to(device), va.to(device), ve, mask.to(device)
 
