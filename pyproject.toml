@@ -5,7 +5,9 @@ description = "Heterogeneous Hardware MoE"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
-    "pyswip"
+    "pyswip",
+    "numpy",
+    "torch"
 ]
 
 [project.optional-dependencies]
