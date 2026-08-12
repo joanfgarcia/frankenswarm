@@ -1,0 +1,38 @@
+# Escuela Semántica K-65P — brazo STANDARD (receta de ejecución diferida)
+#
+#   red-pill job submit --recipe school_semantic_standard
+#
+# Mismo corpus semántico, mismo protocolo DL-006, distinto embedding.
+# Comparativa directa glyph vs standard sobre aprendizaje de verdad (gen_true).
+
+source: script_job
+title: Escuela Semántica K-65P — standard (cata 1)
+priority: 5
+
+step_command: .venv/bin/python src/bitnet/training/train_sovereign_school_k65p.py --batch_size 32 --max_epochs_per_run 1 --corpus factory_semantic --lang en --embedding standard --state_dir storage/checkpoints/sovereign_school_semantic_std
+env:
+  PYTHONPATH: .
+
+checkpoint_file: storage/checkpoints/sovereign_school_semantic_std/school_state_k65p.json
+pause_exit_code: 78
+
+progress:
+  mode: unbounded
+  current_key: current_epoch
+  stage_current_key: current_stage_idx
+  stage_total: 8
+  stage_offset: 1
+  stage_label: etapa
+
+completion:
+  key: milestones_achieved
+  contains: 8_years
+
+preflight:
+  vram_unload: true
+  min_free_vram_mb: 3500
+  memory_max: 16G
+
+control:
+  max_step_minutes: 780
+  preemptible: false
