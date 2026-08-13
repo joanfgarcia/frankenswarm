@@ -30,7 +30,7 @@ Diseño (3 pruebas de discriminación, umbrales PRE-REGISTRADOS):
 
 Referencias: ESTADO_DEL_CAMINO.md §3 (cola de trabajo, paso 3) ·
 INFORME_DL006_MATRIZ.md §3 (baza exclusiva del glifo, 'jamás examinada') ·
-Aleth_Core/BITACORA_BIT_V2.md (Hito 5, fase de réplicas 2026-08-10).
+docs/BITACORA_BIT_V2.md (Hito 5, fase de réplicas 2026-08-10).
 
 Uso:
 	PYTHONPATH=.:../k65p/src .venv/bin/python scripts/exam_m5_hot_word.py [--state_dir DIR]

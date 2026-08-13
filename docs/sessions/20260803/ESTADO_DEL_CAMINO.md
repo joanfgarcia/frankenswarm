@@ -5,7 +5,7 @@
 > graduación falsa del 2-ago e instrumentos), **DL-005** (glifo cero: sintaxis
 > inaprendible, firmas ternarias), **DL-006** (protocolo adaptativo + matriz de
 > brazos) en `docs/DECISION_LOG.md`, y el Hito 5 de
-> `Aleth_Core/BITACORA_BIT_V2.md`.
+> `docs/BITACORA_BIT_V2.md`.
 
 ## El mapa en una línea
 

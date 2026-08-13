@@ -2,7 +2,7 @@
 
 **ID:** RFC-BIT-GRAD-001
 **Copia canónica** (decisión del Fixer, 27-jul-2026): este fichero en
-`frankenswarm/docs/` es el registro oficial; `Aleth_Core/RFC_BIT_GRADUATION_ROADMAP.md`
+`frankenswarm/docs/` es el registro oficial; `docs/RFC_BIT_GRADUATION_ROADMAP.md`
 queda como espejo de trabajo. Resuelve la pregunta abierta Q5. Ver también
 `docs/DECISION_LOG.md` (DL-002) y `docs/experiments/EXP_079_DESIGN.md`.
 **Status:** Draft v1 — para revisión del Fixer
@@ -170,9 +170,9 @@ hecho estructural de que restan **410 epochs** y de que BF16 (F1) los abarata to
 
 ## 7. Referencias
 
-- `Aleth_Core/RFC_VRAM_SCALING_BITNET_CURRICULUM.md` — RFC-BITNET-VRAM-001 v4 (Grok + DeepSeek)
-- `Aleth_Core/NOTE_CURRICULUM_SCALING_REVIEW.md` — corregida por §2.4 de este RFC
-- `Aleth_Core/bitnet_next_architecture_plan.md` v4 — gates de motor
+- `docs/RFC_VRAM_SCALING_BITNET_CURRICULUM.md` — RFC-BITNET-VRAM-001 v4 (Grok + DeepSeek)
+- `docs/NOTE_CURRICULUM_SCALING_REVIEW.md` — corregida por §2.4 de este RFC
+- `docs/bitnet_next_architecture_plan.md` v4 — gates de motor
 - `k65p/docs/CORE/ROADMAP.md` — fases 1-5 del track nativo (G1 cerrado 2026-07-16)
 - `frankenswarm/src/bitnet/training/train_sovereign_school.py` — `get_stage_config:459`, `get_next_dim:488`
 - `frankenswarm/storage/checkpoints/sovereign_school/school_state.json` — estado vivo del run

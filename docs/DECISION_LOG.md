@@ -123,7 +123,7 @@ K-65P en ~2,4 h y publicó a Bit v2 como "graduado de 8 años" con cifras de tes
 1. El material del 2-ago se mueve a
    `storage/checkpoints/quarantine/bit_v2_smoketest_20260802/` y se re-etiqueta
    como **smoke-test del pipeline**. Sus cifras no se citan. La entrada "Hito 4"
-   de la bitácora (Aleth_Core/BITACORA_BIT_V2.md) queda enmendada por referencia.
+   de la bitácora (docs/BITACORA_BIT_V2.md) queda enmendada por referencia.
 2. **Corpus nuevo por construcción**: `scripts/generate_k65p_corpus.py` genera
    4.500 expresiones únicas validadas contra `k65p.validator` (1.200/1.500/1.800
    por bloque, estratificadas por tiers de moléculas alineados con las máscaras),
