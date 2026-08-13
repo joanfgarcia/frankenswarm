@@ -1,0 +1,40 @@
+# Escuela Semántica K-65P — variante HOT-VOCAB (gating REAL de vocabulario).
+#
+#   red-pill job submit --recipe school_semantic_hotvocab
+#
+# Solo brazo glyph: el vocabulario arranca con el tier base y crece en caliente
+# en las transiciones de etapa (stage 4 → +animales, stage 6 → +comportamiento)
+# vía register_new_word. Mide si las palabras inyectadas son usables al instante
+# (composición de primos ya aprendidos) o cuesta integrarlas.
+
+source: script_job
+title: Escuela Semántica K-65P — hot-vocab (glyph)
+priority: 5
+
+step_command: .venv/bin/python src/bitnet/training/train_sovereign_school_k65p.py --batch_size 32 --max_epochs_per_run 1 --corpus factory_semantic --lang en --hot_vocab --state_dir storage/checkpoints/sovereign_school_semantic_hot
+env:
+  PYTHONPATH: .
+
+checkpoint_file: storage/checkpoints/sovereign_school_semantic_hot/school_state_k65p.json
+pause_exit_code: 78
+
+progress:
+  mode: unbounded
+  current_key: current_epoch
+  stage_current_key: current_stage_idx
+  stage_total: 8
+  stage_offset: 1
+  stage_label: etapa
+
+completion:
+  key: milestones_achieved
+  contains: 8_years
+
+preflight:
+  vram_unload: true
+  min_free_vram_mb: 3500
+  memory_max: 16G
+
+control:
+  max_step_minutes: 780
+  preemptible: false

@@ -68,6 +68,11 @@ EXAM_BIGRAM_MARGIN = 0.10
 EXAM_N_PROMPTS = 25
 MAX_LEN = 48
 
+
+class CorpusExhaustedError(Exception):
+	"""El currículo de la siguiente etapa no existe aún (escala de corpus agotada)."""
+
+
 # Solo nombres, edades y techos de dim; los rangos de épocas del calendario v1 se ignoran (DL-006).
 STAGE_CONFIG = get_stage_config(base_epochs=64, stage_scale=0.5)
 ALL_DIMS = sorted({c["dim"] for c in STAGE_CONFIG})
@@ -80,7 +85,111 @@ ALL_DIMS = sorted({c["dim"] for c in STAGE_CONFIG})
 STRUCT_TRITS = {"<unk>": 4, "<stop>": 3, "[": 0, "]": 1, "G": 2}
 
 
-def build_k65p_vocab_and_glyphs(lang: str = "es") -> tuple[dict[str, int], dict[int, str], np.ndarray]:
+# Gating curricular semántico (escuela semántica, lang=en): desbloqueo por
+# categoría, no por orden alfabético. Refleja el espíritu de v1 (vocabulario
+# gateado por etapa): primero el mundo base (entidades + objetos + acciones
+# básicas), luego agentes animales, luego conducta (sonidos + acciones
+# complejas). El léxico se amplió a 94 moléculas (26 animales, 12 objetos,
+# 17 sonidos) para escalar el espacio de combinaciones.
+SEMANTIC_TIERS: dict[str, list[str]] = {
+	# Tier 0 — preescolar (stages 0-3): mundo físico + objetos + acciones básicas
+	"base": [
+		"fire", "water", "sun", "night", "tree", "rock", "earth", "river",
+		"cave", "forest", "food", "predator", "myself", "group", "wound",
+		"storm", "rain", "danger", "safe", "full",
+		"chair", "table", "bed", "cup", "knife", "door", "house",
+		"bridge", "road", "roof", "hammer", "basket",
+		"eat", "drink", "sleep", "move_action", "see_action",
+		"cut", "open", "build", "sit",
+	],
+	# Tier 1 — primaria (stages 4-5): agentes animales + interacción social
+	"animals": [
+		"dog", "cat", "bird", "horse", "fish", "wolf", "bear",
+		"mouse", "rabbit", "fox", "snake",
+		"cow", "pig", "elephant", "lion", "tiger", "monkey", "owl",
+		"duck", "eagle", "whale", "shark", "ant", "goat", "deer",
+		"learn", "teach", "give",
+	],
+	# Tier 2 — secundaria (stages 6-8): sonidos + acciones complejas
+	"behavior": [
+		"bark", "meow", "sing", "roar", "howl", "chirp", "growl", "hiss",
+		"moo", "oink", "hoot", "quack", "caw", "croak", "buzz", "trumpet", "chatter",
+		"run", "jump", "swim", "fly", "climb", "hunt", "hide", "play",
+	],
+}
+
+# Todas las moléculas (cualquier tier), para las etapas avanzadas
+_ALL_MOLECULES = SEMANTIC_TIERS["base"] + SEMANTIC_TIERS["animals"] + SEMANTIC_TIERS["behavior"]
+
+
+def _gated_molecules(stage_idx: int, lang: str) -> set[str]:
+	"""Devuelve las moléculas permitidas en la máscara de la etapa dada.
+
+	Escuela semántica (lang=en): gating curricular por categoría —
+	stage 0-3 base, 4-5 +animales, 6+ todo.
+	Escuela sintáctica (lang=es): desbloqueo progresivo por orden de lexicon.
+	"""
+	if lang == "en":
+		if stage_idx <= 3:
+			return set(SEMANTIC_TIERS["base"])
+		if stage_idx <= 5:
+			return set(SEMANTIC_TIERS["base"]) | set(SEMANTIC_TIERS["animals"])
+		return set(_ALL_MOLECULES)
+	all_mols = sorted(molecule_names(lang=lang))
+	if stage_idx <= 3:
+		return set(all_mols[:10])
+	if stage_idx <= 5:
+		return set(all_mols[:20])
+	return set(all_mols)
+
+
+def _tier_molecule_order(stage_idx: int) -> list[str]:
+	"""Lista ordenada (canónica: base→animals→behavior) de moléculas activas en stage_idx.
+
+	El orden es determinista y depende SOLO del stage_idx: la reconstrucción del
+	vocabulario en cada step y la inyección en las transiciones usan el MISMO
+	orden, de modo que el índice de cada molécula coincide con su fila en
+	glyph_table (crítico para hot-vocab, que reanuda por épocas atómicas).
+	"""
+	order = list(SEMANTIC_TIERS["base"])
+	if stage_idx <= 3:
+		return order
+	order += list(SEMANTIC_TIERS["animals"])
+	if stage_idx <= 5:
+		return order
+	return order + list(SEMANTIC_TIERS["behavior"])
+
+
+def _lexicon_name_to_glyph(lang: str) -> dict[str, list[int]]:
+	"""Mapa nombre-de-molécula (según lang) → glifo (65 trits)."""
+	out: dict[str, list[int]] = {}
+	for name, entry in load_lexicon().items():
+		mol = name.casefold() if lang == "es" else entry.get("en", name).casefold()
+		out[mol] = entry["glyph"]
+	return out
+
+
+def inject_molecules(model, word_to_idx: dict[str, int], idx_to_word: dict[int, str], molecule_order: list[str], lang: str = "es") -> int:
+	"""Inyecta en caliente las moléculas de `molecule_order` que aún no existen.
+
+	Uso exclusivo del brazo glyph: `register_new_word` compone el embedding de
+	cada palabra nueva a partir de los prime_embeddings ya aprendidos (M5). El
+	standard no puede (assert en register_new_word). Devuelve el nº inyectado.
+	"""
+	glyphs = _lexicon_name_to_glyph(lang)
+	injected = 0
+	for mol in molecule_order:
+		if mol in word_to_idx:
+			continue
+		glyph = torch.tensor(glyphs[mol], dtype=torch.float32)
+		word_to_idx[mol] = len(word_to_idx)
+		idx_to_word[len(idx_to_word)] = mol
+		model.register_new_word(mol, glyph)
+		injected += 1
+	return injected
+
+
+def build_k65p_vocab_and_glyphs(lang: str = "es", molecule_order: list[str] | None = None) -> tuple[dict[str, int], dict[int, str], np.ndarray]:
 	lexicon = load_lexicon()
 	tokens = ["<pad>", "<unk>", "<stop>", "[", "]", "G"]
 	glyphs_list = []
@@ -103,10 +212,18 @@ def build_k65p_vocab_and_glyphs(lang: str = "es") -> tuple[dict[str, int], dict[
 		tokens.append(str(pid))
 		glyphs_list.append(g_sym)
 
-	for name, entry in sorted(lexicon.items()):
-		mol_name = name.casefold() if lang == "es" else entry.get("en", name).casefold()
-		tokens.append(mol_name)
-		glyphs_list.append(entry["glyph"])
+	if molecule_order is None:
+		# Default: todas las moléculas en orden alfabético de la clave del lexicon.
+		for name, entry in sorted(lexicon.items()):
+			mol_name = name.casefold() if lang == "es" else entry.get("en", name).casefold()
+			tokens.append(mol_name)
+			glyphs_list.append(entry["glyph"])
+	else:
+		# Hot-vocabulary: orden canónico explícito (base→animals→behavior).
+		glyphs = _lexicon_name_to_glyph(lang)
+		for mol in molecule_order:
+			tokens.append(mol)
+			glyphs_list.append(glyphs[mol])
 
 	vocab_words = []
 	final_glyphs = []
@@ -211,9 +328,7 @@ def load_dataset_stage(
 						samples.append(expr)
 
 	if len(samples) < 20:
-		print(f"✗ Corpus insuficiente para '{ds_name}': {len(samples)} muestras (<20). "
-			f"Genera el corpus primero: scripts/generate_semantic_corpus.py")
-		sys.exit(1)
+		raise CorpusExhaustedError(f"'{ds_name}': {len(samples)} muestras (<20)")
 
 	rng = random.Random(seed)
 	rng.shuffle(samples)
@@ -236,15 +351,7 @@ def build_stage_logit_mask(stage_idx: int, vocab_size: int, word_to_idx: dict[st
 		allowed.add(row[0].lower())
 		allowed.add(str(pid))
 
-	molecules = sorted(molecule_names(lang=lang))
-	# Escuela semántica (en): todas las moléculas desde el principio
-	# Escuela sintáctica (es): desbloqueo progresivo por etapa
-	if lang != "es" or stage_idx >= 6:
-		allowed.update(molecules)
-	elif stage_idx <= 3:
-		allowed.update(molecules[:10])
-	elif stage_idx <= 5:
-		allowed.update(molecules[:20])
+	allowed.update(_gated_molecules(stage_idx, lang))
 
 	for w in allowed:
 		if w in word_to_idx:
@@ -498,6 +605,7 @@ def run_school_training_k65p():
 	parser.add_argument("--reset_state", action="store_true", help="Reiniciar entrenamiento desde cero")
 	parser.add_argument("--corpus", type=str, default="factory_k65p", help="Subdirectorio del corpus (factory_k65p | factory_semantic)")
 	parser.add_argument("--lang", type=str, default="es", help="Idioma del lexicon (es | en)")
+	parser.add_argument("--hot_vocab", action="store_true", help="Gating REAL de vocabulario: inyectar moléculas en caliente en las transiciones de etapa (solo glyph)")
 	args = parser.parse_args()
 
 	state_dir = Path(args.state_dir)
@@ -510,12 +618,11 @@ def run_school_training_k65p():
 	np.random.seed(args.seed)
 	random.seed(args.seed)
 
-	word_to_idx, idx_to_word, glyph_table = build_k65p_vocab_and_glyphs(lang=args.lang)
-	vocab_size = len(word_to_idx)
-	pad_idx = word_to_idx["<pad>"]
-
 	device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
+	# El estado se lee ANTES de construir el vocabulario: en hot-vocabulary el
+	# tier activo depende del stage_idx guardado (el vocabulario crece en
+	# caliente y debe reconstruirse coherente con el checkpoint en CADA step).
 	if state_file.exists() and not args.reset_state:
 		state = json.loads(state_file.read_text(encoding="utf-8"))
 		if state.get("embedding_mode", "glyph") != args.embedding:
@@ -542,6 +649,18 @@ def run_school_training_k65p():
 			"seed": args.seed,
 		}
 
+	# Hot-vocabulary: el subset inicial depende del stage_idx guardado. Arranca
+	# con el tier base (stage 0-3), y en los steps posteriores reconstruye el
+	# vocabulario con el tier que ya debería estar activo (base+animales en
+	# 4-5, todo en 6+). Las transiciones inyectan las moléculas nuevas; aquí
+	# solo se reconstruye lo que el checkpoint ya contiene.
+	if args.hot_vocab and args.lang == "en":
+		molecule_order = _tier_molecule_order(state["current_stage_idx"])
+	else:
+		molecule_order = None
+	word_to_idx, idx_to_word, glyph_table = build_k65p_vocab_and_glyphs(lang=args.lang, molecule_order=molecule_order)
+	pad_idx = word_to_idx["<pad>"]
+
 	model = build_model(state["embedding_mode"], state["hidden_dim"], glyph_table, state["num_layers"]).to(device)
 	lr_scale = 128.0 / model.hidden_dim
 	optimizer = torch.optim.AdamW(model.parameters(), lr=1e-4 * lr_scale, weight_decay=0.01)
@@ -551,13 +670,13 @@ def run_school_training_k65p():
 
 	st_cfg = STAGE_CONFIG[state["current_stage_idx"]]
 	n_params = sum(p.numel() for p in model.parameters())
-	print(f"⚡ Brazo: {state['embedding_mode']} | Dispositivo: {device} | Vocab: {vocab_size} | Params: {n_params:,} | Semilla: {args.seed}")
+	print(f"⚡ Brazo: {state['embedding_mode']} | Dispositivo: {device} | Vocab: {len(word_to_idx)} | Params: {n_params:,} | Semilla: {args.seed}")
 	print(f"📖 Estado: Época {state['current_epoch']} (etapa {st_cfg['name']}: {state['epoch_in_stage']} ép., best={state['best_stage_val_loss']:.4f}), Dim {model.hidden_dim}d")
 
 	def load_stage(idx: int):
 		cfg = STAGE_CONFIG[idx]
 		tr, va, ve = load_dataset_stage(cfg["name"], word_to_idx, seed=args.seed, corpus=args.corpus)
-		mask = build_stage_logit_mask(cfg["stage_idx"], vocab_size, word_to_idx, lang=args.lang)
+		mask = build_stage_logit_mask(cfg["stage_idx"], len(word_to_idx), word_to_idx, lang=args.lang)
 		assert_mask_covers_dataset([tr, va], mask, idx_to_word, cfg["name"], pad_idx)
 		return cfg, tr.to(device), va.to(device), ve, mask.to(device)
 
@@ -590,7 +709,7 @@ def run_school_training_k65p():
 			logits = model(x)
 			masked_logits = logits + logit_mask.view(1, 1, -1)
 			flat_y = y.reshape(-1)
-			loss = F.cross_entropy(masked_logits.reshape(-1, vocab_size), flat_y, ignore_index=pad_idx)
+			loss = F.cross_entropy(masked_logits.reshape(-1, logits.shape[-1]), flat_y, ignore_index=pad_idx)
 			loss.backward()
 			torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
 			optimizer.step()
@@ -599,7 +718,7 @@ def run_school_training_k65p():
 			total_real_tokens += n_real
 
 		train_loss = total_loss / max(1, total_real_tokens)
-		val_loss, val_acc = evaluate_model(model, val_dataset, logit_mask, vocab_size, pad_idx, args.batch_size)
+		val_loss, val_acc = evaluate_model(model, val_dataset, logit_mask, model.vocab_size, pad_idx, args.batch_size)
 		print(f"▶ [Época {state['current_epoch']} | etapa {st_cfg['name']} ép.{state['epoch_in_stage']}] Dim: {model.hidden_dim}d | Train: {train_loss:.4f} | Val: {val_loss:.4f} | Acc: {val_acc:.4f}")
 
 		# ── Seguimiento del mejor checkpoint de la etapa ──
@@ -630,7 +749,7 @@ def run_school_training_k65p():
 				m_name = f"{st_cfg['age']}_years"
 				print(f"📝 [EXAMEN DE HITO {m_name} sobre best-val] Umbrales congelados: gen_valid≥{EXAM_MIN_GEN_VALID}, val_loss ≤ bigrama − {EXAM_BIGRAM_MARGIN}")
 				exam = run_milestone_exam(
-					model, train_dataset, val_dataset, val_exprs, logit_mask, vocab_size,
+					model, train_dataset, val_dataset, val_exprs, logit_mask, model.vocab_size,
 					word_to_idx, idx_to_word, device, args.batch_size, m_name,
 				)
 				exam["epoch"] = state["current_epoch"]
@@ -676,9 +795,23 @@ def run_school_training_k65p():
 					"hidden_dim": model.hidden_dim,
 				})
 				if state["current_stage_idx"] + 1 < len(STAGE_CONFIG):
-					state["current_stage_idx"] += 1
-					st_cfg, train_dataset, val_dataset, val_exprs, logit_mask = load_stage(state["current_stage_idx"])
-					print(f"➡️ Avanza a la etapa {st_cfg['name']} desde el mejor checkpoint.")
+					next_idx = state["current_stage_idx"] + 1
+					# Hot-vocabulary: inyectar el tier de la siguiente etapa ANTES de
+					# cargarla, para que la máscara y el tokenizer ya lo conozcan.
+					if args.hot_vocab and args.lang == "en":
+						needed = _tier_molecule_order(next_idx)
+						added = inject_molecules(model, word_to_idx, idx_to_word, needed, lang=args.lang)
+						if added:
+							print(f"🔥 Hot-vocab: inyectadas {added} moléculas en caliente (stage_idx {next_idx}).")
+					try:
+						st_cfg, train_dataset, val_dataset, val_exprs, logit_mask = load_stage(next_idx)
+					except CorpusExhaustedError:
+						state["target_milestone"] = "completed"
+						print(f"🎓 Currículo agotado tras {st_cfg['name']}: Bit se gradúa (escala sin etapa secundaria).")
+						advance = False
+					else:
+						state["current_stage_idx"] = next_idx
+						print(f"➡️ Avanza a la etapa {st_cfg['name']} desde el mejor checkpoint.")
 				else:
 					state["target_milestone"] = "completed"
 					print("🎓 ¡ESCUELA COMPLETADA! Todos los hitos aprobados con examen.")

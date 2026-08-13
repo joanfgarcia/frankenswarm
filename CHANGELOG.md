@@ -2,6 +2,42 @@
 
 ## [Unreleased]
 
+### 🔬 Gating curricular + hot-vocab + extractor de vocabulario — y el hallazgo del spanglish (2026-08-12)
+
+- **[FEAT] `train_sovereign_school_k65p.py` — gating curricular semántico**:
+  desbloqueo de vocabulario por categoría (base → animales → comportamiento),
+  reflejando el espíritu de v1. Nuevo `SEMANTIC_TIERS` + `_gated_molecules`
+  (en vez del orden alfabético) y `--corpus`/`--lang` para la escuela semántica.
+- **[FEAT] `--hot_vocab`**: gating REAL de vocabulario — el brazo glyph arranca
+  solo con el tier base e inyecta moléculas en caliente (`register_new_word`) en
+  las transiciones de etapa. **Resultado: la inyección en caliente no cuesta
+  nada** (rinde igual que el gating de máscara, 40% gen_true), y es la capacidad
+  exclusiva del glyph (M5) a escala de currículo entero.
+- **[FIX] Bug de size-mismatch en hot-vocab**: el entrenamiento por épocas
+  atómicas reconstruía el vocabulario en orden distinto al de la inyección
+  (`load_weights` fallaba 174 vs 160). Fix: orden canónico determinista
+  (`_tier_molecule_order`) compartido por reconstrucción e inyección.
+- **[NEW] `scripts/extract_semantic_vocabulary.py`**: extrae el vocabulario por
+  etapa del currículo de v1 y lo cruza con `expanded_glyphs.json` (palabras +
+  glifos ternarios ya calculados). ~97/72/79 palabras con glifo por etapa.
+- **[NEW] `configs/jobs/school_semantic_hotvocab.yaml`**: receta de la variante
+  hot-vocab.
+- **[CONVENTION] RULE 8 en `CONVENTIONS.md`**: el vocabulario del corpus
+  semántico sale del diccionario real de v1 (`expanded_glyphs.json`), nunca de
+  moléculas inventadas a mano.
+- **[RESULT] Gating curricular (n=15, seed 770)**: glyph gana en narrativa 5/5
+  vs standard 2/5 (la composición transfiere entre agentes que comparten primos:
+  dog/cat/wolf). La lógica abstracta sigue sin discriminar (heldout/recall ~0).
+- **[⚠️ HALLAZGO] El corpus de v1 era spanglish**: CHILDES se descargó en
+  ESPAÑOL (`download_childes_spa.py`) y la traducción "fast" a inglés con
+  Samantha quedó mezclada ("the suelo se mías"). v1 no es un modelo de inglés
+  puro. **Decisión del operador: re-entrenar v1 en inglés (CHILDES-en +
+  TinyStories-en)** con las optimizaciones (BF16 + DL-006). Tarea `[BIT-003]`.
+- **[IDEA] Juez semántico gradual ternario `{-1, 0, +1}`**: sustituye al
+  gen_true binario — la semántica es gradual (el perro ladra +1, aúlla 0,
+  maúlla -1), no binaria. Coherente con los trits de K-65P y los pesos ternarios
+  de BitNet.
+
 ### 🎓 Escuela Semántica — fábrica de corpus causal, gen_true vía Prolog y primera cata (2026-08-11)
 
 - **[NEW] `scripts/generate_semantic_corpus.py`**: fábrica de corpus K-65P con

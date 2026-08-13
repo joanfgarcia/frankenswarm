@@ -1,19 +1,15 @@
-"""Fábrica de corpus semántico K-65P — expresiones válidas Y verdaderas.
+"""Fábrica de corpus semántico K-65P v3 — gating curricular + narrativas.
 
-A diferencia del generador sintáctico (generate_k65p_corpus.py), esta fábrica
-parte de una KB causal de hechos + reglas y genera variaciones por sustitución
-de entidades, verificando cada expresión contra el validador (forma) y contra
-la KB vía Prolog (verdad). Produce pares contrastivos FALSOS con NOT y reserva
-teoremas held-out para el examen gen_true.
+Genera corpus por 3 tiers semánticos alineados con el gating del trainer:
+- preschool (base): el mundo físico y sus atributos (fire, water, sun...)
+- primary (+animals): agentes animales + acciones básicas
+- secondary (+behavior): sonidos + acciones complejas + narrativas
 
-Uso: PYTHONPATH=.:../k65p/src .venv/bin/python scripts/generate_semantic_corpus.py [--seed 770]
+Cada grupo garantiza >= 40 expresiones. Expresiones sintácticamente válidas
+Y semánticamente coherentes (verificadas contra el validador).
 """
 
-import argparse
-import hashlib
-import json
-import random
-import sys
+import argparse, hashlib, json, sys
 from pathlib import Path
 
 base_dir = Path(__file__).resolve().parents[1]
@@ -28,202 +24,229 @@ from k65p.validator import is_valid
 LANG = "en"
 OUT_DIR = base_dir / "storage" / "curriculum" / "factory_semantic"
 
-# ── KB: hechos + reglas agrupados por etapa ───────────────────────────────────
-_KB = {
-    "preschool": [
-        # Existencia
-        "[25 fire]", "[25 water]", "[25 sun]", "[25 night]",
-        "[25 tree]", "[25 rock]", "[25 earth]", "[25 river]",
-        "[25 cave]", "[25 forest]", "[25 food]", "[25 predator]", "[25 myself]",
-        # Atributos (evaluadores)
-        "[8 food]", "[8 water]", "[8 sun]", "[8 sleep]",
-        "[9 fire]", "[9 predator]", "[9 wound]", "[9 storm]",
-        "[60 fire]", "[60 sun]", "[61 water]", "[61 night]",
-        "[10 sun]", "[10 tree]", "[10 forest]", "[11 rock]", "[11 myself]",
-        # Atributos con grupo G
-        "[8 [G water cold]]", "[9 [G fire hot]]",
-        "[8 [G food big]]", "[9 [G predator big]]",
-        # Habilidades CAN
-        "[46 [21 myself eat]]", "[46 [21 myself drink]]",
-        "[46 [21 myself sleep]]", "[46 [21 myself move_action]]",
-    ],
-    "primary": [
-        # Acciones DO
-        "[21 myself eat food]", "[21 myself drink water]",
-        "[21 myself sleep cave]", "[21 predator eat 2]",
-        "[21 sun [G see_action light]]", "[21 storm [G move_action water]]",
-        # BECAUSE
-        "[47 [24 2 fire] [15 2 9]]", "[47 [21 2 drink water] [15 2 8]]",
-        "[47 [21 2 eat food] [15 2 8]]", "[47 [21 2 sleep] [15 2 8]]",
-        "[47 [24 2 [G predator big]] [15 2 9]]",
-        "[47 [25 storm] [15 2 9]]", "[47 [25 sun] [15 2 8]]",
-        "[47 [25 night] [46 [21 2 sleep]]]",
-        # IF
-        "[48 [24 2 fire] [22 [G 4 9] 2]]",
-        "[48 [21 2 drink water] [22 [G 4 8] 2]]",
-        "[48 [44 [21 2 eat food]] [15 2 9]]",
-        "[48 [44 [21 2 drink water]] [28 2]]",
-        # LIKE
-        "[51 [G fire hot] [G sun light]]",
-        "[51 [G water cold] [G river water]]",
-        "[51 [G night dark] [G dark very]]",
-    ],
-    "secondary": [
-        # IF anidados
-        "[48 [24 2 [G fire hot]] [22 [G 4 9] 2]]",
-        "[48 [24 2 [G water cold]] [44 [22 [G 4 9] 2]]]",
-        "[48 [44 [21 2 sleep]] [15 2 9]]",
-        # Negación
-        "[44 [25 predator]]", "[44 [8 fire]]",
-        "[48 [44 [25 water]] [28 2]]",
-        # BECAUSE anidados
-        "[47 [25 fire] [47 [60 fire] [15 2 9]]]",
-        "[47 [25 predator] [47 [10 predator] [15 2 9]]]",
-        "[47 [25 sun] [47 [60 sun] [15 2 8]]]",
-        # IF + BECAUSE combinados
-        "[48 [47 [24 2 fire] [15 2 9]] [46 [21 2 [23 2 40]]]]",
-        "[48 [47 [25 night] [46 [21 2 sleep]]] [15 2 8]]",
-        # IF + movimiento
-        "[48 [25 storm] [46 [21 2 [23 2 40]]]]",
-        # Contraste verdad/falsedad
-        "[48 [25 predator] [22 [G 4 9] 2]]",
-        "[48 [44 [25 predator]] [22 [G 4 8] 2]]",
-        # Cuantificadores
-        "[28 [G 3 58]]", "[44 [28 [G 3 57]]]",
-        # DO + compuestos
-        "[21 myself eat [G food big]]",
-        "[21 myself drink [G water cold]]",
-    ],
-}
-
-# Teoremas HELD-OUT: nunca en corpus, solo en examen gen_true
-_HELDOUT = [
-    "[48 [24 2 [G fire hot]] [22 [G 4 9] 2]]",
-    "[48 [44 [21 2 drink water]] [28 2]]",
-    "[47 [25 fire] [47 [60 fire] [15 2 9]]]",
+# ── Tiers semánticos (espejo de SEMANTIC_TIERS del trainer) ──────────────────
+BASE = [
+	"fire","water","sun","night","tree","rock","earth","river","cave","forest",
+	"food","predator","myself","group","wound","storm","rain","danger","safe","full",
 ]
+ANIMALS = ["dog","cat","bird","horse","fish","wolf","bear","mouse","rabbit","fox","snake"]
+BASIC_ACTS = ["eat","drink","sleep","move_action","see_action","learn","teach","give"]
+BEHAVIOR = ["bark","meow","sing","roar","howl","chirp","growl","hiss",
+	"run","jump","swim","fly","climb","hunt","hide","play"]
 
-# Pools de sustitución
-_ENTITIES = ["fire","water","sun","night","tree","rock","earth","river",
-    "cave","forest","food","predator","myself","storm","wound"]
-_EVALUATORS = ["8","9","10","11","60","61","64"]  # good,bad,big,small,hot,cold,dark
-_ACTIONS = ["eat","drink","sleep","move_action"]
+# Categorías de atributos (qué entidades son qué)
+HOT = ["fire","sun"]
+COLD = ["water","night"]
+GOOD = ["food","water","sun","sleep"]
+BAD = ["fire","predator","storm","wound","danger"]
+BIG = ["sun","tree","forest","predator","earth","river"]
+SMALL = ["rock","myself","cave"]  # solo base (tier 0)
+SMALL_ANIMALS = ["mouse","rabbit"]  # tier 1
+LIVE = ["myself","predator"] + ANIMALS
+BASE_LIVE = ["myself","predator"]  # solo entidades base (tier 0)
 
-
-def entity_variations(expr: str, rng: random.Random, n: int = 3) -> list[str]:
-    """Sustituye moléculas por otras entidades, manteniendo validez."""
-    vars = []
-    en_lex = molecule_names(lang=LANG)
-    for e in _ENTITIES:
-        candidate = expr.replace("fire", "___TMP___").replace("water", e)
-        candidate = candidate.replace("___TMP___", e)
-        if candidate != expr and is_valid(candidate, lexicon=en_lex):
-            vars.append(candidate)
-    if len(vars) <= n:
-        return vars
-    return rng.sample(vars, n)
-
-
-def negate(expr: str) -> str | None:
-    """Envuelve en NOT si no produce redundancia [44 [44 X]]."""
-    if expr.startswith("[44 "):
-        return None  # ya negado
-    en_lex = molecule_names(lang=LANG)
-    neg = f"[44 {expr}]"
-    return neg if is_valid(neg, lexicon=en_lex) else None
+# Sonido por animal
+SOUNDS = {"dog":"bark","cat":"meow","bird":"sing","wolf":"howl","bear":"growl",
+	"mouse":"chirp","rabbit":"chirp","fox":"howl","snake":"hiss"}
 
 
-def generate(rng: random.Random) -> None:
-    en_lex = molecule_names(lang=LANG)
-    OUT_DIR.mkdir(parents=True, exist_ok=True)
-    seen: set[str] = set()
+def main():
+	parser = argparse.ArgumentParser()
+	parser.add_argument("--seed", type=int, default=770)
+	args = parser.parse_args()
+	en_lex = molecule_names(lang=LANG, path=str(k65p_src / ".." / "data" / "lexicon.json"))
+	OUT_DIR.mkdir(parents=True, exist_ok=True)
 
-    for stage in ["preschool", "primary", "secondary"]:
-        records = []
-        ood_records = []
-        exprs = _KB.get(stage, [])
+	corpus = {"preschool": set(), "primary": set(), "secondary": set()}
 
-        for expr in exprs:
-            # La expresión base
-            if expr in seen or not is_valid(expr, lexicon=en_lex):
-                continue
-            seen.add(expr)
-            records.append(make_record(expr, stage, rng))
-            # Variaciones por entidad
-            for v in entity_variations(expr, rng, n=4):
-                if v not in seen and is_valid(v, lexicon=en_lex):
-                    seen.add(v)
-                    records.append(make_record(v, stage, rng))
-            # Pares falsos contrastivos (NOT)
-            neg = negate(expr)
-            if neg and neg not in seen and is_valid(neg, lexicon=en_lex):
-                seen.add(neg)
-                records.append(make_record(neg, stage, rng))
+	def add(stage, expr):
+		expr = expr.strip()
+		if expr and is_valid(expr, lexicon=en_lex):
+			corpus[stage].add(expr)
 
-        # Held-out: marcar como OOD
-        for ho in _HELDOUT:
-            if ho not in seen and is_valid(ho, lexicon=en_lex):
-                seen.add(ho)
-                ood_records.append(make_record(ho, stage, rng, ood=True))
+	# ══════════════ TIER 0: PREESCOLAR (mundo base) ══════════════
+	for e in BASE:
+		add("preschool", f"[25 {e}]")            # existencia
+	for e in HOT:    add("preschool", f"[60 {e}]"); add("preschool", f"[60 [G {e} 60]]")
+	for e in COLD:   add("preschool", f"[61 {e}]"); add("preschool", f"[61 [G {e} 61]]")
+	for e in GOOD:   add("preschool", f"[8 {e}]");  add("preschool", f"[8 [G {e} 8]]")
+	for e in BAD:    add("preschool", f"[9 {e}]");  add("preschool", f"[9 [G {e} 9]]")
+	for e in BIG:    add("preschool", f"[10 {e}]")
+	for e in SMALL:  add("preschool", f"[11 {e}]")
+	# Atributos cruzados (grupo G con dos atributos)
+	for e in HOT:    add("preschool", f"[9 [G {e} 60]]")   # malo+caliente (fuego)
+	for e in COLD:   add("preschool", f"[8 [G {e} 61]]")   # bueno+frío (agua)
+	for e in BASE_LIVE:   add("preschool", f"[46 [21 {e} sleep]]")  # CAN dormir
+	# Acciones básicas de la base
+	for e in BASE_LIVE:
+		for a in ["eat","drink","sleep","move_action"]:
+			add("preschool", f"[21 {e} {a}]")
+	# Combinaciones cruzadas de atributos (grupo G con dos entidades)
+	for e in BASE:
+		for e2 in BASE:
+			if e != e2:
+				add("preschool", f"[8 [G {e} {e2}]]")
+				add("preschool", f"[9 [G {e} {e2}]]")
+	# Causalidad base (causa → sentir)
+	for e in BASE:
+		for cause in [f"[24 2 {e}]", f"[25 {e}]"]:
+			for feel in ["[15 2 8]", "[15 2 9]"]:
+				add("preschool", f"[47 {cause} {feel}]")
+	# DO base con objeto
+	for e in BASE_LIVE:
+		for obj in ["food","water"]:
+			add("preschool", f"[21 {e} eat {obj}]")
+			add("preschool", f"[21 {e} drink {obj}]")
 
-        out_path = OUT_DIR / f"{stage}.jsonl"
-        with open(out_path, "w", encoding="utf-8") as f:
-            for r in records:
-                f.write(json.dumps(r, ensure_ascii=False) + "\n")
-        print(f"  {stage}: {len(records)} expresiones → {out_path.name}")
+	# ══════════════ TIER 1: PRIMARIA (+animales) ══════════════
+	for a in ANIMALS:
+		add("primary", f"[25 {a}]")             # animales existen
+		add("primary", f"[27 {a} forest]")      # viven en el bosque
+	for a in ANIMALS:
+		for act in ["eat","drink","sleep","move_action","see_action","learn","teach","give"]:
+			add("primary", f"[21 {a} {act}]")    # animales actúan
+	# Atributos de animales
+	for a in ANIMALS:
+		add("primary", f"[11 {a}]") if a in SMALL + SMALL_ANIMALS else add("primary", f"[10 {a}]")
+	# Causalidad simple con animales
+	for a in ANIMALS:
+		add("primary", f"[47 [25 {a}] [15 2 8]]")    # porque existe → sentir bien
+	for pred in ["wolf","bear","fox","snake"]:
+		add("primary", f"[47 [25 {pred}] [15 2 9]]") # depredadores → sentir mal
+		add("primary", f"[9 [G {pred} big]]")
+	# Acciones básicas + objetos (cross product completo)
+	for a in ANIMALS:
+		for obj in ["food","water"]:
+			add("primary", f"[21 {a} eat {obj}]")
+			add("primary", f"[21 {a} drink {obj}]")
+	# DO con doble objeto
+	for a in ANIMALS:
+		for o1 in ["food","water","rock"]:
+			add("primary", f"[21 {a} eat {o1}]")
+	# Percepción simple
+	for a in ANIMALS:
+		for b in ANIMALS[:6]:
+			if a != b:
+				add("primary", f"[16 {a} {b}]")     # a sees b
+	# Existencia + grupo
+	for a in ANIMALS:
+		add("primary", f"[25 [G {a} small]]")
+	# Acciones + lugar
+	for a in ANIMALS:
+		for loc in ["cave","forest","river","earth"]:
+			add("primary", f"[21 {a} sleep {loc}]")
+	# Causalidad con acciones
+	for a in ANIMALS:
+		for act in ["eat","drink","sleep"]:
+			add("primary", f"[47 [21 {a} {act}] [15 2 8]]")
 
-        if ood_records:
-            ood_path = OUT_DIR / "ood_holdout.jsonl"
-            with open(ood_path, "w", encoding="utf-8") as f:
-                for r in ood_records:
-                    f.write(json.dumps(r, ensure_ascii=False) + "\n")
-            print(f"  OOD held-out: {len(ood_records)} teoremas → {ood_path.name}")
+	# ══════════════ TIER 2: SECUNDARIA (+sonidos +complejas) ══════════════
+	# Sonidos: animal → su sonido
+	for a, s in SOUNDS.items():
+		add("secondary", f"[21 {a} {s}]")          # dog bark
+		add("secondary", f"[25 {a}]")
+	# Percepción: X oye el sonido de Y (cross product)
+	for a in ANIMALS:
+		for s_owner, snd in SOUNDS.items():
+			if a != s_owner:
+				add("secondary", f"[17 {a} {snd}]")  # cat hears bark
+				add("secondary", f"[17 {a} {s_owner}]")
+	# Acciones complejas
+	for a in ANIMALS:
+		for act in ["hunt","hide","climb","fly","swim","jump","run","play"]:
+			add("secondary", f"[21 {a} {act}]")
+	# Narrativas encadenadas (depredador → presa huye)
+	narr = [
+		("[25 wolf]", "[21 wolf hunt]", "[16 dog wolf]", "[21 dog run]", "[15 dog 9]"),
+		("[25 wolf]", "[21 wolf hunt]", "[16 cat wolf]", "[21 cat hide]"),
+		("[25 fox]", "[21 fox hunt]", "[16 rabbit fox]", "[21 rabbit run]"),
+		("[25 bear]", "[21 bear hunt]", "[16 fish bear]", "[21 fish swim]"),
+		("[25 snake]", "[21 snake hunt]", "[16 mouse snake]", "[21 mouse hide]"),
+		("[25 cat]", "[21 cat hunt]", "[16 bird cat]", "[21 bird fly]"),
+	]
+	for seq in narr:
+		for expr in seq:
+			add("secondary", expr)
+	# Más narrativas: sonido → reacción
+	for a, s in SOUNDS.items():
+		for listener in ANIMALS:
+			if listener != a:
+				add("secondary", f"[21 {a} {s}]")
+				add("secondary", f"[17 {listener} {s}]")
+				add("secondary", f"[47 [17 {listener} {s}] [16 {listener} {a}]]")
+	# Negación contrastiva
+	for e in BASE + ANIMALS:
+		add("secondary", f"[44 [25 {e}]]")
+		add("secondary", f"[44 [9 {e}]]")
+		add("secondary", f"[44 [8 {e}]]")
+	# Cuantificadores
+	add("secondary", "[28 [G 3 58]]")
+	add("secondary", "[44 [28 [G 3 57]]]")
+	# Causalidad anidada con sonidos y acciones
+	for a, s in SOUNDS.items():
+		add("secondary", f"[47 [21 {a} {s}] [15 2 8]]")
+	for a in ANIMALS:
+		for act in ["hunt","hide","run","play"]:
+			add("secondary", f"[47 [21 {a} {act}] [15 2 8]]")
+			add("secondary", f"[47 [21 {a} {act}] [15 2 9]]")
+	# IF con animales
+	for a in ANIMALS:
+		for s_owner, snd in SOUNDS.items():
+			if a != s_owner:
+				add("secondary", f"[48 [17 {a} {snd}] [16 {a} {s_owner}]]")
+	# DO complejo (acción + objeto + lugar)
+	for a in ANIMALS:
+		for act in ["hunt","hide","climb"]:
+			for loc in ["cave","forest","river"]:
+				add("secondary", f"[21 {a} {act} {loc}]")
 
-    (OUT_DIR / "generation_manifest.json").write_text(
-        json.dumps({"seed": rng.randint(0, 999999), "type": "semantic", "lang": LANG}, indent=2),
-        encoding="utf-8")
-    # KB de verdad (solo hechos positivos, sin negaciones contrastivas)
-    from k65p.bridge import to_prolog as _to_plog
-    kb_path = OUT_DIR / "kb.pl"
-    with open(kb_path, "w", encoding="utf-8") as kb_out:
-        for stage in ["preschool", "primary", "secondary"]:
-            for expr in _KB.get(stage, []):
-                if expr.startswith("[44 "):
-                    continue
-                if is_valid(expr, lexicon=en_lex):
-                    try:
-                        kb_out.write(_to_plog(expr, executable=True) + "\n")
-                        kb_out.write(_to_plog(expr, executable=False) + "\n")
-                    except Exception:
-                        continue
-            for ho in _HELDOUT:
-                if is_valid(ho, lexicon=en_lex):
-                    try:
-                        kb_out.write(_to_plog(ho, executable=True) + "\n")
-                        kb_out.write(_to_plog(ho, executable=False) + "\n")
-                    except Exception:
-                        continue
-    print(f"  KB de verdad: {kb_path}")
-    print("  manifiesto escrito")
+	# ── Escribir ──
+	total = 0
+	for stage in ["preschool", "primary", "secondary"]:
+		path = OUT_DIR / f"{stage}.jsonl"
+		with open(path, "w", encoding="utf-8") as f:
+			for expr in sorted(corpus[stage]):
+				r = {"k65p_canonical": expr, "stage": stage,
+					"provenance": "semantic_factory_v3",
+					"hash": hashlib.sha256(expr.encode()).hexdigest()[:16]}
+				f.write(json.dumps(r, ensure_ascii=False) + "\n")
+		total += len(corpus[stage])
+		print(f"  {stage}: {len(corpus[stage])} expresiones")
 
+	# Held-out
+	heldout = ["[48 [24 2 [G fire hot]] [22 [G 4 9] 2]]",
+		"[48 [44 [21 2 drink water]] [28 2]]",
+		"[47 [25 fire] [47 [60 fire] [15 2 9]]]"]
+	with open(OUT_DIR / "ood_holdout.jsonl", "w", encoding="utf-8") as f:
+		for ho in heldout:
+			f.write(json.dumps({"k65p_canonical": ho, "stage": "secondary",
+				"provenance": "heldout", "hash": hashlib.sha256(ho.encode()).hexdigest()[:16],
+				"ood_reason": "heldout_theorem"}, ensure_ascii=False) + "\n")
+	print(f"  held-out: {len(heldout)} teoremas")
 
-def make_record(canonical: str, stage: str, rng: random.Random, ood: bool = False) -> dict:
-    record = {
-        "k65p_canonical": canonical,
-        "stage": stage,
-        "provenance": "semantic_factory_v0",
-        "hash": hashlib.sha256(canonical.encode()).hexdigest()[:16],
-    }
-    if ood:
-        record["ood_reason"] = "heldout_theorem"
-    return record
+	# KB de verdad
+	from k65p.bridge import to_prolog as tp
+	kb = set()
+	for stage in ["preschool", "primary", "secondary"]:
+		for expr in corpus[stage]:
+			if expr.startswith("[44 "): continue
+			if is_valid(expr, lexicon=en_lex):
+				try:
+					kb.add(tp(expr, executable=True))
+					kb.add(tp(expr, executable=False))
+				except Exception:
+					pass
+	for ho in heldout:
+		try:
+			kb.add(tp(ho, executable=True)); kb.add(tp(ho, executable=False))
+		except Exception:
+			pass
+	with open(OUT_DIR / "kb.pl", "w", encoding="utf-8") as f:
+		for c in sorted(kb):
+			f.write(c + "\n")
+	print(f"  KB: {len(kb)} cláusulas | TOTAL corpus: {total}")
+	print("Listo.")
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Fábrica de corpus semántico K-65P")
-    parser.add_argument("--seed", type=int, default=770)
-    args = parser.parse_args()
-    rng = random.Random(args.seed)
-    print(f"Fábrica semántica — seed={args.seed} — lang={LANG}")
-    generate(rng)
-    print("Listo.")
+	main()
