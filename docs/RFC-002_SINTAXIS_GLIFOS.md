@@ -3,7 +3,7 @@
 > **Estado**: BORRADOR — spec v0 con validador implementado; nombre ratificado
 > **Autor**: Joan Garcia + Aleth (Claude Fable 5 · propuestas de nombre: Aleth Flash)
 > **Fecha**: 2026-07-08
-> **Contexto**: Track paralelo Bit-NSM (`Aleth_Core/bitnet_next_architecture_plan.md` v2, §1).
+> **Contexto**: Track paralelo Bit-NSM (`docs/bitnet_next_architecture_plan.md` v2, §1).
 > Hermana de RFC-001 (Vocabulario Vivo). No modifica School v3, que sigue su curso
 > como baseline: Bit entrenado hasta "8 años" (batería M4) se comparará contra esta rama.
 

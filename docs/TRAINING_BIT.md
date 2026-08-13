@@ -134,7 +134,82 @@ consolidación de memoria entre a su hora.
 
 ---
 
-## 4. Diagnóstico rápido
+## 3.1 Réplicas multi-semilla (K-65P)
+
+La graduación de Bit v2/v0 (DL-006) es una **lectura de una sola semilla** (770):
+la varianza entre runs de una misma configuración es del orden del efecto
+medido, así que la comparación *glifos (v2) vs embedding estándar (v0)* no se
+considera concluyente sin **3+ semillas**. Para eso existen las recetas de
+réplica, versionadas en `configs/jobs/`:
+
+```bash
+# Un job por réplica: 3 semillas × 2 brazos = 6 jobs
+red-pill job submit --recipe school_k65p_glyph_s771     # Bit v2, seed 771
+red-pill job submit --recipe school_k65p_standard_s771  # Bit v0, seed 771
+# ...s772, s773
+```
+
+Cada réplica declara `--seed` y `--state_dir` **propios**
+(`storage/checkpoints/replicates/k65p/{glyph,standard}_sNNN`) para que ninguna
+pise el estado canónico (seed 770). El runner autónomo equivalente acepta las
+mismas variables (`EMBEDDING`, `SEED`, `STATE_DIR`):
+
+```bash
+SEED=771 EMBEDDING=standard STATE_DIR=storage/checkpoints/replicates/k65p/standard_s771 \
+	./scripts/train_school_k65p.sh --status   # o sin --status para entrenar
+```
+
+La receta canónica `school_k65p.yaml` declara el progreso como `bounded` con
+`total: 1600` (máximo teórico del protocolo adaptativo: 8 etapas × 200 épocas
+de tope) — no es un calendario fijo; la escuela termina por **milestone
+`8_years`**, igual que en v1.
+
+---
+
+## 3.2 Escuela Semántica (K-65P con verdad)
+
+El corpus sintáctico `factory_k65p` enseña gramática; el corpus semántico
+`factory_semantic` enseña VERDAD a partir de una KB causal de hechos + reglas
+(69 expresiones en 3 niveles: preschool/primary/secondary). Las expresiones son
+válidas por construcción Y verificables contra la KB vía Prolog (swipl).
+
+```bash
+# Generar el corpus semántico
+PYTHONPATH=.:../k65p/src .venv/bin/python scripts/generate_semantic_corpus.py
+
+# Lanzar la escuela semántica (job diferido)
+red-pill job submit --recipe school_semantic
+```
+
+Cada expresión en el corpus es un hecho o regla de la KB (ej. `[exist fire]`,
+`[if [touch someone fire] [happen [G something bad] someone]]`), con
+variaciones por entidad y pares contrastivos falsos (NOT). Los teoremas
+**held-out** (expresiones de la KB nunca vistas en el corpus) permiten separar
+memoria de razonamiento en el examen.
+
+### Examen gen_true (verdad vía Prolog)
+
+A diferencia de `gen_valid` (sintaxis: ¿es válido?), `gen_true` pregunta: ¿la
+continuación generada se DEMUESTRA de la KB? El puente K-65P → Prolog traduce
+la expresión y swipl la demuestra o la refuta.
+
+```bash
+PYTHONPATH=.:../k65p/src .venv/bin/python scripts/exam_gen_true.py
+```
+
+### Examen M5 (vocabulario en caliente)
+
+El brazo glyph puede registrar palabras nuevas en caliente
+(`register_new_word`) sin reentrenar la tabla — capacidad exclusiva que el
+standard no tiene. El examen M5 inyecta una palabra de prueba con glifo
+compuesto de primos y mide uso inmediato + consolidación:
+
+```bash
+PYTHONPATH=.:../k65p/src .venv/bin/python scripts/exam_m5_hot_word.py \
+    --state_dir storage/checkpoints/replicates/k65p/glyph_s773
+```
+
+---
 
 | Síntoma | Dónde mirar |
 | :--- | :--- |

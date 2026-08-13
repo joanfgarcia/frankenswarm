@@ -2,6 +2,167 @@
 
 ## [Unreleased]
 
+### 🔬 Gating curricular + hot-vocab + extractor de vocabulario — y el hallazgo del spanglish (2026-08-12)
+
+- **[FEAT] `train_sovereign_school_k65p.py` — gating curricular semántico**:
+  desbloqueo de vocabulario por categoría (base → animales → comportamiento),
+  reflejando el espíritu de v1. Nuevo `SEMANTIC_TIERS` + `_gated_molecules`
+  (en vez del orden alfabético) y `--corpus`/`--lang` para la escuela semántica.
+- **[FEAT] `--hot_vocab`**: gating REAL de vocabulario — el brazo glyph arranca
+  solo con el tier base e inyecta moléculas en caliente (`register_new_word`) en
+  las transiciones de etapa. **Resultado: la inyección en caliente no cuesta
+  nada** (rinde igual que el gating de máscara, 40% gen_true), y es la capacidad
+  exclusiva del glyph (M5) a escala de currículo entero.
+- **[FIX] Bug de size-mismatch en hot-vocab**: el entrenamiento por épocas
+  atómicas reconstruía el vocabulario en orden distinto al de la inyección
+  (`load_weights` fallaba 174 vs 160). Fix: orden canónico determinista
+  (`_tier_molecule_order`) compartido por reconstrucción e inyección.
+- **[NEW] `scripts/extract_semantic_vocabulary.py`**: extrae el vocabulario por
+  etapa del currículo de v1 y lo cruza con `expanded_glyphs.json` (palabras +
+  glifos ternarios ya calculados). ~97/72/79 palabras con glifo por etapa.
+- **[NEW] `configs/jobs/school_semantic_hotvocab.yaml`**: receta de la variante
+  hot-vocab.
+- **[CONVENTION] RULE 8 en `CONVENTIONS.md`**: el vocabulario del corpus
+  semántico sale del diccionario real de v1 (`expanded_glyphs.json`), nunca de
+  moléculas inventadas a mano.
+- **[RESULT] Gating curricular (n=15, seed 770)**: glyph gana en narrativa 5/5
+  vs standard 2/5 (la composición transfiere entre agentes que comparten primos:
+  dog/cat/wolf). La lógica abstracta sigue sin discriminar (heldout/recall ~0).
+- **[⚠️ HALLAZGO] El corpus de v1 era spanglish**: CHILDES se descargó en
+  ESPAÑOL (`download_childes_spa.py`) y la traducción "fast" a inglés con
+  Samantha quedó mezclada ("the suelo se mías"). v1 no es un modelo de inglés
+  puro. **Decisión del operador: re-entrenar v1 en inglés (CHILDES-en +
+  TinyStories-en)** con las optimizaciones (BF16 + DL-006). Tarea `[BIT-003]`.
+- **[IDEA] Juez semántico gradual ternario `{-1, 0, +1}`**: sustituye al
+  gen_true binario — la semántica es gradual (el perro ladra +1, aúlla 0,
+  maúlla -1), no binaria. Coherente con los trits de K-65P y los pesos ternarios
+  de BitNet.
+
+### 🎓 Escuela Semántica — fábrica de corpus causal, gen_true vía Prolog y primera cata (2026-08-11)
+
+- **[NEW] `scripts/generate_semantic_corpus.py`**: fábrica de corpus K-65P con
+  VERDAD por construcción. A diferencia del generador sintáctico
+  (`generate_k65p_corpus.py`), parte de una KB causal de 69 hechos + reglas en
+  3 niveles (preschool/primary/secondary) y genera expresiones válidas Y
+  verdaderas (consistentes con la KB), variaciones por entidad, pares
+  contrastivos falsos (NOT) y teoremas held-out para el examen de reasoning.
+  Produce `factory_semantic/kb.pl` como KB de verdad para el juez Prolog.
+- **[NEW] `scripts/exam_gen_true.py`**: examinador que convierte la continuación
+  generada a Prolog (vía bridge) y comprueba si se DEMUESTRA de la KB compilada
+  con swipl. Sucesor de `gen_valid`: donde el examinador sintáctico preguntaba
+  "¿es válido?", gen_true pregunta "¿es verdad?". Separa teoremas held-out
+  (reasoning) de recall.
+- **[NEW] `scripts/exam_m5_hot_word.py`**: examen de vocabulario en caliente que
+  inyecta una palabra nueva (trueno) con glifo compuesto de primos y mide uso
+  inmediato. 3 pruebas: inyección en frío (composición mueve logit), contraste
+  estructural (NO EVALUABLE sin semántica) y consolidación (≤5 épocas, emisión
+  98.5%). La capacidad de `register_new_word` es real y exclusiva del brazo
+  glyph (el standard no puede por construcción).
+- **[NEW] `configs/jobs/school_semantic.yaml`**: receta `script_job` para la
+  escuela semántica con `--corpus factory_semantic --lang en`. Protocolo
+  adaptativo DL-006, todas las moléculas disponibles desde la etapa 0.
+- **[FEAT] `train_sovereign_school_k65p.py`**: nuevos flags `--corpus`
+  (factory_k65p|factory_semantic) y `--lang` (es|en). El builder de vocabulario
+  añade nombres simbólicos en inglés cuando `lang=en`. La máscara de etapa
+  permite todas las moléculas desde el principio en modo semántico.
+- **[FEAT] `k65p/data/lexicon.json`**: renderings en inglés para las 28
+  moléculas gold. `k65p/src/k65p/lexicon.py`: `molecule_names(lang='en')`.
+- **[CATA 1]**: modelo glyph a 128d, 6/7 hitos en 211 épocas (gen_valid=1.0,
+  val=1.45 vs bigrama=3.06). Falló por corpus secundario insuficiente (20 <
+  mínimo). Umbral bajado a 20; KB secundaria ampliada a 16 expresiones +
+  variaciones 4x = 47 muestras.
+- **[CATA 2]**: en curso — 2_years aprobado en 59 épocas.
+
+### 🧬 Réplicas multi-semilla DL-006 — resultado: 6/6 graduadas; el ajuste distribucional es conclusivo, la robustez generativa OOD no se replica (2026-08-10)
+
+- **[RESULT] 6/6 réplicas GRADUADAS 7/7 hitos** (seeds 771/772/773 × glyph/
+  standard), protocolo adaptativo DL-006 + umbrales DL-004 congelados. épocas:
+  glyph 164/148/165, standard 148/141/145.
+- **[CONCLUSIÓN — AJUSTE DISTRIBUCIONAL, CONCLUSIVA]**: `standard` bate a
+  `glyph` en val_loss final en TODAS las réplicas (2.007-2.039 vs 2.149-2.162).
+  El embedding libre ajusta mejor la distribución; deja de ser lectura de una
+  semilla.
+- **[CONCLUSIÓN — ROBUSTEZ GENERATIVA OOD, NO SE REPLICA]**: la ventaja
+  gramatical generativa del glyph de la seed 770 (OOD 40/40) era artefacto de
+  semilla. gen_valid OOD varía salvajemente (glyph 40-100%, standard 45-70%) y
+  **3 de 6 réplicas SUSPENDEN la batería adversarial DL-004** (umbral ≥0.60).
+- **[CONCLUSIÓN — SIN COLAPSO DISTRIBUCIONAL]**: el gap OOD−val es pequeño y
+  consistente en las 6 (+0.06 a +0.12 nats). El fallo del attack 2 es de
+  GENERACIÓN greedy (autoregresiva), no de representación: las muestras
+  inválidas son concatenaciones léxicas no-estructurales (`[18 comida dar dar]`),
+  no árboles mal balanceados.
+- **[ACTAS]** `storage/checkpoints/replicates/k65p/<brazo>_sNNN/adversarial_report.json`
+  (attack1+attack2) + `school_state_k65p.json` (exam_history, seed).
+
+### 🧬 Réplicas multi-semilla DL-006 — la comparación v2↔v0 deja de ser anécdota (2026-08-10)
+
+- **[NEW] 6 recetas de réplica K-65P** (`configs/jobs/school_k65p_{glyph,standard}_s{771,772,773}.yaml`):
+  misma semilla canónica → 3 semillas nuevas (771/772/773) × 2 brazos
+  (`--embedding glyph|standard`) bajo el MISMO protocolo adaptativo DL-006 y
+  umbrales DL-004 congelados. Cada réplica usa `--state_dir` propio
+  (`storage/checkpoints/replicates/k65p/...`): el trainer valida `embedding_mode`
+  por directorio y una réplica jamás pisa el estado canónico ni otra réplica.
+  Doctrina (BITACORA Hito 5 / RELEASES_20260803): la lectura de una semilla no
+  concluye — la varianza entre runs es del orden del efecto; con 3+ semillas la
+  conjetura *glifos ⇒ robustez gramatical / embedding libre ⇒ ajuste distribucional*
+  se convierte en dato.
+- **[FIX] `configs/jobs/school_k65p.yaml`**: el `total: 1408` era el calendario
+  fijo de v1, falso para el protocolo adaptativo — ahora `1600` = máximo teórico
+  (8 etapas × 200 tope), y la terminación la gobierna el milestone `8_years`
+  (`completion`), que en cualquier modo gana al contador.
+- **[NEW] `--seed` en `scripts/train_school_k65p.sh`** (env `SEED`, default 770):
+  el runner autónomo propagaba `--embedding` y `--state_dir` pero no la semilla,
+  por lo que las réplicas por CLI eran imposibles.
+
+### 🎓 DL-006 — Protocolo adaptativo + brazo Bit v0: la edad se mide en hitos, no en épocas (2026-08-03)
+
+- **[NEW] Protocolo adaptativo en `train_sovereign_school_k65p.py`**: etapas por
+  plateau (no cronómetro), examen sobre el mejor checkpoint, avance desde best,
+  neurogénesis SOLO como remediación de examen suspendido. El calendario de 1408
+  épocas de v1 queda retirado para K-65P (sobreentrenaba por construcción).
+- **[NEW] Brazo `--embedding standard` (Bit v0)**: one-hot congelado +
+  proyecciones ≡ embedding estándar, mismo corpus/exámenes. Matriz 2×2 con la
+  tesis: {glyph, standard} × {K-65P, inglés}.
+- **[RESULT sandbox, seed 770]**: v2 (glyph) **graduado 7/7 en 157 épocas a 128d
+  (1,26M params), cero suspensos**; v0 (standard) 6/7 con mejor val_loss pero
+  suspenso de 8_years por gen_valid 0.52 (anidamiento profundo) → remediación
+  128→256d en curso. Conjetura a replicar: glifos ⇒ robustez gramatical;
+  embedding libre ⇒ ajuste distribucional.
+
+### 🧬 DL-005 — El glifo cero hacía la sintaxis K-65P inaprendible (2026-08-03)
+
+- **[ROOT CAUSE] El examen de hito DL-004 suspendió a la primera run y destapó
+  el defecto real**: los 6 tokens estructurales compartían el glifo todo-ceros
+  (embedding idéntico → `[` y `]` indistinguibles) y símbolo/dígito del mismo
+  primo empataban logits. La sintaxis era inaprendible por construcción —
+  también el 2-ago.
+- **[FIX] Firmas ternarias (trit −1) para `[`, `]`, `G`, `<stop>`, `<unk>`** y
+  primos solo en forma canónica: vocab 164 → 99 tokens con 99 glifos únicos.
+  Probe A/B: val_acc 0.4% → 38%, gen_valid 0% → 16% (100 ép.), val_loss bate
+  al bigrama. Corpus ×2.5 (10.800 exprs + 105 OOD) contra el overfitting.
+
+### 🔴 DL-004 — La "graduación" de Bit v2 (K-65P) se invalida y los instrumentos se reconstruyen (2026-08-03)
+
+- **[NEGATIVE RESULT] La run del 2-ago era un smoke-test, no una graduación**:
+  hitos por cronómetro sin examen, corpus de 94 muestras con traducción semántica
+  vacía, loss con 96% de padding sin `ignore_index` (la acc 97.32% quedaba a ~0,8
+  puntos del predictor trivial de `<pad>`), neurogénesis disparada sobre
+  `val_loss=Infinity`, y una suite adversarial que validaba la sintaxis de la
+  ENTRADA en lugar de la salida del modelo. Material en cuarentena:
+  `storage/checkpoints/quarantine/bit_v2_smoketest_20260802/`. Detalle: DL-004.
+- **[NEW] `scripts/generate_k65p_corpus.py`** — corpus composicional válido por
+  construcción (4.500 expresiones, tiers alineados con las máscaras de etapa) +
+  holdout OOD real por pares cabeza-argumento nunca vistos.
+- **[FIX] `train_sovereign_school_k65p.py`** — `ignore_index=<pad>`, assert
+  máscara↔corpus, plateau solo con métricas finitas, split barajado, optimizer
+  recargado, y **examen de hito con umbrales congelados** (gen_valid≥0.60 +
+  val_loss ≤ bigrama−0.10; suspenso = repetición de curso + pausa rc=78). Fix
+  del tokenizador que partía `grupo` en `g`+`rupo` y perdía el marcador `G`.
+- **[FIX] `run_adversarial_suite.py`** — evalúa la SALIDA generada sobre el
+  holdout OOD, compara contra baselines triviales (uniforme, bigrama) y su
+  veredicto es condicional (puede suspender, rc=2). `bit_metrics.py` deja de
+  comparar cross-entropies de vocabularios distintos y cuenta parámetros reales.
+
 ### 🎓 La batería vuelve a examinar en el idioma del alumno (2026-07-28)
 - **[FIX] `milestone_battery.py` — exam data v2-en**: los 20 pares de gramática
   y los 8 prompts de producción seguían en castellano (v1, congelados el 03-jul)

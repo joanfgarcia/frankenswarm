@@ -3,8 +3,8 @@ import random
 import torch
 import torch.nn.functional as F
 
-from src.bitnet.worlds.cooperative_world import COOP_ACTIONS, COOP_LOCATION_GLYPHS
 from src.bitnet.vocab.glyph_vocabulary import EMOTION_INDEX, WORD_INDEX
+from src.bitnet.worlds.cooperative_world import COOP_ACTIONS, COOP_LOCATION_GLYPHS
 
 
 def generate_dojo_batch(batch_size=1024, device="cpu"):

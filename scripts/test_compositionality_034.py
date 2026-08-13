@@ -22,6 +22,7 @@ import torch.nn.functional as F
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
+from src.bitnet.model.modeling_bitnet import BitNet4LayerModel
 from src.bitnet.vocab.glyph_vocabulary import (
 	EMOTION_INDEX,
 	GLYPH_TABLE,
@@ -29,7 +30,6 @@ from src.bitnet.vocab.glyph_vocabulary import (
 	WORD_NAMES,
 	_make_glyph,
 )
-from src.bitnet.model.modeling_bitnet import BitNet4LayerModel
 
 # ═══════════════════════════════════════════════════════════════════
 # PALABRAS NUEVAS (nunca vistas en entrenamiento)

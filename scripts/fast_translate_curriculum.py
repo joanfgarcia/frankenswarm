@@ -38,22 +38,20 @@ WORD_MAP = {
     "gusta": "likes", "pongo": "put", "bebo": "drink", "descansar": "rest", "cerrar": "close",
     "querer": "want", "llora": "cries", "lloro": "cry", "volar": "fly", "cantar": "sing",
     "mueve": "moves", "saltar": "jump", "nadie": "nobody", "duermen": "sleep", "trabaja": "works",
-    "girar": "rotate", "correr": "run", "respiramos": "breathe", "obtiene": "obtains",
-    "muestra": "shows", "muestran": "show", "llueve": "rains", "moja": "wets", "produce": "produces",
+    "girar": "rotate", "correr": "run", "obtiene": "obtains", "llueve": "rains", "moja": "wets", "produce": "produces",
     "veo": "see", "ves": "see", "ve": "sees", "vemos": "see", "ven": "see", "puedo": "can",
     "está": "is", "están": "are", "estamos": "are", "brilla": "shines", "manda": "sends",
 
     # Adjectives
-    "caliente": "hot", "buena": "good", "bueno": "good", "fría": "cold", "frío": "cold",
+    "caliente": "hot", "buena": "good", "bueno": "good", "fría": "cold",
     "dolorosa": "painful", "doloroso": "painful", "peligrosa": "dangerous", "peligroso": "dangerous",
     "sabia": "wise", "sabio": "wise", "sabroso": "tasty", "grande": "big", "grand": "big",
     "gran": "big", "pequeña": "small", "pequeño": "small", "oscuro": "dark", "oscura": "dark",
     "brillante": "bright", "alto": "high", "limpia": "clean", "limpio": "clean", "dulce": "sweet",
     "rápida": "fast", "rápido": "fast", "fuerte": "strong", "larga": "long", "largo": "long",
     "verdes": "green", "verde": "green", "sencillas": "simple", "sencillo": "simple",
-    "infinitos": "infinite", "infinito": "infinite", "fresca": "fresh", "frio": "cold",
-    "caliente": "hot", "saciado": "full", "seguro": "safe", "malo": "bad", "pocas": "few",
-    "comunes": "common", "sencillas": "simple", "típicas": "typical", "complejas": "complex",
+    "infinitos": "infinite", "infinito": "infinite", "fresca": "fresh", "frio": "cold", "saciado": "full", "seguro": "safe", "malo": "bad", "pocas": "few",
+    "comunes": "common", "típicas": "typical", "complejas": "complex",
     "política": "political",
 
     # Pronouns & Determiners

@@ -1,8 +1,8 @@
 import json
 import os
-import sys
 import re
 import subprocess
+import sys
 
 base_dir = "/home/joan/Documents/IA/frankenswarm"
 sys.path.append(base_dir)

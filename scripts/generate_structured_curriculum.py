@@ -1,8 +1,8 @@
-import os
+import hashlib
 import json
+import os
 import re
 import subprocess
-import hashlib
 import sys
 
 # Añadir el path del proyecto para importar src
@@ -26,7 +26,7 @@ VALID_CATEGORIES = {
 ENGLISH_STOPWORDS = {
 	"and", "the", "of", "in", "to", "is", "it", "that", "you", "was", "for",
 	"on", "with", "his", "they", "he", "she", "at", "by", "this", "but", "from",
-	"are", "as", "well", "or", "an", "this", "about", "would", "their"
+	"are", "as", "well", "or", "an", "about", "would", "their"
 }
 
 def validate_curriculum_item(item, stage_name, vocab_set):
@@ -159,7 +159,7 @@ def run_curriculum_generation():
 	generated_data = {"preschool": [], "primary": [], "secondary": []}
 	if os.path.exists(temp_output_path):
 		try:
-			with open(temp_output_path, "r", encoding="utf-8") as f:
+			with open(temp_output_path, encoding="utf-8") as f:
 				generated_data = json.load(f)
 				print(f"🔄 Reanudando desde archivo temporal. Cargados: "
 					  f"Preschool={len(generated_data['preschool'])}, "

@@ -7,7 +7,6 @@ import re
 import tempfile
 import unittest
 
-
 base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
@@ -70,15 +69,15 @@ class TestStoryFactoryMockPipeline(unittest.TestCase):
 
 	def test_mock_pipeline_produces_valid_jsonl(self):
 		"""Running with --mock produces valid JSONL with required fields."""
+		# Simulate the pipeline manually (to avoid sys.argv issues)
+		import random
+
 		from scripts.samantha_story_factory import (
 			STAGE_SPECS,
 			build_prompt,
 			mock_generate,
 			words_of,
 		)
-
-		# Simulate the pipeline manually (to avoid sys.argv issues)
-		import random
 
 		spec = STAGE_SPECS["preschool"]
 		rng = random.Random(770)

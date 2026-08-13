@@ -86,6 +86,29 @@ When using models with constrained vocabularies based on semantic signatures or 
 
 ---
 
+## 🚨 RULE 8: Semantic School Vocabulary Comes From v1's Dictionary
+
+The semantic school (`factory_semantic`, K-65P with truth) must reuse the
+**dictionary already built for v1**, never hand-invented molecules:
+
+- **Source of truth**: `configs/expanded_glyphs.json` — 12,143 words from v1's
+  clean vocabulary with their **already-computed ternary glyphs** (Ridge
+  projection + ternary quantization, `theta=0.26`). These are the exact glyphs
+  v1 trained with.
+- **Census**: `configs/clean_vocabulary_words.json` (filtered `min_count=3`,
+  sources TinyStories + `tiny_dialogues_large_en.json`).
+- **Why**: the glyph-vs-standard comparison only holds if BOTH arms see the
+  SAME vocabulary. Inventing ad-hoc molecules breaks the comparison; reusing
+  v1's dictionary (words + glyphs) makes it coherent by construction and avoids
+  hand-designing glyphs.
+- **Selection**: choose semantically relevant words (concrete nouns, action
+  verbs, adjectives) by corpus frequency, mapped to their existing glyphs, and
+  assign them to the gating tiers (`SEMANTIC_TIERS` in
+  `src/bitnet/training/train_sovereign_school_k65p.py`). Do NOT design new
+  glyphs by hand for this corpus.
+
+---
+
 ## 📁 Project Structure
 
 ```

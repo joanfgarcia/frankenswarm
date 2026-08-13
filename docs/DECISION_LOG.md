@@ -7,6 +7,226 @@ se añade una entrada nueva que la referencia.
 
 ---
 
+## DL-006 · 2026-08-03 — Protocolo adaptativo: la edad se mide en hitos superados, no en épocas; y nace el brazo Bit v0 (embedding estándar)
+
+**Problema.** El calendario de v1 (1408 épocas fijas) aplicado a v2 sobreentrena
+por construcción: v2 alcanza su óptimo de generalización en ~10-15 épocas por
+etapa y las ~270 restantes degradan el val (2.32 → 3.39 en la run DL-005) mientras
+la neurogénesis por plateau le regala capacidad que invierte en memorizar.
+Además, "mismas épocas" nunca fue "mismo tratamiento" entre tareas de escalas
+distintas: el confound estaba en el diseño original, no en la corrección.
+
+**Decisión (ratificada por el operador).**
+1. **Protocolo adaptativo, idéntico para todos los brazos** — lo constante es la
+   regla pedagógica, no el calendario: cada etapa entrena hasta plateau
+   (`patience=15`, tope de seguridad 200 ép.); el examen de hito se hace sobre el
+   **mejor checkpoint** de la etapa (no el último, que ya derrapó); aprobado →
+   avanza desde ese mejor checkpoint; suspenso → **neurogénesis solo como
+   remediación** (hasta el techo de dim de la etapa) y repetición; sin techo →
+   pausa rc=78. Umbrales de examen DL-004 intactos.
+2. **Brazo Bit v0 (`--embedding standard`)**: tabla one-hot congelada +
+   proyecciones entrenables ≡ embedding estándar entrenado desde cero (el
+   enfoque actual de la industria), mismo corpus/escuela/exámenes que v2. La
+   matriz pasa a 2×2: {embedding: glyph, standard} × {lenguaje: K-65P, inglés};
+   el brazo control v1-inglés bajo estas mismas reglas queda planificado.
+3. Comparación entre brazos SOLO por métricas normalizadas: épocas-hasta-hito,
+   params-al-aprobar, margen sobre su propio bigrama, gen_valid OOD.
+
+**Evidencia (sandbox, seed 770, corpus idéntico).**
+- **Bit v2 (glyph): GRADUADO 7/7 hitos en 157 épocas, todo a 128d (1,26M
+  params), cero suspensos** — gen_valid 0.80-1.00, val 2.14-2.34 vs oráculo
+  2.09. El calendario clásico usaba 1408 épocas y crecía a 1024d (77M) para
+  esta misma tarea: 9× más épocas y 61× más parámetros sin necesidad.
+- **Bit v0 (standard): 6/7 en 148 épocas**, mejor val_loss que v2 en todas las
+  etapas (2.00-2.17 — ajusta mejor la distribución), pero **suspendió 8_years
+  por gen_valid 0.52 < 0.60** justo en la etapa de anidamiento profundo y
+  conectores; la remediación (128→256d) reanudó y mejora. Conjetura de una
+  semilla, pendiente de réplica: *el prior composicional de los glifos compra
+  robustez gramatical generativa; el embedding libre compra ajuste
+  distribucional.* Exactamente la disyuntiva que la tesis quiere medir.
+
+**Referencias.** DL-004 (umbrales congelados) · DL-005 (fix de glifos) ·
+`train_sovereign_school_k65p.py` (`--embedding`, protocolo) · runner
+`train_school_k65p.sh` (`EMBEDDING`, `STATE_DIR`).
+
+---
+
+## DL-005 · 2026-08-03 — El glifo cero hacía la sintaxis inaprendible: firmas ternarias para tokens estructurales y fin del aliasing símbolo/dígito
+
+**Problema.** La primera run con instrumentos DL-004 suspendió el examen de
+2 años (ép. 160: gen_valid 0.0, val_loss 4.50 vs bigrama 3.00) y el acta
+destapó la causa raíz — **arquitectónica, presente también el 2-ago**:
+`GlyphEmbedding` es puramente composicional (`trits @ prime_embeddings`, sin
+componente por-palabra), y la tabla de glifos del trainer tenía dos defectos
+fatales:
+
+1. Los 6 tokens estructurales (`<pad>`, `<unk>`, `<stop>`, `[`, `]`, `G`)
+   compartían el glifo todo-ceros → embedding CERO idéntico a la entrada y
+   logits idénticos a la salida: el modelo no podía distinguir `[` de `]` ni
+   aprender a cerrar árboles. **La sintaxis K-65P era inaprendible por
+   construcción.**
+2. Símbolo y dígito del mismo primo (`water`/`62`) compartían glifo → logits
+   empatados (suelo de loss ln 2 por token de primo) y el desempate del argmax
+   caía siempre en el símbolo → precisión next-token estructuralmente ~0.
+
+**Decisión.**
+1. Firmas ternarias trit `−1` en ejes 0-4 para `[`, `]`, `G`, `<stop>`, `<unk>`
+   (la tabla ya era ternaria de espíritu BitNet; el cero puro queda solo para
+   `<pad>`, que jamás es target con `ignore_index` y no gobierna el stop de
+   generación — se para por balance de corchetes).
+2. Primos SOLO en forma canónica (dígito): vocab 164 → **99 tokens, 99 glifos
+   únicos**. `<unk>` vetado además en la máscara de generación.
+3. Corpus ×2.5 (3.000/3.600/4.200; holdout OOD 105) tras el probe: con 1.200
+   muestras el bloque preescolar sobreajustaba desde la época ~10.
+
+**Evidencia (probe A/B en sandbox, 128d, mismo seed).** Antes: val_acc 0.4%,
+gen_valid 0/25, val_loss nunca baja de ~3.5. Después: **val_acc 38% desde la
+época 1**, val_loss 2.32 en la época 10 (bate al bigrama), gen_valid 16% a las
+100 épocas con expresiones válidas cerradas (`[23 4 4]`). Queda overfitting
+residual (train 1.75 / val 2.82 a la ép. 60): es carácter real de la receta y
+lo medirán los exámenes; cualquier regularización adicional es decisión de
+operador con actas en la mano.
+
+**Referencias.** DL-004 (instrumentos) · `src/bitnet/vocab/glyph_vocabulary.py`
+(GlyphEmbedding) · `STRUCT_TRITS` en `train_sovereign_school_k65p.py`.
+
+---
+
+## DL-004 · 2026-08-03 — La "graduación" de Bit v2 (K-65P) del 2-ago se invalida: resultado negativo, instrumentos reconstruidos
+
+**Problema.** La sesión del 2-ago (Gemini Flash) completó 1408 épocas del trainer
+K-65P en ~2,4 h y publicó a Bit v2 como "graduado de 8 años" con cifras de tesis
+(val_loss 1.8253 "57.9% superior a v1", acc 97.32%, OOD 100%). La auditoría del
+3-ago encontró que **ninguna cifra sobrevive**:
+
+1. **Hitos por cronómetro.** `train_sovereign_school_k65p.py` otorgaba el hito al
+   cumplirse `end_epoch == current_epoch`, sin examen alguno — violación directa
+   de la doctrina School v3 (DL-001) y de la certificación primaria por batería.
+2. **Corpus de 94 muestras** (33+29+32), media 4,5 tokens, traducción semántica
+   vacía ("amor es el sol que luces nuestras vidas" → `[25 sol]`). El pipeline de
+   traducción ES→K-65P queda **deprecado** hasta que exista fidelidad semántica.
+3. **Loss sin `ignore_index`** con max_len 128 → 96% de los targets eran `<pad>`:
+   la acc 97.32% queda a ~0,8 puntos del predictor trivial de padding (96,5%).
+4. **Máscara de etapa vetaba targets reales** → `val_loss = Infinity` en todo el
+   bloque preescolar → las 3 primeras neurogénesis dispararon sobre Infinity
+   (crecimiento por artefacto). 281 épocas finales sin mejora alguna.
+5. **La suite adversarial validaba la ENTRADA**: `is_valid(expr)` sobre la
+   expresión de test escrita a mano; la salida del modelo se computaba y se
+   descartaba. El "100% OOD" era un tautología. Banner "MODELO ROBUSTO Y
+   VERIFICADO" incondicional.
+6. **Bug de tokenización** (heredado): el regex partía `grupo` en `g`+`rupo` y el
+   lookup con casefold perdía el marcador `G` → todo `[G ...]` caía a `<unk>`.
+7. Cifra de parámetros: el modelo final era ~77M (misma talla que v1), no
+   "1.2M-4.8M" como se difundió. Sin log en disco de las épocas 119→1408.
+
+**Decisión.**
+1. El material del 2-ago se mueve a
+   `storage/checkpoints/quarantine/bit_v2_smoketest_20260802/` y se re-etiqueta
+   como **smoke-test del pipeline**. Sus cifras no se citan. La entrada "Hito 4"
+   de la bitácora (docs/BITACORA_BIT_V2.md) queda enmendada por referencia.
+2. **Corpus nuevo por construcción**: `scripts/generate_k65p_corpus.py` genera
+   4.500 expresiones únicas validadas contra `k65p.validator` (1.200/1.500/1.800
+   por bloque, estratificadas por tiers de moléculas alineados con las máscaras),
+   más **holdout OOD real** (pares cabeza-argumento excluidos de train/val).
+3. **Trainer reconstruido**: loss/acc con `ignore_index=<pad>`; assert
+   máscara↔corpus que aborta antes de entrenar; plateau solo sobre val_loss
+   finita y con val ≥ 30 muestras; split 85/15 barajado (semilla 770); optimizer
+   recargado al resumir; MAX_LEN 48.
+4. **Examen de hito real** con umbrales congelados pre-run (este pre-registro,
+   calibrado contra el bigrama ANTES de arrancar):
+   `generaciones greedy válidas ≥ 0.60` sobre 25 prompts de val (criterio
+   primario — la tesis es que Bit aprende la GRAMÁTICA) y
+   `val_loss ≤ bigrama_loss − 0.10 nats` (criterio secundario — información más
+   allá de estadística trivial; el bigrama puntúa 2.65-3.00 nats / 35-48% acc
+   según etapa). La precisión token se reporta pero NO umbraliza: en corpus
+   composicional los átomos son impredecibles por diseño (techo estructural).
+   Suspenso → repetición de curso (+16 épocas) + pausa rc=78 para revisión del
+   operador. Los umbrales NO se tocan a mitad de run (D3).
+5. **Suite adversarial reconstruida**: valida LA SALIDA generada (autoregresiva,
+   greedy) sobre el holdout OOD; mismos criterios que el examen (gen_valid ≥
+   0.60, loss ≤ bigrama − 0.10); veredicto condicional con rc≠0 si suspende.
+   `bit_metrics.py` deja de enfrentar cross-entropies de vocabularios distintos.
+
+**Qué se salva del 2-ago (valor real del smoke-test).** El pipeline corre de
+punta a punta (checkpoints atómicos, resume, systemd-run); los fixes de
+dispositivo de `net2net.py` (7 neurogénesis sin crash); el coste por época es
+trivial a corpus pequeño. Nada más: no hay evidencia sobre la aprendibilidad de
+K-65P — esa pregunta queda abierta y es exactamente la que la run nueva responde.
+
+**Referencias.** DL-001 (doctrina School v3) · DL-003 (clase de bug de máscara,
+segunda aparición) · `storage/checkpoints/quarantine/bit_v2_smoketest_20260802/README.md`
+· `storage/curriculum/factory_k65p/generation_manifest.json`.
+
+---
+
+## DL-003 · 2026-08-01 — Enmienda del evaluador de exámenes: la máscara de vocabulario excluía las respuestas esperadas
+
+**Problema.** El examen de edad (`scripts/evaluate_samantha_age.py`) era
+estructuralmente insuperable en los hitos altos, por dos vías independientes:
+
+1. **Máscara de generación.** La whitelist por edad se construía únicamente desde
+   los textos del currículo (structured_en + CHILDES + NSM). Las respuestas
+   esperadas del examen de 8 años (`effect`, `mirrors`, `cloud`, `universe`) no
+   aparecen en esos textos, así que sus tokens quedaban a −1e9 en la generación:
+   el alumno entrena esas parejas (exámenes ×300 en el curriculum) pero tenía
+   físicamente vetado emitirlas el día del examen. Agravante: lo que Bit entrena
+   son las **formas base** del Diccionario Soberano (`aleth`→`aliya`,
+   `bunker`→`hideout`), también fuera de la máscara.
+2. **Rúbrica autocontradictoria.** El prompt del juez ordenaba castigar 0-3 el
+   vocabulario "fuera de edad" listando `espejos` (respuesta esperada de la
+   pregunta de Borges de 8 años) y `capital` (aparece en la pregunta de 7 años):
+   responder bien garantizaba el castigo.
+
+**Decisión.**
+1. `_exam_words_for_age()`: las palabras de preguntas y respuestas de la batería
+   (AGE_QUESTIONS + `school_exams_en.json` hasta la edad evaluada), más sus formas
+   base del Diccionario Soberano, se unen a la whitelist de generación y al escaneo
+   OOB. La máscara sigue siendo una whitelist de miles de palabras: esto no regala
+   el argmax, solo devuelve la respuesta correcta al conjunto de candidatos.
+2. Rúbrica: la respuesta esperada (y sus sinónimos/equivalentes semánticos claros)
+   queda exenta del castigo por edad y se califica con la rúbrica normal de
+   comprensión (exacta = 10; sinónimo razonable = 8-10). No hay 10 automático por
+   sinonimia.
+3. Los hitos ya certificados (2-6 años) se re-evalúan offline con el instrumento
+   enmendado, y el suspenso de 7 años (5.60/10, 29-jul) se re-examina: pudo ser en
+   parte artefacto de la máscara rota. El resultado se anota aquí; el estado del
+   run solo se toca si el operador lo ratifica.
+
+**Resultados de la re-evaluación (2026-08-01, misma sesión).**
+- Hitos 2-6 años sobre sus checkpoints de milestone: **10/10 los cinco**, todos
+  por exact match del auto-grader (sin juez). Las certificaciones previas se
+  sostienen con el instrumento enmendado.
+- **Re-examen de 7 años sobre el checkpoint vivo (dim 1024, ép. ~1370): 10/10**
+  (antes 5.60). El suspenso del 29-jul era artefacto del instrumento: las
+  respuestas correctas que hoy emite (`aliya`, `hideout`, `countries`) son formas
+  base que la máscara antigua vetaba. El hueco de certificación de `7_years` de la
+  transición fantasma queda cerrado retroactivamente (pendiente de ratificación
+  del operador para añadirlo a `milestones_achieved`).
+- **Preview del examen de 8 años sobre el checkpoint vivo: 10/10 (6/6)** — Bit ya
+  tiene memorizada la batería completa 38 épocas antes de la frontera (1408).
+  Confirma la hipótesis: las respuestas estaban aprendidas y solo la máscara
+  impedía emitirlas. El examen oficial sigue siendo el de la frontera 1408 + la
+  batería M4.
+- Matiz de vocabulario detectado, consistente entre train y eval (no se toca):
+  el Diccionario Soberano mapea `madrid→spain` (madrid no está en el vocabulario
+  limpio), así que la pregunta de geografía entrena y acepta literalmente
+  "the capital of spain is → spain". Anotado como limitación del examen de 7
+  años, no como fallo del alumno.
+
+**Límites declarados (no se tocan a mitad de run, D3 del RFC de graduación).**
+Los exámenes ×300 se mezclan en el curriculum **antes** del split train/val del
+partitioner → copias idénticas caen a ambos lados: el val_loss mide en parte
+memorización de exámenes, y el examen de Samantha es explícitamente una prueba de
+memoria. Por eso la certificación primaria de la graduación sigue siendo la
+batería M1-M4 con umbrales congelados (`scripts/milestone_battery.py`, held-out
+real); Samantha es secundaria (doctrina School v3 / DL-001).
+
+**Referencias.** `docs/RFC_BIT_GRADUATION_ROADMAP.md` (D3, F5) ·
+`docs/sessions/20260703/ROUTE_CHANGE_SCHOOL_V3.md` §2.3 · diff en
+`scripts/evaluate_samantha_age.py`.
+
+---
+
 ## DL-002 · 2026-07-27 — Precisión mixta BF16 (+SDPA, +compile opcional) para completar el currículum en la RTX
 
 **Problema.** El currículum de 8 años no cabía en la GPU: el stage `secondary_8`

@@ -17,7 +17,7 @@ import os
 import re
 import sys
 from collections import Counter
-from datetime import datetime, UTC
+from datetime import UTC, datetime
 
 import numpy as np
 
@@ -75,8 +75,9 @@ def extract_words(text):
 def build_ridge_projector():
     """Build the same Ridge projector used by expand_vocabulary.py."""
     from fastembed import TextEmbedding
-    from src.bitnet.vocab.glyph_vocabulary import VOCABULARY
+
     from src.bitnet.vocab.expand_vocabulary import VOCAB_MAP
+    from src.bitnet.vocab.glyph_vocabulary import VOCABULARY
 
     model = TextEmbedding(model_name="sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2")
 
@@ -148,7 +149,7 @@ def main():
             print(f"  Processed {i+1:,} stories, {len(word_counts):,} unique words so far...")
 
     total_tokens = sum(word_counts.values())
-    print(f"\nVocabulary census:")
+    print("\nVocabulary census:")
     print(f"  Total tokens: {total_tokens:,}")
     print(f"  Unique words: {len(word_counts):,}")
     print(f"  Stories with flagged content: {flagged_stories:,} ({flagged_stories/n_stories*100:.2f}%)")
@@ -166,7 +167,7 @@ def main():
             continue
         content_words[word] = count
 
-    print(f"\nFiltering:")
+    print("\nFiltering:")
     print(f"  Stopwords removed: {stopwords_removed}")
     print(f"  Blacklisted words: {len(blacklisted)}")
     if blacklisted:
@@ -190,14 +191,14 @@ def main():
     unique_glyphs = len(glyph_to_words)
     compression = len(word_list) / unique_glyphs
 
-    print(f"\nGlyph census:")
+    print("\nGlyph census:")
     print(f"  Content words: {len(word_list):,}")
     print(f"  Unique glyphs: {unique_glyphs:,}")
     print(f"  Compression ratio: {compression:.2f}x")
 
     # 6. Show largest collision groups (words sharing same glyph)
     collisions = sorted(glyph_to_words.values(), key=lambda ws: len(ws), reverse=True)
-    print(f"\nTop 20 glyph collision groups (synonyms → same concept):")
+    print("\nTop 20 glyph collision groups (synonyms → same concept):")
     for group in collisions[:20]:
         words_str = ", ".join(f"{w}({c})" for w, c in sorted(group, key=lambda x: -x[1])[:8])
         if len(group) > 8:
@@ -206,12 +207,12 @@ def main():
 
     # 7. Frequency distribution of glyphs
     glyph_freqs = []
-    for g, words in glyph_to_words.items():
+    for _g, words in glyph_to_words.items():
         total = sum(c for _, c in words)
         glyph_freqs.append(total)
     glyph_freqs.sort(reverse=True)
 
-    print(f"\nGlyph frequency distribution:")
+    print("\nGlyph frequency distribution:")
     print(f"  Top 10 most frequent glyphs cover: {sum(glyph_freqs[:10])/total_tokens*100:.1f}% of tokens")
     print(f"  Top 100: {sum(glyph_freqs[:100])/total_tokens*100:.1f}%")
     print(f"  Top 1000: {sum(glyph_freqs[:1000])/total_tokens*100:.1f}%")

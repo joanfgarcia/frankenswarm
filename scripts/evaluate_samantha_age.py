@@ -7,8 +7,8 @@ import subprocess
 import numpy as np
 import torch
 
-from src.bitnet.vocab.dictionary_tool import SovereignDictionary
 from src.bitnet.model.modeling_bitnet import BitNet4LayerModel
+from src.bitnet.vocab.dictionary_tool import SovereignDictionary
 
 # Batería de preguntas por edad cognitiva/milestone (2 a 8 años)
 AGE_QUESTIONS = {
@@ -156,6 +156,55 @@ except Exception as e:
 	return None
 
 
+def _exam_words_for_age(age: int, base_dir: str) -> set[str]:
+	"""Palabras de la batería de exámenes (school_exams_en.json + AGE_QUESTIONS) hasta la edad dada.
+
+	Las respuestas esperadas de los exámenes (p. ej. 'effect', 'mirrors', 'universe') no aparecen
+	en los textos del currículo, así que la máscara de vocabulario por edad las excluía y el alumno
+	jamás podía emitirlas aunque las tuviera memorizadas. Se unen aquí para que la generación (y el
+	escaneo OOB) las trate como vocabulario legítimo de su edad.
+
+	Además se incluyen las FORMAS BASE del Diccionario Soberano: lo que Bit entrena como respuesta
+	no es la cadena cruda del examen (p. ej. 'aleth', 'bunker'), sino su base ('aliya', 'hideout').
+	Si solo se destaparan las palabras crudas, los tokens reales seguirían enmascarados y el examen
+	seguiría siendo irresoluble por la puerta de generación.
+	"""
+	words = set()
+
+	expanded_glyphs_path = os.path.join(base_dir, "configs", "expanded_glyphs.json")
+	dictionary = SovereignDictionary(expanded_glyphs_path)
+
+	def _collect(raw: str):
+		for w in re.findall(r"[a-zA-ZáéíóúüñÁÉÍÓÚÜÑ_]+", raw.lower()):
+			words.add(w)
+			words.add(dictionary.map_to_base_word(w))
+
+	for a, qas in AGE_QUESTIONS.items():
+		if a <= age:
+			for qa in qas:
+				_collect(qa["question"])
+				_collect(qa["expected"])
+
+	exams_path = os.path.join(base_dir, "configs", "school_exams_en.json")
+	if os.path.exists(exams_path):
+		with open(exams_path, encoding="utf-8") as f:
+			exams = json.load(f)
+		buckets = []
+		if age >= 2:
+			buckets.append("preschool")
+		if age >= 5:
+			buckets.append("primary")
+		if age >= 7:
+			buckets.append("secondary")
+		for bucket in buckets:
+			for qas in exams.get(bucket, {}).values():
+				for qa in qas:
+					_collect(qa.get("question", ""))
+					_collect(qa.get("answer", ""))
+
+	return words
+
+
 def get_allowed_vocab_for_age(age: int, base_dir: str) -> set[str]:
 	curriculum_path = os.path.join(base_dir, "configs", "school_curriculum_structured_en.json")
 	childes_path = os.path.join(base_dir, "configs", "childes_pre_school.json")
@@ -177,7 +226,7 @@ def get_allowed_vocab_for_age(age: int, base_dir: str) -> set[str]:
 		"to", "of", "in", "for", "on", "with", "without", "about", "and", "or", "but", "if", "because",
 		"is", "are", "was", "were", "be", "been", "have", "has", "had", "do", "does", "did", "want", "can",
 		"say", "see", "go", "give", "know", "eat", "drink", "meow", "bark", "hurt", "hello", "fine", "good",
-		"dad", "mom", "baby", "kid", "kiss", "give", "take", "more", "sleep", "runs", "much", "very"
+		"dad", "mom", "baby", "kid", "kiss", "take", "more", "sleep", "runs", "much", "very"
 	}
 
 	preschool_words = set(safe_words)
@@ -200,7 +249,7 @@ def get_allowed_vocab_for_age(age: int, base_dir: str) -> set[str]:
 			preschool_words.update(words)
 
 	if age <= 4:
-		return preschool_words
+		return preschool_words | _exam_words_for_age(age, base_dir)
 
 	primary_words = set()
 	for sentence in curriculum_data.get("primary", []):
@@ -208,14 +257,14 @@ def get_allowed_vocab_for_age(age: int, base_dir: str) -> set[str]:
 		primary_words.update(words)
 
 	if age <= 6:
-		return preschool_words | primary_words
+		return (preschool_words | primary_words) | _exam_words_for_age(age, base_dir)
 
 	secondary_words = set()
 	for sentence in curriculum_data.get("secondary", []):
 		words = re.findall(r"[a-zA-ZáéíóúüñÁÉÍÓÚÜÑ_]+", sentence.lower())
 		secondary_words.update(words)
 
-	return preschool_words | primary_words | secondary_words
+	return (preschool_words | primary_words | secondary_words) | _exam_words_for_age(age, base_dir)
 
 
 def run_evaluation(args):
@@ -240,19 +289,35 @@ def run_evaluation(args):
 	# 2. Inicializar Diccionario Soberano
 	dictionary = SovereignDictionary(expanded_glyphs_path)
 
-	# 3. Inicializar y cargar modelo (en la CPU o iGPU según args.device)
-	print(f"🧠 Inicializando modelo BitNet en [{device}] ({args.hidden_dim} dim, {args.num_layers} capas)...")
-	model = BitNet4LayerModel(
-		use_glyphs=True,
-		glyph_table=glyphs,
-		hidden_dim=args.hidden_dim,
-		num_layers=args.num_layers,
-		use_pos_embedding=True,
-		is_causal=True,
-		max_seq_len=128,
-	).to(device)
+	# 3. Inicializar y cargar modelo (en la CPU o iGPU según args.device).
+	# El modo de embedding se detecta por las claves del checkpoint: los brazos
+	# estándar DL-006 (use_glyphs=False, tabla one-hot congelada) no tienen
+	# glyph_embedding y reconstruirlos como glifos rompería el load_state_dict.
+	state_dict = torch.load(args.model_path, map_location=device, weights_only=True)
+	ckpt_uses_glyphs = any(k.startswith("glyph_embedding.") for k in state_dict)
+	print(f"🧠 Inicializando modelo BitNet en [{device}] ({args.hidden_dim} dim, {args.num_layers} capas, embedding={'glyph' if ckpt_uses_glyphs else 'standard'})...")
+	if ckpt_uses_glyphs:
+		model = BitNet4LayerModel(
+			use_glyphs=True,
+			glyph_table=glyphs,
+			hidden_dim=args.hidden_dim,
+			num_layers=args.num_layers,
+			use_pos_embedding=True,
+			is_causal=True,
+			max_seq_len=128,
+		).to(device)
+	else:
+		model = BitNet4LayerModel(
+			use_glyphs=False,
+			vocab_embeddings=np.eye(len(words), dtype=np.float32),
+			hidden_dim=args.hidden_dim,
+			num_layers=args.num_layers,
+			use_pos_embedding=True,
+			is_causal=True,
+			max_seq_len=128,
+		).to(device)
 
-	model.load_state_dict(torch.load(args.model_path, map_location=device, weights_only=True))
+	model.load_state_dict(state_dict)
 	model.eval()
 
 	target_age = args.target_age
@@ -275,7 +340,7 @@ def run_evaluation(args):
 	qa_pairs = []
 	for qa in questions:
 		raw_q = qa["question"]
-		expected = dictionary.map_to_base_word(qa["expected"])
+		dictionary.map_to_base_word(qa["expected"])
 
 		# Extraer contenido de la pregunta
 		q_match = re.match(r"^(yo|tú|me|you)\s*:\s*(.*)$", raw_q, re.IGNORECASE)
@@ -373,6 +438,7 @@ def run_evaluation(args):
 		"Sin embargo, debes penalizar rigurosamente:\n"
 		"- Respuestas con lenguaje metafórico abstracto o excesivamente complejo para la edad cognitiva dada.\n"
 		f"- Respuestas que correspondan a etapas de desarrollo superiores. Si la edad evaluada es {target_age} años, el niño NO debe responder con palabras de primaria o secundaria (como 'asteroide', 'población', 'cáncer', 'oxígeno', 'espejos', 'infinitos', 'tiempo', 'capital'). Si el alumno usa vocabulario fuera de su rango de edad (como palabras escolares complejas o conceptos de matemáticas avanzadas), la calificación de esa pregunta debe ser castigada a un rango de 0 a 3.\n"
+		"IMPORTANTE: la 'respuesta correcta esperada' de cada pregunta está SIEMPRE exenta del castigo por vocabulario fuera de edad: si la respuesta del alumno coincide con la esperada, o es un sinónimo o equivalente semántico claro de ella, NO apliques ese castigo y califícala con la rúbrica normal de comprensión (una coincidencia exacta merece 10; un sinónimo o equivalente razonable, 8-10 según lo bien que responda a la pregunta).\n"
 		"- Respuestas que contengan palabras de ruido/alucinación aleatoria que no tengan coherencia sintáctica o gramatical en una frase simple.\n\n"
 		"Califica cada respuesta de 0 a 10 y detalla tu motivo en una frase muy corta (máximo 10 palabras).\n"
 		"Debes responder ÚNICAMENTE con un objeto JSON válido que siga exactamente este formato:\n"
@@ -409,7 +475,7 @@ def run_evaluation(args):
 		exp_clean = dictionary.map_to_base_word(qa["expected"]).strip().lower()
 		raw_exp_clean = qa["expected"].strip().lower()
 		
-		if ans_clean == exp_clean or ans_clean == raw_exp_clean:
+		if ans_clean in (exp_clean, raw_exp_clean):
 			calificaciones.append({
 				"pregunta": qa["question"],
 				"respuesta": qa["answer"],
@@ -450,7 +516,7 @@ def run_evaluation(args):
 				if matching_expected:
 					exp_clean = dictionary.map_to_base_word(matching_expected).strip().lower()
 					raw_exp_clean = matching_expected.strip().lower()
-					if r_clean == exp_clean or r_clean == raw_exp_clean:
+					if r_clean in (exp_clean, raw_exp_clean):
 						cal["calificacion"] = 10
 						cal["motivo"] = "Exact match (Auto-grade Override)"
 						cal["esperada"] = matching_expected

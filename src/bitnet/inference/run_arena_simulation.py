@@ -24,6 +24,12 @@ try:
 except ImportError:
 	samantha_available = False
 
+from lab.experiments.train_arena_ppo import get_masked_probs
+from src.bitnet.model.modeling_bitnet import BitNet4LayerModel
+from src.bitnet.vocab.glyph_vocabulary import (
+	N_EMOTIONS,
+	WORD_NAMES,
+)
 from src.bitnet.worlds.cooperative_world import (
 	COOP_ACTIONS,
 	COOP_LOCATION_NAMES,
@@ -31,12 +37,6 @@ from src.bitnet.worlds.cooperative_world import (
 	SILENCE_GLYPH,
 	CooperativeWorld,
 )
-from src.bitnet.vocab.glyph_vocabulary import (
-	N_EMOTIONS,
-	WORD_NAMES,
-)
-from src.bitnet.model.modeling_bitnet import BitNet4LayerModel
-from lab.experiments.train_arena_ppo import get_masked_probs
 
 # ANSI escape codes for coloring agents
 COLOR_NICO = "\033[96m"      # Cyan

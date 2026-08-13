@@ -1,0 +1,39 @@
+# Escuela Semántica K-65P — receta de ejecución diferida (red-pill script_job).
+#
+#   red-pill job submit --recipe school_semantic
+#
+# Primera cata: corpus semántico (factory_semantic), inglés, protocolo
+# adaptativo DL-006 con gen_valid (sintaxis). gen_true via Prolog se corre
+# aparte como examen post-hoc (scripts/exam_gen_true.py).
+
+source: script_job
+title: Escuela Semántica K-65P (cata 1)
+priority: 5
+
+step_command: .venv/bin/python src/bitnet/training/train_sovereign_school_k65p.py --batch_size 32 --max_epochs_per_run 1 --corpus factory_semantic --lang en --state_dir storage/checkpoints/sovereign_school_semantic
+env:
+  PYTHONPATH: .
+
+checkpoint_file: storage/checkpoints/sovereign_school_semantic/school_state_k65p.json
+pause_exit_code: 78
+
+progress:
+  mode: unbounded
+  current_key: current_epoch
+  stage_current_key: current_stage_idx
+  stage_total: 8
+  stage_offset: 1
+  stage_label: etapa
+
+completion:
+  key: milestones_achieved
+  contains: 8_years
+
+preflight:
+  vram_unload: true
+  min_free_vram_mb: 3500
+  memory_max: 16G
+
+control:
+  max_step_minutes: 780
+  preemptible: false

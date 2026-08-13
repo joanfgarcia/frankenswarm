@@ -84,7 +84,7 @@ real quedan bajo vigilancia (val_loss vs tendencia + ∇STE) con rollback de un 
 ## 4. Fuera de alcance
 
 Batch >64, vocabulary gating (cambio aparte, condiciones en
-`Aleth_Core/bitnet_next_architecture_plan.md` §2), cambios de currículum (D3).
+`docs/bitnet_next_architecture_plan.md` §2), cambios de currículum (D3).
 
 ## 5. Resultados Tier 2 (ejecutado 27/28-jul-2026, 21:07-23:45)
 

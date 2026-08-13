@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-Tier 1 del benchmark BF16/SDPA (Aleth_Core/plans/benchmark_bf16_school.md §2).
+Tier 1 del benchmark BF16/SDPA (docs/benchmark_bf16_school.md §2).
 
 Micro-benchmark del step de entrenamiento a dims grandes (896, 1024) con datos
 sintéticos. NO lee ni escribe ningún checkpoint: modelo desde init aleatoria.
