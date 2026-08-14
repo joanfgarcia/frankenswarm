@@ -2,6 +2,30 @@
 
 ## [Unreleased]
 
+### 🛫 Preflight BIT-003 — auditoría del refactor y desminado de cachés (2026-08-14)
+
+- **[AUDIT] `docs/sessions/20260814/PREFLIGHT_BIT003.md`**: auditoría de coherencia
+  previa al reentrenamiento de v1 en inglés. El trainer refactorizado (PR #5) nunca
+  había corrido una escuela real; smoke test adaptativo en sandbox incluido.
+- **[FIX] Caché de etapa keyeada por corpus**: `stage_cache/<corpus_hash>/` — la caché
+  plana global habría re-servido el dataset spanglish (o token-IDs de otro censo) en
+  silencio tras regenerar currículo/vocabulario.
+- **[FIX] `school_exams_en.json` entra en `compute_corpus_hash`**: los exámenes se
+  mezclan ×300 en el dataset de etapa y no invalidaban ninguna caché.
+- **[FIX] `datasets` declarado en `pyproject.toml`**: el trainer lo importa para
+  TinyStories y no estaba ni en el venv — cualquier run con caché inválida moría en
+  `ModuleNotFoundError`. Resuelve limpio junto a fastembed (el conflicto HF era con
+  `transformers`).
+- **[FIX] Acta de suspensos en modo adaptativo**: `_save_adaptive_state()` machacaba
+  el `exam_failures` que `run_samantha_eval` acababa de incrementar.
+- **[FIX] `select_strategy` recibe el modo AMP resuelto**: con `--amp auto` elegía la
+  estrategia `fp32` (afectaba al log del acta y al cruce con `--opt8bit`).
+- **[NEW] `scripts/download_childes_en.py`** (BIT-003 §1): CHILDES en inglés de la
+  fuente verificada, sin mapeo OOV ciego (RULE 7). No toca el fichero español.
+- **[⚠️ GUARDIA] `--opt8bit` + neurogénesis sin verificar** (mapeo de estados
+  cuantizados en `net2wider`): no usarlo en BIT-003; la receta certificada DL-002
+  sigue siendo `--amp auto --compile`.
+
 ### 🔬 Gating curricular + hot-vocab + extractor de vocabulario — y el hallazgo del spanglish (2026-08-12)
 
 - **[FEAT] `train_sovereign_school_k65p.py` — gating curricular semántico**:

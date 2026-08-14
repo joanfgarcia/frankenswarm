@@ -389,7 +389,11 @@ def run_school_training():
 
 	secondary_dialogues_half1 = secondary_dialogues_total[: len(secondary_dialogues_total) // 2]
 
-	stage_cache_dir = os.path.join(base_dir, "storage", "datasets", "stage_cache")
+	# La caché de etapa contiene token-IDs y secuencias de examen: DEBE estar
+	# keyeada por el hash del corpus (vocabulario + currículo + exámenes). Una
+	# caché plana compartida entre censos/currículos distintos re-serviría datos
+	# viejos en silencio (p. ej. el spanglish pre-BIT-003) o IDs de otro vocabulario.
+	stage_cache_dir = os.path.join(base_dir, "storage", "datasets", "stage_cache", corpus_hash)
 	os.makedirs(stage_cache_dir, exist_ok=True)
 
 	# Helper para compilar datos por etapa con 20% currículo (con caché persistente en disco)
@@ -584,7 +588,9 @@ def run_school_training():
 	print(f"Modelo instanciado. Total parámetros: {n_params:,}")
 
 	# Seleccionar estrategia de entrenamiento según flags
-	strategy = select_strategy(args.amp, args.opt8bit)
+	# select_strategy no entiende "auto": se le pasa el modo AMP ya resuelto
+	# (amp_enabled), o con --amp auto en GPU BF16 elegiría la estrategia fp32.
+	strategy = select_strategy("bf16" if amp_enabled else "off", args.opt8bit)
 	print(f"🎯 [STRATEGY] Estrategia seleccionada: {strategy.name}")
 
 	lr_scale = 128.0 / model.hidden_dim
@@ -761,6 +767,10 @@ def run_school_training():
 					)
 					model = eval_result.model
 					train_model = _maybe_compile(model)
+					# run_samantha_eval registra el suspenso en el fichero de estado;
+					# sin este sync, _save_adaptive_state() machacaría el contador
+					# con el valor viejo en memoria y el acta de suspensos se perdería.
+					exam_failures = eval_result.state.get("exam_failures", exam_failures)
 					if eval_result.passed:
 						print(f"🎓 [ADAPTIVE] Hito {milestone_name} APROBADO en {a_epoch_in_stage} épocas con {model.hidden_dim}d.")
 						advance = True

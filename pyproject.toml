@@ -8,7 +8,8 @@ dependencies = [
     "pyswip",
     "numpy",
     "torch",
-    "fastembed"
+    "fastembed",
+    "datasets>=5.0.1",
 ]
 
 [project.optional-dependencies]
