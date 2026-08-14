@@ -61,10 +61,15 @@ remediación) · **Semilla**: 770 en todos · **Instrumentos**: DL-004 congelado
    lenguaje puro, el estándar gana — sin ambigüedad.
 3. **El glifo conserva tres bazas**: (a) tendencia a mayor validez generativa
    en composición profunda (1.00 vs 0.76 en el examen final; 100% vs 95% OOD)
-   — *tendencia, no resultado, hasta réplicas*; (b) decode ~4.7× más barato con
-   vocabulario grande (O(65·d) vs O(V·d), medido 15 vs 70 s/época); (c) la
-   capacidad EXCLUSIVA de vocabulario en caliente (`register_new_word`) —
-   arquitectónicamente presente, **jamás examinada** → examen M5.
+   — *tendencia, no resultado, hasta réplicas* → **(a) NO REPLICÓ** en las
+   réplicas multi-semilla del 10-ago; (b) decode ~4.7× más barato con
+   vocabulario grande (O(65·d) vs O(V·d), medido 15 vs 70 s/época) →
+   **(b) RETIRADA, ver la corrección del encabezado y DL-007: medía la
+   implementación del baseline; con baseline justo el estándar es más rápido**;
+   (c) la capacidad EXCLUSIVA de vocabulario en caliente (`register_new_word`) —
+   arquitectónicamente presente, **jamás examinada** → examen M5. **De las tres
+   bazas solo (c) sigue en pie**; la ventaja real que sí sobrevive y no estaba
+   en esta lista es la **compresión** (3,5× menos parámetros).
 4. **Ninguna escuela actual discrimina lo suficiente.** Los dos brazos K-65P se
    gradúan con holgura; los dos ingleses claven 10/10 exact-match en Samantha
    (el auto-grader satura). Los instrumentos son honestos pero el temario es

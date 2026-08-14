@@ -108,9 +108,21 @@ más profundo en ≥0,05 sobre `n_steps=1` a igualdad de parámetros, o reduce
 ∇STE cae >1 orden de magnitud entre el paso 1 y el paso N (bucle inestable en
 ternario) → se documenta el negativo y no se vuelve.
 
-**Riesgo.** BPTT a través de pesos ternarios con STE puede colapsar el gradiente.
-Mitigación: la telemetría de arriba, y que `n_steps=1` sea idéntico al camino actual
-(fijar con un test de equivalencia, como se hizo en DL-007).
+**Riesgo — menor de lo que parece.** El bucle **no es código nuevo ni sin rodar**:
+es el sustrato del track del arena (mundo mínimo), que es el dominio de
+`paper_1_ternary_neurogenesis` — su §3.0 lo describe como *"el modelo piensa en
+espacio continuo n pasos, luego habla una vez"*, y el lazo think/verify (§3.3) lo
+usa en producción. Lo que falta no es la resonancia: es **cablearla a la escuela**,
+que es el único track que la tiene apagada. Queda el riesgo real de que el BPTT
+colapse el gradiente a través de pesos ternarios con el corpus de la escuela (otro
+régimen que el arena). Mitigación: la telemetría de arriba, y que `n_steps=1` sea
+idéntico al camino actual (fijar con un test de equivalencia, como se hizo en
+DL-007).
+
+**Nota de coherencia.** Que la arquitectura central del paper 1 esté desconectada en
+la escuela no es un error del paper — son dos tracks con dominios distintos — pero sí
+significa que **la escuela entrena un modelo que no es el que el paper describe**.
+Conviene decidirlo a la vista, no por omisión.
 
 ### E2 · Rejilla profundidad×anchura a parámetros constantes (el que decide)
 

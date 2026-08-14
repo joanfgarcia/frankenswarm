@@ -28,6 +28,12 @@
 - **[DEUDA] Sin CLI para la geometría**: `num_layers` está hardcodeado a 6 en el
   trainer (sin flag) y no hay flags de resonancia. E1/E2 los necesitan; es el único
   cableado que piden.
+- **[DOC] Balance de la tesis al día**: el informe del 5-ago marca ahora, en la propia
+  lectura 3, qué baza cayó y por qué — (a) no replicó (10-ago), (b) retirada (DL-007),
+  **solo (c) vocabulario en caliente sigue en pie**; la ventaja que sí sobrevive y no
+  estaba en la lista es la compresión. `lab/BRIEFING.md` recoge el estado de la tesis
+  y dos lecciones nuevas (arreglar el baseline antes de comparar; la resonancia está
+  apagada en la escuela).
 
 ### ⚖️ DL-007 — el baseline estaba lisiado: brazo estándar 12× más rápido y se retira la baza de coste del glifo (2026-08-14)
 
