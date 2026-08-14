@@ -149,6 +149,15 @@ def run_school_training():
 		help="Activar estados de optimizador 8-bit vía bitsandbytes (ahorra ~75% VRAM para m/v). Requiere bitsandbytes>=0.44.0. Default: off",
 	)
 	parser.add_argument(
+		"--wd_mode",
+		type=str,
+		default="uniform",
+		choices=["uniform", "no_embed"],
+		help="Trato de weight decay (DL-007). 'uniform' = histórico, decay sobre todo (el trato con el que corrieron las réplicas DL-006). "
+		"'no_embed' = exime las tablas de embedding: trato simétrico entre brazos, recomendado para comparativas nuevas — con decay uniforme "
+		"el embedding de una palabra rara del brazo estándar se encoge entre sus actualizaciones infrecuentes y el glifo no sufre eso",
+	)
+	parser.add_argument(
 		"--adaptive",
 		action="store_true",
 		help="Protocolo adaptativo DL-006 (brazo control v1): cada etapa entrena hasta plateau, "
@@ -590,8 +599,8 @@ def run_school_training():
 	# Seleccionar estrategia de entrenamiento según flags
 	# select_strategy no entiende "auto": se le pasa el modo AMP ya resuelto
 	# (amp_enabled), o con --amp auto en GPU BF16 elegiría la estrategia fp32.
-	strategy = select_strategy("bf16" if amp_enabled else "off", args.opt8bit)
-	print(f"🎯 [STRATEGY] Estrategia seleccionada: {strategy.name}")
+	strategy = select_strategy("bf16" if amp_enabled else "off", args.opt8bit, wd_mode=args.wd_mode)
+	print(f"🎯 [STRATEGY] Estrategia seleccionada: {strategy.name} · weight decay: {args.wd_mode}")
 
 	lr_scale = 128.0 / model.hidden_dim
 	optimizer = strategy.create_optimizer(model, lr_scale)

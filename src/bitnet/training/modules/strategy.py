@@ -3,6 +3,42 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Protocol, runtime_checkable
 
+WEIGHT_DECAY = 0.05
+
+# Parámetros que en `wd_mode="no_embed"` quedan exentos de weight decay: las
+# tablas de embedding (entrada/salida), las posicionales y los primos del glifo.
+#
+# Por qué existe el modo: con decay uniforme, cada step aplica decay a TODAS las
+# columnas de `inbound_proj` (el gradiente es denso aunque solo unas pocas filas
+# reciban señal), así que el embedding de una palabra rara se encoge hacia cero
+# entre sus actualizaciones infrecuentes. El brazo glifo no sufre eso — sus 65
+# primos se actualizan en cada batch. Con decay uniforme los dos brazos NO
+# reciben el mismo trato de regularización, y la penalización cae justo sobre lo
+# que miden OOD y gen_valid: la generalización a lo poco visto.
+NO_DECAY_SUFFIXES = ("inbound_proj.weight", "outbound_proj.weight", "pos_embedding", "prime_embeddings")
+
+
+def build_param_groups(model, weight_decay: float = WEIGHT_DECAY, wd_mode: str = "uniform"):
+	"""Agrupa parámetros para AdamW según el trato de weight decay.
+
+	`wd_mode="uniform"` (histórico) devuelve un grupo único: es el trato con el
+	que corrieron las réplicas DL-006 y se mantiene por defecto para no cambiar
+	un instrumento a mitad de comparativa (D3). `"no_embed"` exime las tablas de
+	embedding, que es el trato simétrico entre brazos.
+	"""
+	if wd_mode == "uniform":
+		return [{"params": list(model.parameters()), "weight_decay": weight_decay}]
+
+	decay, no_decay = [], []
+	for name, param in model.named_parameters():
+		if not param.requires_grad:
+			continue
+		(no_decay if name.endswith(NO_DECAY_SUFFIXES) else decay).append(param)
+	return [
+		{"params": decay, "weight_decay": weight_decay},
+		{"params": no_decay, "weight_decay": 0.0},
+	]
+
 
 @runtime_checkable
 class TrainingStrategy(Protocol):
@@ -37,13 +73,15 @@ class TrainingStrategy(Protocol):
 class FP32Strategy:
 	"""Estrategia FP32 puro (sin mixed precision)."""
 
+	wd_mode: str = "uniform"
+
 	@property
 	def name(self) -> str:
 		return "fp32"
 
 	def create_optimizer(self, model, lr_scale: float):
 		import torch
-		return torch.optim.AdamW(model.parameters(), lr=4e-4 * lr_scale, weight_decay=0.05)
+		return torch.optim.AdamW(build_param_groups(model, wd_mode=self.wd_mode), lr=4e-4 * lr_scale, weight_decay=WEIGHT_DECAY)
 
 	def training_step(self, model, batch_x, vocab_size: int, tau: float, device):
 		import torch
@@ -74,13 +112,15 @@ class FP32Strategy:
 class BF16Strategy:
 	"""Estrategia BF16 autocast (pesos maestros FP32, activaciones BF16)."""
 
+	wd_mode: str = "uniform"
+
 	@property
 	def name(self) -> str:
 		return "bf16"
 
 	def create_optimizer(self, model, lr_scale: float):
 		import torch
-		return torch.optim.AdamW(model.parameters(), lr=4e-4 * lr_scale, weight_decay=0.05)
+		return torch.optim.AdamW(build_param_groups(model, wd_mode=self.wd_mode), lr=4e-4 * lr_scale, weight_decay=WEIGHT_DECAY)
 
 	def training_step(self, model, batch_x, vocab_size: int, tau: float, device):
 		import torch
@@ -117,18 +157,21 @@ class Opt8BitStrategy:
 	Ahorra ~75% VRAM para estados AdamW (m, v).
 	"""
 
+	wd_mode: str = "uniform"
+
 	@property
 	def name(self) -> str:
 		return "opt8bit"
 
 	def create_optimizer(self, model, lr_scale: float):
 		import torch
+		groups = build_param_groups(model, wd_mode=self.wd_mode)
 		try:
 			import bitsandbytes as bnb
-			return bnb.optim.AdamW8bit(model.parameters(), lr=4e-4 * lr_scale, weight_decay=0.05, min_8bit_size=4096)
+			return bnb.optim.AdamW8bit(groups, lr=4e-4 * lr_scale, weight_decay=WEIGHT_DECAY, min_8bit_size=4096)
 		except ImportError:
 			print("⚠️ [OPT8BIT] bitsandbytes no instalado. Fallback a AdamW FP32.")
-			return torch.optim.AdamW(model.parameters(), lr=4e-4 * lr_scale, weight_decay=0.05)
+			return torch.optim.AdamW(groups, lr=4e-4 * lr_scale, weight_decay=WEIGHT_DECAY)
 
 	def training_step(self, model, batch_x, vocab_size: int, tau: float, device):
 		import torch
@@ -159,18 +202,21 @@ class Opt8BitStrategy:
 class BF16Opt8BitStrategy:
 	"""Estrategia combinada: BF16 autocast + 8-bit optimizer states."""
 
+	wd_mode: str = "uniform"
+
 	@property
 	def name(self) -> str:
 		return "bf16+opt8bit"
 
 	def create_optimizer(self, model, lr_scale: float):
 		import torch
+		groups = build_param_groups(model, wd_mode=self.wd_mode)
 		try:
 			import bitsandbytes as bnb
-			return bnb.optim.AdamW8bit(model.parameters(), lr=4e-4 * lr_scale, weight_decay=0.05, min_8bit_size=4096)
+			return bnb.optim.AdamW8bit(groups, lr=4e-4 * lr_scale, weight_decay=WEIGHT_DECAY, min_8bit_size=4096)
 		except ImportError:
 			print("⚠️ [OPT8BIT] bitsandbytes no instalado. Fallback a AdamW FP32.")
-			return torch.optim.AdamW(model.parameters(), lr=4e-4 * lr_scale, weight_decay=0.05)
+			return torch.optim.AdamW(groups, lr=4e-4 * lr_scale, weight_decay=WEIGHT_DECAY)
 
 	def training_step(self, model, batch_x, vocab_size: int, tau: float, device):
 		import torch
@@ -201,13 +247,16 @@ class BF16Opt8BitStrategy:
 		return nullcontext()
 
 
-def select_strategy(amp: str, opt8bit: str) -> TrainingStrategy:
-	"""Factory para seleccionar la estrategia de entrenamiento según flags."""
+def select_strategy(amp: str, opt8bit: str, wd_mode: str = "uniform") -> TrainingStrategy:
+	"""Factory para seleccionar la estrategia de entrenamiento según flags.
+
+	`amp` debe llegar ya resuelto ("bf16"/"off"): "auto" no se interpreta aquí.
+	"""
 	if amp == "bf16" and opt8bit == "on":
-		return BF16Opt8BitStrategy()
+		return BF16Opt8BitStrategy(wd_mode=wd_mode)
 	elif amp == "bf16":
-		return BF16Strategy()
+		return BF16Strategy(wd_mode=wd_mode)
 	elif opt8bit == "on":
-		return Opt8BitStrategy()
+		return Opt8BitStrategy(wd_mode=wd_mode)
 	else:
-		return FP32Strategy()
+		return FP32Strategy(wd_mode=wd_mode)

@@ -80,14 +80,15 @@ del 5-ago corrieron con el código pre-refactor. Esta auditoría es el preflight
   con AdamW8bit (formato cuantizado, no `exp_avg` FP32) está sin verificar. NO usar
   `--opt8bit` en el rebuild hasta que tenga un test A/B propio; la receta DL-002
   certificada es `--amp auto --compile` sin 8-bit.
-- **Checkpoints del brazo estándar: 607 MB CADA UNO**. La tabla one-hot congelada
-  (`np.eye(12143)² ≈ 590 MB`) se serializa en cada checkpoint (en K-65P eran 99
-  tokens y no dolía). Con current/best/final/milestone/etapa, un run completo del
-  brazo estándar deja decenas de GB — y el Drive ya iba justo en julio. Opciones
-  (decisión de operador): excluir el buffer congelado del `state_dict`
-  (reconstruible por `np.eye`, cambia el formato de checkpoint) o usar
-  `nn.Embedding` entrenable como brazo estándar de verdad. En VRAM sí cabe
-  (~3,6 GB medidos a 128d con BF16 en el smoke).
+- ~~**Checkpoints del brazo estándar: 607 MB CADA UNO**~~ → **RESUELTO en DL-007**
+  (2026-08-14): la tabla identidad dejó de persistirse y los matmuls contra ella se
+  cortocircuitaron. Checkpoints 579 → 16,6 MB y el step 12,1× más rápido. De paso
+  destapó que la baza de coste del glifo del informe del 5-ago medía la
+  implementación del baseline: **retirada**. Ver DL-007.
+- **`--wd_mode no_embed` sin medir** (DL-007): es el trato de weight decay simétrico
+  entre brazos y el recomendado para esta comparativa, pero cambiarlo hace que las
+  épocas-hasta-hito no sean directamente comparables con las réplicas DL-006.
+  Decidir un A/B corto antes del run largo.
 
 ## Smoke tests del trainer refactorizado ✅ (14-ago, sandbox, seed 770, mock exam)
 

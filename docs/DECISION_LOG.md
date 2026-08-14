@@ -7,6 +7,92 @@ se añade una entrada nueva que la referencia.
 
 ---
 
+## DL-007 · 2026-08-14 — El brazo estándar estaba lisiado por implementación: se retira la baza de coste del glifo y nace el trato simétrico de weight decay
+
+**Problema.** El brazo estándar (`--embedding standard`, DL-006) se construye con
+`vocab_embeddings=np.eye(V)`: tabla identidad congelada cuyas columnas de
+`inbound_proj` SON el embedding entrenable. La equivalencia matemática es correcta,
+pero la implementación pagaba dos peajes ajenos a la arquitectura:
+
+1. **Un matmul nulo en la salida.** `logits = outbound_proj(h) @ I.T` multiplicaba
+   por la identidad: V×V multiplicaciones por posición de token para no cambiar
+   nada. En la entrada, materializaba un one-hot de V dimensiones para hacer con un
+   matmul denso lo que un lookup de una fila resuelve.
+2. **La tabla identidad se serializaba en cada checkpoint**: 590 MB a 12.143 tokens
+   (`current` + `best` + `final` + 7 hitos + etapa ⇒ decenas de GB por run).
+
+Consecuencia sobre la tesis: la baza (b) del informe del 5-ago —"el glifo decodifica
+~4.7× más barato con vocabulario grande (medido 15 vs 70 s/época)"— **medía la
+implementación del baseline, no la arquitectura**. Es el modo de fallo de DL-004
+otra vez: medir el instrumento y creer que se mide al alumno.
+
+Además, `weight_decay=0.05` se aplicaba uniformemente. El gradiente de
+`inbound_proj` es denso aunque solo unas pocas columnas reciban señal, así que cada
+step encogía el embedding de las palabras raras del brazo estándar entre sus
+actualizaciones infrecuentes; el glifo no sufre eso (sus 65 primos se actualizan en
+cada batch). Los dos brazos NO recibían el mismo trato de regularización, y la
+penalización caía justo sobre lo que miden OOD y gen_valid.
+
+**Decisión.**
+1. **Fast-path one-hot en `BitNet4LayerModel`**: si la tabla es la identidad
+   (`_is_identity_matrix`), la entrada se resuelve con `F.embedding` sobre
+   `inbound_proj.weight.t()` y la salida es `outbound_proj(h)` a secas. **Bitwise
+   idéntico** al camino denso — fijado con `torch.equal` en
+   `tests/test_embedding_arms.py`, no con tolerancias.
+2. La tabla identidad deja de persistirse (`persistent=False`); es reconstruible
+   desde `vocab_size`. `load_state_dict` descarta la clave sobrante, así que **los
+   checkpoints antiguos del brazo estándar siguen cargando exactos** y los ~60
+   sitios de carga del repo no se tocan.
+3. **`--wd_mode {uniform,no_embed}`** (`build_param_groups`). Default `uniform`: es
+   el trato con el que corrieron las réplicas DL-006 y no se cambia un instrumento
+   bajo los pies de una comparativa ya publicada (D3). `no_embed` exime las tablas
+   de embedding (entrada, salida, posicionales, primos) y es el trato **simétrico**,
+   recomendado para BIT-003 y cualquier comparativa nueva.
+4. **`scripts/bench_embedding_arms.py`** queda como el instrumento que produce la
+   cifra de coste publicable.
+
+**Evidencia (medida, RTX 5070, dim 128, batch 64, seq 128, BF16, V=12.143).**
+
+| | glyph | standard antes | standard después |
+|---|---|---|---|
+| ms/step | 25,49 | **291,94** | **24,16** |
+| pico VRAM | 1.538 MB | 2.591 MB | 2.121 MB |
+| checkpoint | 7,8 MB | **579,1 MB** | **16,6 MB** |
+| params | 1.247.880 | 4.348.168 | 4.348.168 |
+
+El brazo estándar acelera **12,1×** y su checkpoint encoge **35×**. Con el baseline
+justo, el estándar es un **10% más rápido** que el glifo por step, no 4,7× más lento.
+Y el escalado va en la misma dirección: ratio standard/glyph 0,97 (V=1.000) → 0,99
+(V=3.000) → 0,92 (V=6.000) → 0,90 (V=12.143), o sea que la ventaja del estándar
+**crece** con el vocabulario en lugar de cerrarse. Razón: el `decode_logits` del
+glifo tiene que **componer** las V palabras desde los primos (V×65×d) y luego
+puntuarlas (V×d) — el O(65·d) describe el tamaño de la TABLA, no el coste del logit.
+
+**Qué se retracta y qué sobrevive.**
+- **Retirada** la baza (b) del informe del 5-ago (`docs/sessions/20260805/
+  INFORME_DL006_MATRIZ.md`, lectura 3): el glifo NO decodifica más barato. Ni a
+  12k tokens ni en tendencia.
+- **Intacta** la lectura 2 (el embedding estándar ajusta mejor la distribución en
+  las 8 mediciones): el fast-path es bitwise equivalente, así que **ningún
+  resultado previo del brazo estándar queda invalidado** — a diferencia de DL-004,
+  aquí no se cae nada. Las réplicas multi-semilla siguen en pie.
+- **Reformulada** la ventaja del glifo, que sigue siendo real: es una victoria de
+  **compresión**, no de velocidad — 3,5× menos parámetros (1,25M vs 4,35M) y
+  checkpoint 2,1× menor con vocabulario de 12k, a rendimiento comparable. Junto a
+  la capacidad exclusiva de vocabulario en caliente (M5), esa es la tesis
+  defendible: el glifo no es un mejor modelo de lenguaje, es un modelo **más
+  pequeño y extensible**.
+
+**Pendiente que esto abre.** El `wd_mode="no_embed"` no está medido: si se adopta en
+BIT-003, la comparativa nueva no es directamente comparable con las réplicas
+DL-006 en épocas-hasta-hito. Decidir A/B corto antes del run largo.
+
+**Referencias.** DL-004 (medir el instrumento) · DL-006 (brazo v0) ·
+`tests/test_embedding_arms.py` · `tests/test_weight_decay_modes.py` ·
+`storage/benchmarks/embedding_arms_bench.json`.
+
+---
+
 ## DL-006 · 2026-08-03 — Protocolo adaptativo: la edad se mide en hitos superados, no en épocas; y nace el brazo Bit v0 (embedding estándar)
 
 **Problema.** El calendario de v1 (1408 épocas fijas) aplicado a v2 sobreentrena

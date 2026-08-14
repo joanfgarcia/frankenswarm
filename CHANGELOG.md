@@ -2,6 +2,38 @@
 
 ## [Unreleased]
 
+### ⚖️ DL-007 — el baseline estaba lisiado: brazo estándar 12× más rápido y se retira la baza de coste del glifo (2026-08-14)
+
+- **[FIX] Fast-path one-hot en `BitNet4LayerModel`**: el brazo estándar multiplicaba
+  por una identidad V×V en la salida (matmul nulo) y materializaba one-hots densos
+  en la entrada. Cortocircuitado, **bitwise idéntico** (`torch.equal`, no
+  tolerancias): **291,94 → 24,16 ms/step (12,1×)** a V=12.143, dim 128, BF16.
+- **[FIX] La tabla identidad deja de persistirse**: checkpoints del brazo estándar
+  de **579 → 16,6 MB (35×)**. `load_state_dict` descarta la clave sobrante, así que
+  los checkpoints antiguos siguen cargando exactos y los ~60 sitios de carga del
+  repo no se tocan.
+- **[🔴 RETRACTACIÓN] "El glifo decodifica 4.7× más barato" queda retirada** (baza
+  (b) del informe del 5-ago): medía la implementación del baseline. Con el baseline
+  justo el estándar es 10% MÁS rápido, y el escalado va en su favor (ratio
+  standard/glyph 0,97 → 0,90 al pasar V de 1.000 a 12.143). El `O(65·d)` describe el
+  tamaño de la tabla, no el coste del logit: el glifo compone las V palabras desde
+  los primos en cada forward.
+- **[REFORMULACIÓN] La ventaja del glifo sigue siendo real, pero es compresión, no
+  velocidad**: 3,5× menos parámetros (1,25M vs 4,35M) y checkpoint 2,1× menor a
+  rendimiento comparable. Con M5 (vocabulario en caliente), la tesis defendible es
+  "más pequeño y extensible", no "mejor modelo de lenguaje".
+- **[FEAT] `--wd_mode {uniform,no_embed}`**: con decay uniforme el embedding de una
+  palabra rara del brazo estándar se encoge entre sus actualizaciones infrecuentes y
+  el glifo no sufre eso — los brazos no recibían el mismo trato de regularización.
+  Default `uniform` (histórico, D3); `no_embed` es el simétrico, recomendado para
+  BIT-003 y sin medir todavía.
+- **[NEW] `scripts/bench_embedding_arms.py`**: instrumento que produce la cifra de
+  coste publicable, con resultados acumulativos por etiqueta.
+- **[FIX] `orchestrator.py` resolvía `--amp auto` como fp32** (mismo fallo que ya se
+  curó en el trainer).
+- Nada de aprendizaje queda invalidado: la equivalencia es exacta, así que las
+  réplicas multi-semilla DL-006 y la lectura 2 siguen en pie.
+
 ### 🛫 Preflight BIT-003 — auditoría del refactor y desminado de cachés (2026-08-14)
 
 - **[AUDIT] `docs/sessions/20260814/PREFLIGHT_BIT003.md`**: auditoría de coherencia

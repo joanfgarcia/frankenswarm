@@ -4,6 +4,17 @@
 plateau → examen sobre mejor checkpoint → avance; suspenso → neurogénesis como
 remediación) · **Semilla**: 770 en todos · **Instrumentos**: DL-004 congelados.
 
+> 🔴 **CORRECCIÓN POSTERIOR (2026-08-14, DL-007).** La baza (b) de la lectura 3 —el
+> glifo decodifica "~4.7× más barato", medido 15 vs 70 s/época— **queda retirada**.
+> Ese 70 s/época se midió contra un brazo estándar que multiplicaba por una matriz
+> identidad V×V (trabajo aritmético nulo) y materializaba one-hots densos: medía la
+> implementación del baseline, no la arquitectura. Con el baseline arreglado, el
+> estándar es un 10% MÁS RÁPIDO que el glifo por step (24,16 vs 26,74 ms), y su
+> ventaja crece con el vocabulario. Las cifras de coste de este informe (la fila
+> "Coste por época" y el 15 vs 70 s) **no deben citarse**. Lo demás del informe se
+> sostiene: el arreglo es bitwise equivalente, así que ningún resultado de
+> aprendizaje queda invalidado. Detalle y tabla nueva en DL-007.
+
 > ⚠️ **Una semilla por brazo.** La varianza observada entre runs de una misma
 > configuración (sandbox vs canónico del 3-ago) fue comparable a varios de los
 > efectos aquí tabulados. Este informe fija la foto y las tendencias; las
