@@ -2,6 +2,33 @@
 
 ## [Unreleased]
 
+### 📐 RFC-GROWTH-V6 — la premisa de Net2DeeperNet caducó; la rejilla D×W la sustituye (2026-08-14)
+
+- **[NEW] `docs/RFC_GROWTH_V6_DEPTH_WIDTH.md`** (🟡 propuesta, pendiente de
+  ratificación): plan de crecimiento posterior a DL-006. Tres experimentos con
+  criterios pre-registrados — E1 encender la resonancia (looped transformer ya
+  implementado y **desconectado** en la escuela: profundidad efectiva 12 por 384
+  parámetros, vs ~394.000 de dos capas nuevas), E2 rejilla profundidad×anchura a
+  parámetros constantes en K-65P (5 puntos, W/D de 2,7 a 112, ~3 GPU-h), E3 N2DN solo
+  si pasa su gate. **E1+E2 ≈ 12 GPU-h, menos que las ~18 del único experimento N2DN
+  que sustituyen.**
+- **[⚠️ CADUCIDAD] `bitnet_next_architecture_plan.md` §5 marcado como premisa
+  caducada**: el diagnóstico "W/D=170 fuera de toda configuración BitNet" describía el
+  v1 de 1024d que DL-006 declaró artefacto del calendario. A las anchuras reales
+  (128-256d) la ratio es 21-43 y `D_crit ≈ W^0,44` da 8,5-11,5 capas, así que 6→8
+  aterriza en el techo en lugar de lejos de él: la fórmula que justificaba el plan hoy
+  lo desaconseja. Ficha de "✅ aprobada" a "⚠️ gateada". **La doctrina de la sección
+  (solo sobre copia, control G4 congelado, spec de init, mina ternaria) se conserva
+  íntegra.**
+- **[HALLAZGO] `forward_resonance` está implementado y sin usar en la escuela**: bucle
+  latente cerrado con BPTT (`forward_resonance_training`) y reloj posicional por paso.
+  Es la arquitectura de Saunshi (NeurIPS 2025) que la propia nota de literatura cita
+  — 12 capas en bucle 2× superan a 24 capas con la mitad de parámetros — y el trainer
+  construye con `max_resonance_steps=0` y llama al `forward` plano.
+- **[DEUDA] Sin CLI para la geometría**: `num_layers` está hardcodeado a 6 en el
+  trainer (sin flag) y no hay flags de resonancia. E1/E2 los necesitan; es el único
+  cableado que piden.
+
 ### ⚖️ DL-007 — el baseline estaba lisiado: brazo estándar 12× más rápido y se retira la baza de coste del glifo (2026-08-14)
 
 - **[FIX] Fast-path one-hot en `BitNet4LayerModel`**: el brazo estándar multiplicaba
