@@ -6,11 +6,39 @@ from fastembed import TextEmbedding
 
 from src.bitnet.vocab.glyph_vocabulary import SEMANTIC_PRIMES, VOCABULARY
 
-# Mapeo de claves internas a palabras naturales en español para fastembed
+# Mapeo de claves internas a palabras naturales para fastembed.
+# BIT-003: el vocabulario es INGLÉS (corpus EN de cero) → las 28 palabras de
+# referencia se proyectan con sus equivalentes EN para que la regresión Ridge
+# aprenda en el espacio semántico del corpus real (RULE 7: sin OOV ciego).
 VOCAB_MAP = {
-	"yo_palabra": "yo",
-	"mover_accion": "mover",
-	"ver_accion": "ver",
+	"agua": "water",
+	"comida": "food",
+	"fuego": "fire",
+	"sol": "sun",
+	"noche": "night",
+	"cueva": "cave",
+	"yo_palabra": "i",
+	"peligro": "danger",
+	"comer": "eat",
+	"beber": "drink",
+	"mover_accion": "move",
+	"ver_accion": "see",
+	"dormir": "sleep",
+	"dar": "give",
+	"enseñar": "teach",
+	"aprender": "learn",
+	"bosque": "forest",
+	"río": "river",
+	"piedra": "stone",
+	"árbol": "tree",
+	"tierra": "earth",
+	"lluvia": "rain",
+	"depredador": "predator",
+	"tormenta": "storm",
+	"herida": "wound",
+	"seguro": "safe",
+	"saciado": "full",
+	"grupo": "group",
 }
 
 # Lista de palabras base en español para completar hasta 1,000 términos
