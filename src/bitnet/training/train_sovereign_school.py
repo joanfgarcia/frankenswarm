@@ -1,5 +1,6 @@
 import json
 import os
+import random
 import re
 
 import numpy as np
@@ -9,7 +10,7 @@ import torch.nn.functional as F  # noqa: N812
 from src.bitnet.model.modeling_bitnet import BitNet4LayerModel
 from src.bitnet.training.modules.corpus import compute_corpus_hash, load_tokenized_cache, save_tokenized_cache
 from src.bitnet.training.modules.exam_compiler import compile_exam_sequences_for_age
-from src.bitnet.training.modules.partitioner import compile_stage_dataset, partition_corpus_by_mlu
+from src.bitnet.training.modules.partitioner import bucketize_batches, compile_stage_dataset, partition_corpus_by_mlu
 from src.bitnet.training.modules.stage_config import get_next_dim, get_stage_config
 from src.bitnet.training.modules.state_manager import run_samantha_eval, trigger_neurogenesis
 from src.bitnet.training.modules.strategy import select_strategy
@@ -177,6 +178,17 @@ def run_school_training():
 		"(brazo control 'inglés + estándar'). El evaluador de Samantha detecta el modo por el checkpoint.",
 	)
 	parser.add_argument(
+		"--full_tinystories",
+		action="store_true",
+		help="Usar el dataset TinyStories completo (2.1M historias, ~500M tokens) en vez del subconjunto de 100k.",
+	)
+	parser.add_argument(
+		"--samples_per_epoch",
+		type=int,
+		default=250000,
+		help="Nº de secuencias del corpus general muestreadas por época (bucketing por longitud). 250k ≈ 2.3M tokens/época; con ~160 épocas cubre TinyStories completo.",
+	)
+	parser.add_argument(
 		"--require_gpu",
 		action="store_true",
 		help="Abortar (rc=3) si CUDA no está disponible, en lugar del fallout silencioso a CPU. "
@@ -273,7 +285,7 @@ def run_school_training():
 
 	# 3. Caché de corpus tokenizado
 	tokenized_cache_path = os.path.join(base_dir, "storage", "datasets", "tokenized_corpus.json")
-	n_stories = 100000
+	n_stories = len(ts_dataset) if args.full_tinystories else min(100000, len(ts_dataset))
 	corpus_hash = compute_corpus_hash(base_dir, n_stories)
 	cached = None if args.force_tokenize else load_tokenized_cache(tokenized_cache_path, corpus_hash)
 
@@ -284,8 +296,9 @@ def run_school_training():
 		tokenized_preschool_curriculum = cached["preschool_curriculum"]
 		tokenized_primary = cached["primary"]
 		tokenized_secondary = cached["secondary"]
+		tokenized_childes = cached.get("childes", [])
 		print(
-			f"  ✓ {len(tiny_stories_tokenized):,} secuencias TinyStories + {len(tokenized_dialogues):,} diálogos + {len(tokenized_preschool_curriculum):,} preescolar + {len(tokenized_primary):,} primaria + {len(tokenized_secondary):,} secundaria"
+			f"  ✓ {len(tiny_stories_tokenized):,} secuencias TinyStories + {len(tokenized_dialogues):,} diálogos + {len(tokenized_preschool_curriculum):,} preescolar + {len(tokenized_primary):,} primaria + {len(tokenized_secondary):,} secundaria + {len(tokenized_childes):,} CHILDES-en"
 		)
 	else:
 		tiny_stories_cache = os.path.join(base_dir, "storage", "datasets", "tiny_stories")
@@ -302,7 +315,7 @@ def run_school_training():
 			print("📖 Descargando TinyStories desde HF Hub (primera vez)...")
 			ts_dataset = load_dataset("roneneldan/TinyStories", split="train", cache_dir=tiny_stories_cache)
 
-		n_stories = min(100000, len(ts_dataset))
+		n_stories = len(ts_dataset) if args.full_tinystories else min(100000, len(ts_dataset))
 		print(f"  ✓ {n_stories:,} historias disponibles en TinyStories.")
 
 		if args.force_tokenize:
@@ -345,6 +358,14 @@ def run_school_training():
 		tokenized_secondary = [tokenize(s, word_to_idx) for s in secondary_sentences]
 		tokenized_secondary = [seq for seq in tokenized_secondary if len(seq) >= 2]
 
+		# Tokenizar CHILDES-en (corpus de lenguaje infantil real, 1.45M oraciones)
+		childes_data = json.load(open(os.path.join(base_dir, "configs", "childes_pre_school_en.json")))
+		print(f"📚 [DATOS] CHILDES-en: {len(childes_data):,} oraciones.")
+		tokenized_childes = [tokenize(s, word_to_idx) for s in childes_data]
+		tokenized_childes = [seq for seq in tokenized_childes if 2 <= len(seq) <= 64]
+		del childes_data
+		print(f"  ✓ {len(tokenized_childes):,} secuencias tokenizadas de CHILDES-en.")
+
 		# Guardar caché
 		save_tokenized_cache(
 			tokenized_cache_path,
@@ -355,6 +376,7 @@ def run_school_training():
 				"preschool_curriculum": tokenized_preschool_curriculum,
 				"primary": tokenized_primary,
 				"secondary": tokenized_secondary,
+				"childes": tokenized_childes,
 			},
 		)
 		print(f"💾 Caché tokenizado guardado en {tokenized_cache_path}")
@@ -370,8 +392,8 @@ def run_school_training():
 	num_dialogues = int(len(tokenized_dialogues) * 0.1)
 	preschool_dialogues = tokenized_dialogues[:num_dialogues]
 
-	# Particionar corpus general
-	tokenized_general = tokenized_preschool + preschool_dialogues
+	# Particionar corpus general (TinyStories + diálogos + CHILDES-en real)
+	tokenized_general = tokenized_preschool + preschool_dialogues + tokenized_childes
 	gen_0_1, gen_1_2, gen_2_3, gen_3_4 = partition_corpus_by_mlu(tokenized_general)
 
 	# Particionar currículo estructurado preescolar
@@ -648,6 +670,7 @@ def run_school_training():
 
 		loaded_stage = -1
 		x_train_gen = x_train_curr = x_val = None
+		n_val_seqs = 0
 		epochs_this_run = 0
 
 		def _save_adaptive_state():
@@ -679,14 +702,13 @@ def run_school_training():
 			if loaded_stage != a_stage_idx:
 				print(f"\n🎒 [ETAPA ADAPTATIVA] Compilando dataset de {cfg['name']}...")
 				general_data, curriculum_data_st = compile_data_for_stage(a_stage_idx)
-				train_gen, val_gen = compile_stage_dataset(general_data, seq_len=128)
-				train_curr, val_curr = compile_stage_dataset(curriculum_data_st, seq_len=128)
-				x_train_gen = torch.tensor(train_gen, dtype=torch.long)
-				x_train_curr = torch.tensor(train_curr, dtype=torch.long)
+				train_gen, val_gen = compile_stage_dataset(general_data, seq_len=None)
+				train_curr, val_curr = compile_stage_dataset(curriculum_data_st, seq_len=None)
 				val_seqs = val_gen + val_curr
-				x_val = torch.tensor(val_seqs, dtype=torch.long) if len(val_seqs) > 0 else None
+				n_val_seqs = len(val_seqs)
+				x_val = bucketize_batches(val_seqs, batch_size=batch_size) if len(val_seqs) > 0 else []
 				loaded_stage = a_stage_idx
-				print(f"  ✓ Gen: {len(x_train_gen)} | Curr: {len(x_train_curr)} | Val: {len(x_val) if x_val is not None else 0}")
+				print(f"  ✓ Gen: {len(train_gen):,} | Curr: {len(train_curr):,} | Val batches: {len(x_val)}")
 
 			a_global_epoch += 1
 			a_epoch_in_stage += 1
@@ -703,16 +725,17 @@ def run_school_training():
 
 			model.train()
 			epoch_loss = 0.0
-			max_gen_seqs_per_epoch = 15000
-			if x_train_gen.size(0) > max_gen_seqs_per_epoch:
-				x_gen_sub = x_train_gen[torch.randperm(x_train_gen.size(0))[:max_gen_seqs_per_epoch]]
+			max_gen_seqs_per_epoch = args.samples_per_epoch
+			if len(train_gen) > max_gen_seqs_per_epoch:
+				x_gen_sub = train_gen.copy()
+				random.shuffle(x_gen_sub)
+				x_gen_sub = x_gen_sub[:max_gen_seqs_per_epoch]
 			else:
-				x_gen_sub = x_train_gen
-			x_epoch = torch.cat([x_gen_sub, x_train_curr], dim=0)
-			permutation = torch.randperm(x_epoch.size(0))
+				x_gen_sub = train_gen
+			x_epoch = x_gen_sub + train_curr
+			batches = bucketize_batches(x_epoch, batch_size=batch_size, seed=epochs_this_run)
 
-			for i in range(0, x_epoch.size(0), batch_size):
-				batch_x = x_epoch[permutation[i : i + batch_size]]
+			for batch_x in batches:
 				optimizer.zero_grad()
 				inputs = batch_x[:, :-1].to(device)
 				targets = batch_x[:, 1:].to(device)
@@ -726,14 +749,14 @@ def run_school_training():
 				torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
 				optimizer.step()
 				epoch_loss += loss.item() * batch_x.size(0)
-			epoch_loss /= x_epoch.size(0)
+			epoch_loss /= (max_gen_seqs_per_epoch + len(train_curr))
 
 			val_loss = 0.0
-			if x_val is not None and len(x_val) > 0:
+			if len(x_val) > 0:
 				model.eval()
 				with torch.no_grad():
-					for vi in range(0, x_val.size(0), batch_size):
-						batch_xv = x_val[vi : vi + batch_size].to(device)
+					for batch_xv in x_val:
+						batch_xv = batch_xv.to(device)
 						inputs_v, targets_v = batch_xv[:, :-1], batch_xv[:, 1:]
 						with autocast_ctx():
 							logits_v = train_model(inputs_v)
@@ -741,7 +764,7 @@ def run_school_training():
 							mv = (torch.cumsum((targets_v == 0).to(torch.int32), dim=-1) <= 1).to(logits_v.dtype)
 							loss_v = (lve * mv).sum() / mv.sum()
 						val_loss += loss_v.item() * batch_xv.size(0)
-					val_loss /= x_val.size(0)
+					val_loss /= n_val_seqs
 
 			print(f"  [Ép. {a_global_epoch} | {cfg['name']} ép.{a_epoch_in_stage}] Loss: {epoch_loss:.4f} | Val: {val_loss:.4f} | lr: {current_lr:.2e} | dim: {model.hidden_dim}")
 
@@ -853,17 +876,15 @@ def run_school_training():
 			print(f"\n🎒 [CAMBIO DE ETAPA] Época {epoch}: Compilando dataset para la etapa {stage_name}...")
 			general_data, curriculum_data = compile_data_for_stage(stage_idx)
 
-			train_gen, val_gen = compile_stage_dataset(general_data, seq_len=128)
-			train_curr, val_curr = compile_stage_dataset(curriculum_data, seq_len=128)
+			train_gen, val_gen = compile_stage_dataset(general_data, seq_len=None)
+			train_curr, val_curr = compile_stage_dataset(curriculum_data, seq_len=None)
 
-			x_train_gen = torch.tensor(train_gen, dtype=torch.long)
-			x_train_curr = torch.tensor(train_curr, dtype=torch.long)
-
-			# Combine validation directly
+			# Validate: bucketing por longitud (padding dinámico intra-batch)
 			val_seqs = val_gen + val_curr
-			x_val = torch.tensor(val_seqs, dtype=torch.long) if len(val_seqs) > 0 else None
+			n_val_seqs = len(val_seqs)
+			x_val = bucketize_batches(val_seqs, batch_size=batch_size) if len(val_seqs) > 0 else []
 			active_stage_idx = stage_idx
-			print(f"  ✓ Gen Train: {len(x_train_gen)} | Curr Train: {len(x_train_curr)} | Val: {len(x_val) if x_val is not None else 0}")
+			print(f"  ✓ Gen Train: {len(train_gen):,} | Curr Train: {len(train_curr):,} | Val: {n_val_seqs:,}")
 
 		# Warmup de learning rate lineal (primeras 10 épocas) o decaimiento coseno por etapa
 		lr_scale = 128.0 / model.hidden_dim
@@ -898,20 +919,18 @@ def run_school_training():
 			torch.cuda.reset_peak_memory_stats()
 
 		# Subsamplear solo general y concatenar con currículo/exámenes completos
-		max_gen_seqs_per_epoch = 15000
-		if x_train_gen.size(0) > max_gen_seqs_per_epoch:
-			subsample_idx = torch.randperm(x_train_gen.size(0))[:max_gen_seqs_per_epoch]
-			x_gen_sub = x_train_gen[subsample_idx]
+		max_gen_seqs_per_epoch = args.samples_per_epoch
+		if len(train_gen) > max_gen_seqs_per_epoch:
+			x_gen_sub = train_gen.copy()
+			random.shuffle(x_gen_sub)
+			x_gen_sub = x_gen_sub[:max_gen_seqs_per_epoch]
 		else:
-			x_gen_sub = x_train_gen
+			x_gen_sub = train_gen
 
-		x_epoch = torch.cat([x_gen_sub, x_train_curr], dim=0)
-		permutation = torch.randperm(x_epoch.size(0))
+		x_epoch = x_gen_sub + train_curr
+		batches = bucketize_batches(x_epoch, batch_size=batch_size, seed=epoch)
 
-		for i in range(0, x_epoch.size(0), batch_size):
-			indices = permutation[i : i + batch_size]
-			batch_x = x_epoch[indices]
-
+		for batch_x in batches:
 			try:
 				optimizer.zero_grad()
 				inputs = batch_x[:, :-1].to(device)
@@ -965,15 +984,15 @@ def run_school_training():
 				else:
 					raise
 
-		epoch_loss /= x_epoch.size(0)
+		epoch_loss /= (max_gen_seqs_per_epoch + len(train_curr))
 
 		# Calcular pérdida de validación (val_loss)
 		val_loss = 0.0
-		if x_val is not None and len(x_val) > 0:
+		if len(x_val) > 0:
 			model.eval()
 			with torch.no_grad():
-				for vi in range(0, x_val.size(0), batch_size):
-					batch_xv = x_val[vi : vi + batch_size].to(device)
+				for batch_xv in x_val:
+					batch_xv = batch_xv.to(device)
 					inputs_v = batch_xv[:, :-1]
 					targets_v = batch_xv[:, 1:]
 
@@ -987,7 +1006,7 @@ def run_school_training():
 
 						loss_v = (loss_v_elem * mask_v).sum() / mask_v.sum()
 					val_loss += loss_v.item() * batch_xv.size(0)
-				val_loss /= x_val.size(0)
+				val_loss /= n_val_seqs
 
 		# Telemetría RFC-VRAM-001: VRAM pico de la época y salud del STE bajo AMP
 		# (el gradiente de BitLinear en cero delataría un STE roto — §4.8.1).
@@ -1002,7 +1021,7 @@ def run_school_training():
 		)
 
 		# ── Neurogénesis dirigida por dolor (plateau de val_loss) ──
-		if x_val is not None and val_loss > 0:
+		if len(x_val) > 0 and val_loss > 0:
 			if val_loss < best_val_loss - args.min_delta:
 				best_val_loss = val_loss
 				epochs_without_improvement = 0
