@@ -207,7 +207,7 @@ def _exam_words_for_age(age: int, base_dir: str) -> set[str]:
 
 def get_allowed_vocab_for_age(age: int, base_dir: str) -> set[str]:
 	curriculum_path = os.path.join(base_dir, "configs", "school_curriculum_structured_en.json")
-	childes_path = os.path.join(base_dir, "configs", "childes_pre_school.json")
+	childes_path = os.path.join(base_dir, "configs", "childes_pre_school_en.json")
 	nsm_path = os.path.join(base_dir, "configs", "nsm_physics_pre_school.json")
 
 	with open(curriculum_path, encoding="utf-8") as f:

@@ -2,6 +2,7 @@ import json
 import os
 import random
 import re
+from collections import Counter
 
 import numpy as np
 import torch
@@ -11,6 +12,7 @@ from src.bitnet.model.modeling_bitnet import BitNet4LayerModel
 from src.bitnet.training.modules.corpus import compute_corpus_hash, load_tokenized_cache, save_tokenized_cache
 from src.bitnet.training.modules.exam_compiler import compile_exam_sequences_for_age
 from src.bitnet.training.modules.partitioner import bucketize_batches, compile_stage_dataset, partition_corpus_by_mlu
+from src.bitnet.training.modules.stage_gating import apply_stage_gate, build_all_stage_masks, loss_mask_for_gate
 from src.bitnet.training.modules.stage_config import get_next_dim, get_stage_config
 from src.bitnet.training.modules.state_manager import run_samantha_eval, trigger_neurogenesis
 from src.bitnet.training.modules.strategy import select_strategy
@@ -300,6 +302,9 @@ def run_school_training():
 		print(
 			f"  ✓ {len(tiny_stories_tokenized):,} secuencias TinyStories + {len(tokenized_dialogues):,} diálogos + {len(tokenized_preschool_curriculum):,} preescolar + {len(tokenized_primary):,} primaria + {len(tokenized_secondary):,} secundaria + {len(tokenized_childes):,} CHILDES-en"
 		)
+		childes_freq = Counter()
+		for seq in tokenized_childes:
+			childes_freq.update(seq)
 	else:
 		tiny_stories_cache = os.path.join(base_dir, "storage", "datasets", "tiny_stories")
 		os.makedirs(tiny_stories_cache, exist_ok=True)
@@ -364,7 +369,10 @@ def run_school_training():
 		tokenized_childes = [tokenize(s, word_to_idx) for s in childes_data]
 		tokenized_childes = [seq for seq in tokenized_childes if 2 <= len(seq) <= 64]
 		del childes_data
-		print(f"  ✓ {len(tokenized_childes):,} secuencias tokenizadas de CHILDES-en.")
+		childes_freq = Counter()
+		for seq in tokenized_childes:
+			childes_freq.update(seq)
+		print(f"  ✓ {len(tokenized_childes):,} secuencias tokenizadas de CHILDES-en ({len(childes_freq):,} palabras únicas).")
 
 		# Guardar caché
 		save_tokenized_cache(
@@ -387,6 +395,16 @@ def run_school_training():
 
 	# El corpus preescolar principal son las TinyStories tokenizadas
 	tokenized_preschool = tiny_stories_tokenized
+
+	# ── Gateo de vocabulario por etapa (BIT-003) ──
+	# Máscaras de logits: cada etapa solo puede PRODUCIR el vocabulario de su
+	# edad (primos EN + safe words + top-N CHILDES + currículo de la etapa).
+	# El input ve el corpus completo; la pérdida excluye targets vetados.
+	stage_masks = build_all_stage_masks(vocab_size, word_to_idx, childes_freq, curriculum_data)
+	print(
+		"  🚧 [GATEO] Palabras producibles por etapa: "
+		+ ", ".join(f"E{i}:{int((m == 0).sum())}" for i, m in enumerate(stage_masks))
+	)
 
 	# Mezclar 10% de diálogos
 	num_dialogues = int(len(tokenized_dialogues) * 0.1)
@@ -672,6 +690,7 @@ def run_school_training():
 		x_train_gen = x_train_curr = x_val = None
 		n_val_seqs = 0
 		epochs_this_run = 0
+		a_stage_mask = stage_masks[0]
 
 		def _save_adaptive_state():
 			with open(state_path, "w", encoding="utf-8") as sf:
@@ -707,6 +726,7 @@ def run_school_training():
 				val_seqs = val_gen + val_curr
 				n_val_seqs = len(val_seqs)
 				x_val = bucketize_batches(val_seqs, batch_size=batch_size) if len(val_seqs) > 0 else []
+				a_stage_mask = stage_masks[a_stage_idx]
 				loaded_stage = a_stage_idx
 				print(f"  ✓ Gen: {len(train_gen):,} | Curr: {len(train_curr):,} | Val batches: {len(x_val)}")
 
@@ -740,11 +760,12 @@ def run_school_training():
 				inputs = batch_x[:, :-1].to(device)
 				targets = batch_x[:, 1:].to(device)
 				with autocast_ctx():
-					logits = train_model(inputs, tau=tau)
+					logits = apply_stage_gate(train_model(inputs, tau=tau), a_stage_mask.to(device))
 					loss_elementwise = F.cross_entropy(logits.reshape(-1, vocab_size), targets.reshape(-1), reduction="none")
 					loss_elementwise = loss_elementwise.reshape(targets.shape)
 					mask = (torch.cumsum((targets == 0).to(torch.int32), dim=-1) <= 1).to(logits.dtype)
-					loss = (loss_elementwise * mask).sum() / mask.sum()
+					mask = loss_mask_for_gate(mask, targets, a_stage_mask)
+					loss = (loss_elementwise.masked_fill(mask == 0, 0.0)).sum() / mask.sum()
 				loss.backward()
 				torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
 				optimizer.step()
@@ -759,10 +780,11 @@ def run_school_training():
 						batch_xv = batch_xv.to(device)
 						inputs_v, targets_v = batch_xv[:, :-1], batch_xv[:, 1:]
 						with autocast_ctx():
-							logits_v = train_model(inputs_v)
+							logits_v = apply_stage_gate(train_model(inputs_v), a_stage_mask.to(device))
 							lve = F.cross_entropy(logits_v.reshape(-1, vocab_size), targets_v.reshape(-1), reduction="none").reshape(targets_v.shape)
 							mv = (torch.cumsum((targets_v == 0).to(torch.int32), dim=-1) <= 1).to(logits_v.dtype)
-							loss_v = (lve * mv).sum() / mv.sum()
+							mv = loss_mask_for_gate(mv, targets_v, a_stage_mask)
+							loss_v = (lve.masked_fill(mv == 0, 0.0)).sum() / mv.sum()
 						val_loss += loss_v.item() * batch_xv.size(0)
 					val_loss /= n_val_seqs
 
@@ -929,6 +951,7 @@ def run_school_training():
 
 		x_epoch = x_gen_sub + train_curr
 		batches = bucketize_batches(x_epoch, batch_size=batch_size, seed=epoch)
+		stage_mask = stage_masks[active_stage_idx]
 
 		for batch_x in batches:
 			try:
@@ -937,15 +960,16 @@ def run_school_training():
 				targets = batch_x[:, 1:].to(device)
 
 				with autocast_ctx():
-					logits = train_model(inputs, tau=tau)
+					logits = apply_stage_gate(train_model(inputs, tau=tau), stage_mask.to(device))
 
 					loss_elementwise = F.cross_entropy(logits.reshape(-1, vocab_size), targets.reshape(-1), reduction="none")
 					loss_elementwise = loss_elementwise.reshape(targets.shape)
 					is_zero = (targets == 0).to(torch.int32)
 					cumsum_zero = torch.cumsum(is_zero, dim=-1)
 					mask = (cumsum_zero <= 1).to(logits.dtype)
+					mask = loss_mask_for_gate(mask, targets, stage_mask)
 
-					loss = (loss_elementwise * mask).sum() / mask.sum()
+					loss = (loss_elementwise.masked_fill(mask == 0, 0.0)).sum() / mask.sum()
 				loss.backward()
 				torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
 				optimizer.step()
@@ -967,15 +991,16 @@ def run_school_training():
 					optimizer.zero_grad()
 					inputs = batch_x[:, :-1].to(device)
 					targets = batch_x[:, 1:].to(device)
-					logits = model(inputs, tau=tau)
+					logits = apply_stage_gate(model(inputs, tau=tau), stage_mask.to(device))
 
 					loss_elementwise = F.cross_entropy(logits.reshape(-1, vocab_size), targets.reshape(-1), reduction="none")
 					loss_elementwise = loss_elementwise.reshape(targets.shape)
 					is_zero = (targets == 0).to(torch.int32)
 					cumsum_zero = torch.cumsum(is_zero, dim=-1)
 					mask = (cumsum_zero <= 1).to(logits.dtype)
+					mask = loss_mask_for_gate(mask, targets, stage_mask)
 
-					loss = (loss_elementwise * mask).sum() / mask.sum()
+					loss = (loss_elementwise.masked_fill(mask == 0, 0.0)).sum() / mask.sum()
 					loss.backward()
 					torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
 					optimizer.step()
@@ -997,14 +1022,15 @@ def run_school_training():
 					targets_v = batch_xv[:, 1:]
 
 					with autocast_ctx():
-						logits_v = train_model(inputs_v)
+						logits_v = apply_stage_gate(train_model(inputs_v), stage_mask.to(device))
 						loss_v_elem = F.cross_entropy(logits_v.reshape(-1, vocab_size), targets_v.reshape(-1), reduction="none")
 						loss_v_elem = loss_v_elem.reshape(targets_v.shape)
 						is_zero_v = (targets_v == 0).to(torch.int32)
 						cumsum_zero_v = torch.cumsum(is_zero_v, dim=-1)
 						mask_v = (cumsum_zero_v <= 1).to(logits_v.dtype)
+						mask_v = loss_mask_for_gate(mask_v, targets_v, stage_mask)
 
-						loss_v = (loss_v_elem * mask_v).sum() / mask_v.sum()
+						loss_v = (loss_v_elem.masked_fill(mask_v == 0, 0.0)).sum() / mask_v.sum()
 					val_loss += loss_v.item() * batch_xv.size(0)
 				val_loss /= n_val_seqs
 
@@ -1078,24 +1104,23 @@ def run_school_training():
 
 		allowed_vocab = get_allowed_vocab_for_age(eval_age, base_dir)
 		special_tokens = {
-			"yo",
-			"tú",
+			"i",
+			"you",
 			"<pad>",
 			"<unk>",
-			"hola",
-			"mamá",
-			"papá",
-			"nene",
-			"nena",
-			"miau",
-			"guau",
-			"agua",
-			"fuego",
-			"sí",
+			"hello",
+			"mom",
+			"dad",
+			"baby",
+			"meow",
+			"bark",
+			"water",
+			"fire",
+			"yes",
 			"no",
-			"bien",
-			"mal",
-			"pan",
+			"good",
+			"bad",
+			"bread",
 		}
 		allowed_mask = torch.zeros(vocab_size, dtype=torch.bool, device=device)
 		for w, idx in word_to_idx.items():
