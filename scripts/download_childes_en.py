@@ -17,11 +17,15 @@ import re
 import urllib.request
 
 
+CHAT_ARTIFACTS = {"xxx", "yyy", "www", "xx", "yy"}
+
+
 def clean_and_extract_words(line: str) -> list[str]:
-	# Quitar signos de puntuación comunes
-	line = re.sub(r"[?!.,;:\"()\[\]]", "", line)
-	words = [w for w in re.findall(r"[a-zA-Z\-']+", line.lower()) if w]
-	return words
+	# Quitar signos de puntuación comunes y apóstrofos (normalización BIT-003:
+	# don't→dont, igual que la fuente AoA y que tokenization.words_of).
+	line = re.sub(r"[?!.,;:\"()\[\]]", "", line).replace("'", "")
+	# xxx/yyy/www son marcadores CHAT de habla ininteligible, no palabras.
+	return [w for w in re.findall(r"[a-zA-Z\-]+", line.lower()) if w and w not in CHAT_ARTIFACTS]
 
 
 def run_download_and_mining():

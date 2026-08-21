@@ -11,10 +11,11 @@ Con glifos una palabra nueva se compone de primos ya aprendidos → basta
 desbloquear su token en la máscara. Con standard (tabla one-hot congelada) su
 columna de embedding no ha sido entrenada → no se puede añadir sin reentrenar.
 """
-import re
 from collections import Counter
 
 import torch
+
+from src.bitnet.training.modules.tokenization import words_of
 
 # Vocabulario de referencia EN (los 28 glifos de V 0-7, mapeados por VOCAB_MAP)
 REFERENCE_WORDS_EN = {
@@ -58,7 +59,7 @@ def curriculum_words_by_stage(curriculum_data: dict, stage_idx: int, word_to_idx
 	words = set()
 	for stage in stages:
 		for text in curriculum_data.get(stage, []):
-			for w in re.findall(r"[a-zA-Z']+", text.lower()):
+			for w in words_of(text):
 				if w in word_to_idx:
 					words.add(w)
 	return words
@@ -70,6 +71,7 @@ def build_stage_logit_mask(
 	word_to_idx: dict,
 	childes_freq: Counter | None,
 	curriculum_words: set,
+	exam_words: set | None = None,
 ) -> torch.Tensor:
 	"""Máscara de logits (0 = permitido, -inf = vetado) para la etapa dada."""
 	mask = torch.full((vocab_size,), float("-inf"))
@@ -81,6 +83,9 @@ def build_stage_logit_mask(
 		n = TOP_N_BY_STAGE[stage_idx]
 		allowed.update(w for w, _ in childes_freq.most_common(n))
 	allowed.update(curriculum_words)
+	# Respuestas de examen de la etapa: todo target examinado debe ser
+	# producible en la etapa que lo examina (BIT-003 S5, DL-009).
+	allowed.update(exam_words or set())
 
 	for w in allowed:
 		idx = word_to_idx.get(w)
@@ -94,14 +99,19 @@ def build_all_stage_masks(
 	word_to_idx: dict,
 	childes_freq: Counter,
 	curriculum_data: dict,
+	exam_words_by_stage: list | None = None,
 ) -> list:
+	exam_words_by_stage = exam_words_by_stage or [set()] * 8
 	masks = [
-		build_stage_logit_mask(i, vocab_size, word_to_idx, childes_freq, curriculum_words_by_stage(curriculum_data, i, word_to_idx))
+		build_stage_logit_mask(i, vocab_size, word_to_idx, childes_freq, curriculum_words_by_stage(curriculum_data, i, word_to_idx), exam_words_by_stage[i])
 		for i in range(8)
 	]
-	# La etapa final cubre TODO el vocabulario: toda frase del corpus debe ser
-	# clasificable (ninguna se pierde, solo se reordena por etapa).
-	masks[-1] = torch.zeros(vocab_size)
+	# La etapa final cubre TODO el vocabulario real: toda frase del corpus debe
+	# ser clasificable (ninguna se pierde, solo se reordena por etapa). <unk>
+	# sigue vetado también en E7 (salvaguarda DL-008: ruido de generación).
+	final_mask = torch.zeros(vocab_size)
+	final_mask[UNK_TOKEN] = float("-inf")
+	masks[-1] = final_mask
 	return masks
 
 

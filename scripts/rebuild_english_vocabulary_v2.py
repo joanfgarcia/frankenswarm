@@ -38,12 +38,9 @@ BLACKLIST_PATTERNS = [
 ]
 BLACKLIST_RE = re.compile("|".join(BLACKLIST_PATTERNS), re.IGNORECASE)
 
-# Regex IDÉNTICO al de tokenization.py::tokenize (apóstrofes y guiones son token).
-TOKEN_RE = re.compile(r"[a-zA-ZáéíóúüñÁÉÍÓÚÜÑ_<>'\-]+")
-
-
-def words_of(text: str) -> list[str]:
-    return TOKEN_RE.findall(str(text).lower())
+# Tokenización canónica importada del trainer: una sola fuente de verdad
+# (apóstrofos eliminados, guiones conservados — BIT-003 S2).
+from src.bitnet.training.modules.tokenization import words_of  # noqa: E402
 
 
 def load_json(path: str):
