@@ -2,6 +2,49 @@
 
 ## [Unreleased]
 
+### 🎓 BIT-003 — corpus inglés desde cero, gateo de vocabulario por etapa e instrumento v2 (2026-08-20/21)
+
+- **[NEW] Corpus EN íntegro y trazable**: `childes_pre_school_en.json` (1,45M oraciones
+  de habla infantil real, fuente AoA evaportelance) + TinyStories + diálogos EN; censo
+  directo sin mapeo OOV (RULE 7) → vocabulario de **19.637 palabras** con **28/28
+  glifos canónicos** y 19.637 glifos únicos. Artefactos CHAT (`xxx/yyy/www`, 51.440
+  tokens que habrían entrado al top-30 del censo) eliminados del corpus, y apóstrofos
+  normalizados en la tokenización canónica única (`words_of`: `don't→dont`, como la
+  fuente) — la forma partida `don't`(censo 0)/`dont`(censo real) arrastraba TinyStories
+  a etapas tardías.
+- **[NEW] Gateo de producción por etapa (DL-008)**: máscara de logits por edad — núcleo
+  (28 referencias EN + safe words) + top-N de CHILDES por frecuencia de adquisición +
+  currículo + respuestas de examen de la etapa. Gateo medido:
+  `[254, 825, 3008, 5003, 8005, 10003, 15002, 19636]`. Clasificación del corpus al 95%:
+  CHILDES cae 78% en E0-E2 (3,5% E7); TinyStories baja su E7 del 16% al **7,1%** al
+  curar las contracciones. `<unk>` vetado en las 8 etapas, E7 incluida. La pérdida
+  excluye targets vetados; el input ve el corpus completo.
+- **[FIX] Remediación pre-lanzamiento (DL-009, auditoría del 21-ago)** — 5 bloqueantes
+  que habrían quemado el run: `NameError` de arranque (TinyStories se cargaba después
+  del hash que lo necesita), censo de CHILDES por **ids** en vez de palabras (las
+  máscaras quedaban en [107..179] y el 99% del corpus se clasificaba a E7), device
+  mismatch CPU/CUDA en `loss_mask_for_gate` (crash en el primer batch GPU, invisible en
+  smokes CPU), `<unk>` producible en E7, y `xxx` entrenable desde E0.
+- **[NEW] Instrumento de evaluación v2**: exámenes y `AGE_QUESTIONS` a **10 preguntas
+  por edad**, 100% dentro del vocabulario (fuera `aleth/bunker/madrid`: el brazo
+  control mide adquisición de lenguaje, no memorización de tokens sin presencia en
+  corpus). El evaluador de Samantha consume la **máscara real de la etapa**
+  (`stage_gate_masks.json` persistida por el trainer) en generación y monitor OOB —
+  el gateo legado permitía 18k/20k palabras a edad 2 frente a las ~800 entrenables.
+  Veredicto y mock alineados al tamaño real de la batería (un `== 5` hardcodeado
+  suspendía todo examen con media 10/10).
+- **[NEW] Currículo preescolar rico**: 32 items deterministas validados contra el
+  censo, 4 bins MLU poblados `[10,8,8,6]` (antes `[0,0,0,4]`).
+- **[NEW] Aceptación reproducible**: `scripts/audit_stage_gating.py` (22 checks, fuente
+  de las tablas del RFC), `scripts/validate_exam_vocab.py` (instrumentos in-vocab) y
+  `scripts/clean_childes_en_artifacts.py` (idempotente). Verificado: pytest 433 ✓,
+  smokes CPU+GPU de ambos brazos ✓ (loss inicial 5,14 ≈ ln(254): el gate actúa),
+  dry-run del examen E1 con máscara real → APROBADO ✓.
+- **[DOC]** `docs/RFC_GATING_VOCABULARIO_ETAPAS.md` re-medido, DL-008 + DL-009 en el
+  decision log; `samples_per_epoch` por defecto a 400k (análisis Chinchilla,
+  confirmado por operador). Runbook de lanzamiento de ambos brazos en
+  `.red-pill/memory/BIT-003_fix_plan.md` §F8.3.
+
 ### 📐 RFC-GROWTH-V6 — la premisa de Net2DeeperNet caducó; la rejilla D×W la sustituye (2026-08-14)
 
 - **[NEW] `docs/RFC_GROWTH_V6_DEPTH_WIDTH.md`** (🟡 propuesta, pendiente de
