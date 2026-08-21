@@ -148,6 +148,17 @@ class BitNetTransformerBlock(nn.Module):
 		return x
 
 
+def _is_identity_matrix(m: np.ndarray) -> bool:
+	"""True si `m` es la matriz identidad, sin materializar una segunda tabla V×V.
+
+	Diagonal a unos + exactamente n elementos no nulos ⇒ todo lo de fuera es cero.
+	"""
+	if m.ndim != 2 or m.shape[0] != m.shape[1]:
+		return False
+	n = m.shape[0]
+	return bool(np.count_nonzero(m) == n and np.all(np.diagonal(m) == 1))
+
+
 class BitNet4LayerModel(nn.Module):
 	"""
 	Modelo de 4 capas acoplado al vocabulario conceptual discreto.
@@ -176,13 +187,20 @@ class BitNet4LayerModel(nn.Module):
 			self.register_buffer("vocab_embeddings", None)
 			self.inbound_proj = None
 			self.outbound_proj = None
+			self.onehot_vocab = False
 		else:
 			# ── Modo clasico: fastembed lookup ──
 			assert vocab_embeddings is not None, "vocab_embeddings required when use_glyphs=False"
 			self.vocab_size, self.vocab_dim = vocab_embeddings.shape
 			self.glyph_embedding = None
+			# Brazo estándar DL-006: la tabla es la identidad (un token = una columna
+			# libre de inbound_proj ≡ embedding entrenable desde cero). En ese caso la
+			# tabla es reconstruible desde vocab_size, así que NO se persiste — a 12k
+			# tokens ocupaba 590 MB en cada checkpoint — y los matmuls contra ella se
+			# cortocircuitan en _embed_input/_decode_hidden.
+			self.onehot_vocab = _is_identity_matrix(vocab_embeddings)
 			# Registrar los embeddings del vocabulario conceptual como un buffer no entrenable (Capa 1 fija)
-			self.register_buffer("vocab_embeddings", torch.from_numpy(vocab_embeddings).float())
+			self.register_buffer("vocab_embeddings", torch.from_numpy(vocab_embeddings).float(), persistent=not self.onehot_vocab)
 			# Capa 2: Inbound Translator (Proyección del embedding de 384-dim al espacio oculto del Core de 256-dim)
 			self.inbound_proj = nn.Linear(self.vocab_dim, hidden_dim, bias=False)
 			# Capa 4: Outbound Translator (Proyección del espacio oculto de 256-dim al espacio conceptual de 384-dim)
@@ -250,6 +268,19 @@ class BitNet4LayerModel(nn.Module):
 		self.glyph_embedding.register_buffer("glyph_table", new_table)
 		self.vocab_size = self.glyph_embedding.vocab_size
 
+	def load_state_dict(self, state_dict, strict: bool = True, **kwargs):
+		"""Tolera los checkpoints del brazo estándar previos al fast-path one-hot.
+
+		Aquellos guardaban la tabla identidad V×V (590 MB a 12k tokens). Hoy la
+		tabla es reconstruible desde `vocab_size` y no se persiste, así que la
+		clave sobra: se descarta en lugar de reventar contra `strict=True`. Los
+		pesos entrenables (inbound/outbound/core) no cambiaron de nombre ni de
+		forma, así que los checkpoints antiguos siguen cargando exactos.
+		"""
+		if getattr(self, "onehot_vocab", False) and "vocab_embeddings" in state_dict:
+			state_dict = {k: v for k, v in state_dict.items() if k != "vocab_embeddings"}
+		return super().load_state_dict(state_dict, strict=strict, **kwargs)
+
 	def forward(self, x: torch.Tensor, logit_mask: torch.Tensor = None, tau: float = None) -> torch.Tensor:
 		"""
 		Paso forward estándar (sin resonancia).
@@ -314,6 +345,11 @@ class BitNet4LayerModel(nn.Module):
 				# Gumbel path: soft_tokens @ word_embeddings
 				word_embeds = self.glyph_embedding.get_word_embeddings()
 				h = torch.matmul(x, word_embeds)  # (batch, seq, hidden_dim)
+		elif self.onehot_vocab:
+			# Tabla identidad: one_hot(x) @ I == one_hot(x), y proyectar un one-hot
+			# es elegir su fila en inbound_proj. Bitwise idéntico al camino denso
+			# sin el matmul V×V (tests/test_embedding_arms.py lo fija).
+			h = F.embedding(x, self.inbound_proj.weight.t()) if x.ndim == 2 else self.inbound_proj(x)
 		else:
 			# Modo clásico: fastembed lookup + inbound projection
 			embeds = F.embedding(x, self.vocab_embeddings) if x.ndim == 2 else torch.matmul(x, self.vocab_embeddings)
@@ -337,6 +373,10 @@ class BitNet4LayerModel(nn.Module):
 		if self.use_glyphs:
 			# EXP_034: Cosine similarity con word embeddings composicionales
 			logits = self.glyph_embedding.decode_logits(h)
+		elif self.onehot_vocab:
+			# Tabla identidad: `@ I.T` era un no-op que costaba V×V multiplicaciones
+			# por posición de token. El logit ES la proyección de salida.
+			logits = self.outbound_proj(h)
 		else:
 			# Modo clásico: outbound projection + similarity
 			concept_proj = self.outbound_proj(h)

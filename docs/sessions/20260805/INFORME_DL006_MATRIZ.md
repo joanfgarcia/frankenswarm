@@ -4,6 +4,17 @@
 plateau → examen sobre mejor checkpoint → avance; suspenso → neurogénesis como
 remediación) · **Semilla**: 770 en todos · **Instrumentos**: DL-004 congelados.
 
+> 🔴 **CORRECCIÓN POSTERIOR (2026-08-14, DL-007).** La baza (b) de la lectura 3 —el
+> glifo decodifica "~4.7× más barato", medido 15 vs 70 s/época— **queda retirada**.
+> Ese 70 s/época se midió contra un brazo estándar que multiplicaba por una matriz
+> identidad V×V (trabajo aritmético nulo) y materializaba one-hots densos: medía la
+> implementación del baseline, no la arquitectura. Con el baseline arreglado, el
+> estándar es un 10% MÁS RÁPIDO que el glifo por step (24,16 vs 26,74 ms), y su
+> ventaja crece con el vocabulario. Las cifras de coste de este informe (la fila
+> "Coste por época" y el 15 vs 70 s) **no deben citarse**. Lo demás del informe se
+> sostiene: el arreglo es bitwise equivalente, así que ningún resultado de
+> aprendizaje queda invalidado. Detalle y tabla nueva en DL-007.
+
 > ⚠️ **Una semilla por brazo.** La varianza observada entre runs de una misma
 > configuración (sandbox vs canónico del 3-ago) fue comparable a varios de los
 > efectos aquí tabulados. Este informe fija la foto y las tendencias; las
@@ -50,10 +61,15 @@ remediación) · **Semilla**: 770 en todos · **Instrumentos**: DL-004 congelado
    lenguaje puro, el estándar gana — sin ambigüedad.
 3. **El glifo conserva tres bazas**: (a) tendencia a mayor validez generativa
    en composición profunda (1.00 vs 0.76 en el examen final; 100% vs 95% OOD)
-   — *tendencia, no resultado, hasta réplicas*; (b) decode ~4.7× más barato con
-   vocabulario grande (O(65·d) vs O(V·d), medido 15 vs 70 s/época); (c) la
-   capacidad EXCLUSIVA de vocabulario en caliente (`register_new_word`) —
-   arquitectónicamente presente, **jamás examinada** → examen M5.
+   — *tendencia, no resultado, hasta réplicas* → **(a) NO REPLICÓ** en las
+   réplicas multi-semilla del 10-ago; (b) decode ~4.7× más barato con
+   vocabulario grande (O(65·d) vs O(V·d), medido 15 vs 70 s/época) →
+   **(b) RETIRADA, ver la corrección del encabezado y DL-007: medía la
+   implementación del baseline; con baseline justo el estándar es más rápido**;
+   (c) la capacidad EXCLUSIVA de vocabulario en caliente (`register_new_word`) —
+   arquitectónicamente presente, **jamás examinada** → examen M5. **De las tres
+   bazas solo (c) sigue en pie**; la ventaja real que sí sobrevive y no estaba
+   en esta lista es la **compresión** (3,5× menos parámetros).
 4. **Ninguna escuela actual discrimina lo suficiente.** Los dos brazos K-65P se
    gradúan con holgura; los dos ingleses claven 10/10 exact-match en Samantha
    (el auto-grader satura). Los instrumentos son honestos pero el temario es

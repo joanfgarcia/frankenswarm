@@ -7,6 +7,185 @@ se añade una entrada nueva que la referencia.
 
 ---
 
+## DL-009 · 2026-08-21 — Instrumento v2 y alineación evaluador↔gateo (remediación pre-lanzamiento BIT-003)
+
+**Problema.** La auditoría pre-lanzamiento del 21-ago (`.red-pill/memory/BIT-003_audit_findings.md`) encontró que
+(a) el evaluador, al repuntarse a `childes_pre_school_en.json`, pasó a permitir TODO el vocabulario de CHILDES sin
+corte (18.364/20.095 palabras a edad 2, vs ~800 del gateo de entrenamiento) — un cambio de instrumento de facto sin
+DL; (b) los exámenes (29-jul, pre-rebuild) esperaban respuestas fuera del vocabulario nuevo (aleth, bunker, madrid);
+(c) el trainer no implementaba la semántica de DL-008 (censo por ids que no desbloqueaba el top-N, NameError de
+arranque, device mismatch CPU/CUDA en la pérdida, E7 con `<unk>`, 'xxx' —marcador CHAT con 50.894 apariciones—
+producible desde E0, contracciones partidas don't/dont, 7/28 glifos de referencia sin el canónico).
+
+**Decisión (operador, 21-ago).**
+1. **Instrumento v2**: exámenes y `AGE_QUESTIONS` reescritos SOLO con palabras del vocabulario (sin nombres propios
+   de lore: el control v1-inglés mide adquisición de lenguaje, no memorización de tokens sin presencia en corpus) y
+   ampliados a **10 preguntas por edad**. Toda respuesta de examen entra al gateo de su etapa (`exam_answer_words_for_age`).
+2. **Evaluador alineado**: el trainer persiste `stage_gate_masks.json` y Samantha restringe la generación (y el
+   monitor OOB) a la máscara REAL de la etapa, con fallback legado para checkpoints antiguos. `<unk>` vetado también
+   en evaluación.
+3. **Pipeline de corpus**: apóstrofos normalizados en la tokenización canónica (`words_of`: don't→dont, como el
+   corpus CHILDES-en upstream), artefactos CHAT (xxx/yyy/www) eliminados del corpus, censo y glifos regenerados con
+   preservación canónica EN (28/28). Vocabulario final: **19.637** palabras, 19.637 glifos únicos.
+4. Currículo preescolar rico: 32 items (28 nuevos deterministas), 4 bins MLU poblados [10,8,8,6].
+5. `samples_per_epoch=400.000` por defecto (análisis Chinchilla 21-ago, confirmado).
+
+**Instrumento.** Este DL VERSIONA el instrumento de evaluación de v1-inglés (sucesor del congelado en DL-004, que
+sigue intacto para los runs v1-ES históricos). Los dos brazos BIT-003 (glyph/standard) usan este instrumento v2
+idéntico; la comparativa entre brazos no se ve afectada.
+
+**Evidencia.** `scripts/audit_stage_gating.py` (22 checks, rc=0). Gateo por etapa: `[254, 825, 3008, 5003, 8005,
+10003, 15002, 19636]`. Clasificación CHILDES: `[11.9, 31.1, 34.9, 8.9, 5.5, 1.8, 2.4, 3.5]%` (78% en E0-E2).
+TinyStories(100k): `[3.4, 11.7, 40.4, 15.1, 12.9, 4.1, 5.2, 7.1]%` — el E7 baja del 16% al 7.1% al curar la
+partición de contracciones. Instrumentos 100% in-vocab (`scripts/validate_exam_vocab.py`).
+
+**Referencias.** `.red-pill/memory/BIT-003_audit_findings.md`, `.red-pill/memory/BIT-003_fix_plan.md`,
+`docs/RFC_GATING_VOCABULARIO_ETAPAS.md`, DL-008 (semántica del gateo), DL-004 (instrumento v1-ES congelado).
+
+---
+
+## DL-008 · 2026-08-21 — Gateo de vocabulario por etapa (BIT-003): el corpus y la producción de cada etapa se restringen al vocabulario de su edad, con equivalencia estricta entre el brazo estándar y el K-65P
+
+**Problema.** En v1 (BIT-003, corpus EN desde cero) el entrenamiento pasaba
+pérdida sobre las 20.095 palabras del vocabulario desde la etapa 0, mientras que
+la evaluación de cada edad solo dejaba emitir 729-851 palabras (gateo de
+`get_allowed_vocab_for_age`). Doble desalineación: (a) Bit invertía gradiente en
+palabras que jamás podría producir en su etapa; (b) el gateo de evaluación apuntaba
+a `childes_pre_school.json` (el fichero **ES** ya inexistente) y a `special_tokens`
+en español — no reflejaba el corpus EN real. En k65p el gateo SÍ estaba en
+entrenamiento (`logit_mask` por tiers); en frankenswarm no existía activo.
+
+**Decisión.** Aplicar gateo de vocabulario por etapa en el entrenamiento de ambos
+brazos, con **equivalencia estricta** entre el brazo estándar (`--embedding standard`)
+y el K-65P (`--embedding glyph`):
+
+1. **Producción gateada por etapa** (`logit_mask`): cada etapa solo puede *producir*
+   el vocabulario de su edad — primos EN (28 referencias) + safe words + **top-N de
+   CHILDES-en por frecuencia de adquisición** + palabras del currículo de la etapa.
+   Cortes por etapa: `[200, 800, 3000, 5000, 8000, 10000, 15000, 20095]` (E7 = todo el
+   vocabulario). La pérdida excluye posiciones cuyo target está vetado (evita
+   `inf×0=NaN` con `masked_fill`).
+2. **Equivalencia entre brazos**: la máscara es una máscara sobre *tokens*,
+   independiente del tipo de embedding → ambos brazos ven y producen **exactamente
+   las mismas palabras en cada etapa**. La única diferencia que mide la comparativa
+   es la representación (composición de 65 primos vs tabla one-hot congelada +
+   proyección entrenable).
+3. **Clasificación del corpus por etapa (umbral 95%)**: cada frase del corpus general
+   se asigna a la **etapa mínima** cuyo vocabulario cubre ≥95% de sus tokens. El
+   corpus de la etapa `i` = frases acumuladas `E0..Ei`. Resultado medido: CHILDES-en
+   cae un 78% en E0-E2 (habla real infantil temprano); TinyStories se incorpora según
+   su vocabulario (solo 14% en E0-E1, repartida en E2-E7). Ninguna frase se pierde
+   (E7 cubre el 100%).
+4. **Propiedad de la tesis**: el gateo se puede **ampliar en caliente** con K-65P —
+   una palabra nueva se compone de primos ya aprendidos, basta desbloquear su token
+   en la máscara. Con el estándar (columna de embedding no entrenada) no es posible
+   sin reentrenar. La comparativa demostrará esta propiedad en evaluación.
+
+**Evidencia.** Cobertura del vocabulario por CHILDES-en: 99.53% (0.47% `<unk>`).
+Distribución del corpus por etapa (umbral 95%): CHILDES `[11,32,35,9,5,2,2,4]%`,
+TinyStories `[3,11,35,16,12,3,6,15]%`. Gateo resultante: `[242, 822, 3007, 5004,
+8007, 10005, 15002, 20095]` palabras producibles por etapa. Los 65 primos (y las 28
+palabras EN que representan) entran desde E0.
+
+**Adoptado.** `src/bitnet/training/modules/stage_gating.py` (máscaras + clasificación)
+aplicado en entrenamiento y validación (adaptativo + clásico). Detalle completo en
+`docs/RFC_GATING_VOCABULARIO_ETAPAS.md`.
+
+**Salvaguardas.** E7 = todo el vocabulario (toda frase clasificable, nada se pierde).
+`<unk>` vetado en todas las etapas (ruido de generación). El currículo mantiene su
+asignación por MLU. Evaluador actualizado a EN (`childes_pre_school_en.json`,
+`special_tokens` EN).
+
+**Referencias.** Commits 081fc8d, 2741e95 · `docs/RFC_GATING_VOCABULARIO_ETAPAS.md`.
+
+---
+
+## DL-007 · 2026-08-14 — El brazo estándar estaba lisiado por implementación: se retira la baza de coste del glifo y nace el trato simétrico de weight decay
+
+**Problema.** El brazo estándar (`--embedding standard`, DL-006) se construye con
+`vocab_embeddings=np.eye(V)`: tabla identidad congelada cuyas columnas de
+`inbound_proj` SON el embedding entrenable. La equivalencia matemática es correcta,
+pero la implementación pagaba dos peajes ajenos a la arquitectura:
+
+1. **Un matmul nulo en la salida.** `logits = outbound_proj(h) @ I.T` multiplicaba
+   por la identidad: V×V multiplicaciones por posición de token para no cambiar
+   nada. En la entrada, materializaba un one-hot de V dimensiones para hacer con un
+   matmul denso lo que un lookup de una fila resuelve.
+2. **La tabla identidad se serializaba en cada checkpoint**: 590 MB a 12.143 tokens
+   (`current` + `best` + `final` + 7 hitos + etapa ⇒ decenas de GB por run).
+
+Consecuencia sobre la tesis: la baza (b) del informe del 5-ago —"el glifo decodifica
+~4.7× más barato con vocabulario grande (medido 15 vs 70 s/época)"— **medía la
+implementación del baseline, no la arquitectura**. Es el modo de fallo de DL-004
+otra vez: medir el instrumento y creer que se mide al alumno.
+
+Además, `weight_decay=0.05` se aplicaba uniformemente. El gradiente de
+`inbound_proj` es denso aunque solo unas pocas columnas reciban señal, así que cada
+step encogía el embedding de las palabras raras del brazo estándar entre sus
+actualizaciones infrecuentes; el glifo no sufre eso (sus 65 primos se actualizan en
+cada batch). Los dos brazos NO recibían el mismo trato de regularización, y la
+penalización caía justo sobre lo que miden OOD y gen_valid.
+
+**Decisión.**
+1. **Fast-path one-hot en `BitNet4LayerModel`**: si la tabla es la identidad
+   (`_is_identity_matrix`), la entrada se resuelve con `F.embedding` sobre
+   `inbound_proj.weight.t()` y la salida es `outbound_proj(h)` a secas. **Bitwise
+   idéntico** al camino denso — fijado con `torch.equal` en
+   `tests/test_embedding_arms.py`, no con tolerancias.
+2. La tabla identidad deja de persistirse (`persistent=False`); es reconstruible
+   desde `vocab_size`. `load_state_dict` descarta la clave sobrante, así que **los
+   checkpoints antiguos del brazo estándar siguen cargando exactos** y los ~60
+   sitios de carga del repo no se tocan.
+3. **`--wd_mode {uniform,no_embed}`** (`build_param_groups`). Default `uniform`: es
+   el trato con el que corrieron las réplicas DL-006 y no se cambia un instrumento
+   bajo los pies de una comparativa ya publicada (D3). `no_embed` exime las tablas
+   de embedding (entrada, salida, posicionales, primos) y es el trato **simétrico**,
+   recomendado para BIT-003 y cualquier comparativa nueva.
+4. **`scripts/bench_embedding_arms.py`** queda como el instrumento que produce la
+   cifra de coste publicable.
+
+**Evidencia (medida, RTX 5070, dim 128, batch 64, seq 128, BF16, V=12.143).**
+
+| | glyph | standard antes | standard después |
+|---|---|---|---|
+| ms/step | 25,49 | **291,94** | **24,16** |
+| pico VRAM | 1.538 MB | 2.591 MB | 2.121 MB |
+| checkpoint | 7,8 MB | **579,1 MB** | **16,6 MB** |
+| params | 1.247.880 | 4.348.168 | 4.348.168 |
+
+El brazo estándar acelera **12,1×** y su checkpoint encoge **35×**. Con el baseline
+justo, el estándar es un **10% más rápido** que el glifo por step, no 4,7× más lento.
+Y el escalado va en la misma dirección: ratio standard/glyph 0,97 (V=1.000) → 0,99
+(V=3.000) → 0,92 (V=6.000) → 0,90 (V=12.143), o sea que la ventaja del estándar
+**crece** con el vocabulario en lugar de cerrarse. Razón: el `decode_logits` del
+glifo tiene que **componer** las V palabras desde los primos (V×65×d) y luego
+puntuarlas (V×d) — el O(65·d) describe el tamaño de la TABLA, no el coste del logit.
+
+**Qué se retracta y qué sobrevive.**
+- **Retirada** la baza (b) del informe del 5-ago (`docs/sessions/20260805/
+  INFORME_DL006_MATRIZ.md`, lectura 3): el glifo NO decodifica más barato. Ni a
+  12k tokens ni en tendencia.
+- **Intacta** la lectura 2 (el embedding estándar ajusta mejor la distribución en
+  las 8 mediciones): el fast-path es bitwise equivalente, así que **ningún
+  resultado previo del brazo estándar queda invalidado** — a diferencia de DL-004,
+  aquí no se cae nada. Las réplicas multi-semilla siguen en pie.
+- **Reformulada** la ventaja del glifo, que sigue siendo real: es una victoria de
+  **compresión**, no de velocidad — 3,5× menos parámetros (1,25M vs 4,35M) y
+  checkpoint 2,1× menor con vocabulario de 12k, a rendimiento comparable. Junto a
+  la capacidad exclusiva de vocabulario en caliente (M5), esa es la tesis
+  defendible: el glifo no es un mejor modelo de lenguaje, es un modelo **más
+  pequeño y extensible**.
+
+**Pendiente que esto abre.** El `wd_mode="no_embed"` no está medido: si se adopta en
+BIT-003, la comparativa nueva no es directamente comparable con las réplicas
+DL-006 en épocas-hasta-hito. Decidir A/B corto antes del run largo.
+
+**Referencias.** DL-004 (medir el instrumento) · DL-006 (brazo v0) ·
+`tests/test_embedding_arms.py` · `tests/test_weight_decay_modes.py` ·
+`storage/benchmarks/embedding_arms_bench.json`.
+
+---
+
 ## DL-006 · 2026-08-03 — Protocolo adaptativo: la edad se mide en hitos superados, no en épocas; y nace el brazo Bit v0 (embedding estándar)
 
 **Problema.** El calendario de v1 (1408 épocas fijas) aplicado a v2 sobreentrena

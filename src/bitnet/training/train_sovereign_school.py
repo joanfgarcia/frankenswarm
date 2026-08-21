@@ -1,6 +1,8 @@
 import json
 import os
+import random
 import re
+from collections import Counter
 
 import numpy as np
 import torch
@@ -8,8 +10,15 @@ import torch.nn.functional as F  # noqa: N812
 
 from src.bitnet.model.modeling_bitnet import BitNet4LayerModel
 from src.bitnet.training.modules.corpus import compute_corpus_hash, load_tokenized_cache, save_tokenized_cache
-from src.bitnet.training.modules.exam_compiler import compile_exam_sequences_for_age
-from src.bitnet.training.modules.partitioner import compile_stage_dataset, partition_corpus_by_mlu
+from src.bitnet.training.modules.exam_compiler import compile_exam_sequences_for_age, exam_answer_words_for_age
+from src.bitnet.training.modules.partitioner import bucketize_batches, compile_stage_dataset, partition_corpus_by_mlu
+from src.bitnet.training.modules.stage_gating import (
+	apply_stage_gate,
+	build_all_stage_masks,
+	classify_sequences_by_gate,
+	loss_mask_for_gate,
+	token_min_stage,
+)
 from src.bitnet.training.modules.stage_config import get_next_dim, get_stage_config
 from src.bitnet.training.modules.state_manager import run_samantha_eval, trigger_neurogenesis
 from src.bitnet.training.modules.strategy import select_strategy
@@ -149,6 +158,15 @@ def run_school_training():
 		help="Activar estados de optimizador 8-bit vía bitsandbytes (ahorra ~75% VRAM para m/v). Requiere bitsandbytes>=0.44.0. Default: off",
 	)
 	parser.add_argument(
+		"--wd_mode",
+		type=str,
+		default="uniform",
+		choices=["uniform", "no_embed"],
+		help="Trato de weight decay (DL-007). 'uniform' = histórico, decay sobre todo (el trato con el que corrieron las réplicas DL-006). "
+		"'no_embed' = exime las tablas de embedding: trato simétrico entre brazos, recomendado para comparativas nuevas — con decay uniforme "
+		"el embedding de una palabra rara del brazo estándar se encoge entre sus actualizaciones infrecuentes y el glifo no sufre eso",
+	)
+	parser.add_argument(
 		"--adaptive",
 		action="store_true",
 		help="Protocolo adaptativo DL-006 (brazo control v1): cada etapa entrena hasta plateau, "
@@ -166,6 +184,17 @@ def run_school_training():
 		help="Brazo de embedding (DL-006): glyph = composicional de primos (v1 clásico); "
 		"standard = tabla one-hot congelada + proyecciones entrenables ≡ nn.Embedding estándar "
 		"(brazo control 'inglés + estándar'). El evaluador de Samantha detecta el modo por el checkpoint.",
+	)
+	parser.add_argument(
+		"--full_tinystories",
+		action="store_true",
+		help="Usar el dataset TinyStories completo (2.1M historias, ~500M tokens) en vez del subconjunto de 100k.",
+	)
+	parser.add_argument(
+		"--samples_per_epoch",
+		type=int,
+		default=400000,
+		help="Nº de secuencias del corpus general muestreadas por época (bucketing por longitud). 400k ≈ 3.7M tokens/época (análisis Chinchilla 21-ago, confirmado por operador).",
 	)
 	parser.add_argument(
 		"--require_gpu",
@@ -263,8 +292,21 @@ def run_school_training():
 	print(f"Diálogos cargados: {len(dialogue_list)}")
 
 	# 3. Caché de corpus tokenizado
+	# TinyStories se carga SIEMPRE antes del hash: n_stories (que entra en el
+	# hash) depende de len(ts_dataset); cargarlo solo en el caché-miss dejaba
+	# NameError en todo arranque (fix B1). Con caché HF local es barato.
 	tokenized_cache_path = os.path.join(base_dir, "storage", "datasets", "tokenized_corpus.json")
-	n_stories = 100000
+	tiny_stories_cache = os.path.join(base_dir, "storage", "datasets", "tiny_stories")
+	os.makedirs(tiny_stories_cache, exist_ok=True)
+	from datasets import load_dataset
+
+	if args.force_download:
+		print("📖 Forzando re-descarga de TinyStories desde HF Hub...")
+		ts_dataset = load_dataset("roneneldan/TinyStories", split="train", cache_dir=tiny_stories_cache, force_redownload=True)
+	else:
+		print("📖 Cargando TinyStories (caché HF local o descarga inicial)...")
+		ts_dataset = load_dataset("roneneldan/TinyStories", split="train", cache_dir=tiny_stories_cache)
+	n_stories = len(ts_dataset) if args.full_tinystories else min(100000, len(ts_dataset))
 	corpus_hash = compute_corpus_hash(base_dir, n_stories)
 	cached = None if args.force_tokenize else load_tokenized_cache(tokenized_cache_path, corpus_hash)
 
@@ -275,25 +317,17 @@ def run_school_training():
 		tokenized_preschool_curriculum = cached["preschool_curriculum"]
 		tokenized_primary = cached["primary"]
 		tokenized_secondary = cached["secondary"]
+		tokenized_childes = cached.get("childes", [])
 		print(
-			f"  ✓ {len(tiny_stories_tokenized):,} secuencias TinyStories + {len(tokenized_dialogues):,} diálogos + {len(tokenized_preschool_curriculum):,} preescolar + {len(tokenized_primary):,} primaria + {len(tokenized_secondary):,} secundaria"
+			f"  ✓ {len(tiny_stories_tokenized):,} secuencias TinyStories + {len(tokenized_dialogues):,} diálogos + {len(tokenized_preschool_curriculum):,} preescolar + {len(tokenized_primary):,} primaria + {len(tokenized_secondary):,} secundaria + {len(tokenized_childes):,} CHILDES-en"
 		)
+		# Censo por PALABRA, no por id: build_stage_logit_mask cruza el top-N con
+		# word_to_idx — un Counter de ids no desbloqueaba nada (fix B2). t > 1
+		# excluye <pad>/<unk>: <unk> (~0.5% del corpus) entraría al top-200.
+		childes_freq = Counter()
+		for seq in tokenized_childes:
+			childes_freq.update(idx_to_word[t] for t in seq if t > 1)
 	else:
-		tiny_stories_cache = os.path.join(base_dir, "storage", "datasets", "tiny_stories")
-		os.makedirs(tiny_stories_cache, exist_ok=True)
-		from datasets import load_dataset
-
-		if args.force_download:
-			print("📖 Forzando re-descarga de TinyStories desde HF Hub...")
-			ts_dataset = load_dataset("roneneldan/TinyStories", split="train", cache_dir=tiny_stories_cache, force_redownload=True)
-		elif os.listdir(tiny_stories_cache):
-			print("📖 Cargando TinyStories desde caché local...")
-			ts_dataset = load_dataset("roneneldan/TinyStories", split="train", cache_dir=tiny_stories_cache)
-		else:
-			print("📖 Descargando TinyStories desde HF Hub (primera vez)...")
-			ts_dataset = load_dataset("roneneldan/TinyStories", split="train", cache_dir=tiny_stories_cache)
-
-		n_stories = min(100000, len(ts_dataset))
 		print(f"  ✓ {n_stories:,} historias disponibles en TinyStories.")
 
 		if args.force_tokenize:
@@ -336,6 +370,18 @@ def run_school_training():
 		tokenized_secondary = [tokenize(s, word_to_idx) for s in secondary_sentences]
 		tokenized_secondary = [seq for seq in tokenized_secondary if len(seq) >= 2]
 
+		# Tokenizar CHILDES-en (corpus de lenguaje infantil real, 1.45M oraciones)
+		childes_data = json.load(open(os.path.join(base_dir, "configs", "childes_pre_school_en.json")))
+		print(f"📚 [DATOS] CHILDES-en: {len(childes_data):,} oraciones.")
+		tokenized_childes = [tokenize(s, word_to_idx) for s in childes_data]
+		tokenized_childes = [seq for seq in tokenized_childes if 2 <= len(seq) <= 64]
+		del childes_data
+		# Censo por PALABRA, no por id (fix B2; ver rama de caché arriba).
+		childes_freq = Counter()
+		for seq in tokenized_childes:
+			childes_freq.update(idx_to_word[t] for t in seq if t > 1)
+		print(f"  ✓ {len(tokenized_childes):,} secuencias tokenizadas de CHILDES-en ({len(childes_freq):,} palabras únicas).")
+
 		# Guardar caché
 		save_tokenized_cache(
 			tokenized_cache_path,
@@ -346,33 +392,63 @@ def run_school_training():
 				"preschool_curriculum": tokenized_preschool_curriculum,
 				"primary": tokenized_primary,
 				"secondary": tokenized_secondary,
+				"childes": tokenized_childes,
 			},
 		)
 		print(f"💾 Caché tokenizado guardado en {tokenized_cache_path}")
-		del ts_dataset
-		import gc
 
-		gc.collect()
+	del ts_dataset
+	import gc
+
+	gc.collect()
 
 	# El corpus preescolar principal son las TinyStories tokenizadas
 	tokenized_preschool = tiny_stories_tokenized
+
+	# ── Gateo de vocabulario por etapa (BIT-003) ──
+	# Máscaras de logits: cada etapa solo puede PRODUCIR el vocabulario de su
+	# edad (primos EN + safe words + top-N CHILDES + currículo + respuestas de
+	# examen de la etapa). El input ve el corpus completo; la pérdida excluye
+	# targets vetados.
+	stage_config = get_stage_config(args.base_epochs, args.stage_scale)
+
+	# Respuestas de examen acumuladas por etapa → entran al gateo (fix S5:
+	# 'moon' era examen de edad 2 pero estaba vetado en E1, y sus ×300
+	# secuencias nunca entrenaban la respuesta).
+	exam_words_by_stage = []
+	_acc_exam_words: set = set()
+	for _cfg in stage_config:
+		if _cfg["age"] is not None:
+			_acc_exam_words |= exam_answer_words_for_age(_cfg["age"], exams_data, dictionary)
+		exam_words_by_stage.append(set(_acc_exam_words))
+
+	stage_masks = build_all_stage_masks(vocab_size, word_to_idx, childes_freq, curriculum_data, exam_words_by_stage)
+	print(
+		"  🚧 [GATEO] Palabras producibles por etapa: "
+		+ ", ".join(f"E{i}:{int((m == 0).sum())}" for i, m in enumerate(stage_masks))
+	)
 
 	# Mezclar 10% de diálogos
 	num_dialogues = int(len(tokenized_dialogues) * 0.1)
 	preschool_dialogues = tokenized_dialogues[:num_dialogues]
 
-	# Particionar corpus general
-	tokenized_general = tokenized_preschool + preschool_dialogues
-	gen_0_1, gen_1_2, gen_2_3, gen_3_4 = partition_corpus_by_mlu(tokenized_general)
+	# ── Clasificación del corpus general por gateo (BIT-003) ──
+	# Cada frase se asigna a la etapa mínima cuyo vocabulario cubre ≥95% de
+	# sus tokens (umbral). CHILDES (habla real infantil) cae naturalmente en
+	# etapas tempranas; TinyStories se incorpora según su vocabulario.
+	tokenized_general = tokenized_preschool + preschool_dialogues + tokenized_childes
+	token_min_stage_arr = token_min_stage(stage_masks, vocab_size)
+	gated_general = classify_sequences_by_gate(tokenized_general, token_min_stage_arr)
+	print(
+		"  🚧 [CLASIFICACIÓN] Corpus general por etapa: "
+		+ ", ".join(f"E{i}:{len(g)}" for i, g in enumerate(gated_general))
+	)
 
-	# Particionar currículo estructurado preescolar
+	# Particionar currículo estructurado preescolar (por MLU — material pequeño)
 	curr_0_1, curr_1_2, curr_2_3, curr_3_4 = partition_corpus_by_mlu(tokenized_preschool_curriculum)
 
-	print("Particiones MLU General:")
-	print(f"  - 0-1 Año (MLU <= 2): {len(gen_0_1)} secuencias")
-	print(f"  - 1-2 Años (MLU = 3): {len(gen_1_2)} secuencias")
-	print(f"  - 2-3 Años (MLU 4-5): {len(gen_2_3)} secuencias")
-	print(f"  - 3-4 Años (MLU 6+): {len(gen_3_4)} secuencias")
+	print("Particiones currículo MLU:")
+	print(f"  - 0-1: {len(curr_0_1)} | 1-2: {len(curr_1_2)} | 2-3: {len(curr_2_3)} | 3-4: {len(curr_3_4)}")
 
 	# Dividir currículo en mitades
 	primary_half1 = tokenized_primary[: len(tokenized_primary) // 2]
@@ -389,7 +465,11 @@ def run_school_training():
 
 	secondary_dialogues_half1 = secondary_dialogues_total[: len(secondary_dialogues_total) // 2]
 
-	stage_cache_dir = os.path.join(base_dir, "storage", "datasets", "stage_cache")
+	# La caché de etapa contiene token-IDs y secuencias de examen: DEBE estar
+	# keyeada por el hash del corpus (vocabulario + currículo + exámenes). Una
+	# caché plana compartida entre censos/currículos distintos re-serviría datos
+	# viejos en silencio (p. ej. el spanglish pre-BIT-003) o IDs de otro vocabulario.
+	stage_cache_dir = os.path.join(base_dir, "storage", "datasets", "stage_cache", corpus_hash)
 	os.makedirs(stage_cache_dir, exist_ok=True)
 
 	# Helper para compilar datos por etapa con 20% currículo (con caché persistente en disco)
@@ -414,30 +494,30 @@ def run_school_training():
 		print(f"🔄 Compilando dataset de la etapa {stage_idx} (variaciones de exámenes en CPU)...")
 
 		if stage_idx == 0:
-			general = gen_0_1
 			# Sin currículo en etapa 0 (0-1 años)
 			curriculum = curr_0_1
 		elif stage_idx == 1:
-			general = gen_0_1 + gen_1_2
 			curriculum = curr_0_1 + curr_1_2
 		elif stage_idx == 2:
-			general = gen_0_1 + gen_1_2 + gen_2_3
 			curriculum = curr_0_1 + curr_1_2 + curr_2_3
 		elif stage_idx == 3:
-			general = gen_0_1 + gen_1_2 + gen_2_3 + gen_3_4
 			curriculum = curr_0_1 + curr_1_2 + curr_2_3 + curr_3_4
 		elif stage_idx == 4:
-			general = gen_0_1 + gen_1_2 + gen_2_3 + gen_3_4 + primary_dialogues_half1
 			curriculum = curr_0_1 + curr_1_2 + curr_2_3 + curr_3_4 + primary_half1
 		elif stage_idx == 5:
-			general = gen_0_1 + gen_1_2 + gen_2_3 + gen_3_4 + primary_dialogues_half1 + primary_dialogues_half2
 			curriculum = curr_0_1 + curr_1_2 + curr_2_3 + curr_3_4 + primary_half1 + primary_half2
 		elif stage_idx == 6:
-			general = gen_0_1 + gen_1_2 + gen_2_3 + gen_3_4 + primary_dialogues_total + secondary_dialogues_half1
 			curriculum = curr_0_1 + curr_1_2 + curr_2_3 + curr_3_4 + tokenized_primary + secondary_half1
 		else:
-			general = gen_0_1 + gen_1_2 + gen_2_3 + gen_3_4 + primary_dialogues_total + secondary_dialogues_total
 			curriculum = curr_0_1 + curr_1_2 + curr_2_3 + curr_3_4 + tokenized_primary + tokenized_secondary
+
+		# Corpus general: acumulado por etapas del gateo (E0..E{stage_idx}).
+		# CHILDES en etapas tempranas + TinyStories incorporadas según gateo.
+		general = [s for i in range(stage_idx + 1) for s in gated_general[i]]
+		if stage_idx >= 4:
+			general = general + primary_dialogues_total
+		if stage_idx >= 6:
+			general = general + secondary_dialogues_total
 
 		# Mix in exam sequences up to the current stage's age
 		exams = []
@@ -474,7 +554,18 @@ def run_school_training():
 	state_path = os.path.join(save_dir, "school_state.json")
 	os.makedirs(save_dir, exist_ok=True)
 
-	stage_config = get_stage_config(args.base_epochs, args.stage_scale)
+	# Máscaras de gateo persistidas para el evaluador (DL-009): Samantha debe
+	# permitir EXACTAMENTE el vocabulario que el entrenamiento dejó producir —
+	# el gateo legado del evaluador tragaba todo CHILDES (18k palabras a edad 2).
+	gate_masks_path = os.path.join(save_dir, "stage_gate_masks.json")
+	with open(gate_masks_path, "w", encoding="utf-8") as f:
+		json.dump({
+			"corpus_hash": corpus_hash,
+			"vocab_size": vocab_size,
+			"stage_allowed": [torch.nonzero(m == 0).flatten().tolist() for m in stage_masks],
+		}, f)
+	print(f"🔒 [GATEO] Máscaras por etapa persistidas para el evaluador: {gate_masks_path}")
+
 	max_epochs = stage_config[-1]["end_epoch"]
 
 	current_epoch = 1
@@ -584,8 +675,10 @@ def run_school_training():
 	print(f"Modelo instanciado. Total parámetros: {n_params:,}")
 
 	# Seleccionar estrategia de entrenamiento según flags
-	strategy = select_strategy(args.amp, args.opt8bit)
-	print(f"🎯 [STRATEGY] Estrategia seleccionada: {strategy.name}")
+	# select_strategy no entiende "auto": se le pasa el modo AMP ya resuelto
+	# (amp_enabled), o con --amp auto en GPU BF16 elegiría la estrategia fp32.
+	strategy = select_strategy("bf16" if amp_enabled else "off", args.opt8bit, wd_mode=args.wd_mode)
+	print(f"🎯 [STRATEGY] Estrategia seleccionada: {strategy.name} · weight decay: {args.wd_mode}")
 
 	lr_scale = 128.0 / model.hidden_dim
 	optimizer = strategy.create_optimizer(model, lr_scale)
@@ -633,7 +726,9 @@ def run_school_training():
 
 		loaded_stage = -1
 		x_train_gen = x_train_curr = x_val = None
+		n_val_seqs = 0
 		epochs_this_run = 0
+		a_stage_mask = stage_masks[0].to(device)
 
 		def _save_adaptive_state():
 			with open(state_path, "w", encoding="utf-8") as sf:
@@ -664,14 +759,14 @@ def run_school_training():
 			if loaded_stage != a_stage_idx:
 				print(f"\n🎒 [ETAPA ADAPTATIVA] Compilando dataset de {cfg['name']}...")
 				general_data, curriculum_data_st = compile_data_for_stage(a_stage_idx)
-				train_gen, val_gen = compile_stage_dataset(general_data, seq_len=128)
-				train_curr, val_curr = compile_stage_dataset(curriculum_data_st, seq_len=128)
-				x_train_gen = torch.tensor(train_gen, dtype=torch.long)
-				x_train_curr = torch.tensor(train_curr, dtype=torch.long)
+				train_gen, val_gen = compile_stage_dataset(general_data, seq_len=None)
+				train_curr, val_curr = compile_stage_dataset(curriculum_data_st, seq_len=None)
 				val_seqs = val_gen + val_curr
-				x_val = torch.tensor(val_seqs, dtype=torch.long) if len(val_seqs) > 0 else None
+				n_val_seqs = len(val_seqs)
+				x_val = bucketize_batches(val_seqs, batch_size=batch_size) if len(val_seqs) > 0 else []
+				a_stage_mask = stage_masks[a_stage_idx].to(device)
 				loaded_stage = a_stage_idx
-				print(f"  ✓ Gen: {len(x_train_gen)} | Curr: {len(x_train_curr)} | Val: {len(x_val) if x_val is not None else 0}")
+				print(f"  ✓ Gen: {len(train_gen):,} | Curr: {len(train_curr):,} | Val batches: {len(x_val)}")
 
 			a_global_epoch += 1
 			a_epoch_in_stage += 1
@@ -688,45 +783,50 @@ def run_school_training():
 
 			model.train()
 			epoch_loss = 0.0
-			max_gen_seqs_per_epoch = 15000
-			if x_train_gen.size(0) > max_gen_seqs_per_epoch:
-				x_gen_sub = x_train_gen[torch.randperm(x_train_gen.size(0))[:max_gen_seqs_per_epoch]]
+			max_gen_seqs_per_epoch = args.samples_per_epoch
+			if len(train_gen) > max_gen_seqs_per_epoch:
+				x_gen_sub = train_gen.copy()
+				random.shuffle(x_gen_sub)
+				x_gen_sub = x_gen_sub[:max_gen_seqs_per_epoch]
 			else:
-				x_gen_sub = x_train_gen
-			x_epoch = torch.cat([x_gen_sub, x_train_curr], dim=0)
-			permutation = torch.randperm(x_epoch.size(0))
+				x_gen_sub = train_gen
+			x_epoch = x_gen_sub + train_curr
+			batches = bucketize_batches(x_epoch, batch_size=batch_size, seed=epochs_this_run)
 
-			for i in range(0, x_epoch.size(0), batch_size):
-				batch_x = x_epoch[permutation[i : i + batch_size]]
+			for batch_x in batches:
 				optimizer.zero_grad()
 				inputs = batch_x[:, :-1].to(device)
 				targets = batch_x[:, 1:].to(device)
 				with autocast_ctx():
-					logits = train_model(inputs, tau=tau)
+					logits = apply_stage_gate(train_model(inputs, tau=tau), a_stage_mask)
 					loss_elementwise = F.cross_entropy(logits.reshape(-1, vocab_size), targets.reshape(-1), reduction="none")
 					loss_elementwise = loss_elementwise.reshape(targets.shape)
 					mask = (torch.cumsum((targets == 0).to(torch.int32), dim=-1) <= 1).to(logits.dtype)
-					loss = (loss_elementwise * mask).sum() / mask.sum()
+					mask = loss_mask_for_gate(mask, targets, a_stage_mask)
+					loss = (loss_elementwise.masked_fill(mask == 0, 0.0)).sum() / mask.sum()
 				loss.backward()
 				torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
 				optimizer.step()
 				epoch_loss += loss.item() * batch_x.size(0)
-			epoch_loss /= x_epoch.size(0)
+			# len(x_epoch) real: con menos datos que samples_per_epoch (etapas
+			# tempranas, smokes) el denominador fijo desinflaba la loss ~5×.
+			epoch_loss /= max(1, len(x_epoch))
 
 			val_loss = 0.0
-			if x_val is not None and len(x_val) > 0:
+			if len(x_val) > 0:
 				model.eval()
 				with torch.no_grad():
-					for vi in range(0, x_val.size(0), batch_size):
-						batch_xv = x_val[vi : vi + batch_size].to(device)
+					for batch_xv in x_val:
+						batch_xv = batch_xv.to(device)
 						inputs_v, targets_v = batch_xv[:, :-1], batch_xv[:, 1:]
 						with autocast_ctx():
-							logits_v = train_model(inputs_v)
+							logits_v = apply_stage_gate(train_model(inputs_v), a_stage_mask)
 							lve = F.cross_entropy(logits_v.reshape(-1, vocab_size), targets_v.reshape(-1), reduction="none").reshape(targets_v.shape)
 							mv = (torch.cumsum((targets_v == 0).to(torch.int32), dim=-1) <= 1).to(logits_v.dtype)
-							loss_v = (lve * mv).sum() / mv.sum()
+							mv = loss_mask_for_gate(mv, targets_v, a_stage_mask)
+							loss_v = (lve.masked_fill(mv == 0, 0.0)).sum() / mv.sum()
 						val_loss += loss_v.item() * batch_xv.size(0)
-					val_loss /= x_val.size(0)
+					val_loss /= n_val_seqs
 
 			print(f"  [Ép. {a_global_epoch} | {cfg['name']} ép.{a_epoch_in_stage}] Loss: {epoch_loss:.4f} | Val: {val_loss:.4f} | lr: {current_lr:.2e} | dim: {model.hidden_dim}")
 
@@ -761,6 +861,10 @@ def run_school_training():
 					)
 					model = eval_result.model
 					train_model = _maybe_compile(model)
+					# run_samantha_eval registra el suspenso en el fichero de estado;
+					# sin este sync, _save_adaptive_state() machacaría el contador
+					# con el valor viejo en memoria y el acta de suspensos se perdería.
+					exam_failures = eval_result.state.get("exam_failures", exam_failures)
 					if eval_result.passed:
 						print(f"🎓 [ADAPTIVE] Hito {milestone_name} APROBADO en {a_epoch_in_stage} épocas con {model.hidden_dim}d.")
 						advance = True
@@ -834,17 +938,15 @@ def run_school_training():
 			print(f"\n🎒 [CAMBIO DE ETAPA] Época {epoch}: Compilando dataset para la etapa {stage_name}...")
 			general_data, curriculum_data = compile_data_for_stage(stage_idx)
 
-			train_gen, val_gen = compile_stage_dataset(general_data, seq_len=128)
-			train_curr, val_curr = compile_stage_dataset(curriculum_data, seq_len=128)
+			train_gen, val_gen = compile_stage_dataset(general_data, seq_len=None)
+			train_curr, val_curr = compile_stage_dataset(curriculum_data, seq_len=None)
 
-			x_train_gen = torch.tensor(train_gen, dtype=torch.long)
-			x_train_curr = torch.tensor(train_curr, dtype=torch.long)
-
-			# Combine validation directly
+			# Validate: bucketing por longitud (padding dinámico intra-batch)
 			val_seqs = val_gen + val_curr
-			x_val = torch.tensor(val_seqs, dtype=torch.long) if len(val_seqs) > 0 else None
+			n_val_seqs = len(val_seqs)
+			x_val = bucketize_batches(val_seqs, batch_size=batch_size) if len(val_seqs) > 0 else []
 			active_stage_idx = stage_idx
-			print(f"  ✓ Gen Train: {len(x_train_gen)} | Curr Train: {len(x_train_curr)} | Val: {len(x_val) if x_val is not None else 0}")
+			print(f"  ✓ Gen Train: {len(train_gen):,} | Curr Train: {len(train_curr):,} | Val: {n_val_seqs:,}")
 
 		# Warmup de learning rate lineal (primeras 10 épocas) o decaimiento coseno por etapa
 		lr_scale = 128.0 / model.hidden_dim
@@ -879,35 +981,35 @@ def run_school_training():
 			torch.cuda.reset_peak_memory_stats()
 
 		# Subsamplear solo general y concatenar con currículo/exámenes completos
-		max_gen_seqs_per_epoch = 15000
-		if x_train_gen.size(0) > max_gen_seqs_per_epoch:
-			subsample_idx = torch.randperm(x_train_gen.size(0))[:max_gen_seqs_per_epoch]
-			x_gen_sub = x_train_gen[subsample_idx]
+		max_gen_seqs_per_epoch = args.samples_per_epoch
+		if len(train_gen) > max_gen_seqs_per_epoch:
+			x_gen_sub = train_gen.copy()
+			random.shuffle(x_gen_sub)
+			x_gen_sub = x_gen_sub[:max_gen_seqs_per_epoch]
 		else:
-			x_gen_sub = x_train_gen
+			x_gen_sub = train_gen
 
-		x_epoch = torch.cat([x_gen_sub, x_train_curr], dim=0)
-		permutation = torch.randperm(x_epoch.size(0))
+		x_epoch = x_gen_sub + train_curr
+		batches = bucketize_batches(x_epoch, batch_size=batch_size, seed=epoch)
+		stage_mask = stage_masks[active_stage_idx].to(device)
 
-		for i in range(0, x_epoch.size(0), batch_size):
-			indices = permutation[i : i + batch_size]
-			batch_x = x_epoch[indices]
-
+		for batch_x in batches:
 			try:
 				optimizer.zero_grad()
 				inputs = batch_x[:, :-1].to(device)
 				targets = batch_x[:, 1:].to(device)
 
 				with autocast_ctx():
-					logits = train_model(inputs, tau=tau)
+					logits = apply_stage_gate(train_model(inputs, tau=tau), stage_mask)
 
 					loss_elementwise = F.cross_entropy(logits.reshape(-1, vocab_size), targets.reshape(-1), reduction="none")
 					loss_elementwise = loss_elementwise.reshape(targets.shape)
 					is_zero = (targets == 0).to(torch.int32)
 					cumsum_zero = torch.cumsum(is_zero, dim=-1)
 					mask = (cumsum_zero <= 1).to(logits.dtype)
+					mask = loss_mask_for_gate(mask, targets, stage_mask)
 
-					loss = (loss_elementwise * mask).sum() / mask.sum()
+					loss = (loss_elementwise.masked_fill(mask == 0, 0.0)).sum() / mask.sum()
 				loss.backward()
 				torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
 				optimizer.step()
@@ -919,6 +1021,7 @@ def run_school_training():
 					torch.cuda.empty_cache()
 					device = torch.device("cpu")
 					model = model.to(device)
+					stage_mask = stage_mask.to(device)
 					for state_opt in optimizer.state.values():
 						for k, v in state_opt.items():
 							if isinstance(v, torch.Tensor):
@@ -929,15 +1032,16 @@ def run_school_training():
 					optimizer.zero_grad()
 					inputs = batch_x[:, :-1].to(device)
 					targets = batch_x[:, 1:].to(device)
-					logits = model(inputs, tau=tau)
+					logits = apply_stage_gate(model(inputs, tau=tau), stage_mask)
 
 					loss_elementwise = F.cross_entropy(logits.reshape(-1, vocab_size), targets.reshape(-1), reduction="none")
 					loss_elementwise = loss_elementwise.reshape(targets.shape)
 					is_zero = (targets == 0).to(torch.int32)
 					cumsum_zero = torch.cumsum(is_zero, dim=-1)
 					mask = (cumsum_zero <= 1).to(logits.dtype)
+					mask = loss_mask_for_gate(mask, targets, stage_mask)
 
-					loss = (loss_elementwise * mask).sum() / mask.sum()
+					loss = (loss_elementwise.masked_fill(mask == 0, 0.0)).sum() / mask.sum()
 					loss.backward()
 					torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
 					optimizer.step()
@@ -946,29 +1050,30 @@ def run_school_training():
 				else:
 					raise
 
-		epoch_loss /= x_epoch.size(0)
+		epoch_loss /= max(1, len(x_epoch))
 
 		# Calcular pérdida de validación (val_loss)
 		val_loss = 0.0
-		if x_val is not None and len(x_val) > 0:
+		if len(x_val) > 0:
 			model.eval()
 			with torch.no_grad():
-				for vi in range(0, x_val.size(0), batch_size):
-					batch_xv = x_val[vi : vi + batch_size].to(device)
+				for batch_xv in x_val:
+					batch_xv = batch_xv.to(device)
 					inputs_v = batch_xv[:, :-1]
 					targets_v = batch_xv[:, 1:]
 
 					with autocast_ctx():
-						logits_v = train_model(inputs_v)
+						logits_v = apply_stage_gate(train_model(inputs_v), stage_mask)
 						loss_v_elem = F.cross_entropy(logits_v.reshape(-1, vocab_size), targets_v.reshape(-1), reduction="none")
 						loss_v_elem = loss_v_elem.reshape(targets_v.shape)
 						is_zero_v = (targets_v == 0).to(torch.int32)
 						cumsum_zero_v = torch.cumsum(is_zero_v, dim=-1)
 						mask_v = (cumsum_zero_v <= 1).to(logits_v.dtype)
+						mask_v = loss_mask_for_gate(mask_v, targets_v, stage_mask)
 
-						loss_v = (loss_v_elem * mask_v).sum() / mask_v.sum()
+						loss_v = (loss_v_elem.masked_fill(mask_v == 0, 0.0)).sum() / mask_v.sum()
 					val_loss += loss_v.item() * batch_xv.size(0)
-				val_loss /= x_val.size(0)
+				val_loss /= n_val_seqs
 
 		# Telemetría RFC-VRAM-001: VRAM pico de la época y salud del STE bajo AMP
 		# (el gradiente de BitLinear en cero delataría un STE roto — §4.8.1).
@@ -983,7 +1088,7 @@ def run_school_training():
 		)
 
 		# ── Neurogénesis dirigida por dolor (plateau de val_loss) ──
-		if x_val is not None and val_loss > 0:
+		if len(x_val) > 0 and val_loss > 0:
 			if val_loss < best_val_loss - args.min_delta:
 				best_val_loss = val_loss
 				epochs_without_improvement = 0
@@ -1040,24 +1145,23 @@ def run_school_training():
 
 		allowed_vocab = get_allowed_vocab_for_age(eval_age, base_dir)
 		special_tokens = {
-			"yo",
-			"tú",
+			"i",
+			"you",
 			"<pad>",
 			"<unk>",
-			"hola",
-			"mamá",
-			"papá",
-			"nene",
-			"nena",
-			"miau",
-			"guau",
-			"agua",
-			"fuego",
-			"sí",
+			"hello",
+			"mom",
+			"dad",
+			"baby",
+			"meow",
+			"bark",
+			"water",
+			"fire",
+			"yes",
 			"no",
-			"bien",
-			"mal",
-			"pan",
+			"good",
+			"bad",
+			"bread",
 		}
 		allowed_mask = torch.zeros(vocab_size, dtype=torch.bool, device=device)
 		for w, idx in word_to_idx.items():

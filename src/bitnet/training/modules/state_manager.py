@@ -77,6 +77,13 @@ def run_samantha_eval(
 		str(eval_age),
 		"--device",
 		"cpu",
+		# Máscara de gateo REAL de la etapa (DL-009): Samantha permite exactamente
+		# lo que el entrenamiento dejó producir. El evaluador cae al gateo legado
+		# si el fichero no existe (checkpoints antiguos).
+		"--stage_masks",
+		os.path.join(save_dir, "stage_gate_masks.json"),
+		"--stage_idx",
+		str(stage_idx),
 	]
 	if args.test_mock:
 		eval_cmd.append("--test_mock")

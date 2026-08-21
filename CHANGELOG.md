@@ -2,6 +2,138 @@
 
 ## [Unreleased]
 
+### 🎓 BIT-003 — corpus inglés desde cero, gateo de vocabulario por etapa e instrumento v2 (2026-08-20/21)
+
+- **[NEW] Corpus EN íntegro y trazable**: `childes_pre_school_en.json` (1,45M oraciones
+  de habla infantil real, fuente AoA evaportelance) + TinyStories + diálogos EN; censo
+  directo sin mapeo OOV (RULE 7) → vocabulario de **19.637 palabras** con **28/28
+  glifos canónicos** y 19.637 glifos únicos. Artefactos CHAT (`xxx/yyy/www`, 51.440
+  tokens que habrían entrado al top-30 del censo) eliminados del corpus, y apóstrofos
+  normalizados en la tokenización canónica única (`words_of`: `don't→dont`, como la
+  fuente) — la forma partida `don't`(censo 0)/`dont`(censo real) arrastraba TinyStories
+  a etapas tardías.
+- **[NEW] Gateo de producción por etapa (DL-008)**: máscara de logits por edad — núcleo
+  (28 referencias EN + safe words) + top-N de CHILDES por frecuencia de adquisición +
+  currículo + respuestas de examen de la etapa. Gateo medido:
+  `[254, 825, 3008, 5003, 8005, 10003, 15002, 19636]`. Clasificación del corpus al 95%:
+  CHILDES cae 78% en E0-E2 (3,5% E7); TinyStories baja su E7 del 16% al **7,1%** al
+  curar las contracciones. `<unk>` vetado en las 8 etapas, E7 incluida. La pérdida
+  excluye targets vetados; el input ve el corpus completo.
+- **[FIX] Remediación pre-lanzamiento (DL-009, auditoría del 21-ago)** — 5 bloqueantes
+  que habrían quemado el run: `NameError` de arranque (TinyStories se cargaba después
+  del hash que lo necesita), censo de CHILDES por **ids** en vez de palabras (las
+  máscaras quedaban en [107..179] y el 99% del corpus se clasificaba a E7), device
+  mismatch CPU/CUDA en `loss_mask_for_gate` (crash en el primer batch GPU, invisible en
+  smokes CPU), `<unk>` producible en E7, y `xxx` entrenable desde E0.
+- **[NEW] Instrumento de evaluación v2**: exámenes y `AGE_QUESTIONS` a **10 preguntas
+  por edad**, 100% dentro del vocabulario (fuera `aleth/bunker/madrid`: el brazo
+  control mide adquisición de lenguaje, no memorización de tokens sin presencia en
+  corpus). El evaluador de Samantha consume la **máscara real de la etapa**
+  (`stage_gate_masks.json` persistida por el trainer) en generación y monitor OOB —
+  el gateo legado permitía 18k/20k palabras a edad 2 frente a las ~800 entrenables.
+  Veredicto y mock alineados al tamaño real de la batería (un `== 5` hardcodeado
+  suspendía todo examen con media 10/10).
+- **[NEW] Currículo preescolar rico**: 32 items deterministas validados contra el
+  censo, 4 bins MLU poblados `[10,8,8,6]` (antes `[0,0,0,4]`).
+- **[NEW] Aceptación reproducible**: `scripts/audit_stage_gating.py` (22 checks, fuente
+  de las tablas del RFC), `scripts/validate_exam_vocab.py` (instrumentos in-vocab) y
+  `scripts/clean_childes_en_artifacts.py` (idempotente). Verificado: pytest 433 ✓,
+  smokes CPU+GPU de ambos brazos ✓ (loss inicial 5,14 ≈ ln(254): el gate actúa),
+  dry-run del examen E1 con máscara real → APROBADO ✓.
+- **[DOC]** `docs/RFC_GATING_VOCABULARIO_ETAPAS.md` re-medido, DL-008 + DL-009 en el
+  decision log; `samples_per_epoch` por defecto a 400k (análisis Chinchilla,
+  confirmado por operador). Runbook de lanzamiento de ambos brazos en
+  `.red-pill/memory/BIT-003_fix_plan.md` §F8.3.
+
+### 📐 RFC-GROWTH-V6 — la premisa de Net2DeeperNet caducó; la rejilla D×W la sustituye (2026-08-14)
+
+- **[NEW] `docs/RFC_GROWTH_V6_DEPTH_WIDTH.md`** (🟡 propuesta, pendiente de
+  ratificación): plan de crecimiento posterior a DL-006. Tres experimentos con
+  criterios pre-registrados — E1 encender la resonancia (looped transformer ya
+  implementado y **desconectado** en la escuela: profundidad efectiva 12 por 384
+  parámetros, vs ~394.000 de dos capas nuevas), E2 rejilla profundidad×anchura a
+  parámetros constantes en K-65P (5 puntos, W/D de 2,7 a 112, ~3 GPU-h), E3 N2DN solo
+  si pasa su gate. **E1+E2 ≈ 12 GPU-h, menos que las ~18 del único experimento N2DN
+  que sustituyen.**
+- **[⚠️ CADUCIDAD] `bitnet_next_architecture_plan.md` §5 marcado como premisa
+  caducada**: el diagnóstico "W/D=170 fuera de toda configuración BitNet" describía el
+  v1 de 1024d que DL-006 declaró artefacto del calendario. A las anchuras reales
+  (128-256d) la ratio es 21-43 y `D_crit ≈ W^0,44` da 8,5-11,5 capas, así que 6→8
+  aterriza en el techo en lugar de lejos de él: la fórmula que justificaba el plan hoy
+  lo desaconseja. Ficha de "✅ aprobada" a "⚠️ gateada". **La doctrina de la sección
+  (solo sobre copia, control G4 congelado, spec de init, mina ternaria) se conserva
+  íntegra.**
+- **[HALLAZGO] `forward_resonance` está implementado y sin usar en la escuela**: bucle
+  latente cerrado con BPTT (`forward_resonance_training`) y reloj posicional por paso.
+  Es la arquitectura de Saunshi (NeurIPS 2025) que la propia nota de literatura cita
+  — 12 capas en bucle 2× superan a 24 capas con la mitad de parámetros — y el trainer
+  construye con `max_resonance_steps=0` y llama al `forward` plano.
+- **[DEUDA] Sin CLI para la geometría**: `num_layers` está hardcodeado a 6 en el
+  trainer (sin flag) y no hay flags de resonancia. E1/E2 los necesitan; es el único
+  cableado que piden.
+- **[DOC] Balance de la tesis al día**: el informe del 5-ago marca ahora, en la propia
+  lectura 3, qué baza cayó y por qué — (a) no replicó (10-ago), (b) retirada (DL-007),
+  **solo (c) vocabulario en caliente sigue en pie**; la ventaja que sí sobrevive y no
+  estaba en la lista es la compresión. `lab/BRIEFING.md` recoge el estado de la tesis
+  y dos lecciones nuevas (arreglar el baseline antes de comparar; la resonancia está
+  apagada en la escuela).
+
+### ⚖️ DL-007 — el baseline estaba lisiado: brazo estándar 12× más rápido y se retira la baza de coste del glifo (2026-08-14)
+
+- **[FIX] Fast-path one-hot en `BitNet4LayerModel`**: el brazo estándar multiplicaba
+  por una identidad V×V en la salida (matmul nulo) y materializaba one-hots densos
+  en la entrada. Cortocircuitado, **bitwise idéntico** (`torch.equal`, no
+  tolerancias): **291,94 → 24,16 ms/step (12,1×)** a V=12.143, dim 128, BF16.
+- **[FIX] La tabla identidad deja de persistirse**: checkpoints del brazo estándar
+  de **579 → 16,6 MB (35×)**. `load_state_dict` descarta la clave sobrante, así que
+  los checkpoints antiguos siguen cargando exactos y los ~60 sitios de carga del
+  repo no se tocan.
+- **[🔴 RETRACTACIÓN] "El glifo decodifica 4.7× más barato" queda retirada** (baza
+  (b) del informe del 5-ago): medía la implementación del baseline. Con el baseline
+  justo el estándar es 10% MÁS rápido, y el escalado va en su favor (ratio
+  standard/glyph 0,97 → 0,90 al pasar V de 1.000 a 12.143). El `O(65·d)` describe el
+  tamaño de la tabla, no el coste del logit: el glifo compone las V palabras desde
+  los primos en cada forward.
+- **[REFORMULACIÓN] La ventaja del glifo sigue siendo real, pero es compresión, no
+  velocidad**: 3,5× menos parámetros (1,25M vs 4,35M) y checkpoint 2,1× menor a
+  rendimiento comparable. Con M5 (vocabulario en caliente), la tesis defendible es
+  "más pequeño y extensible", no "mejor modelo de lenguaje".
+- **[FEAT] `--wd_mode {uniform,no_embed}`**: con decay uniforme el embedding de una
+  palabra rara del brazo estándar se encoge entre sus actualizaciones infrecuentes y
+  el glifo no sufre eso — los brazos no recibían el mismo trato de regularización.
+  Default `uniform` (histórico, D3); `no_embed` es el simétrico, recomendado para
+  BIT-003 y sin medir todavía.
+- **[NEW] `scripts/bench_embedding_arms.py`**: instrumento que produce la cifra de
+  coste publicable, con resultados acumulativos por etiqueta.
+- **[FIX] `orchestrator.py` resolvía `--amp auto` como fp32** (mismo fallo que ya se
+  curó en el trainer).
+- Nada de aprendizaje queda invalidado: la equivalencia es exacta, así que las
+  réplicas multi-semilla DL-006 y la lectura 2 siguen en pie.
+
+### 🛫 Preflight BIT-003 — auditoría del refactor y desminado de cachés (2026-08-14)
+
+- **[AUDIT] `docs/sessions/20260814/PREFLIGHT_BIT003.md`**: auditoría de coherencia
+  previa al reentrenamiento de v1 en inglés. El trainer refactorizado (PR #5) nunca
+  había corrido una escuela real; smoke test adaptativo en sandbox incluido.
+- **[FIX] Caché de etapa keyeada por corpus**: `stage_cache/<corpus_hash>/` — la caché
+  plana global habría re-servido el dataset spanglish (o token-IDs de otro censo) en
+  silencio tras regenerar currículo/vocabulario.
+- **[FIX] `school_exams_en.json` entra en `compute_corpus_hash`**: los exámenes se
+  mezclan ×300 en el dataset de etapa y no invalidaban ninguna caché.
+- **[FIX] `datasets` declarado en `pyproject.toml`**: el trainer lo importa para
+  TinyStories y no estaba ni en el venv — cualquier run con caché inválida moría en
+  `ModuleNotFoundError`. Resuelve limpio junto a fastembed (el conflicto HF era con
+  `transformers`).
+- **[FIX] Acta de suspensos en modo adaptativo**: `_save_adaptive_state()` machacaba
+  el `exam_failures` que `run_samantha_eval` acababa de incrementar.
+- **[FIX] `select_strategy` recibe el modo AMP resuelto**: con `--amp auto` elegía la
+  estrategia `fp32` (afectaba al log del acta y al cruce con `--opt8bit`).
+- **[NEW] `scripts/download_childes_en.py`** (BIT-003 §1): CHILDES en inglés de la
+  fuente verificada, sin mapeo OOV ciego (RULE 7). No toca el fichero español.
+- **[⚠️ GUARDIA] `--opt8bit` + neurogénesis sin verificar** (mapeo de estados
+  cuantizados en `net2wider`): no usarlo en BIT-003; la receta certificada DL-002
+  sigue siendo `--amp auto --compile`.
+
 ### 🔬 Gating curricular + hot-vocab + extractor de vocabulario — y el hallazgo del spanglish (2026-08-12)
 
 - **[FEAT] `train_sovereign_school_k65p.py` — gating curricular semántico**:

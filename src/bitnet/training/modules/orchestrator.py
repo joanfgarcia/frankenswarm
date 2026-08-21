@@ -41,9 +41,13 @@ class SchoolOrchestrator:
 		self._load_datasets()
 		self._load_or_init_state()
 
-		# Seleccionar estrategia
-		self.strategy = select_strategy(args.amp, args.opt8bit)
-		print(f"🎯 [STRATEGY] Estrategia: {self.strategy.name}")
+		# Seleccionar estrategia. `--amp auto` se resuelve aquí: select_strategy
+		# solo entiende "bf16"/"off" y con "auto" caería a fp32 en una GPU capaz.
+		amp = args.amp
+		if amp == "auto":
+			amp = "bf16" if self.device.type == "cuda" and torch.cuda.is_bf16_supported() else "off"
+		self.strategy = select_strategy(amp, args.opt8bit, wd_mode=getattr(args, "wd_mode", "uniform"))
+		print(f"🎯 [STRATEGY] Estrategia: {self.strategy.name} · weight decay: {getattr(args, 'wd_mode', 'uniform')}")
 
 	def _setup_directories(self):
 		"""Configura directorios de estado y checkpoints."""

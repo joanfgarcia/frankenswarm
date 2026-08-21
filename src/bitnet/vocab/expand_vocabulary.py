@@ -6,11 +6,39 @@ from fastembed import TextEmbedding
 
 from src.bitnet.vocab.glyph_vocabulary import SEMANTIC_PRIMES, VOCABULARY
 
-# Mapeo de claves internas a palabras naturales en español para fastembed
+# Mapeo de claves internas a palabras naturales para fastembed.
+# BIT-003: el vocabulario es INGLÉS (corpus EN de cero) → las 28 palabras de
+# referencia se proyectan con sus equivalentes EN para que la regresión Ridge
+# aprenda en el espacio semántico del corpus real (RULE 7: sin OOV ciego).
 VOCAB_MAP = {
-	"yo_palabra": "yo",
-	"mover_accion": "mover",
-	"ver_accion": "ver",
+	"agua": "water",
+	"comida": "food",
+	"fuego": "fire",
+	"sol": "sun",
+	"noche": "night",
+	"cueva": "cave",
+	"yo_palabra": "i",
+	"peligro": "danger",
+	"comer": "eat",
+	"beber": "drink",
+	"mover_accion": "move",
+	"ver_accion": "see",
+	"dormir": "sleep",
+	"dar": "give",
+	"enseñar": "teach",
+	"aprender": "learn",
+	"bosque": "forest",
+	"río": "river",
+	"piedra": "stone",
+	"árbol": "tree",
+	"tierra": "earth",
+	"lluvia": "rain",
+	"depredador": "predator",
+	"tormenta": "storm",
+	"herida": "wound",
+	"seguro": "safe",
+	"saciado": "full",
+	"grupo": "group",
 }
 
 # Lista de palabras base en español para completar hasta 1,000 términos
@@ -207,9 +235,24 @@ def calibrate_and_project():
 	all_glyphs[continuous_projections > best_theta] = 1
 	all_glyphs[continuous_projections < -best_theta] = -1
 
-	# Conservar EXACTAMENTE los glifos de referencia originales para los tokens de referencia
+	# Conservar EXACTAMENTE los glifos canónicos de referencia. El vocabulario
+	# BIT-003 es EN: la referencia es la palabra EN de VOCAB_MAP — mirar solo la
+	# clave ES dejaba 7/28 referencias EN con glifo Ridge en vez del canónico
+	# ('i' difería en 5 de 65 bits). Una clave ES suelta en el corpus ("agua",
+	# "sol") NO es referencia si su EN está en el vocab: darle también el
+	# canónico creaba pares de glifos idénticos irresolubles (agua/water).
+	EN_CANON = {VOCAB_MAP.get(k, k): VOCABULARY[k] for k in VOCABULARY}
+	final_vocab_set = set(FINAL_VOCAB)
+
+	def _is_canonical(w):
+		if w in EN_CANON:
+			return True
+		return w in VOCABULARY and VOCAB_MAP.get(w, w) not in final_vocab_set
+
 	for idx, w in enumerate(FINAL_VOCAB):
-		if w in VOCABULARY:
+		if w in EN_CANON:
+			all_glyphs[idx] = EN_CANON[w]
+		elif _is_canonical(w):
 			all_glyphs[idx] = VOCABULARY[w]
 
 	# ── DESEMPATADOR DE GLIFOS DUPLICADOS (Asegura unicidad semántica) ──
@@ -230,8 +273,8 @@ def calibrate_and_project():
 		print(f"  [Iteración {iteration+1}] Resolviendo {len(duplicates)} grupos de duplicados ({sum(len(v) for v in duplicates.values())} palabras)...")
 
 		for g_tuple, indices in duplicates.items():
-			ref_indices = [idx for idx in indices if FINAL_VOCAB[idx] in VOCABULARY]
-			non_ref_indices = [idx for idx in indices if FINAL_VOCAB[idx] not in VOCABULARY]
+			ref_indices = [idx for idx in indices if _is_canonical(FINAL_VOCAB[idx])]
+			non_ref_indices = [idx for idx in indices if not _is_canonical(FINAL_VOCAB[idx])]
 
 			g_arr = np.array(g_tuple)
 			zero_dims = np.where(g_arr == 0)[0]

@@ -44,9 +44,19 @@ def generate_question_variations(q_content: str) -> list[str]:
 	return list(set(variations))
 
 
+WORD_RE = re.compile(r"[a-zA-ZáéíóúüñÁÉÍÓÚÜÑ_<>\-]+")
+
+
+def words_of(text: str) -> list[str]:
+	"""Tokenización canónica BIT-003. Los apóstrofos se ELIMINAN (don't→dont):
+	el corpus CHILDES-en upstream viene sin apóstrofos y mantener ambas formas
+	partía la identidad de cada contracción en dos tokens (don't con censo 0 →
+	gateada a E7; dont con censo real). Guiones se conservan."""
+	return WORD_RE.findall(str(text).replace("'", "").lower())
+
+
 def tokenize(text: str, word_to_idx: dict) -> list[int]:
-	words = re.findall(r"[a-zA-ZáéíóúüñÁÉÍÓÚÜÑ_<>'\-]+", text.lower())
-	return [word_to_idx.get(w, 1) for w in words]  # 1 is <unk>
+	return [word_to_idx.get(w, 1) for w in words_of(text)]  # 1 is <unk>
 
 
 def format_and_tokenize_dialogue(dialogue, word_to_idx):
@@ -57,7 +67,7 @@ def format_and_tokenize_dialogue(dialogue, word_to_idx):
 		if match:
 			speaker = match.group(1).lower()
 			content = match.group(2)
-			turn_words = [speaker] + re.findall(r"[a-zA-ZáéíóúüñÁÉÍÓÚÜÑ_<>'\-]+", content.lower())
+			turn_words = [speaker] + words_of(content)
 			turn_tokens = [word_to_idx.get(w, 1) for w in turn_words]
 			dialogue_tokens.extend(turn_tokens)
 	return dialogue_tokens

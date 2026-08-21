@@ -6,10 +6,14 @@ import os
 def compute_corpus_hash(base_dir: str, n_stories: int) -> str:
 	"""Hash de los inputs del corpus para invalidar caché si cambian."""
 	h = hashlib.sha256()
+	# school_exams_en.json entra en el hash porque las secuencias de examen se
+	# mezclan en el dataset de etapa (×300) y viven en la caché de etapa.
 	for path in [
 		os.path.join(base_dir, "configs", "expanded_glyphs.json"),
 		os.path.join(base_dir, "configs", "tiny_dialogues_large_en.json"),
 		os.path.join(base_dir, "configs", "school_curriculum_structured_en.json"),
+		os.path.join(base_dir, "configs", "school_exams_en.json"),
+		os.path.join(base_dir, "configs", "childes_pre_school_en.json"),
 	]:
 		with open(path, "rb") as f:
 			h.update(f.read())

@@ -45,7 +45,7 @@ sintaxis humana de la lógica pura y aplica gating evolutivo de vocabulario.
 | 3 | Trit-Level Loss | 🧪 **Experimento A/B pre-registrado** | Término auxiliar en etapas tempranas; se adopta solo si gana en la batería |
 | 4 | Híbrido Attention+SSM (BitMambaBlock, Mamba ternario) | 🧪 **Experimento pre-registrado** — gateado tras la comparación Bit-lingüístico vs Bit-NSM | Evolución del motor (paper 1); sustituye el hack `h_prev`, no compite con K-65P |
 | 1 | Pure NSM Bit — lenguaje **K-65P** (*Kernel de 65 Primos*, dialecto Lisp) | 🔬 **Track de investigación paralelo** — desde v5: repo soberano `~/Documents/IA/k65p`, Gate G1 cerrado (16 jul), su ROADMAP gobierna la secuenciación global (§7) | No bloquea ni redefine School v3; destino: **paper 3** (`paper_3_k65p_neurosymbolic`) |
-| 5 | Net2DeeperNet — depth expansion 6→8 sobre **copia** del control | ✅ **Aprobada para la ventana de GPU post-graduación** (§5) — el checkpoint de graduación queda congelado como control de G4 | Línea del motor (paper 1); no toca ningún gate del ROADMAP k65p |
+| 5 | Net2DeeperNet — depth expansion 6→8 sobre **copia** del control | ⚠️ **GATEADA — premisa caducada por DL-006** (§5): el W/D=170 que la justificaba era del v1 del calendario. Entra solo si la rejilla D×W del `RFC_GROWTH_V6_DEPTH_WIDTH.md` la pide. La doctrina de copia sigue vigente | Línea del motor (paper 1); no toca ningún gate del ROADMAP k65p |
 | 6 | Arsenal — SSM-en-resonancia, híbrido Jamba, SSM puro, SENN y variantes | 🗃️ **Reserva** — balas en la recámara (§6); se desenfundan solo si una línea activa se estanca | Cada bala lleva su gatillo definido en §6; ninguna se descarta |
 
 ---
@@ -278,6 +278,18 @@ directa de EXP_032 (bucle latente, +2.15%).
 ---
 
 ## 5. Net2DeeperNet — Depth Expansion sobre Copia (añadido v5)
+
+> ⚠️ **PREMISA CADUCADA (2026-08-14) — NO IMPLEMENTAR SIN LEER
+> `docs/RFC_GROWTH_V6_DEPTH_WIDTH.md`.** El diagnóstico de abajo (W=1024, D=6,
+> W/D=170) describe un modelo que el protocolo adaptativo **ya no produce**: DL-006
+> declaró ese 1024 artefacto del calendario y los brazos reales se graduaron a
+> 128-256d con cero o una neurogénesis. A 128d la ratio es **21** (por debajo de todo
+> BitNet publicado, el problema opuesto) y `D_crit ≈ 128^0.44 ≈ 8,5` capas, así que
+> ir de 6→8 aterriza **en el techo** en lugar de "muy lejos" de él. La hipótesis
+> width→depth de la nota (§4.2) también asume un plateau a 1024d que ya no existe.
+> El estado de la ficha pasa de "✅ aprobada" a **⚠️ gateada** tras la rejilla del
+> RFC-GROWTH-V6. La doctrina de esta sección (solo sobre copia, control G4
+> congelado, spec de init, mina ternaria) **se conserva íntegra y sigue vigente**.
 
 **Fuente:** `docs/NOTE_DEPTH_VS_WIDTH_LITERATURE.md` (30 jul 2026) — revisión de
 literatura completa (Petty NAACL 2024, Saunshi NeurIPS 2025, Bu/Meta FAIR 2025, BitNet

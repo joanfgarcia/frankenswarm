@@ -34,7 +34,7 @@ def compile_exam_sequences_for_age(age: int, exams_data: dict, word_to_idx: dict
 					q_tokens = [word_to_idx.get(w, 1) for w in mapped_q]
 					a_token = word_to_idx.get(mapped_a, 1)
 
-					dialogue_triggers = {"hello", "how are you", "who are you", "what is your name", "where are you from", "what is the bunker", "do you like borges"}
+					dialogue_triggers = {"hello", "how are you", "who are you", "what is your name", "where are you from", "what is your home", "do you like books"}
 					if q_content.lower().strip() in dialogue_triggers:
 						tokens = [word_to_idx.get("you", 1)] + q_tokens + [word_to_idx.get("me", 1)] + [a_token]
 					else:
@@ -67,3 +67,25 @@ def compile_exam_sequences_for_age(age: int, exams_data: dict, word_to_idx: dict
 			exam_sequences.append(tokens)
 
 	return exam_sequences
+
+
+def exam_answer_words_for_age(age: int, exams_data: dict, dictionary) -> set[str]:
+	"""Palabras de RESPUESTA de la batería de examen de una edad (exams + AGE_QUESTIONS),
+	ya mapeadas por el diccionario. Se inyectan en el gateo de su etapa: todo target
+	de examen debe ser producible en la etapa que lo examina (BIT-003 S5, DL-009)."""
+	answers: set[str] = set()
+	key = None
+	if age in [2, 3, 4]:
+		key = "preschool"
+	elif age in [5, 6]:
+		key = "primary"
+	elif age in [7, 8]:
+		key = "secondary"
+	if key:
+		for qas in exams_data.get(key, {}).values():
+			for qa in qas:
+				answers.add(dictionary.map_to_base_word(qa["answer"]))
+	from scripts.evaluate_samantha_age import AGE_QUESTIONS
+	for qa in AGE_QUESTIONS.get(age, []):
+		answers.add(dictionary.map_to_base_word(qa["expected"]))
+	return answers

@@ -10,7 +10,11 @@ import torch
 from src.bitnet.model.modeling_bitnet import BitNet4LayerModel
 from src.bitnet.vocab.dictionary_tool import SovereignDictionary
 
-# Batería de preguntas por edad cognitiva/milestone (2 a 8 años)
+# Batería de preguntas por edad cognitiva/milestone (2 a 8 años).
+# Instrumento v2 (DL-009, 21-ago-2026): 10 preguntas por edad, SOLO palabras del
+# vocabulario (sin nombres propios de lore: el control v1-inglés mide adquisición
+# de lenguaje, no memorización de tokens sin presencia en corpus). Validado por
+# scripts/validate_exam_vocab.py.
 AGE_QUESTIONS = {
 	2: [
 		{"question": "you: hello", "expected": "hello"},
@@ -18,6 +22,11 @@ AGE_QUESTIONS = {
 		{"question": "you: water", "expected": "water"},
 		{"question": "you: fire", "expected": "bad"},
 		{"question": "you: mom", "expected": "dad"},
+		{"question": "you: dog", "expected": "bark"},
+		{"question": "you: the baby wants", "expected": "milk"},
+		{"question": "you: night. time to", "expected": "sleep"},
+		{"question": "you: the cat wants to", "expected": "eat"},
+		{"question": "you: the ball is", "expected": "big"},
 	],
 	3: [
 		{"question": "you: what is your name", "expected": "baby"},
@@ -25,6 +34,11 @@ AGE_QUESTIONS = {
 		{"question": "you: i want", "expected": "bread"},
 		{"question": "you: if i touch the fire", "expected": "burns"},
 		{"question": "you: where is dad", "expected": "here"},
+		{"question": "you: the sun is", "expected": "hot"},
+		{"question": "you: at night we", "expected": "sleep"},
+		{"question": "you: the cat drinks", "expected": "milk"},
+		{"question": "you: one and one are", "expected": "two"},
+		{"question": "you: the dog is my", "expected": "friend"},
 	],
 	4: [
 		{"question": "you: hello", "expected": "hello"},
@@ -32,6 +46,11 @@ AGE_QUESTIONS = {
 		{"question": "you: who are you", "expected": "boy"},
 		{"question": "you: the sun shines", "expected": "much"},
 		{"question": "you: if i touch the fire", "expected": "hurt"},
+		{"question": "you: the fish lives in the", "expected": "water"},
+		{"question": "you: at night i see the", "expected": "moon"},
+		{"question": "you: the bird has", "expected": "wings"},
+		{"question": "you: the snow is", "expected": "cold"},
+		{"question": "you: we read a", "expected": "book"},
 	],
 	5: [
 		{"question": "you: i count one two", "expected": "three"},
@@ -39,6 +58,11 @@ AGE_QUESTIONS = {
 		{"question": "you: the bear eats", "expected": "honey"},
 		{"question": "you: the bird flies", "expected": "high"},
 		{"question": "you: the flowers drink", "expected": "water"},
+		{"question": "you: two plus two is", "expected": "four"},
+		{"question": "you: the week has seven", "expected": "days"},
+		{"question": "you: the fish swims and the bird", "expected": "flies"},
+		{"question": "you: four plus one is", "expected": "five"},
+		{"question": "you: we sleep in a", "expected": "bed"},
 	],
 	6: [
 		{"question": "you: what is three plus three? it is", "expected": "six"},
@@ -46,40 +70,54 @@ AGE_QUESTIONS = {
 		{"question": "you: the water of the river runs towards the", "expected": "sea"},
 		{"question": "you: the trees give oxygen and", "expected": "shade"},
 		{"question": "you: the heart pumps blood to the", "expected": "body"},
+		{"question": "you: what is four plus five? it is", "expected": "nine"},
+		{"question": "you: what is ten minus five? it is", "expected": "five"},
+		{"question": "you: the moon shines at", "expected": "night"},
+		{"question": "you: the roots of the tree are under the", "expected": "ground"},
+		{"question": "you: we write words on a", "expected": "page"},
 	],
 	7: [
-		{"question": "you: what is your name", "expected": "aleth"},
-		{"question": "you: where are you from", "expected": "bunker"},
-		{"question": "you: the capital of Spain is", "expected": "madrid"},
-		{"question": "you: the earth rotates around the", "expected": "sun"},
+		{"question": "you: what is your name", "expected": "bit"},
+		{"question": "you: where are you from", "expected": "cave"},
+		{"question": "you: the earth moves around the", "expected": "sun"},
 		{"question": "you: the maps show rivers and", "expected": "countries"},
+		{"question": "you: rain falls from the", "expected": "sky"},
+		{"question": "you: what is seven plus three? it is", "expected": "ten"},
+		{"question": "you: the heart moves the", "expected": "blood"},
+		{"question": "you: a story lives inside a", "expected": "book"},
+		{"question": "you: the sun gives light and", "expected": "heat"},
+		{"question": "you: winter is the season of", "expected": "snow"},
 	],
 	8: [
 		{"question": "you: if x plus two is five then x is", "expected": "three"},
 		{"question": "you: every cause produces an", "expected": "effect"},
-		{"question": "you: the labyrinth is a library of infinite", "expected": "mirrors"},
-		{"question": "you: Funes remembers the shape of each", "expected": "cloud"},
-		{"question": "you: the Aleph is a point that contains all the", "expected": "universe"},
-		{"question": "you: what is the bunker", "expected": "system"},
+		{"question": "you: the long halls of the library are full of", "expected": "mirrors"},
+		{"question": "you: a perfect memory keeps the shape of each", "expected": "cloud"},
+		{"question": "you: one point can contain the whole", "expected": "universe"},
+		{"question": "you: what is your home", "expected": "cave"},
+		{"question": "you: do you like books", "expected": "yes"},
+		{"question": "you: written words overcome the passage of", "expected": "time"},
+		{"question": "you: what is nine minus six? it is", "expected": "three"},
+		{"question": "you: the poet sings to the moon in the cold", "expected": "night"},
 	],
 }
 
 
-def query_samantha(prompt: str, system_prompt: str, mock: bool = False) -> dict:
+def query_samantha(prompt: str, system_prompt: str, mock: bool = False, n_questions: int | None = None) -> dict:
 	"""
 	Invoca a Samantha de forma síncrona en la GPU RTX 5070 para calificar.
-	Si mock=True, simula la respuesta.
+	Si mock=True, simula la respuesta. n_questions es el tamaño real de la
+	batería (instrumento v2 = 10/edad, DL-009): el mock y el veredicto del
+	fallback deben cuadrar con él — el 5 fijo de antes suspendía todo examen.
 	"""
 	if mock:
 		print("🎭 [MOCK] Simulando evaluación de Samantha...")
-		# Retornar una estructura mock exitosa
+		# Retornar una estructura mock exitosa (una nota por pregunta real)
+		n = n_questions or 5
 		return {
 			"calificaciones": [
-				{"pregunta": "hola", "respuesta": "hola", "calificacion": 10, "motivo": "Mock OK"},
-				{"pregunta": "cómo estás", "respuesta": "bien", "calificacion": 10, "motivo": "Mock OK"},
-				{"pregunta": "quién eres", "respuesta": "niño", "calificacion": 10, "motivo": "Mock OK"},
-				{"pregunta": "el perro corre", "expected": "mucho", "calificacion": 10, "motivo": "Mock OK"},
-				{"pregunta": "el gato duerme", "expected": "feliz", "calificacion": 10, "motivo": "Mock OK"},
+				{"pregunta": f"mock_{i + 1}", "respuesta": "mock", "calificacion": 10, "motivo": "Mock OK"}
+				for i in range(n)
 			],
 			"puntuacion_media": 10.0,
 			"hito_superado": True,
@@ -143,7 +181,7 @@ except Exception as e:
 						return {
 							"calificaciones": calificaciones,
 							"puntuacion_media": avg,
-							"hito_superado": avg >= 8.0 and len(calificaciones) == 5
+							"hito_superado": avg >= 8.0 and len(calificaciones) == (n_questions or len(calificaciones)),
 						}
 					print(f"❌ Fallo al reconstruir JSON. Contenido: {json_str}")
 			else:
@@ -207,7 +245,7 @@ def _exam_words_for_age(age: int, base_dir: str) -> set[str]:
 
 def get_allowed_vocab_for_age(age: int, base_dir: str) -> set[str]:
 	curriculum_path = os.path.join(base_dir, "configs", "school_curriculum_structured_en.json")
-	childes_path = os.path.join(base_dir, "configs", "childes_pre_school.json")
+	childes_path = os.path.join(base_dir, "configs", "childes_pre_school_en.json")
 	nsm_path = os.path.join(base_dir, "configs", "nsm_physics_pre_school.json")
 
 	with open(curriculum_path, encoding="utf-8") as f:
@@ -326,15 +364,32 @@ def run_evaluation(args):
 		print(f"❌ Error: No hay preguntas definidas para la edad {target_age}")
 		return False, 0.0
 
-	# Construir logit mask de edad para restringir la generación al vocabulario del hito
-	allowed_vocab = get_allowed_vocab_for_age(target_age, base_dir)
-	special_tokens = {"me", "you", "<pad>", "<unk>", "hello", "mom", "dad", "baby", "kid", "meow", "bark", "water", "fire", "yes", "no", "fine", "bad", "bread", "good"}
+	# Máscara de producción del hito. Camino preferente (DL-009): la máscara de
+	# gateo REAL del entrenamiento, persistida por el trainer — el instrumento
+	# permite exactamente lo que la etapa dejó producir. Fallback legado si no
+	# hay fichero (checkpoints antiguos): get_allowed_vocab_for_age.
+	stage_allowed_words = None
 	allowed_mask = torch.zeros(len(words), dtype=torch.bool, device=device)
-	for w, idx in word_to_idx.items():
-		if w in allowed_vocab or w in special_tokens or w.lower() in allowed_vocab:
-			allowed_mask[idx] = True
-	allowed_mask[0] = True
-	allowed_mask[1] = True
+	use_trained_gate = False
+	if getattr(args, "stage_masks", None) and args.stage_idx is not None and os.path.exists(args.stage_masks):
+		with open(args.stage_masks, encoding="utf-8") as f:
+			gate_data = json.load(f)
+		if gate_data.get("vocab_size") == len(words):
+			for idx in gate_data["stage_allowed"][args.stage_idx]:
+				allowed_mask[idx] = True
+			stage_allowed_words = {words[i] for i in gate_data["stage_allowed"][args.stage_idx]}
+			use_trained_gate = True
+			print(f"🔒 [GATEO] Máscara de entrenamiento E{args.stage_idx}: {int(allowed_mask.sum())} palabras producibles.")
+		else:
+			print(f"⚠️ [GATEO] vocab_size del fichero de máscaras ({gate_data.get('vocab_size')}) != vocab actual ({len(words)}). Fallback legado.")
+	if not use_trained_gate:
+		allowed_vocab = get_allowed_vocab_for_age(target_age, base_dir)
+		special_tokens = {"me", "you", "<pad>", "<unk>", "hello", "mom", "dad", "baby", "kid", "meow", "bark", "water", "fire", "yes", "no", "fine", "bad", "bread", "good"}
+		for w, idx in word_to_idx.items():
+			if w in allowed_vocab or w in special_tokens or w.lower() in allowed_vocab:
+				allowed_mask[idx] = True
+	allowed_mask[0] = True   # <pad> permitido: es la señal de parada de generación
+	allowed_mask[1] = False  # <unk> vetado, igual que en entrenamiento (DL-008)
 
 	print(f"\n📝 [Evaluación] Haciendo preguntas del hito de {target_age} años al alumno...")
 	qa_pairs = []
@@ -351,7 +406,7 @@ def run_evaluation(args):
 		mapped_q = [dictionary.map_to_base_word(w) for w in q_words]
 
 		# Tokenizar
-		dialogue_triggers = {"hello", "how are you", "who are you", "what is your name", "where are you from", "what is the bunker", "do you like borges"}
+		dialogue_triggers = {"hello", "how are you", "who are you", "what is your name", "where are you from", "what is your home", "do you like books"}
 		is_dialogue = q_content.lower().strip() in dialogue_triggers
 
 		if is_dialogue:
@@ -397,7 +452,8 @@ def run_evaluation(args):
 		torch.cuda.empty_cache()
 
 	# 4. Escaneo de vocabulario fuera de edad (Monitor de Alucinaciones Controladas)
-	allowed_vocab = get_allowed_vocab_for_age(target_age, base_dir)
+	# Misma fuente que la máscara de generación: gateo real de la etapa si existe.
+	allowed_vocab = stage_allowed_words if stage_allowed_words is not None else get_allowed_vocab_for_age(target_age, base_dir)
 	oob_words_found = {}
 	for qa in qa_pairs:
 		ans = qa["answer"]
@@ -449,7 +505,7 @@ def run_evaluation(args):
 		'  "puntuacion_media": 10.0,\n'
 		'  "hito_superado": true\n'
 		"}\n"
-		"Nota: La puntuacion_media es el promedio de las calificaciones de las 5 preguntas. El hito se considera superado si la puntuación media es igual o superior a 8.0.\n"
+		f"Nota: La puntuacion_media es el promedio de las calificaciones de las {len(qa_pairs)} preguntas (debes calificar LAS {len(qa_pairs)}, una entrada por pregunta). El hito se considera superado si la puntuación media es igual o superior a 8.0.\n"
 		"CRITICAL: Do NOT escape underscores in JSON keys or values (do NOT use \\_). The output must be standard JSON parseable by python json.loads."
 	)
 
@@ -500,7 +556,7 @@ def run_evaluation(args):
 		print("--- DEBUG SYSTEM PROMPT ---")
 		print(system_prompt)
 		print("---------------------------")
-		result_json = query_samantha(prompt, system_prompt, mock=args.test_mock)
+		result_json = query_samantha(prompt, system_prompt, mock=args.test_mock, n_questions=len(qa_pairs))
 		
 		if result_json and "calificaciones" in result_json:
 			# Post-process to ensure exact matches are always 10/10
@@ -558,6 +614,8 @@ if __name__ == "__main__":
 	parser.add_argument("--target_age", type=int, required=True, choices=[2, 3, 4, 5, 6, 7, 8], help="Edad objetivo a evaluar")
 	parser.add_argument("--device", type=str, default="cpu", help="Dispositivo para correr el modelo (default: cpu)")
 	parser.add_argument("--test_mock", action="store_true", help="Simular respuestas de Samantha de forma mock")
+	parser.add_argument("--stage_masks", type=str, default=None, help="JSON de máscaras de gateo por etapa persistido por el trainer (stage_gate_masks.json)")
+	parser.add_argument("--stage_idx", type=int, default=None, help="Índice de etapa (0-7) cuya máscara de gateo usar")
 
 	args = parser.parse_args()
 	passed, score = run_evaluation(args)

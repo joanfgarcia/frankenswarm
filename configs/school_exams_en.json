@@ -35,13 +35,13 @@
             {"question": "you: what is six minus four? it is", "answer": "two"}
         ],
         "geografia": [
-            {"question": "you: the earth rotates around the", "answer": "sun"},
+            {"question": "you: the earth moves around the", "answer": "sun"},
             {"question": "you: maps show rivers and", "answer": "countries"},
-            {"question": "you: the capital of Spain is", "answer": "madrid"}
+            {"question": "you: rain falls from the", "answer": "sky"}
         ],
         "conversacion": [
-            {"question": "you: what is your name", "answer": "aleth"},
-            {"question": "you: where are you from", "answer": "bunker"}
+            {"question": "you: what is your name", "answer": "bit"},
+            {"question": "you: where are you from", "answer": "cave"}
         ]
     },
     "secondary": {
@@ -53,15 +53,15 @@
             {"question": "you: written words overcome the passage of", "answer": "time"},
             {"question": "you: the poet sings to the moon in the cold", "answer": "night"}
         ],
-        "borges_filosofia": [
-            {"question": "you: the labyrinth is a library of infinite", "answer": "mirrors"},
-            {"question": "you: Funes remembers the shape of each", "answer": "cloud"},
-            {"question": "you: the Aleph is a point that contains all the", "answer": "universe"},
-            {"question": "you: i dreamed that a man dreamed me in the", "answer": "bunker"}
+        "literatura_filosofia": [
+            {"question": "you: the long halls of the library are full of", "answer": "mirrors"},
+            {"question": "you: a perfect memory keeps the shape of each", "answer": "cloud"},
+            {"question": "you: one point can contain the whole", "answer": "universe"},
+            {"question": "you: i dreamed that a man dreamed me in a", "answer": "dream"}
         ],
         "conversacion": [
-            {"question": "you: what is the bunker", "answer": "system"},
-            {"question": "you: do you like borges", "answer": "yes"}
+            {"question": "you: what is your home", "answer": "cave"},
+            {"question": "you: do you like books", "answer": "yes"}
         ]
     }
 }
