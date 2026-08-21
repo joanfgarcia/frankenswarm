@@ -13,8 +13,8 @@
 
 ## Remediación 21-ago (DL-009) — APLICADA
 - Auditoría pre-lanzamiento encontró 5 bloqueantes + 6 serios: ver BIT-003_audit_findings.md y BIT-003_fix_plan.md (esta carpeta).
-- Todo aplicado en feat/v1-english-rebuild (commits F1-F7): corpus sin artefactos CHAT, apóstrofos normalizados (don't→dont), vocab 19.637 con 28/28 glifos canónicos, censo por palabras, arranque y device curados, E7 sin <unk>, instrumento v2 (10 preguntas/edad, solo in-vocab, sin lore), evaluador alineado con las máscaras reales (stage_gate_masks.json).
-- Aceptación: scripts/audit_stage_gating.py 22/22 ✓ · scripts/validate_exam_vocab.py ✓. Gateo [254,825,3008,5003,8005,10003,15002,19636]; CHILDES 78% E0-E2, 3.5% E7; TinyStories E7 16%→7.1%.
+- Todo aplicado en feat/v1-english-rebuild (commits F1-F8b, 0bd9277→3def79b): corpus sin artefactos CHAT, apóstrofos normalizados (don't→dont), vocab 19.637 con 28/28 glifos canónicos, censo por palabras, arranque y device curados, E7 sin <unk>, instrumento v2 (10 preguntas/edad, solo in-vocab, sin lore), evaluador alineado con las máscaras reales (stage_gate_masks.json).
+- Aceptación: audit_stage_gating 22/22 ✓ · validate_exam_vocab ✓ · pytest 433 ✓ · smokes CPU+GPU×2 ✓ · dry-run examen E1 con máscara real APROBADO ✓ (cazó y curó el ==5 hardcodeado del veredicto, F8b). Gateo [254,825,3008,5003,8005,10003,15002,19636]; CHILDES 78% E0-E2, 3.5% E7; TinyStories E7 16%→7.1%.
 
 ## Pendiente
 - samples_per_epoch: 400k CONFIRMADO por operador (default del trainer desde F4).
