@@ -7,6 +7,62 @@ se añade una entrada nueva que la referencia.
 
 ---
 
+## DL-008 · 2026-08-21 — Gateo de vocabulario por etapa (BIT-003): el corpus y la producción de cada etapa se restringen al vocabulario de su edad, con equivalencia estricta entre el brazo estándar y el K-65P
+
+**Problema.** En v1 (BIT-003, corpus EN desde cero) el entrenamiento pasaba
+pérdida sobre las 20.095 palabras del vocabulario desde la etapa 0, mientras que
+la evaluación de cada edad solo dejaba emitir 729-851 palabras (gateo de
+`get_allowed_vocab_for_age`). Doble desalineación: (a) Bit invertía gradiente en
+palabras que jamás podría producir en su etapa; (b) el gateo de evaluación apuntaba
+a `childes_pre_school.json` (el fichero **ES** ya inexistente) y a `special_tokens`
+en español — no reflejaba el corpus EN real. En k65p el gateo SÍ estaba en
+entrenamiento (`logit_mask` por tiers); en frankenswarm no existía activo.
+
+**Decisión.** Aplicar gateo de vocabulario por etapa en el entrenamiento de ambos
+brazos, con **equivalencia estricta** entre el brazo estándar (`--embedding standard`)
+y el K-65P (`--embedding glyph`):
+
+1. **Producción gateada por etapa** (`logit_mask`): cada etapa solo puede *producir*
+   el vocabulario de su edad — primos EN (28 referencias) + safe words + **top-N de
+   CHILDES-en por frecuencia de adquisición** + palabras del currículo de la etapa.
+   Cortes por etapa: `[200, 800, 3000, 5000, 8000, 10000, 15000, 20095]` (E7 = todo el
+   vocabulario). La pérdida excluye posiciones cuyo target está vetado (evita
+   `inf×0=NaN` con `masked_fill`).
+2. **Equivalencia entre brazos**: la máscara es una máscara sobre *tokens*,
+   independiente del tipo de embedding → ambos brazos ven y producen **exactamente
+   las mismas palabras en cada etapa**. La única diferencia que mide la comparativa
+   es la representación (composición de 65 primos vs tabla one-hot congelada +
+   proyección entrenable).
+3. **Clasificación del corpus por etapa (umbral 95%)**: cada frase del corpus general
+   se asigna a la **etapa mínima** cuyo vocabulario cubre ≥95% de sus tokens. El
+   corpus de la etapa `i` = frases acumuladas `E0..Ei`. Resultado medido: CHILDES-en
+   cae un 78% en E0-E2 (habla real infantil temprano); TinyStories se incorpora según
+   su vocabulario (solo 14% en E0-E1, repartida en E2-E7). Ninguna frase se pierde
+   (E7 cubre el 100%).
+4. **Propiedad de la tesis**: el gateo se puede **ampliar en caliente** con K-65P —
+   una palabra nueva se compone de primos ya aprendidos, basta desbloquear su token
+   en la máscara. Con el estándar (columna de embedding no entrenada) no es posible
+   sin reentrenar. La comparativa demostrará esta propiedad en evaluación.
+
+**Evidencia.** Cobertura del vocabulario por CHILDES-en: 99.53% (0.47% `<unk>`).
+Distribución del corpus por etapa (umbral 95%): CHILDES `[11,32,35,9,5,2,2,4]%`,
+TinyStories `[3,11,35,16,12,3,6,15]%`. Gateo resultante: `[242, 822, 3007, 5004,
+8007, 10005, 15002, 20095]` palabras producibles por etapa. Los 65 primos (y las 28
+palabras EN que representan) entran desde E0.
+
+**Adoptado.** `src/bitnet/training/modules/stage_gating.py` (máscaras + clasificación)
+aplicado en entrenamiento y validación (adaptativo + clásico). Detalle completo en
+`docs/RFC_GATING_VOCABULARIO_ETAPAS.md`.
+
+**Salvaguardas.** E7 = todo el vocabulario (toda frase clasificable, nada se pierde).
+`<unk>` vetado en todas las etapas (ruido de generación). El currículo mantiene su
+asignación por MLU. Evaluador actualizado a EN (`childes_pre_school_en.json`,
+`special_tokens` EN).
+
+**Referencias.** Commits 081fc8d, 2741e95 · `docs/RFC_GATING_VOCABULARIO_ETAPAS.md`.
+
+---
+
 ## DL-007 · 2026-08-14 — El brazo estándar estaba lisiado por implementación: se retira la baza de coste del glifo y nace el trato simétrico de weight decay
 
 **Problema.** El brazo estándar (`--embedding standard`, DL-006) se construye con
