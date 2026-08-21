@@ -27,6 +27,11 @@ base = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 fails = []
 
 
+def load_config(name: str):
+	with open(os.path.join(base, "configs", name), encoding="utf-8") as f:
+		return json.load(f)
+
+
 def check(cond: bool, msg: str) -> None:
 	print(("  ✓ " if cond else "  ✗ ") + msg)
 	if not cond:
@@ -34,7 +39,7 @@ def check(cond: bool, msg: str) -> None:
 
 
 print("── 1. Vocabulario y glifos ──")
-G = json.load(open(os.path.join(base, "configs", "expanded_glyphs.json")))
+G = load_config("expanded_glyphs.json")
 words, glyphs = G["words"], G["glyphs"]
 w2i = {w: i for i, w in enumerate(words)}
 vocab_size = len(words)
@@ -49,7 +54,7 @@ bad_canon = [w for k, w in VOCAB_MAP.items() if w in w2i and not (np.asarray(VOC
 check(not bad_canon, f"28 referencias EN con glifo canónico (mal: {bad_canon})")
 
 print("── 2. CHILDES-en ──")
-childes = json.load(open(os.path.join(base, "configs", "childes_pre_school_en.json")))
+childes = load_config("childes_pre_school_en.json")
 seqs, childes_freq, n_unk, n_tok = [], Counter(), 0, 0
 for s in childes:
 	ids = tokenize(s, w2i)
@@ -64,9 +69,9 @@ coverage = 1 - n_unk / max(1, n_tok)
 check(coverage >= 0.99, f"cobertura vocab >=99% (real {coverage:.4%})")
 
 print("── 3. Máscaras por etapa ──")
-curr_json = json.load(open(os.path.join(base, "configs", "school_curriculum_structured_en.json")))["curriculum"]
+curr_json = load_config("school_curriculum_structured_en.json")["curriculum"]
 curriculum_data = {k: [it["text"] for it in curr_json.get(k, [])] for k in ("preschool", "primary", "secondary")}
-exams_data = json.load(open(os.path.join(base, "configs", "school_exams_en.json")))
+exams_data = load_config("school_exams_en.json")
 dictionary = SovereignDictionary(os.path.join(base, "configs", "expanded_glyphs.json"))
 stage_config = get_stage_config()
 exam_words_by_stage, acc = [], set()
@@ -104,7 +109,7 @@ for cfg in stage_config:
 check(not viol, f"toda respuesta de examen producible en su etapa (mal: {viol})")
 
 print("── 6. Longitudes ──")
-dial = json.load(open(os.path.join(base, "configs", "tiny_dialogues_large_en.json")))
+dial = load_config("tiny_dialogues_large_en.json")
 dlens = [len(format_and_tokenize_dialogue(d, w2i)) for d in dial]
 check(max(dlens) <= 64, f"diálogos <=64 tokens (max {max(dlens)}) — nada se descarta en bucketing")
 clens = [len(words_of(t)) for k in curriculum_data for t in curriculum_data[k]]
