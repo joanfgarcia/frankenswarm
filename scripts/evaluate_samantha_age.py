@@ -103,21 +103,21 @@ AGE_QUESTIONS = {
 }
 
 
-def query_samantha(prompt: str, system_prompt: str, mock: bool = False) -> dict:
+def query_samantha(prompt: str, system_prompt: str, mock: bool = False, n_questions: int | None = None) -> dict:
 	"""
 	Invoca a Samantha de forma síncrona en la GPU RTX 5070 para calificar.
-	Si mock=True, simula la respuesta.
+	Si mock=True, simula la respuesta. n_questions es el tamaño real de la
+	batería (instrumento v2 = 10/edad, DL-009): el mock y el veredicto del
+	fallback deben cuadrar con él — el 5 fijo de antes suspendía todo examen.
 	"""
 	if mock:
 		print("🎭 [MOCK] Simulando evaluación de Samantha...")
-		# Retornar una estructura mock exitosa
+		# Retornar una estructura mock exitosa (una nota por pregunta real)
+		n = n_questions or 5
 		return {
 			"calificaciones": [
-				{"pregunta": "hola", "respuesta": "hola", "calificacion": 10, "motivo": "Mock OK"},
-				{"pregunta": "cómo estás", "respuesta": "bien", "calificacion": 10, "motivo": "Mock OK"},
-				{"pregunta": "quién eres", "respuesta": "niño", "calificacion": 10, "motivo": "Mock OK"},
-				{"pregunta": "el perro corre", "expected": "mucho", "calificacion": 10, "motivo": "Mock OK"},
-				{"pregunta": "el gato duerme", "expected": "feliz", "calificacion": 10, "motivo": "Mock OK"},
+				{"pregunta": f"mock_{i + 1}", "respuesta": "mock", "calificacion": 10, "motivo": "Mock OK"}
+				for i in range(n)
 			],
 			"puntuacion_media": 10.0,
 			"hito_superado": True,
@@ -181,7 +181,7 @@ except Exception as e:
 						return {
 							"calificaciones": calificaciones,
 							"puntuacion_media": avg,
-							"hito_superado": avg >= 8.0 and len(calificaciones) == 5
+							"hito_superado": avg >= 8.0 and len(calificaciones) == (n_questions or len(calificaciones)),
 						}
 					print(f"❌ Fallo al reconstruir JSON. Contenido: {json_str}")
 			else:
@@ -505,7 +505,7 @@ def run_evaluation(args):
 		'  "puntuacion_media": 10.0,\n'
 		'  "hito_superado": true\n'
 		"}\n"
-		"Nota: La puntuacion_media es el promedio de las calificaciones de las 5 preguntas. El hito se considera superado si la puntuación media es igual o superior a 8.0.\n"
+		f"Nota: La puntuacion_media es el promedio de las calificaciones de las {len(qa_pairs)} preguntas (debes calificar LAS {len(qa_pairs)}, una entrada por pregunta). El hito se considera superado si la puntuación media es igual o superior a 8.0.\n"
 		"CRITICAL: Do NOT escape underscores in JSON keys or values (do NOT use \\_). The output must be standard JSON parseable by python json.loads."
 	)
 
@@ -556,7 +556,7 @@ def run_evaluation(args):
 		print("--- DEBUG SYSTEM PROMPT ---")
 		print(system_prompt)
 		print("---------------------------")
-		result_json = query_samantha(prompt, system_prompt, mock=args.test_mock)
+		result_json = query_samantha(prompt, system_prompt, mock=args.test_mock, n_questions=len(qa_pairs))
 		
 		if result_json and "calificaciones" in result_json:
 			# Post-process to ensure exact matches are always 10/10
