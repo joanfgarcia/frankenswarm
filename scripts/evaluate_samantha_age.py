@@ -364,15 +364,32 @@ def run_evaluation(args):
 		print(f"❌ Error: No hay preguntas definidas para la edad {target_age}")
 		return False, 0.0
 
-	# Construir logit mask de edad para restringir la generación al vocabulario del hito
-	allowed_vocab = get_allowed_vocab_for_age(target_age, base_dir)
-	special_tokens = {"me", "you", "<pad>", "<unk>", "hello", "mom", "dad", "baby", "kid", "meow", "bark", "water", "fire", "yes", "no", "fine", "bad", "bread", "good"}
+	# Máscara de producción del hito. Camino preferente (DL-009): la máscara de
+	# gateo REAL del entrenamiento, persistida por el trainer — el instrumento
+	# permite exactamente lo que la etapa dejó producir. Fallback legado si no
+	# hay fichero (checkpoints antiguos): get_allowed_vocab_for_age.
+	stage_allowed_words = None
 	allowed_mask = torch.zeros(len(words), dtype=torch.bool, device=device)
-	for w, idx in word_to_idx.items():
-		if w in allowed_vocab or w in special_tokens or w.lower() in allowed_vocab:
-			allowed_mask[idx] = True
-	allowed_mask[0] = True
-	allowed_mask[1] = True
+	use_trained_gate = False
+	if getattr(args, "stage_masks", None) and args.stage_idx is not None and os.path.exists(args.stage_masks):
+		with open(args.stage_masks, encoding="utf-8") as f:
+			gate_data = json.load(f)
+		if gate_data.get("vocab_size") == len(words):
+			for idx in gate_data["stage_allowed"][args.stage_idx]:
+				allowed_mask[idx] = True
+			stage_allowed_words = {words[i] for i in gate_data["stage_allowed"][args.stage_idx]}
+			use_trained_gate = True
+			print(f"🔒 [GATEO] Máscara de entrenamiento E{args.stage_idx}: {int(allowed_mask.sum())} palabras producibles.")
+		else:
+			print(f"⚠️ [GATEO] vocab_size del fichero de máscaras ({gate_data.get('vocab_size')}) != vocab actual ({len(words)}). Fallback legado.")
+	if not use_trained_gate:
+		allowed_vocab = get_allowed_vocab_for_age(target_age, base_dir)
+		special_tokens = {"me", "you", "<pad>", "<unk>", "hello", "mom", "dad", "baby", "kid", "meow", "bark", "water", "fire", "yes", "no", "fine", "bad", "bread", "good"}
+		for w, idx in word_to_idx.items():
+			if w in allowed_vocab or w in special_tokens or w.lower() in allowed_vocab:
+				allowed_mask[idx] = True
+	allowed_mask[0] = True   # <pad> permitido: es la señal de parada de generación
+	allowed_mask[1] = False  # <unk> vetado, igual que en entrenamiento (DL-008)
 
 	print(f"\n📝 [Evaluación] Haciendo preguntas del hito de {target_age} años al alumno...")
 	qa_pairs = []
@@ -435,7 +452,8 @@ def run_evaluation(args):
 		torch.cuda.empty_cache()
 
 	# 4. Escaneo de vocabulario fuera de edad (Monitor de Alucinaciones Controladas)
-	allowed_vocab = get_allowed_vocab_for_age(target_age, base_dir)
+	# Misma fuente que la máscara de generación: gateo real de la etapa si existe.
+	allowed_vocab = stage_allowed_words if stage_allowed_words is not None else get_allowed_vocab_for_age(target_age, base_dir)
 	oob_words_found = {}
 	for qa in qa_pairs:
 		ans = qa["answer"]
@@ -596,6 +614,8 @@ if __name__ == "__main__":
 	parser.add_argument("--target_age", type=int, required=True, choices=[2, 3, 4, 5, 6, 7, 8], help="Edad objetivo a evaluar")
 	parser.add_argument("--device", type=str, default="cpu", help="Dispositivo para correr el modelo (default: cpu)")
 	parser.add_argument("--test_mock", action="store_true", help="Simular respuestas de Samantha de forma mock")
+	parser.add_argument("--stage_masks", type=str, default=None, help="JSON de máscaras de gateo por etapa persistido por el trainer (stage_gate_masks.json)")
+	parser.add_argument("--stage_idx", type=int, default=None, help="Índice de etapa (0-7) cuya máscara de gateo usar")
 
 	args = parser.parse_args()
 	passed, score = run_evaluation(args)

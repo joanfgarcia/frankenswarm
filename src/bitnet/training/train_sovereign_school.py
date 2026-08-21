@@ -554,6 +554,18 @@ def run_school_training():
 	state_path = os.path.join(save_dir, "school_state.json")
 	os.makedirs(save_dir, exist_ok=True)
 
+	# Máscaras de gateo persistidas para el evaluador (DL-009): Samantha debe
+	# permitir EXACTAMENTE el vocabulario que el entrenamiento dejó producir —
+	# el gateo legado del evaluador tragaba todo CHILDES (18k palabras a edad 2).
+	gate_masks_path = os.path.join(save_dir, "stage_gate_masks.json")
+	with open(gate_masks_path, "w", encoding="utf-8") as f:
+		json.dump({
+			"corpus_hash": corpus_hash,
+			"vocab_size": vocab_size,
+			"stage_allowed": [torch.nonzero(m == 0).flatten().tolist() for m in stage_masks],
+		}, f)
+	print(f"🔒 [GATEO] Máscaras por etapa persistidas para el evaluador: {gate_masks_path}")
+
 	max_epochs = stage_config[-1]["end_epoch"]
 
 	current_epoch = 1
