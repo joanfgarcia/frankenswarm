@@ -95,10 +95,51 @@ def build_all_stage_masks(
 	childes_freq: Counter,
 	curriculum_data: dict,
 ) -> list:
-	return [
+	masks = [
 		build_stage_logit_mask(i, vocab_size, word_to_idx, childes_freq, curriculum_words_by_stage(curriculum_data, i, word_to_idx))
 		for i in range(8)
 	]
+	# La etapa final cubre TODO el vocabulario: toda frase del corpus debe ser
+	# clasificable (ninguna se pierde, solo se reordena por etapa).
+	masks[-1] = torch.zeros(vocab_size)
+	return masks
+
+
+def token_min_stage(masks: list, vocab_size: int) -> list:
+	"""Etapa mínima de cada token (la menor etapa cuyo gateo lo permite)."""
+	import numpy as np
+
+	arr = [None] * vocab_size
+	for t in range(vocab_size):
+		for st, m in enumerate(masks):
+			if m[t] == 0.0:
+				arr[t] = st
+				break
+	return arr
+
+
+def classify_sequences_by_gate(
+	sequences: list,
+	token_min_stage_arr: list,
+	threshold: float = 0.95,
+	num_stages: int = 8,
+) -> list:
+	"""Clasifica cada frase en su etapa mínima según el gateo (umbral de
+	cobertura de tokens). La frase entra en la etapa más temprana que cubre
+	≥threshold de sus tokens. Las frases con <umbral de tokens conocidos (o
+	con vocabulario tardío) se asignan a la última etapa."""
+	import math
+
+	groups: list = [[] for _ in range(num_stages)]
+	for seq in sequences:
+		known = [token_min_stage_arr[t] for t in seq if token_min_stage_arr[t] is not None]
+		if not known or len(known) / len(seq) < threshold:
+			groups[-1].append(seq)
+			continue
+		stages = sorted(known)
+		k = min(len(stages) - 1, math.ceil(len(seq) * threshold) - 1)
+		groups[stages[k]].append(seq)
+	return groups
 
 
 def apply_stage_gate(logits: torch.Tensor, stage_mask: torch.Tensor) -> torch.Tensor:

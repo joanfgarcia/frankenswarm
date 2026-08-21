@@ -12,7 +12,13 @@ from src.bitnet.model.modeling_bitnet import BitNet4LayerModel
 from src.bitnet.training.modules.corpus import compute_corpus_hash, load_tokenized_cache, save_tokenized_cache
 from src.bitnet.training.modules.exam_compiler import compile_exam_sequences_for_age
 from src.bitnet.training.modules.partitioner import bucketize_batches, compile_stage_dataset, partition_corpus_by_mlu
-from src.bitnet.training.modules.stage_gating import apply_stage_gate, build_all_stage_masks, loss_mask_for_gate
+from src.bitnet.training.modules.stage_gating import (
+	apply_stage_gate,
+	build_all_stage_masks,
+	classify_sequences_by_gate,
+	loss_mask_for_gate,
+	token_min_stage,
+)
 from src.bitnet.training.modules.stage_config import get_next_dim, get_stage_config
 from src.bitnet.training.modules.state_manager import run_samantha_eval, trigger_neurogenesis
 from src.bitnet.training.modules.strategy import select_strategy
@@ -410,18 +416,23 @@ def run_school_training():
 	num_dialogues = int(len(tokenized_dialogues) * 0.1)
 	preschool_dialogues = tokenized_dialogues[:num_dialogues]
 
-	# Particionar corpus general (TinyStories + diálogos + CHILDES-en real)
+	# ── Clasificación del corpus general por gateo (BIT-003) ──
+	# Cada frase se asigna a la etapa mínima cuyo vocabulario cubre ≥95% de
+	# sus tokens (umbral). CHILDES (habla real infantil) cae naturalmente en
+	# etapas tempranas; TinyStories se incorpora según su vocabulario.
 	tokenized_general = tokenized_preschool + preschool_dialogues + tokenized_childes
-	gen_0_1, gen_1_2, gen_2_3, gen_3_4 = partition_corpus_by_mlu(tokenized_general)
+	token_min_stage_arr = token_min_stage(stage_masks, vocab_size)
+	gated_general = classify_sequences_by_gate(tokenized_general, token_min_stage_arr)
+	print(
+		"  🚧 [CLASIFICACIÓN] Corpus general por etapa: "
+		+ ", ".join(f"E{i}:{len(g)}" for i, g in enumerate(gated_general))
+	)
 
-	# Particionar currículo estructurado preescolar
+	# Particionar currículo estructurado preescolar (por MLU — material pequeño)
 	curr_0_1, curr_1_2, curr_2_3, curr_3_4 = partition_corpus_by_mlu(tokenized_preschool_curriculum)
 
-	print("Particiones MLU General:")
-	print(f"  - 0-1 Año (MLU <= 2): {len(gen_0_1)} secuencias")
-	print(f"  - 1-2 Años (MLU = 3): {len(gen_1_2)} secuencias")
-	print(f"  - 2-3 Años (MLU 4-5): {len(gen_2_3)} secuencias")
-	print(f"  - 3-4 Años (MLU 6+): {len(gen_3_4)} secuencias")
+	print("Particiones currículo MLU:")
+	print(f"  - 0-1: {len(curr_0_1)} | 1-2: {len(curr_1_2)} | 2-3: {len(curr_2_3)} | 3-4: {len(curr_3_4)}")
 
 	# Dividir currículo en mitades
 	primary_half1 = tokenized_primary[: len(tokenized_primary) // 2]
@@ -467,30 +478,30 @@ def run_school_training():
 		print(f"🔄 Compilando dataset de la etapa {stage_idx} (variaciones de exámenes en CPU)...")
 
 		if stage_idx == 0:
-			general = gen_0_1
 			# Sin currículo en etapa 0 (0-1 años)
 			curriculum = curr_0_1
 		elif stage_idx == 1:
-			general = gen_0_1 + gen_1_2
 			curriculum = curr_0_1 + curr_1_2
 		elif stage_idx == 2:
-			general = gen_0_1 + gen_1_2 + gen_2_3
 			curriculum = curr_0_1 + curr_1_2 + curr_2_3
 		elif stage_idx == 3:
-			general = gen_0_1 + gen_1_2 + gen_2_3 + gen_3_4
 			curriculum = curr_0_1 + curr_1_2 + curr_2_3 + curr_3_4
 		elif stage_idx == 4:
-			general = gen_0_1 + gen_1_2 + gen_2_3 + gen_3_4 + primary_dialogues_half1
 			curriculum = curr_0_1 + curr_1_2 + curr_2_3 + curr_3_4 + primary_half1
 		elif stage_idx == 5:
-			general = gen_0_1 + gen_1_2 + gen_2_3 + gen_3_4 + primary_dialogues_half1 + primary_dialogues_half2
 			curriculum = curr_0_1 + curr_1_2 + curr_2_3 + curr_3_4 + primary_half1 + primary_half2
 		elif stage_idx == 6:
-			general = gen_0_1 + gen_1_2 + gen_2_3 + gen_3_4 + primary_dialogues_total + secondary_dialogues_half1
 			curriculum = curr_0_1 + curr_1_2 + curr_2_3 + curr_3_4 + tokenized_primary + secondary_half1
 		else:
-			general = gen_0_1 + gen_1_2 + gen_2_3 + gen_3_4 + primary_dialogues_total + secondary_dialogues_total
 			curriculum = curr_0_1 + curr_1_2 + curr_2_3 + curr_3_4 + tokenized_primary + tokenized_secondary
+
+		# Corpus general: acumulado por etapas del gateo (E0..E{stage_idx}).
+		# CHILDES en etapas tempranas + TinyStories incorporadas según gateo.
+		general = [s for i in range(stage_idx + 1) for s in gated_general[i]]
+		if stage_idx >= 4:
+			general = general + primary_dialogues_total
+		if stage_idx >= 6:
+			general = general + secondary_dialogues_total
 
 		# Mix in exam sequences up to the current stage's age
 		exams = []
