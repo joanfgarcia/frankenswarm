@@ -7,6 +7,43 @@ se añade una entrada nueva que la referencia.
 
 ---
 
+## DL-009 · 2026-08-21 — Instrumento v2 y alineación evaluador↔gateo (remediación pre-lanzamiento BIT-003)
+
+**Problema.** La auditoría pre-lanzamiento del 21-ago (`.red-pill/memory/BIT-003_audit_findings.md`) encontró que
+(a) el evaluador, al repuntarse a `childes_pre_school_en.json`, pasó a permitir TODO el vocabulario de CHILDES sin
+corte (18.364/20.095 palabras a edad 2, vs ~800 del gateo de entrenamiento) — un cambio de instrumento de facto sin
+DL; (b) los exámenes (29-jul, pre-rebuild) esperaban respuestas fuera del vocabulario nuevo (aleth, bunker, madrid);
+(c) el trainer no implementaba la semántica de DL-008 (censo por ids que no desbloqueaba el top-N, NameError de
+arranque, device mismatch CPU/CUDA en la pérdida, E7 con `<unk>`, 'xxx' —marcador CHAT con 50.894 apariciones—
+producible desde E0, contracciones partidas don't/dont, 7/28 glifos de referencia sin el canónico).
+
+**Decisión (operador, 21-ago).**
+1. **Instrumento v2**: exámenes y `AGE_QUESTIONS` reescritos SOLO con palabras del vocabulario (sin nombres propios
+   de lore: el control v1-inglés mide adquisición de lenguaje, no memorización de tokens sin presencia en corpus) y
+   ampliados a **10 preguntas por edad**. Toda respuesta de examen entra al gateo de su etapa (`exam_answer_words_for_age`).
+2. **Evaluador alineado**: el trainer persiste `stage_gate_masks.json` y Samantha restringe la generación (y el
+   monitor OOB) a la máscara REAL de la etapa, con fallback legado para checkpoints antiguos. `<unk>` vetado también
+   en evaluación.
+3. **Pipeline de corpus**: apóstrofos normalizados en la tokenización canónica (`words_of`: don't→dont, como el
+   corpus CHILDES-en upstream), artefactos CHAT (xxx/yyy/www) eliminados del corpus, censo y glifos regenerados con
+   preservación canónica EN (28/28). Vocabulario final: **19.637** palabras, 19.637 glifos únicos.
+4. Currículo preescolar rico: 32 items (28 nuevos deterministas), 4 bins MLU poblados [10,8,8,6].
+5. `samples_per_epoch=400.000` por defecto (análisis Chinchilla 21-ago, confirmado).
+
+**Instrumento.** Este DL VERSIONA el instrumento de evaluación de v1-inglés (sucesor del congelado en DL-004, que
+sigue intacto para los runs v1-ES históricos). Los dos brazos BIT-003 (glyph/standard) usan este instrumento v2
+idéntico; la comparativa entre brazos no se ve afectada.
+
+**Evidencia.** `scripts/audit_stage_gating.py` (22 checks, rc=0). Gateo por etapa: `[254, 825, 3008, 5003, 8005,
+10003, 15002, 19636]`. Clasificación CHILDES: `[11.9, 31.1, 34.9, 8.9, 5.5, 1.8, 2.4, 3.5]%` (78% en E0-E2).
+TinyStories(100k): `[3.4, 11.7, 40.4, 15.1, 12.9, 4.1, 5.2, 7.1]%` — el E7 baja del 16% al 7.1% al curar la
+partición de contracciones. Instrumentos 100% in-vocab (`scripts/validate_exam_vocab.py`).
+
+**Referencias.** `.red-pill/memory/BIT-003_audit_findings.md`, `.red-pill/memory/BIT-003_fix_plan.md`,
+`docs/RFC_GATING_VOCABULARIO_ETAPAS.md`, DL-008 (semántica del gateo), DL-004 (instrumento v1-ES congelado).
+
+---
+
 ## DL-008 · 2026-08-21 — Gateo de vocabulario por etapa (BIT-003): el corpus y la producción de cada etapa se restringen al vocabulario de su edad, con equivalencia estricta entre el brazo estándar y el K-65P
 
 **Problema.** En v1 (BIT-003, corpus EN desde cero) el entrenamiento pasaba

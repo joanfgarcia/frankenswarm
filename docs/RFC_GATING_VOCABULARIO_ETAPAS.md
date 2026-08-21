@@ -41,7 +41,7 @@ tesis ("cognición con pocos datos vía glifos") quiere medir.
 ### 3.1 Composición del vocabulario de cada etapa
 
 ```
-Gateo(E{i}) = NÚCLEO ∪ TopN(CHILDES-en, frecuencia) ∪ Currículo(E{i})
+Gateo(E{i}) = NÚCLEO ∪ TopN(CHILDES-en, frecuencia) ∪ Currículo(E{i}) ∪ RespuestasExamen(E{i})
 ```
 
 - **NÚCLEO** (siempre, desde E0): las 28 palabras de referencia EN del
@@ -52,20 +52,26 @@ Gateo(E{i}) = NÚCLEO ∪ TopN(CHILDES-en, frecuencia) ∪ Currículo(E{i})
 
 | Etapa | Edad | N (top CHILDES) | Palabras gateadas |
 |---|---|---|---|
-| E0 | 0-1 | 200 | 242 |
-| E1 | 1-2 | 800 | 822 |
-| E2 | 2-3 | 3000 | 3007 |
-| E3 | 3-4 | 5000 | 5004 |
-| E4 | primaria_5 | 8000 | 8007 |
-| E5 | primaria_6 | 10000 | 10005 |
+| E0 | 0-1 | 200 | 254 |
+| E1 | 1-2 | 800 | 825 |
+| E2 | 2-3 | 3000 | 3008 |
+| E3 | 3-4 | 5000 | 5003 |
+| E4 | primaria_5 | 8000 | 8005 |
+| E5 | primaria_6 | 10000 | 10003 |
 | E6 | secondary_7 | 15000 | 15002 |
-| E7 | secondary_8 | **todo** | 20095 |
+| E7 | secondary_8 | **todo** | 19636 |
 
-- **Currículo(E{i})**: palabras del currículo acumulado de la etapa (asegura que
-  los targets de examen estén siempre dentro del gateo de su etapa).
+_Medido por `scripts/audit_stage_gating.py` (2026-08-21, post-remediación DL-009;
+vocabulario 19.637 — E7 excluye `<unk>`)._
+
+- **Currículo(E{i})**: palabras del currículo acumulado de la etapa.
+- **RespuestasExamen(E{i})**: respuestas de la batería de examen acumulada
+  (`school_exams_en.json` + `AGE_QUESTIONS`) — garantiza que TODO target de
+  examen sea producible en la etapa que lo examina (DL-009; el currículo solo
+  no lo garantizaba: 'moon' era examen de edad 2 y quedaba vetado en E1).
 
 Tokens especiales: `<pad>` permitido siempre; `<unk>` vetado en todas las etapas
-(ruido de generación).
+(ruido de generación), **incluida E7**.
 
 ### 3.2 Aplicación
 
@@ -126,17 +132,24 @@ El corpus de la etapa `i` es el **acumulado** `E0 ∪ ... ∪ Ei`.
 
 | E0 | E1 | E2 | E3 | E4 | E5 | E6 | E7 |
 |---|---|---|---|---|---|---|---|
-| 12% | 32% | 36% | 9% | 6% | 2% | 3% | 1% |
+| 11.9% | 31.1% | 34.9% | 8.9% | 5.5% | 1.8% | 2.4% | 3.5% |
 
-**TinyStories**: se incorpora según su vocabulario — solo 14% en E0-E1, repartida
-en E2-E7 (33% en E2, 16% en E7).
+**TinyStories** (proyección sobre 100k historias): se incorpora según su
+vocabulario — 15% en E0-E1, con el grueso en E2-E4.
 
 | E0 | E1 | E2 | E3 | E4 | E5 | E6 | E7 |
 |---|---|---|---|---|---|---|---|
-| 3% | 11% | 33% | 17% | 11% | 3% | 6% | 16% |
+| 3.4% | 11.7% | 40.4% | 15.1% | 12.9% | 4.1% | 5.2% | 7.1% |
 
-**Ninguna frase se pierde**: E7 cubre el 100% del vocabulario, toda frase es
-clasificable. El corpus solo se reordena por etapa.
+_Medido con las máscaras post-DL-009 (`scripts/audit_stage_gating.py`,
+2026-08-21). La normalización de apóstrofos (don't→dont) bajó el E7 de
+TinyStories del 16% al 7.1%: más de la mitad de aquel "vocabulario tardío" era
+la partición de contracciones, no edad real._
+
+**Ninguna frase se pierde**: E7 cubre el 100% del vocabulario real (todo menos
+`<unk>`); una frase con tokens fuera de vocabulario también se clasifica (E7) y
+sus posiciones `<unk>` quedan excluidas de la pérdida. El corpus solo se
+reordena por etapa.
 
 ### 5.3 El currículo
 
@@ -150,9 +163,12 @@ El currículo (119 items + exámenes ×300) mantiene su asignación por **MLU**
 
 | Archivo | Contenido |
 |---|---|
-| `src/bitnet/training/modules/stage_gating.py` | `REFERENCE_WORDS_EN`, `SAFE_WORDS_EN`, `TOP_N_BY_STAGE`, `build_stage_logit_mask`, `build_all_stage_masks` (E7=todo), `token_min_stage`, `classify_sequences_by_gate`, `apply_stage_gate`, `loss_mask_for_gate` |
-| `src/bitnet/training/train_sovereign_school.py` | construcción de `childes_freq` (Counter), `stage_masks`, clasificación `gated_general`, aplicación en forwards (adaptativo + clásico) |
-| `scripts/evaluate_samantha_age.py` | `get_allowed_vocab_for_age` → `childes_pre_school_en.json`; `special_tokens` EN |
+| `src/bitnet/training/modules/stage_gating.py` | `REFERENCE_WORDS_EN`, `SAFE_WORDS_EN`, `TOP_N_BY_STAGE`, `build_stage_logit_mask`, `build_all_stage_masks` (E7=todo salvo `<unk>`), `token_min_stage`, `classify_sequences_by_gate`, `apply_stage_gate`, `loss_mask_for_gate` |
+| `src/bitnet/training/train_sovereign_school.py` | censo `childes_freq` por PALABRA (sin `<pad>/<unk>`), `exam_words_by_stage`, `stage_masks`, clasificación `gated_general`, aplicación en forwards (adaptativo + clásico), persistencia de `stage_gate_masks.json` para el evaluador |
+| `src/bitnet/training/modules/exam_compiler.py` | `exam_answer_words_for_age` (respuestas de examen → gateo de su etapa) |
+| `scripts/evaluate_samantha_age.py` | máscara de generación = gateo REAL de la etapa (`--stage_masks/--stage_idx`, DL-009), fallback legado `get_allowed_vocab_for_age` |
+| `scripts/audit_stage_gating.py` | auditoría permanente del gateo (acceptance, 22 checks) — fuente de las tablas de este RFC |
+| `scripts/validate_exam_vocab.py` | instrumentos (exámenes + AGE_QUESTIONS + currículo) 100% in-vocab |
 
 ### 6.1 Almacenamiento y caché
 
@@ -178,6 +194,9 @@ El currículo (119 items + exámenes ×300) mantiene su asignación por **MLU**
    controlar esto en la interpretación.
 4. La equivalencia de *exposición* entre brazos está garantizada; la equivalencia
    de *computo* no es el objetivo (ya retirada en DL-007).
+5. **Instrumento**: el evaluador usa la máscara real de la etapa persistida por
+   el trainer (`stage_gate_masks.json`, DL-009); el gateo legado por edad queda
+   como fallback para checkpoints antiguos.
 
 ---
 
