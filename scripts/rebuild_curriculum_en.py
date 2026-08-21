@@ -100,8 +100,48 @@ PREGUNTA = {
 SALUDA = [
     "hello baby, how are you? do you want to play today",
     "hello child, how are you? do you want to play with a ball",
-    "hello baby, how are you? do you want to play with maureen",
+    "hello baby, how are you? do you want to play with your friend",
     "hello baby, how are you? do you want to play with toys",
+]
+
+# Set preescolar rico BIT-003 (decisión operador 21-ago): conversación y rutinas
+# cotidianas con reparto deliberado por MLU para poblar curr_0_1..curr_3_4
+# (los saludos de arriba, con 9+ tokens, caían todos en curr_3_4 y dejaban las
+# tres primeras particiones vacías). Cada palabra está validada contra el censo
+# (la validación RULE 7 de abajo lo garantiza en cada regeneración).
+PRESCHOOL_CORE = [
+    # MLU ≤ 3 → curr_0_1
+    "hello baby",
+    "hello child",
+    "dad is here",
+    "mom is here",
+    "i want milk",
+    "i see you",
+    "water is good",
+    "time to sleep",
+    "the red ball",
+    "the dog runs",
+    # MLU = 4 → curr_1_2
+    "do you want milk",
+    "the cat drinks milk",
+    "i play with you",
+    "the sun is hot",
+    "i eat the apple",
+    "the baby wants mom",
+    "we go to bed",
+    "i love you mom",
+    # MLU 5-6 → curr_2_3
+    "hello child, how are you",
+    "do you want to play",
+    "the dog plays with the ball",
+    "i want to see the moon",
+    "we eat bread and drink water",
+    "the baby sleeps in the night",
+    "come here and play with me",
+    "the cat and the dog play",
+    # MLU ≥ 7 → curr_3_4
+    "do you want to play with your friend today",
+    "i give you food and you give me a kiss",
 ]
 
 PLANT_PARTES = {
@@ -263,6 +303,12 @@ def main() -> None:
                              "qué_le_gusta", "qué_le_gusta_a_tu_amigo")):
                 groups[i].append(it)
         by_stage[stage] = reconstruct(groups, stage)
+
+    # Set preescolar rico (BIT-003 S4): items autorizados, deterministas.
+    by_stage["preschool"].extend(
+        make_item(text, "conversacion", "preschool_core", ["tú"], "preschool")
+        for text in PRESCHOOL_CORE
+    )
 
     total = sum(len(v) for v in by_stage.values())
     print(f"Reconstruidos: preschool={len(by_stage['preschool'])} primary={len(by_stage['primary'])} secondary={len(by_stage['secondary'])} (total {total})")

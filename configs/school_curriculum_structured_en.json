@@ -1,13 +1,13 @@
 {
     "metadata": {
         "version": "v3.0-structured-en-determinista",
-        "total_sentences": 119,
+        "total_sentences": 147,
         "stats": {
-            "preschool": 4,
+            "preschool": 32,
             "primary": 98,
             "secondary": 17
         },
-        "sha256": "0e2d59ad1cac9cdec00d3cd735ec74d3224619ef62eb15d72d866bc70aa8a871"
+        "sha256": "af2de0bbfeb6d50bfd9f8331094de26c07db8baf8dfd4080b60f08841710965b"
     },
     "curriculum": {
         "preschool": [
@@ -28,7 +28,7 @@
                 ]
             },
             {
-                "text": "hello baby, how are you? do you want to play with maureen",
+                "text": "hello baby, how are you? do you want to play with your friend",
                 "category": "física_sensorial",
                 "intent": "saluda",
                 "primes": [
@@ -39,6 +39,230 @@
                 "text": "hello baby, how are you? do you want to play with toys",
                 "category": "física_sensorial",
                 "intent": "saluda",
+                "primes": [
+                    "tú"
+                ]
+            },
+            {
+                "text": "hello baby",
+                "category": "conversacion",
+                "intent": "preschool_core",
+                "primes": [
+                    "tú"
+                ]
+            },
+            {
+                "text": "hello child",
+                "category": "conversacion",
+                "intent": "preschool_core",
+                "primes": [
+                    "tú"
+                ]
+            },
+            {
+                "text": "dad is here",
+                "category": "conversacion",
+                "intent": "preschool_core",
+                "primes": [
+                    "tú"
+                ]
+            },
+            {
+                "text": "mom is here",
+                "category": "conversacion",
+                "intent": "preschool_core",
+                "primes": [
+                    "tú"
+                ]
+            },
+            {
+                "text": "i want milk",
+                "category": "conversacion",
+                "intent": "preschool_core",
+                "primes": [
+                    "tú"
+                ]
+            },
+            {
+                "text": "i see you",
+                "category": "conversacion",
+                "intent": "preschool_core",
+                "primes": [
+                    "tú"
+                ]
+            },
+            {
+                "text": "water is good",
+                "category": "conversacion",
+                "intent": "preschool_core",
+                "primes": [
+                    "tú"
+                ]
+            },
+            {
+                "text": "time to sleep",
+                "category": "conversacion",
+                "intent": "preschool_core",
+                "primes": [
+                    "tú"
+                ]
+            },
+            {
+                "text": "the red ball",
+                "category": "conversacion",
+                "intent": "preschool_core",
+                "primes": [
+                    "tú"
+                ]
+            },
+            {
+                "text": "the dog runs",
+                "category": "conversacion",
+                "intent": "preschool_core",
+                "primes": [
+                    "tú"
+                ]
+            },
+            {
+                "text": "do you want milk",
+                "category": "conversacion",
+                "intent": "preschool_core",
+                "primes": [
+                    "tú"
+                ]
+            },
+            {
+                "text": "the cat drinks milk",
+                "category": "conversacion",
+                "intent": "preschool_core",
+                "primes": [
+                    "tú"
+                ]
+            },
+            {
+                "text": "i play with you",
+                "category": "conversacion",
+                "intent": "preschool_core",
+                "primes": [
+                    "tú"
+                ]
+            },
+            {
+                "text": "the sun is hot",
+                "category": "conversacion",
+                "intent": "preschool_core",
+                "primes": [
+                    "tú"
+                ]
+            },
+            {
+                "text": "i eat the apple",
+                "category": "conversacion",
+                "intent": "preschool_core",
+                "primes": [
+                    "tú"
+                ]
+            },
+            {
+                "text": "the baby wants mom",
+                "category": "conversacion",
+                "intent": "preschool_core",
+                "primes": [
+                    "tú"
+                ]
+            },
+            {
+                "text": "we go to bed",
+                "category": "conversacion",
+                "intent": "preschool_core",
+                "primes": [
+                    "tú"
+                ]
+            },
+            {
+                "text": "i love you mom",
+                "category": "conversacion",
+                "intent": "preschool_core",
+                "primes": [
+                    "tú"
+                ]
+            },
+            {
+                "text": "hello child, how are you",
+                "category": "conversacion",
+                "intent": "preschool_core",
+                "primes": [
+                    "tú"
+                ]
+            },
+            {
+                "text": "do you want to play",
+                "category": "conversacion",
+                "intent": "preschool_core",
+                "primes": [
+                    "tú"
+                ]
+            },
+            {
+                "text": "the dog plays with the ball",
+                "category": "conversacion",
+                "intent": "preschool_core",
+                "primes": [
+                    "tú"
+                ]
+            },
+            {
+                "text": "i want to see the moon",
+                "category": "conversacion",
+                "intent": "preschool_core",
+                "primes": [
+                    "tú"
+                ]
+            },
+            {
+                "text": "we eat bread and drink water",
+                "category": "conversacion",
+                "intent": "preschool_core",
+                "primes": [
+                    "tú"
+                ]
+            },
+            {
+                "text": "the baby sleeps in the night",
+                "category": "conversacion",
+                "intent": "preschool_core",
+                "primes": [
+                    "tú"
+                ]
+            },
+            {
+                "text": "come here and play with me",
+                "category": "conversacion",
+                "intent": "preschool_core",
+                "primes": [
+                    "tú"
+                ]
+            },
+            {
+                "text": "the cat and the dog play",
+                "category": "conversacion",
+                "intent": "preschool_core",
+                "primes": [
+                    "tú"
+                ]
+            },
+            {
+                "text": "do you want to play with your friend today",
+                "category": "conversacion",
+                "intent": "preschool_core",
+                "primes": [
+                    "tú"
+                ]
+            },
+            {
+                "text": "i give you food and you give me a kiss",
+                "category": "conversacion",
+                "intent": "preschool_core",
                 "primes": [
                     "tú"
                 ]
