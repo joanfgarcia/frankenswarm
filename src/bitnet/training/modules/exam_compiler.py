@@ -34,7 +34,7 @@ def compile_exam_sequences_for_age(age: int, exams_data: dict, word_to_idx: dict
 					q_tokens = [word_to_idx.get(w, 1) for w in mapped_q]
 					a_token = word_to_idx.get(mapped_a, 1)
 
-					dialogue_triggers = {"hello", "how are you", "who are you", "what is your name", "where are you from", "what is the bunker", "do you like borges"}
+					dialogue_triggers = {"hello", "how are you", "who are you", "what is your name", "where are you from", "what is your home", "do you like books"}
 					if q_content.lower().strip() in dialogue_triggers:
 						tokens = [word_to_idx.get("you", 1)] + q_tokens + [word_to_idx.get("me", 1)] + [a_token]
 					else:

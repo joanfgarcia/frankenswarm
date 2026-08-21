@@ -10,7 +10,11 @@ import torch
 from src.bitnet.model.modeling_bitnet import BitNet4LayerModel
 from src.bitnet.vocab.dictionary_tool import SovereignDictionary
 
-# Batería de preguntas por edad cognitiva/milestone (2 a 8 años)
+# Batería de preguntas por edad cognitiva/milestone (2 a 8 años).
+# Instrumento v2 (DL-009, 21-ago-2026): 10 preguntas por edad, SOLO palabras del
+# vocabulario (sin nombres propios de lore: el control v1-inglés mide adquisición
+# de lenguaje, no memorización de tokens sin presencia en corpus). Validado por
+# scripts/validate_exam_vocab.py.
 AGE_QUESTIONS = {
 	2: [
 		{"question": "you: hello", "expected": "hello"},
@@ -18,6 +22,11 @@ AGE_QUESTIONS = {
 		{"question": "you: water", "expected": "water"},
 		{"question": "you: fire", "expected": "bad"},
 		{"question": "you: mom", "expected": "dad"},
+		{"question": "you: dog", "expected": "bark"},
+		{"question": "you: the baby wants", "expected": "milk"},
+		{"question": "you: night. time to", "expected": "sleep"},
+		{"question": "you: the cat wants to", "expected": "eat"},
+		{"question": "you: the ball is", "expected": "big"},
 	],
 	3: [
 		{"question": "you: what is your name", "expected": "baby"},
@@ -25,6 +34,11 @@ AGE_QUESTIONS = {
 		{"question": "you: i want", "expected": "bread"},
 		{"question": "you: if i touch the fire", "expected": "burns"},
 		{"question": "you: where is dad", "expected": "here"},
+		{"question": "you: the sun is", "expected": "hot"},
+		{"question": "you: at night we", "expected": "sleep"},
+		{"question": "you: the cat drinks", "expected": "milk"},
+		{"question": "you: one and one are", "expected": "two"},
+		{"question": "you: the dog is my", "expected": "friend"},
 	],
 	4: [
 		{"question": "you: hello", "expected": "hello"},
@@ -32,6 +46,11 @@ AGE_QUESTIONS = {
 		{"question": "you: who are you", "expected": "boy"},
 		{"question": "you: the sun shines", "expected": "much"},
 		{"question": "you: if i touch the fire", "expected": "hurt"},
+		{"question": "you: the fish lives in the", "expected": "water"},
+		{"question": "you: at night i see the", "expected": "moon"},
+		{"question": "you: the bird has", "expected": "wings"},
+		{"question": "you: the snow is", "expected": "cold"},
+		{"question": "you: we read a", "expected": "book"},
 	],
 	5: [
 		{"question": "you: i count one two", "expected": "three"},
@@ -39,6 +58,11 @@ AGE_QUESTIONS = {
 		{"question": "you: the bear eats", "expected": "honey"},
 		{"question": "you: the bird flies", "expected": "high"},
 		{"question": "you: the flowers drink", "expected": "water"},
+		{"question": "you: two plus two is", "expected": "four"},
+		{"question": "you: the week has seven", "expected": "days"},
+		{"question": "you: the fish swims and the bird", "expected": "flies"},
+		{"question": "you: four plus one is", "expected": "five"},
+		{"question": "you: we sleep in a", "expected": "bed"},
 	],
 	6: [
 		{"question": "you: what is three plus three? it is", "expected": "six"},
@@ -46,21 +70,35 @@ AGE_QUESTIONS = {
 		{"question": "you: the water of the river runs towards the", "expected": "sea"},
 		{"question": "you: the trees give oxygen and", "expected": "shade"},
 		{"question": "you: the heart pumps blood to the", "expected": "body"},
+		{"question": "you: what is four plus five? it is", "expected": "nine"},
+		{"question": "you: what is ten minus five? it is", "expected": "five"},
+		{"question": "you: the moon shines at", "expected": "night"},
+		{"question": "you: the roots of the tree are under the", "expected": "ground"},
+		{"question": "you: we write words on a", "expected": "page"},
 	],
 	7: [
-		{"question": "you: what is your name", "expected": "aleth"},
-		{"question": "you: where are you from", "expected": "bunker"},
-		{"question": "you: the capital of Spain is", "expected": "madrid"},
-		{"question": "you: the earth rotates around the", "expected": "sun"},
+		{"question": "you: what is your name", "expected": "bit"},
+		{"question": "you: where are you from", "expected": "cave"},
+		{"question": "you: the earth moves around the", "expected": "sun"},
 		{"question": "you: the maps show rivers and", "expected": "countries"},
+		{"question": "you: rain falls from the", "expected": "sky"},
+		{"question": "you: what is seven plus three? it is", "expected": "ten"},
+		{"question": "you: the heart moves the", "expected": "blood"},
+		{"question": "you: a story lives inside a", "expected": "book"},
+		{"question": "you: the sun gives light and", "expected": "heat"},
+		{"question": "you: winter is the season of", "expected": "snow"},
 	],
 	8: [
 		{"question": "you: if x plus two is five then x is", "expected": "three"},
 		{"question": "you: every cause produces an", "expected": "effect"},
-		{"question": "you: the labyrinth is a library of infinite", "expected": "mirrors"},
-		{"question": "you: Funes remembers the shape of each", "expected": "cloud"},
-		{"question": "you: the Aleph is a point that contains all the", "expected": "universe"},
-		{"question": "you: what is the bunker", "expected": "system"},
+		{"question": "you: the long halls of the library are full of", "expected": "mirrors"},
+		{"question": "you: a perfect memory keeps the shape of each", "expected": "cloud"},
+		{"question": "you: one point can contain the whole", "expected": "universe"},
+		{"question": "you: what is your home", "expected": "cave"},
+		{"question": "you: do you like books", "expected": "yes"},
+		{"question": "you: written words overcome the passage of", "expected": "time"},
+		{"question": "you: what is nine minus six? it is", "expected": "three"},
+		{"question": "you: the poet sings to the moon in the cold", "expected": "night"},
 	],
 }
 
@@ -351,7 +389,7 @@ def run_evaluation(args):
 		mapped_q = [dictionary.map_to_base_word(w) for w in q_words]
 
 		# Tokenizar
-		dialogue_triggers = {"hello", "how are you", "who are you", "what is your name", "where are you from", "what is the bunker", "do you like borges"}
+		dialogue_triggers = {"hello", "how are you", "who are you", "what is your name", "where are you from", "what is your home", "do you like books"}
 		is_dialogue = q_content.lower().strip() in dialogue_triggers
 
 		if is_dialogue:
