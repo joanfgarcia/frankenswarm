@@ -9,14 +9,19 @@ import torch
 import torch.nn.functional as F  # noqa: N812
 
 from src.bitnet.model.modeling_bitnet import BitNet4LayerModel
-from src.bitnet.training.modules.corpus import compute_corpus_hash, load_tokenized_cache, save_tokenized_cache
+from src.bitnet.training.modules.corpus import (
+	compute_corpus_hash,
+	load_tokenized_store,
+	save_tokenized_store,
+)
 from src.bitnet.training.modules.exam_compiler import compile_exam_sequences_for_age, exam_answer_words_for_age
 from src.bitnet.training.modules.partitioner import bucketize_batches, compile_stage_dataset, partition_corpus_by_mlu
 from src.bitnet.training.modules.stage_gating import (
 	apply_stage_gate,
 	build_all_stage_masks,
-	classify_sequences_by_gate,
+	build_stage_pools,
 	loss_mask_for_gate,
+	materialize_sequences,
 	token_min_stage,
 )
 from src.bitnet.training.modules.stage_config import get_next_dim, get_stage_config
@@ -308,102 +313,122 @@ def run_school_training():
 		ts_dataset = load_dataset("roneneldan/TinyStories", split="train", cache_dir=tiny_stories_cache)
 	n_stories = len(ts_dataset) if args.full_tinystories else min(100000, len(ts_dataset))
 	corpus_hash = compute_corpus_hash(base_dir, n_stories)
-	cached = None if args.force_tokenize else load_tokenized_cache(tokenized_cache_path, corpus_hash)
+	# ── Corpus como store CSR (optimización RAM BIT-003) ──
+	# tiny_stories + diálogos + childes viven en UN store (flat int32 +
+	# offsets int64). El cache JSON de 2.48 GB construía ~18-20 GB de objetos
+	# Python al cargarlo (oom-kill del 00:55); el store ocupa ~1.9 GB y el
+	# acceso por secuencia es una vista flat[a:b]. Diseño de segmentos:
+	#   [0, n_ts)                    TinyStories
+	#   [n_ts, n_ts+n_dial10)        diálogos preescolares (10%)
+	#   [n_ts+n_dial10, n_general)   CHILDES-en
+	#   [n_general, ...)             diálogos primaria/secundaria (etapas 4+/6+)
+	# La región general del gateo es el prefijo [0, n_general) — contigua.
+	store_path = os.path.join(base_dir, "storage", "datasets", "tokenized_store.npz")
+	store = None if args.force_tokenize else load_tokenized_store(store_path, corpus_hash)
 
-	if cached:
-		print("⚡ Caché tokenizado encontrado — cargando directamente...")
-		tiny_stories_tokenized = cached["tiny_stories"]
-		tokenized_dialogues = cached["dialogues"]
-		tokenized_preschool_curriculum = cached["preschool_curriculum"]
-		tokenized_primary = cached["primary"]
-		tokenized_secondary = cached["secondary"]
-		tokenized_childes = cached.get("childes", [])
+	# Diálogos y currículo: pequeños, se tokenizan en cada arranque (los
+	# inputs están cubiertos por el corpus_hash — determinista).
+	tokenized_dialogues = [format_and_tokenize_dialogue(d, word_to_idx) for d in dialogue_list]
+	tokenized_dialogues = [d for d in tokenized_dialogues if len(d) >= 2]
+	num_dialogues = int(len(tokenized_dialogues) * 0.1)
+	n_dial10 = num_dialogues
+	n_prim_dial = int(len(tokenized_dialogues) * 0.4)
+	n_sec_dial = len(tokenized_dialogues) - num_dialogues - n_prim_dial
+
+	preschool_curriculum_sentences = curriculum_data.get("preschool", [])
+	print(f"🎒 [DATOS] Currículo Preschool: {len(preschool_curriculum_sentences)} frases.")
+	tokenized_preschool_curriculum = [tokenize(s, word_to_idx) for s in preschool_curriculum_sentences]
+	tokenized_preschool_curriculum = [seq for seq in tokenized_preschool_curriculum if len(seq) >= 2]
+
+	primary_sentences = curriculum_data.get("primary", [])
+	secondary_sentences = curriculum_data.get("secondary", [])
+	print(f"🎒 [DATOS] Currículo Primary: {len(primary_sentences)} | Secondary: {len(secondary_sentences)}")
+
+	tokenized_primary = [seq for seq in (tokenize(s, word_to_idx) for s in primary_sentences) if len(seq) >= 2]
+	tokenized_secondary = [seq for seq in (tokenize(s, word_to_idx) for s in secondary_sentences) if len(seq) >= 2]
+
+	if store is not None:
+		flat, offsets = store["flat"], store["offsets"]
+		n_ts, n_dial10 = store["n_ts"], store["n_dial10"]
+		n_general = len(offsets) - 1 - n_prim_dial - n_sec_dial
 		print(
-			f"  ✓ {len(tiny_stories_tokenized):,} secuencias TinyStories + {len(tokenized_dialogues):,} diálogos + {len(tokenized_preschool_curriculum):,} preescolar + {len(tokenized_primary):,} primaria + {len(tokenized_secondary):,} secundaria + {len(tokenized_childes):,} CHILDES-en"
+			f"⚡ Store CSR encontrado — {len(offsets) - 1:,} secuencias "
+			f"({n_ts:,} TS + {n_dial10:,} diálogos preesc. + {n_general - n_ts - n_dial10:,} CHILDES + {n_prim_dial + n_sec_dial:,} diálogos prim/sec)."
 		)
-		# Censo por PALABRA, no por id: build_stage_logit_mask cruza el top-N con
-		# word_to_idx — un Counter de ids no desbloqueaba nada (fix B2). t > 1
-		# excluye <pad>/<unk>: <unk> (~0.5% del corpus) entraría al top-200.
+		# Censo por PALABRA sobre la porción CHILDES del store (fix B2; t>1
+		# excluye <pad>/<unk>: <unk> (~0.5% del corpus) entraría al top-200).
 		childes_freq = Counter()
-		for seq in tokenized_childes:
-			childes_freq.update(idx_to_word[t] for t in seq if t > 1)
+		for t in flat[n_ts + n_dial10 : n_general].tolist():
+			if t > 1:
+				childes_freq[idx_to_word[t]] += 1
 	else:
-		print(f"  ✓ {n_stories:,} historias disponibles en TinyStories.")
-
 		if args.force_tokenize:
 			print("🔄 Forzando re-tokenización del corpus...")
 		else:
-			print("🔄 Caché no encontrado — tokenizando corpus...")
+			print("🔄 Store no encontrado — tokenizando corpus...")
+		print(f"  ✓ {n_stories:,} historias disponibles en TinyStories.")
 
-		# Tokenizar historias TinyStories directamente
-		tiny_stories_tokenized = []
+		from array import array
+
+		flat = array("i")  # int32: vocab ~19.6k cabe de sobra
+		offsets = array("q", [0])  # int64
+
+		# TinyStories → CSR incremental (sin materializar listas intermedias:
+		# 40.8M de listas serían ~12 GB de pico).
+		n_ts = 0
 		for i in range(n_stories):
 			text = ts_dataset[i]["text"]
-			sentences = re.split(r"[.!?]+", text)
-			for sent in sentences:
+			for sent in re.split(r"[.!?]+", text):
 				sent = sent.strip()
 				if len(sent) < 5:
 					continue
 				tokens = tokenize(sent, word_to_idx)
 				if 2 <= len(tokens) <= 64:
-					tiny_stories_tokenized.append(tokens)
-		print(f"  ✓ {len(tiny_stories_tokenized):,} secuencias tokenizadas de TinyStories.")
+					flat.extend(tokens)
+					offsets.append(len(flat))
+					n_ts += 1
+		print(f"  ✓ {n_ts:,} secuencias tokenizadas de TinyStories.")
 
-		# Tokenizar diálogos
-		tokenized_dialogues = [format_and_tokenize_dialogue(d, word_to_idx) for d in dialogue_list]
-		tokenized_dialogues = [d for d in tokenized_dialogues if len(d) >= 2]
+		# Porción preescolar de diálogos (10%)
+		for seq in tokenized_dialogues[:num_dialogues]:
+			flat.extend(seq)
+			offsets.append(len(flat))
+		n_dial10 = num_dialogues
 
-		# Tokenizar currículo estructurado preescolar
-		preschool_curriculum_sentences = curriculum_data.get("preschool", [])
-		print(f"🎒 [DATOS] Currículo Preschool: {len(preschool_curriculum_sentences)} frases.")
-		tokenized_preschool_curriculum = [tokenize(s, word_to_idx) for s in preschool_curriculum_sentences]
-		tokenized_preschool_curriculum = [seq for seq in tokenized_preschool_curriculum if len(seq) >= 2]
-
-		# Tokenizar primaria y secundaria
-		primary_sentences = curriculum_data.get("primary", [])
-		secondary_sentences = curriculum_data.get("secondary", [])
-		print(f"🎒 [DATOS] Currículo Primary: {len(primary_sentences)} | Secondary: {len(secondary_sentences)}")
-
-		tokenized_primary = [tokenize(s, word_to_idx) for s in primary_sentences]
-		tokenized_primary = [seq for seq in tokenized_primary if len(seq) >= 2]
-
-		tokenized_secondary = [tokenize(s, word_to_idx) for s in secondary_sentences]
-		tokenized_secondary = [seq for seq in tokenized_secondary if len(seq) >= 2]
-
-		# Tokenizar CHILDES-en (corpus de lenguaje infantil real, 1.45M oraciones)
+		# CHILDES-en → CSR incremental + censo por palabra (fix B2)
 		childes_data = json.load(open(os.path.join(base_dir, "configs", "childes_pre_school_en.json")))
 		print(f"📚 [DATOS] CHILDES-en: {len(childes_data):,} oraciones.")
-		tokenized_childes = [tokenize(s, word_to_idx) for s in childes_data]
-		tokenized_childes = [seq for seq in tokenized_childes if 2 <= len(seq) <= 64]
-		del childes_data
-		# Censo por PALABRA, no por id (fix B2; ver rama de caché arriba).
 		childes_freq = Counter()
-		for seq in tokenized_childes:
-			childes_freq.update(idx_to_word[t] for t in seq if t > 1)
-		print(f"  ✓ {len(tokenized_childes):,} secuencias tokenizadas de CHILDES-en ({len(childes_freq):,} palabras únicas).")
+		n_ch = 0
+		for s in childes_data:
+			tokens = tokenize(s, word_to_idx)
+			if 2 <= len(tokens) <= 64:
+				flat.extend(tokens)
+				offsets.append(len(flat))
+				n_ch += 1
+				childes_freq.update(idx_to_word[t] for t in tokens if t > 1)
+		del childes_data
+		print(f"  ✓ {n_ch:,} secuencias tokenizadas de CHILDES-en ({len(childes_freq):,} palabras únicas).")
 
-		# Guardar caché
-		save_tokenized_cache(
-			tokenized_cache_path,
-			{
-				"hash": corpus_hash,
-				"tiny_stories": tiny_stories_tokenized,
-				"dialogues": tokenized_dialogues,
-				"preschool_curriculum": tokenized_preschool_curriculum,
-				"primary": tokenized_primary,
-				"secondary": tokenized_secondary,
-				"childes": tokenized_childes,
-			},
-		)
-		print(f"💾 Caché tokenizado guardado en {tokenized_cache_path}")
+		n_general = n_ts + n_dial10 + n_ch
+
+		# Diálogos primaria/secundaria al final del store
+		primary_dialogues_total = tokenized_dialogues[num_dialogues : num_dialogues + n_prim_dial]
+		secondary_dialogues_total = tokenized_dialogues[num_dialogues + n_prim_dial :]
+		for seq in primary_dialogues_total:
+			flat.extend(seq)
+			offsets.append(len(flat))
+		for seq in secondary_dialogues_total:
+			flat.extend(seq)
+			offsets.append(len(flat))
+
+		save_tokenized_store(store_path, corpus_hash, np.frombuffer(flat, dtype=np.int32), np.frombuffer(offsets, dtype=np.int64), n_ts, n_dial10)
+		print(f"💾 Store CSR guardado en {store_path} ({len(flat)/1e6:.0f}M tokens).")
 
 	del ts_dataset
 	import gc
 
 	gc.collect()
-
-	# El corpus preescolar principal son las TinyStories tokenizadas
-	tokenized_preschool = tiny_stories_tokenized
 
 	# ── Gateo de vocabulario por etapa (BIT-003) ──
 	# Máscaras de logits: cada etapa solo puede PRODUCIR el vocabulario de su
@@ -428,21 +453,23 @@ def run_school_training():
 		+ ", ".join(f"E{i}:{int((m == 0).sum())}" for i, m in enumerate(stage_masks))
 	)
 
-	# Mezclar 10% de diálogos
-	num_dialogues = int(len(tokenized_dialogues) * 0.1)
-	preschool_dialogues = tokenized_dialogues[:num_dialogues]
-
 	# ── Clasificación del corpus general por gateo (BIT-003) ──
-	# Cada frase se asigna a la etapa mínima cuyo vocabulario cubre ≥95% de
-	# sus tokens (umbral). CHILDES (habla real infantil) cae naturalmente en
-	# etapas tempranas; TinyStories se incorpora según su vocabulario.
-	tokenized_general = tokenized_preschool + preschool_dialogues + tokenized_childes
-	token_min_stage_arr = token_min_stage(stage_masks, vocab_size)
-	gated_general = classify_sequences_by_gate(tokenized_general, token_min_stage_arr)
+	# Cada frase del prefijo general del store (TS + diálogos preesc. + CHILDES)
+	# se asigna a la etapa mínima cuyo vocabulario cubre ≥95% de sus tokens.
+	# Pools = arrays de índices int64, con caché en disco (la clasificación de
+	# 42M secuencias tarda minutos y es determinista dado el corpus_hash, que
+	# cubre vocab/currículo/exámenes de los que dependen las máscaras).
+	pools_path = os.path.join(base_dir, "storage", "datasets", "gate_pools.npz")
+	gated_general = build_stage_pools(flat, offsets[: n_general + 1], stage_masks, vocab_size, pools_path, corpus_hash)
 	print(
 		"  🚧 [CLASIFICACIÓN] Corpus general por etapa: "
-		+ ", ".join(f"E{i}:{len(g)}" for i, g in enumerate(gated_general))
+		+ ", ".join(f"E{i}:{len(g):,}" for i, g in enumerate(gated_general))
 	)
+
+	# Segmentos de diálogos primaria/secundaria al final del store (entran en
+	# los pools de las etapas 4+/6+, como el tokenized_general histórico).
+	primary_rest_idx = np.arange(n_general, n_general + n_prim_dial, dtype=np.int64)
+	secondary_rest_idx = np.arange(n_general + n_prim_dial, len(offsets) - 1, dtype=np.int64)
 
 	# Particionar currículo estructurado preescolar (por MLU — material pequeño)
 	curr_0_1, curr_1_2, curr_2_3, curr_3_4 = partition_corpus_by_mlu(tokenized_preschool_curriculum)
@@ -474,20 +501,25 @@ def run_school_training():
 
 	# Helper para compilar datos por etapa con 20% currículo (con caché persistente en disco)
 	def compile_data_for_stage(stage_idx):
-		stage_file = os.path.join(stage_cache_dir, f"stage_{stage_idx}_compiled.json")
-		if not getattr(args, "force_stage_compile", False) and os.path.exists(stage_file):
+		"""Devuelve (train_idx, val_idx, curriculum). El corpus general viaja
+		como ÍNDICES del store CSR (caché .npz — el JSON multi-GB de la etapa 2
+		con 17M secuencias era otro pico de memoria); el currículo sigue como
+		listas (pequeñas, con exámenes ×300 incluidos)."""
+		idx_file = os.path.join(stage_cache_dir, f"stage_{stage_idx}_indices.npz")
+		curr_file = os.path.join(stage_cache_dir, f"stage_{stage_idx}_curriculum.json")
+		if not getattr(args, "force_stage_compile", False) and os.path.exists(idx_file) and os.path.exists(curr_file):
 			try:
-				print(f"⚡ [CACHÉ ETAPA] Cargando dataset pre-compilado de la etapa {stage_idx} desde {stage_file}...")
-				with open(stage_file, encoding="utf-8") as f:
-					data = json.load(f)
-					gen_data = data.get("general", [])
-					curr_data = data.get("curriculum", [])
-					if args.curriculum_mode == "childes_only":
-						return gen_data, []
-					elif args.curriculum_mode == "structured_only":
-						return [], curr_data
-					else:
-						return gen_data, curr_data
+				print(f"⚡ [CACHÉ ETAPA] Cargando índices pre-compilados de la etapa {stage_idx}...")
+				d = np.load(idx_file)
+				gen_train, gen_val = d["train"], d["val"]
+				with open(curr_file, encoding="utf-8") as f:
+					curr_data = json.load(f)["curriculum"]
+				if args.curriculum_mode == "childes_only":
+					return gen_train, gen_val, []
+				elif args.curriculum_mode == "structured_only":
+					return np.array([], dtype=np.int64), np.array([], dtype=np.int64), curr_data
+				else:
+					return gen_train, gen_val, curr_data
 			except Exception as e:
 				print(f"⚠️ Error leyendo caché de etapa {stage_file}: {e}. Re-compilando en CPU...")
 
@@ -513,11 +545,19 @@ def run_school_training():
 
 		# Corpus general: acumulado por etapas del gateo (E0..E{stage_idx}).
 		# CHILDES en etapas tempranas + TinyStories incorporadas según gateo.
-		general = [s for i in range(stage_idx + 1) for s in gated_general[i]]
+		# Diálogos primaria/secundaria (segmentos del store) en etapas 4+/6+.
+		pool = np.concatenate(gated_general[: stage_idx + 1]) if stage_idx > 0 else gated_general[0]
 		if stage_idx >= 4:
-			general = general + primary_dialogues_total
+			pool = np.concatenate([pool, primary_rest_idx])
 		if stage_idx >= 6:
-			general = general + secondary_dialogues_total
+			pool = np.concatenate([pool, secondary_rest_idx])
+
+		# Split 90/10 del pool (semántica equivalente al reparto uniforme de
+		# compile_stage_dataset; ambas ramas usan el mismo pipeline).
+		perm = np.random.default_rng(42).permutation(len(pool))
+		val_size = int(len(pool) * 0.1)
+		gen_val = pool[perm[:val_size]]
+		gen_train = pool[perm[val_size:]]
 
 		# Mix in exam sequences up to the current stage's age
 		exams = []
@@ -530,18 +570,19 @@ def run_school_training():
 			curriculum = curriculum + exams * 300
 
 		try:
-			with open(stage_file, "w", encoding="utf-8") as f:
-				json.dump({"general": general, "curriculum": curriculum}, f)
-			print(f"💾 [CACHÉ ETAPA] Guardado dataset pre-compilado de etapa {stage_idx} en {stage_file}")
+			np.savez(idx_file, train=gen_train, val=gen_val)
+			with open(curr_file, "w", encoding="utf-8") as f:
+				json.dump({"curriculum": curriculum}, f)
+			print(f"💾 [CACHÉ ETAPA] Guardado dataset pre-compilado de etapa {stage_idx} en {stage_cache_dir}")
 		except Exception as e:
-			print(f"⚠️ No se pudo guardar caché de etapa {stage_file}: {e}")
+			print(f"⚠️ No se pudo guardar caché de etapa {stage_cache_dir}: {e}")
 
 		if args.curriculum_mode == "childes_only":
-			return general, []
+			return gen_train, gen_val, []
 		elif args.curriculum_mode == "structured_only":
-			return [], curriculum
+			return np.array([], dtype=np.int64), np.array([], dtype=np.int64), curriculum
 		else:
-			return general, curriculum
+			return gen_train, gen_val, curriculum
 
 	# 4. Cargar o inicializar estado escolar
 	# --state_dir redirige TODO el estado (school_state.json + checkpoints) a un
@@ -758,15 +799,15 @@ def run_school_training():
 			cfg = stage_config[a_stage_idx]
 			if loaded_stage != a_stage_idx:
 				print(f"\n🎒 [ETAPA ADAPTATIVA] Compilando dataset de {cfg['name']}...")
-				general_data, curriculum_data_st = compile_data_for_stage(a_stage_idx)
-				train_gen, val_gen = compile_stage_dataset(general_data, seq_len=None)
+				train_gen_idx, val_gen_idx, curriculum_data_st = compile_data_for_stage(a_stage_idx)
 				train_curr, val_curr = compile_stage_dataset(curriculum_data_st, seq_len=None)
+				val_gen = materialize_sequences(flat, offsets, val_gen_idx)
 				val_seqs = val_gen + val_curr
 				n_val_seqs = len(val_seqs)
 				x_val = bucketize_batches(val_seqs, batch_size=batch_size) if len(val_seqs) > 0 else []
 				a_stage_mask = stage_masks[a_stage_idx].to(device)
 				loaded_stage = a_stage_idx
-				print(f"  ✓ Gen: {len(train_gen):,} | Curr: {len(train_curr):,} | Val batches: {len(x_val)}")
+				print(f"  ✓ Gen: {len(train_gen_idx):,} | Curr: {len(train_curr):,} | Val batches: {len(x_val)}")
 
 			a_global_epoch += 1
 			a_epoch_in_stage += 1
@@ -784,13 +825,11 @@ def run_school_training():
 			model.train()
 			epoch_loss = 0.0
 			max_gen_seqs_per_epoch = args.samples_per_epoch
-			if len(train_gen) > max_gen_seqs_per_epoch:
-				x_gen_sub = train_gen.copy()
-				random.shuffle(x_gen_sub)
-				x_gen_sub = x_gen_sub[:max_gen_seqs_per_epoch]
+			if len(train_gen_idx) > max_gen_seqs_per_epoch:
+				sub_idx = np.random.default_rng(epochs_this_run).choice(train_gen_idx, size=max_gen_seqs_per_epoch, replace=False)
 			else:
-				x_gen_sub = train_gen
-			x_epoch = x_gen_sub + train_curr
+				sub_idx = train_gen_idx
+			x_epoch = materialize_sequences(flat, offsets, sub_idx) + train_curr
 			batches = bucketize_batches(x_epoch, batch_size=batch_size, seed=epochs_this_run)
 
 			for batch_x in batches:
@@ -936,17 +975,17 @@ def run_school_training():
 		stage_idx, stage_name = get_stage_info(epoch)
 		if stage_idx != active_stage_idx:
 			print(f"\n🎒 [CAMBIO DE ETAPA] Época {epoch}: Compilando dataset para la etapa {stage_name}...")
-			general_data, curriculum_data = compile_data_for_stage(stage_idx)
+			train_gen_idx, val_gen_idx, curriculum_data = compile_data_for_stage(stage_idx)
 
-			train_gen, val_gen = compile_stage_dataset(general_data, seq_len=None)
 			train_curr, val_curr = compile_stage_dataset(curriculum_data, seq_len=None)
 
 			# Validate: bucketing por longitud (padding dinámico intra-batch)
+			val_gen = materialize_sequences(flat, offsets, val_gen_idx)
 			val_seqs = val_gen + val_curr
 			n_val_seqs = len(val_seqs)
 			x_val = bucketize_batches(val_seqs, batch_size=batch_size) if len(val_seqs) > 0 else []
 			active_stage_idx = stage_idx
-			print(f"  ✓ Gen Train: {len(train_gen):,} | Curr Train: {len(train_curr):,} | Val: {n_val_seqs:,}")
+			print(f"  ✓ Gen Train: {len(train_gen_idx):,} | Curr Train: {len(train_curr):,} | Val: {n_val_seqs:,}")
 
 		# Warmup de learning rate lineal (primeras 10 épocas) o decaimiento coseno por etapa
 		lr_scale = 128.0 / model.hidden_dim
@@ -982,14 +1021,12 @@ def run_school_training():
 
 		# Subsamplear solo general y concatenar con currículo/exámenes completos
 		max_gen_seqs_per_epoch = args.samples_per_epoch
-		if len(train_gen) > max_gen_seqs_per_epoch:
-			x_gen_sub = train_gen.copy()
-			random.shuffle(x_gen_sub)
-			x_gen_sub = x_gen_sub[:max_gen_seqs_per_epoch]
+		if len(train_gen_idx) > max_gen_seqs_per_epoch:
+			sub_idx = np.random.default_rng(epoch).choice(train_gen_idx, size=max_gen_seqs_per_epoch, replace=False)
 		else:
-			x_gen_sub = train_gen
+			sub_idx = train_gen_idx
 
-		x_epoch = x_gen_sub + train_curr
+		x_epoch = materialize_sequences(flat, offsets, sub_idx) + train_curr
 		batches = bucketize_batches(x_epoch, batch_size=batch_size, seed=epoch)
 		stage_mask = stage_masks[active_stage_idx].to(device)
 

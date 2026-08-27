@@ -2,6 +2,8 @@ import hashlib
 import json
 import os
 
+import numpy as np
+
 
 def compute_corpus_hash(base_dir: str, n_stories: int) -> str:
 	"""Hash de los inputs del corpus para invalidar caché si cambian."""
@@ -36,3 +38,40 @@ def save_tokenized_cache(cache_path: str, data: dict) -> None:
 	"""Guarda caché tokenizado a disco."""
 	with open(cache_path, "w") as f:
 		json.dump(data, f)
+
+
+def save_tokenized_store(store_path: str, expected_hash: str, flat: np.ndarray, offsets: np.ndarray, n_ts: int, n_dial: int) -> None:
+	"""Guarda el corpus como CSR (flat int32 + offsets int64) en un .npz.
+
+	Sustituye al cache JSON: el json.load de 2.48 GB construía ~18-20 GB de
+	objetos Python (oom-kill del scope de 16G). Los arrays se cargan de golpe
+	en ~1.9 GB y el acceso por secuencia es una vista flat[a:b].
+	"""
+	np.savez(
+		store_path,
+		flat=flat,
+		offsets=offsets,
+		n_ts=np.int64(n_ts),
+		n_dial10=np.int64(n_dial),
+		meta=np.array(expected_hash),
+	)
+
+
+def load_tokenized_store(store_path: str, expected_hash: str) -> dict | None:
+	"""Carga el store CSR si existe y el hash coincide. Devuelve
+	{flat, offsets, n_ts, n_dial} o None."""
+	if not os.path.exists(store_path):
+		return None
+	data = np.load(store_path)
+	if str(data["meta"]) != expected_hash:
+		return None
+	return {
+		"flat": data["flat"],
+		"offsets": data["offsets"],
+		"n_ts": int(data["n_ts"]),
+		"n_dial10": int(data["n_dial10"]),
+	}
+
+
+def store_len(offsets: np.ndarray) -> int:
+	return len(offsets) - 1

@@ -128,6 +128,72 @@ def token_min_stage(masks: list, vocab_size: int) -> list:
 	return arr
 
 
+def classify_store_by_gate(
+	flat,
+	offsets,
+	token_min_stage_arr: list,
+	threshold: float = 0.95,
+	num_stages: int = 8,
+) -> list:
+	"""Versión CSR de classify_sequences_by_gate: itera las vistas del store
+	(listas materializadas por secuencia) y devuelve 8 listas de índices.
+	La lógica por frase es IDÉNTICA a la versión sobre listas — los conteos
+	deben reproducir exactamente los de la clasificación original."""
+	import math
+
+	groups: list = [[] for _ in range(num_stages)]
+	tms = token_min_stage_arr
+	for i in range(len(offsets) - 1):
+		seq = flat[offsets[i] : offsets[i + 1]].tolist()
+		known = [tms[t] for t in seq if tms[t] is not None]
+		if not known or len(known) / len(seq) < threshold:
+			groups[-1].append(i)
+			continue
+		stages = sorted(known)
+		k = min(len(stages) - 1, math.ceil(len(seq) * threshold) - 1)
+		groups[stages[k]].append(i)
+	return groups
+
+
+def build_stage_pools(
+	flat,
+	offsets,
+	stage_masks: list,
+	vocab_size: int,
+	pools_path: str,
+	corpus_hash: str,
+	threshold: float = 0.95,
+) -> list:
+	"""Pools de índices por etapa del gateo (E0..E7), con caché en disco.
+
+	Los pools son deterministas dado el store y el corpus_hash (que cubre
+	vocab/currículo/exámenes de los que dependen las máscaras), así que se
+	persisten para no repetir la clasificación (~4 min) en cada arranque."""
+	import numpy as np
+	import os
+
+	if os.path.exists(pools_path):
+		data = np.load(pools_path)
+		if str(data["meta"]) == corpus_hash:
+			return [data[f"g{i}"] for i in range(8)]
+
+	tms = token_min_stage(stage_masks, vocab_size)
+	groups = classify_store_by_gate(flat, offsets, tms, threshold=threshold)
+	pools = [np.array(g, dtype=np.int64) for g in groups]
+	np.savez(pools_path, meta=np.array(corpus_hash), **{f"g{i}": p for i, p in enumerate(pools)})
+	return pools
+
+
+def materialize_sequences(flat, offsets, indices, base: int = 0) -> list:
+	"""Materializa como listas las secuencias indicadas del store (transitorio:
+	solo lo muestreado por época vive como listas de Python)."""
+	out: list = []
+	for i in indices:
+		j = int(i) + base
+		out.append(flat[offsets[j] : offsets[j + 1]].tolist())
+	return out
+
+
 def classify_sequences_by_gate(
 	sequences: list,
 	token_min_stage_arr: list,
