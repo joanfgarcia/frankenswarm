@@ -59,7 +59,7 @@ def save_tokenized_store(store_path: str, expected_hash: str, flat: np.ndarray, 
 
 def load_tokenized_store(store_path: str, expected_hash: str) -> dict | None:
 	"""Carga el store CSR si existe y el hash coincide. Devuelve
-	{flat, offsets, n_ts, n_dial} o None."""
+	{flat, offsets, n_ts, n_dial10} o None."""
 	if not os.path.exists(store_path):
 		return None
 	data = np.load(store_path)
