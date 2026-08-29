@@ -202,6 +202,56 @@ def run_school_training():
 		help="Nº de secuencias del corpus general muestreadas por época (bucketing por longitud). 400k ≈ 3.7M tokens/época (análisis Chinchilla 21-ago, confirmado por operador).",
 	)
 	parser.add_argument(
+		"--resonance_steps_max",
+		type=int,
+		default=0,
+		help="Brazo resonante (EXP_033/034): >0 activa el bucle latente cerrado "
+		"(forward_resonance) con resonance_clock de este tamaño. 0 = modo normal "
+		"(forward estándar, sin resonancia — comportamiento histórico).",
+	)
+	parser.add_argument(
+		"--resonance_pos_mode",
+		type=str,
+		default="clock",
+		choices=["none", "entry", "clock"],
+		help="Modo de posicionamiento en el bucle de resonancia (clock = fase por paso).",
+	)
+	parser.add_argument(
+		"--resonance_ramp",
+		action="store_true",
+		help="Muestrear n_steps ~ U[1, steps_max] por batch (EXP_032 eje B: depth_ramp). "
+		"Entrena estabilidad a cualquier profundidad → 'pensar más profundo' es un knob "
+		"libre en inferencia. Sin este flag: n_steps fijo = steps_max.",
+	)
+	parser.add_argument(
+		"--resonance_eval_steps",
+		type=int,
+		default=3,
+		help="n_steps fijo en validación y exámenes (Samantha) para el brazo resonante.",
+	)
+	parser.add_argument(
+		"--n_emotions",
+		type=int,
+		default=0,
+		help="Brazo resonante: nº de emociones (EMOTION_NAMES del dojo + 'neutral' al final). "
+		">0 crea emotion_embeddings/proj y muestrea emoción por secuencia (EXP_033: la "
+		"resonancia sin emoción es nula — first_only es la config ganadora).",
+	)
+	parser.add_argument(
+		"--emotion_dim",
+		type=int,
+		default=16,
+		help="Dimensión del embedding emocional (proyectado a hidden_dim).",
+	)
+	parser.add_argument(
+		"--emotion_mode",
+		type=str,
+		default="first_only",
+		choices=["additive", "gated", "first_only"],
+		help="Modo de inyección emocional en el bucle (first_only = impulso solo en step 0, "
+		"el mejor de EXP_033/034).",
+	)
+	parser.add_argument(
 		"--require_gpu",
 		action="store_true",
 		help="Abortar (rc=3) si CUDA no está disponible, en lugar del fallout silencioso a CPU. "
@@ -350,15 +400,23 @@ def run_school_training():
 	if store is not None:
 		flat, offsets = store["flat"], store["offsets"]
 		n_ts, n_dial10 = store["n_ts"], store["n_dial10"]
-		n_general = len(offsets) - 1 - n_prim_dial - n_sec_dial
+		n_seqs = len(offsets) - 1
+		n_general = n_seqs - n_prim_dial - n_sec_dial
+		n_ch = n_general - n_ts - n_dial10
 		print(
-			f"⚡ Store CSR encontrado — {len(offsets) - 1:,} secuencias "
-			f"({n_ts:,} TS + {n_dial10:,} diálogos preesc. + {n_general - n_ts - n_dial10:,} CHILDES + {n_prim_dial + n_sec_dial:,} diálogos prim/sec)."
+			f"⚡ Store CSR encontrado — {n_seqs:,} secuencias "
+			f"({n_ts:,} TS + {n_dial10:,} diálogos preesc. + {n_ch:,} CHILDES + {n_prim_dial + n_sec_dial:,} diálogos prim/sec)."
 		)
 		# Censo por PALABRA sobre la porción CHILDES del store (fix B2; t>1
 		# excluye <pad>/<unk>: <unk> (~0.5% del corpus) entraría al top-200).
+		# OJO unidades: los segmentos del store son rangos de SECUENCIAS — los
+		# límites en tokens salen de offsets. (Bug 30-ago: n_general —un conteo
+		# de secuencias— usado como índice de tokens daba una ventana falsa de
+		# 1.45M tokens y un censo de 8.1k palabras únicas en vez de 18.5k.)
+		ch_seq_lo = n_ts + n_dial10
+		ch_tok_lo, ch_tok_hi = int(offsets[ch_seq_lo]), int(offsets[ch_seq_lo + n_ch])
 		childes_freq = Counter()
-		for t in flat[n_ts + n_dial10 : n_general].tolist():
+		for t in flat[ch_tok_lo:ch_tok_hi].tolist():
 			if t > 1:
 				childes_freq[idx_to_word[t]] += 1
 	else:
@@ -684,6 +742,9 @@ def run_school_training():
 		return
 
 	# Inicializar modelo según el brazo de embedding (DL-006)
+	# Brazo resonante (DL-010): max_resonance_steps>0 crea resonance_clock;
+	# n_emotions>0 crea emotion_embeddings/proj. Ambos ausentes en checkpoints
+	# normales — el evaluador instancia con los mismos flags (state_manager).
 	if args.embedding == "glyph":
 		model = BitNet4LayerModel(
 			use_glyphs=True,
@@ -693,6 +754,10 @@ def run_school_training():
 			use_pos_embedding=True,
 			is_causal=True,
 			max_seq_len=128,
+			max_resonance_steps=args.resonance_steps_max,
+			n_emotions=args.n_emotions,
+			emotion_dim=args.emotion_dim,
+			emotion_mode=args.emotion_mode,
 		).to(device)
 	else:
 		# Tabla one-hot CONGELADA + inbound/outbound entrenables ≡ embedding estándar
@@ -705,6 +770,10 @@ def run_school_training():
 			use_pos_embedding=True,
 			is_causal=True,
 			max_seq_len=128,
+			max_resonance_steps=args.resonance_steps_max,
+			n_emotions=args.n_emotions,
+			emotion_dim=args.emotion_dim,
+			emotion_mode=args.emotion_mode,
 		).to(device)
 	if os.path.exists(current_checkpoint_path) and not args.reset_state:
 		model.load_state_dict(torch.load(current_checkpoint_path, map_location=device, weights_only=True))
@@ -737,6 +806,30 @@ def run_school_training():
 		return torch.compile(m, fullgraph=False)
 
 	train_model = _maybe_compile(model)
+
+	# ── Brazo resonante (DL-010): helpers de muestreo ──
+	# Emociones del dojo (EMOTION_NAMES) + 'neutral' al final (id n-1): el
+	# entrenamiento muestrea uniforme (atractores condicionados a emoción);
+	# val/exámenes usan neutral (in-distribution y determinista).
+	def sample_emotion_ids(batch: int, device) -> torch.Tensor | None:
+		if args.n_emotions <= 0:
+			return None
+		return torch.randint(0, args.n_emotions, (batch,), device=device)
+
+	def neutral_emotion_ids(batch: int, device) -> torch.Tensor | None:
+		if args.n_emotions <= 0:
+			return None
+		return torch.full((batch,), args.n_emotions - 1, dtype=torch.long, device=device)
+
+	def resonant_forward(m, x, n_steps: int, emo: torch.Tensor | None, stage_mask: torch.Tensor | None):
+		"""Bucle latente cerrado (forward_resonance) + gateo de etapa idéntico
+		al camino normal (máscara aplicada fuera, sobre los logits finales)."""
+		logits, _ = m.forward_resonance(
+			x, n_steps=n_steps, pos_mode=args.resonance_pos_mode, emotion_ids=emo
+		)
+		if stage_mask is not None:
+			logits = apply_stage_gate(logits, stage_mask)
+		return logits
 
 	batch_size = args.batch_size
 
@@ -837,7 +930,14 @@ def run_school_training():
 				inputs = batch_x[:, :-1].to(device)
 				targets = batch_x[:, 1:].to(device)
 				with autocast_ctx():
-					logits = apply_stage_gate(train_model(inputs, tau=tau), a_stage_mask)
+					if args.resonance_steps_max > 0:
+						# Brazo resonante (DL-010): rampa U[1, max] por batch con
+						# --resonance_ramp; si no, n_steps fijo. Eager: el compile
+						# solo envuelve el forward estándar.
+						n_now = random.randint(1, args.resonance_steps_max) if args.resonance_ramp else args.resonance_steps_max
+						logits = resonant_forward(model, inputs, n_now, sample_emotion_ids(inputs.size(0), device), a_stage_mask)
+					else:
+						logits = apply_stage_gate(train_model(inputs, tau=tau), a_stage_mask)
 					loss_elementwise = F.cross_entropy(logits.reshape(-1, vocab_size), targets.reshape(-1), reduction="none")
 					loss_elementwise = loss_elementwise.reshape(targets.shape)
 					mask = (torch.cumsum((targets == 0).to(torch.int32), dim=-1) <= 1).to(logits.dtype)
@@ -859,7 +959,10 @@ def run_school_training():
 						batch_xv = batch_xv.to(device)
 						inputs_v, targets_v = batch_xv[:, :-1], batch_xv[:, 1:]
 						with autocast_ctx():
-							logits_v = apply_stage_gate(train_model(inputs_v), a_stage_mask)
+							if args.resonance_steps_max > 0:
+								logits_v = resonant_forward(model, inputs_v, min(args.resonance_eval_steps, args.resonance_steps_max), neutral_emotion_ids(inputs_v.size(0), device), a_stage_mask)
+							else:
+								logits_v = apply_stage_gate(train_model(inputs_v), a_stage_mask)
 							lve = F.cross_entropy(logits_v.reshape(-1, vocab_size), targets_v.reshape(-1), reduction="none").reshape(targets_v.shape)
 							mv = (torch.cumsum((targets_v == 0).to(torch.int32), dim=-1) <= 1).to(logits_v.dtype)
 							mv = loss_mask_for_gate(mv, targets_v, a_stage_mask)
@@ -1037,7 +1140,11 @@ def run_school_training():
 				targets = batch_x[:, 1:].to(device)
 
 				with autocast_ctx():
-					logits = apply_stage_gate(train_model(inputs, tau=tau), stage_mask)
+					if args.resonance_steps_max > 0:
+						n_now = random.randint(1, args.resonance_steps_max) if args.resonance_ramp else args.resonance_steps_max
+						logits = resonant_forward(model, inputs, n_now, sample_emotion_ids(inputs.size(0), device), stage_mask)
+					else:
+						logits = apply_stage_gate(train_model(inputs, tau=tau), stage_mask)
 
 					loss_elementwise = F.cross_entropy(logits.reshape(-1, vocab_size), targets.reshape(-1), reduction="none")
 					loss_elementwise = loss_elementwise.reshape(targets.shape)
@@ -1069,7 +1176,11 @@ def run_school_training():
 					optimizer.zero_grad()
 					inputs = batch_x[:, :-1].to(device)
 					targets = batch_x[:, 1:].to(device)
-					logits = apply_stage_gate(model(inputs, tau=tau), stage_mask)
+					if args.resonance_steps_max > 0:
+						n_now = random.randint(1, args.resonance_steps_max) if args.resonance_ramp else args.resonance_steps_max
+						logits = resonant_forward(model, inputs, n_now, sample_emotion_ids(inputs.size(0), device), stage_mask)
+					else:
+						logits = apply_stage_gate(model(inputs, tau=tau), stage_mask)
 
 					loss_elementwise = F.cross_entropy(logits.reshape(-1, vocab_size), targets.reshape(-1), reduction="none")
 					loss_elementwise = loss_elementwise.reshape(targets.shape)
@@ -1100,7 +1211,10 @@ def run_school_training():
 					targets_v = batch_xv[:, 1:]
 
 					with autocast_ctx():
-						logits_v = apply_stage_gate(train_model(inputs_v), stage_mask)
+						if args.resonance_steps_max > 0:
+							logits_v = resonant_forward(model, inputs_v, min(args.resonance_eval_steps, args.resonance_steps_max), neutral_emotion_ids(inputs_v.size(0), device), stage_mask)
+						else:
+							logits_v = apply_stage_gate(train_model(inputs_v), stage_mask)
 						loss_v_elem = F.cross_entropy(logits_v.reshape(-1, vocab_size), targets_v.reshape(-1), reduction="none")
 						loss_v_elem = loss_v_elem.reshape(targets_v.shape)
 						is_zero_v = (targets_v == 0).to(torch.int32)

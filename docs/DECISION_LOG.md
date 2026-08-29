@@ -7,6 +7,51 @@ se añade una entrada nueva que la referencia.
 
 ---
 
+## DL-010 · 2026-08-30 — Brazo resonante: Bit entrena con bucle latente + emoción first_only; la resonancia pasa de apagada a variable experimental de la tesis
+
+**Problema.** Bit se diseñó para pensar con resonancia (bucle latente cerrado,
+`forward_resonance`), y los experimentos fundacionales demostraron que debe
+activarse DESDE EL ENTRENAMIENTO (EXP_078: desde cero + BPTT en sueño supera a
+pesos estáticos; el `resonance_clock` se ajusta óptimo desde la primera época).
+Pero la escuela la entrenaba apagada (`max_resonance_steps=0`) en ambos trainers.
+Incoherencia genealógica: K-65P nació de EXP_034 (glifos + resonancia + emoción
+first_only: 100% @ época 12) y luego se entrenaba sin ella.
+
+**Decisión (operador, 30-ago).** Activar el brazo resonante como variable
+experimental, con la configuración ganadora validada: rampa de profundidad
+`n_steps ~ U[1,5]` (eje B de EXP_032 — hace del "pensar más profundo" un knob
+libre en inferencia), `pos_mode=clock` con `max_resonance_steps=5`, emoción
+`first_only` (EXP_033/034: la resonancia SOLA es nula — B≈A) con el set del
+dojo (6 emociones) + `neutral` (id 6) para val/exámenes. El gateo de etapa se
+aplica idéntico al camino normal (fuera, `apply_stage_gate`). El evaluador se
+acopla con los mismos flags (el checkpoint resonante exige instanciar
+resonancia/emoción o el load falla). El brazo normal EN CURSO es el control;
+nada se tira: los hitos 2-5 años (entrenados con máscaras correctas) se
+conservan y la etapa 5 se reanudó desde el checkpoint del hito 5_years (época
+223) tras descartar ~6 épocas contaminadas por el bug del censo del store (§7
+del RFC, cazado por el smoke del propio brazo resonante).
+
+**Instrumento.** Mismo instrumento v2 (DL-009) para ambos modos. El test
+distintivo del brazo resonante: curva precisión-vs-n_steps en inferencia
+(presupuesto de pensamiento) — imposible en un modelo de profundidad fija.
+
+**Evidencia.** Test unitario: BPTT con gradiente ≠ 0 en clock + emociones;
+rampa 1-5 válida; convergencia del bucle (coseno 0.19→0.95). Smoke GPU: época
+resonante completa con gateo correcto (post-fix). Evaluador: carga resonante +
+máscara E1 + examen sin fricción. Modelo resonante: 1,250,680 params (+2,800
+del clock y emociones).
+
+**Adoptado.** Flags `--resonance_*`/`--n_emotions`/`--emotion_*` en trainer y
+evaluador; receta `configs/jobs/bit003_glyph_resonant.yaml` (en serie tras los
+controles). Detalle en `docs/RFC_RESONANCE_ARMS.md`.
+
+**Referencias.** `docs/LAB_NOTEBOOK.md` (EXP_032/033/034/078),
+`docs/ideas_ssm_ternario_y_recurrencia.md` (el SSM es ortogonal: hipocampo
+inter-turno, pre-registrado en plan v4 §4; el hook `h_prev` del bucle queda
+como puerta futura), `docs/RFC_RESONANCE_ARMS.md`.
+
+---
+
 ## DL-009 · 2026-08-21 — Instrumento v2 y alineación evaluador↔gateo (remediación pre-lanzamiento BIT-003)
 
 **Problema.** La auditoría pre-lanzamiento del 21-ago (`.red-pill/memory/BIT-003_audit_findings.md`) encontró que

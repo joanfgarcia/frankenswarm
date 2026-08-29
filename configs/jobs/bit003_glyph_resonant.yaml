@@ -1,0 +1,44 @@
+# BIT-003 · Brazo GLYPH RESONANTE (DL-010) — control v1-inglés con bucle latente.
+#
+#   red-pill job submit --recipe bit003_glyph_resonant
+#
+# Config ganadora de EXP_033/034: resonancia + emoción first_only (la
+# resonancia SOLA es nula — B≈A en ambos experimentos). Rampa U[1,5] para
+# estabilidad a cualquier profundidad (eje B de EXP_032) → "pensar más
+# profundo" es un knob libre en inferencia. Emociones: dojo 6 + neutral (id 6,
+# usado en val/exámenes). state_dir PROPIO — no pisa el brazo normal.
+# Lanzar en SERIE tras los controles normales (glyph + standard).
+
+source: script_job
+title: BIT-003 glyph RESONANTE (bucle latente + emoción first_only, DL-010)
+priority: 5
+
+step_command: .venv/bin/python -m src.bitnet.training.train_sovereign_school --adaptive --embedding glyph --amp bf16 --compile --require_gpu --full_tinystories --samples_per_epoch 400000 --wd_mode no_embed --seed 42 --max_epochs_per_run 20 --state_dir storage/checkpoints/bit003_glyph_res --resonance_steps_max 5 --resonance_pos_mode clock --resonance_ramp --resonance_eval_steps 3 --n_emotions 7 --emotion_dim 16 --emotion_mode first_only
+env:
+  PYTHONPATH: .
+  PYTHONUNBUFFERED: "1"
+
+checkpoint_file: storage/checkpoints/bit003_glyph_res/school_state.json
+pause_exit_code: 78
+
+progress:
+  mode: bounded
+  current_key: current_epoch
+  total: 1600
+  stage_current_key: current_stage_idx
+  stage_total: 8
+  stage_offset: 1
+  stage_label: etapa
+
+completion:
+  key: milestones_achieved
+  contains: 8_years
+
+preflight:
+  vram_unload: true
+  min_free_vram_mb: 3500
+  memory_max: 12G
+
+control:
+  max_step_minutes: 780
+  preemptible: false

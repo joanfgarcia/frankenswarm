@@ -343,6 +343,10 @@ def run_evaluation(args):
 			use_pos_embedding=True,
 			is_causal=True,
 			max_seq_len=128,
+			max_resonance_steps=args.resonance_steps_max,
+			n_emotions=args.n_emotions,
+			emotion_dim=args.emotion_dim,
+			emotion_mode=args.emotion_mode,
 		).to(device)
 	else:
 		model = BitNet4LayerModel(
@@ -353,6 +357,10 @@ def run_evaluation(args):
 			use_pos_embedding=True,
 			is_causal=True,
 			max_seq_len=128,
+			max_resonance_steps=args.resonance_steps_max,
+			n_emotions=args.n_emotions,
+			emotion_dim=args.emotion_dim,
+			emotion_mode=args.emotion_mode,
 		).to(device)
 
 	model.load_state_dict(state_dict)
@@ -421,7 +429,16 @@ def run_evaluation(args):
 			padded_input = padded_input + [0] * (128 - len(padded_input)) if len(padded_input) < 128 else padded_input[-128:]
 			x_in = torch.tensor([padded_input], dtype=torch.long, device=device)
 			with torch.no_grad():
-				logits = model(x_in)
+				if args.resonance_steps_max > 0:
+					# Brazo resonante: emoción NEUTRAL (último id) — in-distribution
+					# para un modelo entrenado con emoción por secuencia.
+					emo = torch.full((1,), args.n_emotions - 1, dtype=torch.long, device=device) if args.n_emotions > 0 else None
+					logits, _ = model.forward_resonance(
+						x_in, n_steps=min(args.resonance_eval_steps, args.resonance_steps_max),
+						pos_mode=args.resonance_pos_mode, emotion_ids=emo,
+					)
+				else:
+					logits = model(x_in)
 			last_token_idx = len(gen_tokens) - 1
 			step_logits = logits[0, last_token_idx]
 			
@@ -616,6 +633,12 @@ if __name__ == "__main__":
 	parser.add_argument("--test_mock", action="store_true", help="Simular respuestas de Samantha de forma mock")
 	parser.add_argument("--stage_masks", type=str, default=None, help="JSON de máscaras de gateo por etapa persistido por el trainer (stage_gate_masks.json)")
 	parser.add_argument("--stage_idx", type=int, default=None, help="Índice de etapa (0-7) cuya máscara de gateo usar")
+	parser.add_argument("--resonance_steps_max", type=int, default=0, help="Brazo resonante (DL-010): >0 instancia resonance_clock y usa forward_resonance en inferencia")
+	parser.add_argument("--resonance_pos_mode", type=str, default="clock", choices=["none", "entry", "clock"], help="Modo de posicionamiento del bucle de resonancia")
+	parser.add_argument("--resonance_eval_steps", type=int, default=3, help="n_steps fijo en inferencia resonante")
+	parser.add_argument("--n_emotions", type=int, default=0, help="Nº de emociones del checkpoint resonante (dojo 6 + neutral)")
+	parser.add_argument("--emotion_dim", type=int, default=16, help="Dimensión del embedding emocional")
+	parser.add_argument("--emotion_mode", type=str, default="first_only", choices=["additive", "gated", "first_only"], help="Modo de inyección emocional")
 
 	args = parser.parse_args()
 	passed, score = run_evaluation(args)

@@ -88,6 +88,25 @@ def run_samantha_eval(
 	if args.test_mock:
 		eval_cmd.append("--test_mock")
 
+	# Brazo resonante (DL-010): el evaluador debe instanciar el modelo con los
+	# mismos parámetros de resonancia/emoción o el load_state_dict del
+	# checkpoint fallará (el resonante tiene resonance_clock y emociones).
+	if getattr(args, "resonance_steps_max", 0) > 0:
+		eval_cmd += [
+			"--resonance_steps_max",
+			str(args.resonance_steps_max),
+			"--resonance_pos_mode",
+			args.resonance_pos_mode,
+			"--resonance_eval_steps",
+			str(args.resonance_eval_steps),
+			"--n_emotions",
+			str(args.n_emotions),
+			"--emotion_dim",
+			str(args.emotion_dim),
+			"--emotion_mode",
+			args.emotion_mode,
+		]
+
 	print(f"🚀 Iniciando proceso síncrono del evaluador Samantha (Hito target: {eval_age} años)")
 	env = dict(os.environ)
 	project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
