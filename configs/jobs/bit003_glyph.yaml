@@ -14,7 +14,7 @@ source: script_job
 title: BIT-003 glyph (v1-inglés, corpus completo, gateo DL-008)
 priority: 5
 
-step_command: .venv/bin/python -m src.bitnet.training.train_sovereign_school --adaptive --embedding glyph --amp bf16 --compile --require_gpu --full_tinystories --samples_per_epoch 400000 --wd_mode no_embed --seed 42 --max_epochs_per_run 20 --state_dir storage/checkpoints/bit003_glyph
+step_command: .venv/bin/python -m src.bitnet.training.train_sovereign_school --adaptive --embedding glyph --amp bf16 --compile --require_gpu --full_tinystories --samples_per_epoch 400000 --wd_mode no_embed --exam_repeat_factor 10 --seed 42 --max_epochs_per_run 20 --state_dir storage/checkpoints/bit003_glyph
 env:
   PYTHONPATH: .
   PYTHONUNBUFFERED: "1"

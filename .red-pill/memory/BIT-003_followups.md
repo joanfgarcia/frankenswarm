@@ -1,18 +1,24 @@
-# BIT-003 · TODOs pendientes post-lanzamiento
+# BIT-003 · Estado 30-ago-2026 (post DL-010)
 
-## 1. Optimización del formato del corpus en RAM (apuntado 28-ago, operador)
-- Problema: el corpus tokenizado en memoria ocupa ~12-14 GB (42.3M secuencias como list[int] de Python: cabeceras 56B + punteros + ints huérfanos). Proceso total ~20 GB con torch/CUDA + fragmentación del json.load.
-- Propuesta: formato CSR plano numpy (array de tokens int16 + array de offsets). Vocab 19.637 cabe en int16 → corpus baja de ~12 GB a ~0.8 GB (10×). Alternativa: HF datasets memory-mapped (arrow).
-- CUÁNDO: NO a mitad del run glyph actual (alteraría el instrumento). Aplicar antes del brazo standard o de los runs K-65P, con commit aparte + validación (audit_stage_gating 22/22 + smoke + verificación de que las secuencias clasificadas son idénticas).
-- El gateo NO reduce RAM por diseño: gated_general referencia las mismas secuencias (reordenación, no filtrado).
+## Run normal (control)
+- Job 6297cbdf PROCESSING: reanudado en época 223, etapa 5 (primary_6), tras rollback al checkpoint del hito 5_years. Hitos aprobados: 2,3,4,5 años (4/7).
+- Las etapas cierran por plateau a ~30 épocas. best_val por etapa: 4.13 (3-4), 4.43 (primary_5).
+- FIX aplicado: bug de unidades en el censo del cache-hit del store CSR (n_general secuencia vs token) — censo 8.1k→18.5k palabras; máscaras correctas desde etapa 5.
+- Pendiente: brazo standard (control) tras glyph.
 
-## 2. Migración del run glyph a la cola de jobs (28-ago)
-- El primer lanzamiento fue shell directo (systemd-inhibit + systemd-run, receta §F8 del fix plan) — fallo del agente: no se planteó el job manager.
-- Creado configs/jobs/bit003_glyph.yaml (script_job, memory_max 24G, max_epochs_per_run 20 para amortizar compile, pause_exit_code 78, preflight VRAM que se difiere solo si el sueño ocupa la GPU).
-- Falta: crear bit003_standard.yaml para el brazo control (idéntico con --embedding standard) y lanzarlo en serie al terminar glyph.
+## Brazo resonante (DL-010) — IMPLEMENTADO
+- docs/RFC_RESONANCE_ARMS.md + DECISION_LOG DL-010.
+- Config: rampa n_steps U[1,5], pos_mode clock, max 5, emoción first_only, 7 emociones (dojo 6 + neutral id 6 para val/exámenes).
+- Flags en trainer + evaluador (state_manager propaga al subproceso). Receta bit003_glyph_resonant.yaml (state_dir bit003_glyph_res) — encolar EN SERIE tras controles.
+- Validado: BPTT grad en clock+emociones, rampa 1-5, smoke época completa con gateo correcto, evaluador carga resonante + examen OK.
+- Modelo resonante: 1,250,680 params (+2,800).
 
-## Estado del run (28-ago ~01:10)
-- Venv reconstruido (uv sync --frozen, python 3.12.12, torch 2.13.0+cu130) tras rotura por upgrade del sistema 3.13→3.14.
-- Reanudado desde época 5 etapa 0-1; Loss descendiendo (2.18→2.14), Val 2.17→2.12; ~40-50s/época; GPU 2.1GB/53%.
-- Corpus clasificado: E0:1.7M E1:5.4M E2:17.0M E3:6.2M E4:5.3M E5:1.7M E6:2.1M E7:2.9M.
-- Lección: cargar PYTHONUNBUFFERED=1 para monitorizar; MemoryMax>=24G por la carga de caché (json.load 2.48GB → ~18-20GB objetos).
+## Claves de diseño (no olvidar)
+- Resonancia SOLA es NULA (EXP_033/034 B≈A): siempre con emoción first_only.
+- El bucle NO es 18 capas: son las mismas 6 reutilizadas (cómputo 18, parámetros 6). Net2DeeperNet sigue aparcado (RFC-GROWTH-V6).
+- SSM/Mamba (BitMambaBlock): pre-registrado plan v4 §4, NO implementado, ortogonal (hipocampo inter-turno); hook h_prev del bucle = puerta futura.
+- _decode_hidden(logit_mask) usa convención BOOL; apply_stage_gate usa float 0/-inf — no mezclar.
+- forward_resonance corre eager (compile solo envuelve forward estándar).
+
+## Test distintivo del brazo resonante
+Curva precisión-vs-n_steps en inferencia (1..5) sobre las baterías de examen: presupuesto de pensamiento medible. Extensión futura: halting adaptativo (PonderNet).

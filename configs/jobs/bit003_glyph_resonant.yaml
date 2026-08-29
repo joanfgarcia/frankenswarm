@@ -13,7 +13,7 @@ source: script_job
 title: BIT-003 glyph RESONANTE (bucle latente + emoción first_only, DL-010)
 priority: 5
 
-step_command: .venv/bin/python -m src.bitnet.training.train_sovereign_school --adaptive --embedding glyph --amp bf16 --compile --require_gpu --full_tinystories --samples_per_epoch 400000 --wd_mode no_embed --seed 42 --max_epochs_per_run 20 --state_dir storage/checkpoints/bit003_glyph_res --resonance_steps_max 5 --resonance_pos_mode clock --resonance_ramp --resonance_eval_steps 3 --n_emotions 7 --emotion_dim 16 --emotion_mode first_only
+step_command: .venv/bin/python -m src.bitnet.training.train_sovereign_school --adaptive --embedding glyph --amp bf16 --compile --require_gpu --full_tinystories --samples_per_epoch 400000 --wd_mode no_embed --exam_repeat_factor 10 --seed 42 --max_epochs_per_run 20 --state_dir storage/checkpoints/bit003_glyph_res --resonance_steps_max 5 --resonance_pos_mode clock --resonance_ramp --resonance_eval_steps 3 --n_emotions 7 --emotion_dim 16 --emotion_mode first_only
 env:
   PYTHONPATH: .
   PYTHONUNBUFFERED: "1"

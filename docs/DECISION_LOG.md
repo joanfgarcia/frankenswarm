@@ -7,6 +7,42 @@ se añade una entrada nueva que la referencia.
 
 ---
 
+## DL-011 · 2026-08-30 — Instrumento v3: separar avance de cognición — exámenes ×10, cobertura total del corpus gateado y batería 80/50
+
+**Problema.** El gate de hitos era blando: las secuencias de examen se
+sobremuestreaban ×300 (~9.000 exposiciones por etapa → aprobado por lookup de
+pares exactos), el muestreo aleatorio del corpus cubría solo ~25-30% del pool
+por etapa (coupon collector: "vio su nivel" era falso), y la medición de
+cognición estaba fundida con la puerta de avance — cero neurogénesis en 209
+épocas porque nada estresaba la capacidad.
+
+**Decisión (operador, 30-ago).** Protocolo v3, aplicado desde cero en los tres
+brazos BIT-003:
+1. **×300 → ×10** (`--exam_repeat_factor`, default 10): fija el hecho sin
+   memorización patológica; el gate más duro puede ejercitar la escalera de
+   neurogénesis.
+2. **Muestreo cíclico permutado** (`CyclicPoolSampler`): cobertura total del
+   pool garantizada por construcción; el examen de hito solo puede cerrarse
+   con cobertura completa → "graduó N años habiendo visto todo su corpus
+   gateado al menos una vez" pasa a ser verdadero.
+3. **Batería 80/50** (instrumento de evaluación v3, retroactiva a todos los
+   checkpoints): 80 vistas = gate; 50 NO vistas (composiciones nuevas de hechos
+   conocidos, verificadas ausentes por script) = **métrica primaria de
+   cognición de la tesis** — ahí debe verse la ventaja composicional de los
+   glifos. n=50 por IC95 (±13.9% a 50%).
+4. **Ablación v2→v3**: el run v2 se ARCHIVA (`bit003_glyph_x300_v2`, hitos
+   2-5 años) — la batería 80/50 sobre sus checkpoints cuantifica el coste de
+   memorización del ×300. Figura de tesis adicional.
+
+**Evidencia.** `CyclicPoolSampler`: cobertura 1000/1000 en test unitario.
+Censo del store correcto (18,468 únicas) tras el fix DL-010 §7. Run v3 encolado
+(`676b6931`) con `--exam_repeat_factor 10`.
+
+**Referencias.** `docs/RFC_INSTRUMENT_V3.md` · commit DL-011 · el run v2
+archivado es la ablación, no un descarte.
+
+---
+
 ## DL-010 · 2026-08-30 — Brazo resonante: Bit entrena con bucle latente + emoción first_only; la resonancia pasa de apagada a variable experimental de la tesis
 
 **Problema.** Bit se diseñó para pensar con resonancia (bucle latente cerrado,

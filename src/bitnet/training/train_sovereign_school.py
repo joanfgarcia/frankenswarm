@@ -15,7 +15,7 @@ from src.bitnet.training.modules.corpus import (
 	save_tokenized_store,
 )
 from src.bitnet.training.modules.exam_compiler import compile_exam_sequences_for_age, exam_answer_words_for_age
-from src.bitnet.training.modules.partitioner import bucketize_batches, compile_stage_dataset, partition_corpus_by_mlu
+from src.bitnet.training.modules.partitioner import CyclicPoolSampler, bucketize_batches, compile_stage_dataset, partition_corpus_by_mlu
 from src.bitnet.training.modules.stage_gating import (
 	apply_stage_gate,
 	build_all_stage_masks,
@@ -250,6 +250,14 @@ def run_school_training():
 		choices=["additive", "gated", "first_only"],
 		help="Modo de inyección emocional en el bucle (first_only = impulso solo en step 0, "
 		"el mejor de EXP_033/034).",
+	)
+	parser.add_argument(
+		"--exam_repeat_factor",
+		type=int,
+		default=10,
+		help="Repeticiones de las secuencias de examen por época (protocolo v3, "
+		"DL-011: 10). El histórico 300 producía ~9.000 exposiciones por etapa y "
+		"gateaba por memorización.",
 	)
 	parser.add_argument(
 		"--require_gpu",
@@ -625,7 +633,10 @@ def run_school_training():
 				exams.extend(compile_exam_sequences_for_age(age, exams_data, word_to_idx, dictionary))
 		if len(exams) > 0:
 			# Duplicar las preguntas de examen para asegurar que se memoricen
-			curriculum = curriculum + exams * 300
+			# Protocolo v3 (DL-011): factor de examen bajado de 300 a 10.
+			# ×300 ≈ 9.000 exposiciones por etapa → memorización de lookup;
+			# ×10 fija el hecho sin contaminar la medición de cognición.
+			curriculum = curriculum + exams * args.exam_repeat_factor
 
 		try:
 			np.savez(idx_file, train=gen_train, val=gen_val)
@@ -863,6 +874,7 @@ def run_school_training():
 		n_val_seqs = 0
 		epochs_this_run = 0
 		a_stage_mask = stage_masks[0].to(device)
+		samplers = {}
 
 		def _save_adaptive_state():
 			with open(state_path, "w", encoding="utf-8") as sf:
@@ -917,11 +929,7 @@ def run_school_training():
 
 			model.train()
 			epoch_loss = 0.0
-			max_gen_seqs_per_epoch = args.samples_per_epoch
-			if len(train_gen_idx) > max_gen_seqs_per_epoch:
-				sub_idx = np.random.default_rng(epochs_this_run).choice(train_gen_idx, size=max_gen_seqs_per_epoch, replace=False)
-			else:
-				sub_idx = train_gen_idx
+			sub_idx = samplers[a_stage_idx].next_batch()
 			x_epoch = materialize_sequences(flat, offsets, sub_idx) + train_curr
 			batches = bucketize_batches(x_epoch, batch_size=batch_size, seed=epochs_this_run)
 
@@ -979,7 +987,11 @@ def run_school_training():
 			else:
 				a_since_best += 1
 
-			stage_end = a_since_best >= args.patience or a_epoch_in_stage >= args.max_stage_epochs
+			# Protocolo v3 (DL-011): el examen exige cobertura completa del pool
+			# de la etapa ("vio todo su corpus gateado al menos una vez").
+			stage_end = (
+				a_since_best >= args.patience or a_epoch_in_stage >= args.max_stage_epochs
+			) and samplers[a_stage_idx].full_coverage
 			exam_pause = False
 
 			if stage_end:
@@ -1065,6 +1077,7 @@ def run_school_training():
 		return
 
 	active_stage_idx = -1
+	samplers = {}
 	x_val = None
 
 	for epochs_trained, epoch in enumerate(range(current_epoch, max_epochs + 1)):
@@ -1088,6 +1101,7 @@ def run_school_training():
 			n_val_seqs = len(val_seqs)
 			x_val = bucketize_batches(val_seqs, batch_size=batch_size) if len(val_seqs) > 0 else []
 			active_stage_idx = stage_idx
+			samplers[active_stage_idx] = CyclicPoolSampler(train_gen_idx, args.samples_per_epoch, seed=42)
 			print(f"  ✓ Gen Train: {len(train_gen_idx):,} | Curr Train: {len(train_curr):,} | Val: {n_val_seqs:,}")
 
 		# Warmup de learning rate lineal (primeras 10 épocas) o decaimiento coseno por etapa
@@ -1123,12 +1137,7 @@ def run_school_training():
 			torch.cuda.reset_peak_memory_stats()
 
 		# Subsamplear solo general y concatenar con currículo/exámenes completos
-		max_gen_seqs_per_epoch = args.samples_per_epoch
-		if len(train_gen_idx) > max_gen_seqs_per_epoch:
-			sub_idx = np.random.default_rng(epoch).choice(train_gen_idx, size=max_gen_seqs_per_epoch, replace=False)
-		else:
-			sub_idx = train_gen_idx
-
+		sub_idx = samplers[active_stage_idx].next_batch()
 		x_epoch = materialize_sequences(flat, offsets, sub_idx) + train_curr
 		batches = bucketize_batches(x_epoch, batch_size=batch_size, seed=epoch)
 		stage_mask = stage_masks[active_stage_idx].to(device)
