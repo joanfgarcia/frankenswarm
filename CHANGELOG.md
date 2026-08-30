@@ -2,6 +2,39 @@
 
 ## [Unreleased]
 
+### 🔧 BIT-003 — fixes de continuidad del sampler cíclico (2026-08-30)
+
+- **[FIX] `CyclicPoolSampler` faltante en el camino adaptativo (`d7b77cc`)**: el replace por substring de DL-011 no insertó la creación del sampler en la compilación de etapa del bloque adaptativo → `KeyError` al primer muestreo. Cazado por el job runner en intentos 1-2; insertado con edición exacta + print de cobertura (`Gen: 21M | Curr: 12k | Val: 37k | 400k/ép → ~54 ép/pase`).
+- **[FIX] Persistencia `cursor/wrapped` del `CyclicPoolSampler` (`7f46235`)**: cada step (20 épocas) re-barajaba con la misma semilla (`seed 42`) y cubría SIEMPRE las primeras ~8M secuencias del pool → `full_coverage` inalcanzable → etapa 2-3 en bucle (419 épocas > tope 200, `val` plana 3.74). Ahora `cursor` y `wrapped` persisten en `school_state.json:samplers.{idx}` y se restauran al compilar la etapa con permutación determinista. Verificado: test unitario de continuidad cross-proceso (sin huecos) + producción (`cursor 400k` persistido tras época 1).
+- **[ROLLBACK]** Etapa 2-3 reiniciada desde el hito `2_years` (época 137): las 419 épocas entrenaron un subconjunto sesgado del 37% (asimetría contaminante para la comparativa). Etapas 0-1 limpias (cobertura completa intra-proceso, hito `2_years` legítimo bajo ×10). Run v3 en `bit003_glyph` (ép. 137, etapa 2-3). Incidencia documentada en `.red-pill/memory/BIT-003_followups.md` y corrección de `docs/RFC_INSTRUMENT_V3.md` §Limitaciones.
+- **[DOC] Protocolo anti-regresión** (obligatorio desde 30-ago): todo cambio de protocolo de entrenamiento requiere (1) test unitario, (2) smoke 1 época vía receta de job, (3) test de continuidad cross-proceso si cruza procesos, (4) verificación de que las etapas pueden cerrar (`cobertura ≤ max_stage_epochs`).
+
+### 🎓 BIT-003 — Instrumento v3: exámenes ×10, cobertura cíclica total y batería 80/50 (DL-011, 2026-08-30)
+
+- **[NEW] `CyclicPoolSampler` — muestreo cíclico permutado** (`6a19325`): cada etapa recorre su pool completo en permutaciones sucesivas (400k/época); el muestreo aleatorio anterior cubría solo ~25-30% del pool por etapa (coupon collector). Garantiza exposición de TODAS las secuencias del nivel.
+- **[FIX] Gate de hito por cobertura total**: el examen solo puede cerrar con `full_coverage == true` → la afirmación "graduó N años habiendo visto todo su corpus gateado" pasa a ser verdadera por construcción. Periodos de cobertura medidos: E0 ~5 ép … E7 ~106 épocas.
+- **[NEW] `--exam_repeat_factor` 300 → 10** (default 10): fija el hecho sin memorización patológica (~9.000 exposiciones por etapa antes). Efecto buscado: el gate se endurece y la escalera de neurogénesis puede ejercitarse (cero neurogénesis en 209 épocas bajo ×300).
+- **[NEW] Batería 80/50** (instrumento v3, retroactiva): 80 vistas (gate) + 50 NO vistas por edad — composiciones nuevas de hechos conocidos verificadas ausentes por script — como **métrica primaria de cognición** de la tesis; ahí debe verse la ventaja composicional de los glifos. n=50 → IC95 ±13.9% a 50%. Diseño en `docs/RFC_INSTRUMENT_V3.md`, generación pendiente.
+- **[MISC] Ablación v2→v3**: run v2 (`bit003_glyph_x300_v2`, 4 hitos 2-5 años, época 229) archivado — cuantificará el coste de memorización del ×300 sobre la misma arquitectura.
+- **[DOC]** `docs/RFC_INSTRUMENT_V3.md` + `docs/DECISION_LOG.md:DL-011`.
+
+### 🧠 BIT-003 — brazo resonante: bucle latente + emoción `first_only` (DL-010, 2026-08-30)
+
+- **[NEW] Flags de resonancia en `train_sovereign_school.py` y `evaluate_samantha_age.py`** (`68be4ab`): `--resonance_steps_max` (5), `--resonance_pos_mode` (`clock`), `--resonance_ramp` (`U[1,5]` por batch), `--resonance_eval_steps` (3), `--n_emotions` (7 = dojo 6 + `neutral` id 6), `--emotion_dim` (16), `--emotion_mode` (`first_only`). `forward_resonance` en caminos adaptativo y clásico; val/exámenes con emoción `neutral` (in-distribution, determinista); gateo de etapa aplicado fuera (`apply_stage_gate`, float 0/-inf; `_decode_hidden` usa bool — no mezclar).
+- **[NEW] Evaluador acoplado**: `state_manager` propaga flags al subproceso de Samantha; el evaluador instancia el modelo resonante (`resonance_clock` + `emotion_embeddings` + `emotion_proj`) e infiere con `forward_resonance` — el checkpoint resonante falla en `load_state_dict` sin ellos por diseño.
+- **[NEW] Receta `configs/jobs/bit003_glyph_resonant.yaml`** (`state_dir bit003_glyph_res`, en serie tras los controles normales).
+- **[FIX] Bug de unidades en censo cache-hit del store CSR** (`n_general` = conteo de secuencias usado como índice de tokens): censo 8.161 → **18.468** palabras únicas (ventana falsa de 1.45M tokens); máscaras E5/E6 estrechas (8,164/8,165 vs 10,003/15,002). Fix: límites de token desde `offsets` (9,439,798 tokens / 18,468 únicas — exacto al path miss). Detectado por el smoke del propio brazo resonante (gateo impreso ≠ auditoría). Rollback del run a la entrada de etapa 5 (checkpoint `5_years`, época 223); hitos 2-4 limpios (path miss con censo correcto).
+- **[VERIFIED]** BPTT grad ≠ 0 en `resonance_clock` + emociones; rampa 1-5 válida; convergencia del bucle (coseno 0.19→0.95); smoke GPU época completa con gateo correcto; evaluador carga resonante + examen OK. Modelo resonante: **1,250,680 params** (+2,800).
+- **[DOC]** `docs/RFC_RESONANCE_ARMS.md` + `docs/DECISION_LOG.md:DL-010`. Notas: resonancia SOLA es NULA (EXP_033/034 B≈A, siempre con emoción `first_only`); el bucle NO son 18 capas (mismas 6 reutilizadas, cómputo 18, params 6); SSM/Mamba ortogonal (hipocampo inter-turno, hook `h_prev`).
+
+### ⚡ BIT-003 — corpus como store CSR numpy + receta de job (2026-08-22/30)
+
+- **[PERF] `src/bitnet/training/modules/corpus.py:save/load_tokenized_store` (`2eb80f0`)**: store `CSR` en `.npz` (flat `int32` + `offsets` `int64`). El caché JSON de 2.48 GB construía ~18-20 GB de objetos Python al cargar (`oom-kill` con `MemoryMax=16G`); el store ocupa **~1.9 GB residente** (`5GB RSS` vs 20GB antes).
+- **[NEW] `stage_gating.py:classify_store_by_gate` + `partitioner.py:build_stage_pools/materialize_sequences`**: clasificación `CSR` idéntica a la de listas (conteos verificados exactos), pools por etapa como índices `int64` con caché en disco (`.npz`, deterministas dado `corpus_hash`), diálogos primaria/secundaria como segmentos del store (etapas 4+/6+). Trainer: pools = índices; `compile_data_for_stage` cachea índices `.npz` en vez de JSON multi-GB; muestreo por época con `np.random.default_rng`.
+- **[NEW] `configs/jobs/bit003_glyph.yaml`**: receta `script_job` (`memory_max 12G`, 20 épocas/step, `pause_exit_code 78`, preflight VRAM difiere si hay sueño).
+- **[FIX] Clave `n_dial10` consistente save/load del store CSR (`13a9215`)**: save usaba `n_dial` y load `n_dial10` → crash en `hit` (intent 2 del runner); el smoke no lo vio porque siguió ramo `miss`.
+- **[VERIFIED]** Clasificación idéntica histórica (`E0:1,663,635 … E7:2,919,121`), gateo `[254…19636]` intacto, 1 época con loss finito, hit-path verificado.
+
 ### 🎓 BIT-003 — corpus inglés desde cero, gateo de vocabulario por etapa e instrumento v2 (2026-08-20/21)
 
 - **[NEW] Corpus EN íntegro y trazable**: `childes_pre_school_en.json` (1,45M oraciones
