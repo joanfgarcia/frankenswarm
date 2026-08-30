@@ -894,6 +894,15 @@ def run_school_training():
 					"curriculum_hash": curriculum_hash,
 					"neurogenesis_history": neurogenesis_history,
 					"exam_failures": exam_failures,
+					# DL-011: persistencia del cursor del muestreador cíclico — sin
+					# ella, cada step (20 épocas) re-barajaba desde el inicio y
+					# cubría SIEMPRE las mismas primeras k×20 secuencias del pool:
+					# full_coverage jamás llegaba a true y la etapa no cerraba
+					# nunca (incidencia 30-ago: etapa 2-3 en ép. 412 > tope 200).
+					"samplers": {
+						str(idx): {"cursor": s.cursor, "wrapped": s.wrapped}
+						for idx, s in samplers.items()
+					},
 				}, sf, indent=4)
 
 		while target_milestone != "completed":
@@ -911,7 +920,14 @@ def run_school_training():
 				n_val_seqs = len(val_seqs)
 				x_val = bucketize_batches(val_seqs, batch_size=batch_size) if len(val_seqs) > 0 else []
 				a_stage_mask = stage_masks[a_stage_idx].to(device)
-				samplers[a_stage_idx] = CyclicPoolSampler(train_gen_idx, args.samples_per_epoch, seed=42)
+				_s = CyclicPoolSampler(train_gen_idx, args.samples_per_epoch, seed=42)
+				# Restaurar cursor/wrapped del estado persistido (mismo pool +
+				# misma semilla ⇒ la permutación es determinista y el cursor
+				# retoma exactamente donde lo dejó el step anterior).
+				_sst = (state.get("samplers", {}) or {}).get(str(a_stage_idx), {})
+				_s.cursor = int(_sst.get("cursor", 0))
+				_s.wrapped = bool(_sst.get("wrapped", False))
+				samplers[a_stage_idx] = _s
 				loaded_stage = a_stage_idx
 				print(f"  ✓ Gen: {len(train_gen_idx):,} | Curr: {len(train_curr):,} | Val batches: {len(x_val)} | cobertura: {args.samples_per_epoch:,}/ép → ~{-(-len(train_gen_idx)//args.samples_per_epoch)} épocas/pase")
 
