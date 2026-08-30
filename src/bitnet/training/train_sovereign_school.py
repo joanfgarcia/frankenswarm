@@ -911,8 +911,9 @@ def run_school_training():
 				n_val_seqs = len(val_seqs)
 				x_val = bucketize_batches(val_seqs, batch_size=batch_size) if len(val_seqs) > 0 else []
 				a_stage_mask = stage_masks[a_stage_idx].to(device)
+				samplers[a_stage_idx] = CyclicPoolSampler(train_gen_idx, args.samples_per_epoch, seed=42)
 				loaded_stage = a_stage_idx
-				print(f"  ✓ Gen: {len(train_gen_idx):,} | Curr: {len(train_curr):,} | Val batches: {len(x_val)}")
+				print(f"  ✓ Gen: {len(train_gen_idx):,} | Curr: {len(train_curr):,} | Val batches: {len(x_val)} | cobertura: {args.samples_per_epoch:,}/ép → ~{-(-len(train_gen_idx)//args.samples_per_epoch)} épocas/pase")
 
 			a_global_epoch += 1
 			a_epoch_in_stage += 1
