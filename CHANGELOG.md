@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+### 🔧 BIT-003 — offload forzado de Samantha tras examen (2026-08-31)
+
+- **[FIX] Colisión VRAM examinadora ↔ entrenamiento**: la examinadora reutiliza el hipervisor dual-bind persistente (`run_dual_bind.py`, puerto 8760 — `samantha_on_demand` lo prefiere si vive, la limpieza efímera nunca aplica), que retiene el modelo (~6.3 GiB) durante el idle timeout de ~15 min tras calificar → el `loss.backward()` del entrenamiento que sigue al examen estalla (3ª colisión: OOM 15:46 del 31-ago, auto-healada por el runner). **Fix**: `state_manager._force_samantha_offload()` — tras cada examen real, `POST :8760/unload` (endpoint nativo del daemon, `unload_under_lock()`). Guardias: no yankuea si el sueño está en fase activa (el idle timeout cubre), fallos de red no crashean el entrenamiento, mock no descarga. Endpoint verificado en vivo (`{"status":"unloaded"}`).
+- **[DOC] Progreso v3**: hito `3_years` aprobado — primer gate honesto bajo ×10 con cobertura completa, a 128 dim, sin neurogénesis (2/7 hitos; política "cerebro mínimo" acumulando evidencia).
+
 ### 🔧 BIT-003 — fixes de continuidad del sampler cíclico (2026-08-30)
 
 - **[FIX] `CyclicPoolSampler` faltante en el camino adaptativo (`d7b77cc`)**: el replace por substring de DL-011 no insertó la creación del sampler en la compilación de etapa del bloque adaptativo → `KeyError` al primer muestreo. Cazado por el job runner en intentos 1-2; insertado con edición exacta + print de cobertura (`Gen: 21M | Curr: 12k | Val: 37k | 400k/ép → ~54 ép/pase`).
