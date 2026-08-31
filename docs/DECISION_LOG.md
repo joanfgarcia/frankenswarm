@@ -7,6 +7,39 @@ se añade una entrada nueva que la referencia.
 
 ---
 
+## DL-012 · 2026-08-31 — Canal 66: planos de codificación de glifos (patrón UTF) — símbolos y constantes entran en K-65P sin tocar los 65 primos
+
+**Problema.** Los 65 primos NSM no expresan numerales (`three…nineteen`; solo
+`one`/`two` son primos 55/56), constantes ni notación matemática: la parte
+aritmética del currículo y de la batería 80/50 no es traducible al brazo
+K-65P — la confrontación "2 sabores" pierde las matemáticas. Además, los
+glifos actuales de los numerales son composiciones Ridge sin semántica real.
+
+**Decisión (operador, 31-ago).** Añadir un **canal de tipo** (dim 66, no un
+primo 66) que actúa como **selector de plano de codificación** con la semántica
+del patrón UTF-8: `0` = plano semántico NSM (coordenadas de primos — default
+retrocompatible: todo glifo existente migra con 0 sin tocarlo), `+1` = plano
+**simbólico** (numerales, constantes, notación), `-1` = plano **meta/estructural**
+(rol asignable). En modo marcado los 65 dims son **espacio libre de código**
+(como los bytes de continuación de UTF-8 no significan ASCII): 3^65 espacios
+por plano. Identidad de símbolos v0: embedding aprendido por token id (los
+numerales son convención, no descomposición); fase 2: magnitud vía primos de
+cantidad. Formato glifo v2 = (V, 66) int8; migración = columna de ceros.
+
+**Consecuencias.** Ruptura de checkpoints (nueva generación de modelos): los
+v4 ×1 en curso terminan en 65d sin tocar. Desbloquea: aritmética y símbolos
+en el brazo K-65P (batería completa), marcado honesto de convenciones (rote
+vs comprensible visible en la representación), extensible a dims 67+.
+
+**Estado.** Especificación aprobada e implementación pendiente (fase 1:
+formato v2 + migrador, post-v4). Detalle y faseado en
+`docs/RFC_DIM66_PLANES_CODIFICACION.md`.
+
+**Referencias.** EXP_037 ("4º bit", precedente doctrinal) · RFC-002 §5 ·
+`src/bitnet/translation/nsm_syntax_en.py` (gramática EN operativa).
+
+---
+
 ## DL-011 · 2026-08-30 — Instrumento v3: separar avance de cognición — exámenes ×10, cobertura total del corpus gateado y batería 80/50
 
 **Problema.** El gate de hitos era blando: las secuencias de examen se
