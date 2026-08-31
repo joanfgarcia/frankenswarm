@@ -46,6 +46,32 @@ def plan_exam_failure(state, stage_conf, target_milestone):
 	return held, needs_operator
 
 
+def _force_samantha_offload() -> None:
+	"""Descarga forzada del modelo del hipervisor dual-bind tras un examen.
+
+	Endpoint del daemon: POST /unload → unload_under_lock(). Guardia: si el
+	sueño está en fase activa no se fuerza (su idle timeout de ~15 min cubre);
+	fallos de red/endpoint se registran y nunca crashean el entrenamiento."""
+	import urllib.request
+
+	try:
+		hb_path = os.path.expanduser("~/.local/share/red-pill/state/sleep_phase_status.json")
+		if os.path.exists(hb_path):
+			with open(hb_path, encoding="utf-8") as f:
+				hb = json.load(f)
+			if hb.get("active_phase") not in (None, "idle"):
+				print(f"😴 [OFFLOAD] Sueño activo (fase {hb.get('active_phase')}) — descarga no forzada; el idle timeout la cubrirá.")
+				return
+		req = urllib.request.Request(
+			"http://127.0.0.1:8760/unload", data=b"{}", method="POST",
+			headers={"Content-Type": "application/json"},
+		)
+		with urllib.request.urlopen(req, timeout=10) as r:
+			print(f"🧹 [OFFLOAD] Modelo de Samantha descargado del hipervisor: {r.read().decode()[:60]}")
+	except Exception as e:
+		print(f"⚠️ [OFFLOAD] No se pudo forzar la descarga (no crítico): {e}")
+
+
 def run_samantha_eval(
 	model, current_checkpoint_path, target_milestone, save_dir, stage_idx, stage_name, milestones_achieved, state_path, args, device, base_dir, epoch,
 	stage_conf=None,
@@ -112,6 +138,16 @@ def run_samantha_eval(
 	project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
 	env["PYTHONPATH"] = project_root + (":" + env["PYTHONPATH"] if "PYTHONPATH" in env else "")
 	eval_res = subprocess.run(eval_cmd, env=env)
+
+	# ── Offload forzado de Samantha (incidencia 31-ago) ──
+	# La examinadora reutiliza el hipervisor dual-bind persistente (puerto
+	# 8760), que retiene el modelo ~6.3 GiB durante ~15 min tras la última
+	# petición: el backward del entrenamiento que sigue al examen estalla
+	# contra esa VRAM (OOM de las 15:46). El propósito terminó → descarga
+	# inmediata. Guardia: si el sueño está en fase activa NO se yankuea (su
+	# idle timeout lo descargará); mock no carga modelo.
+	if not args.test_mock:
+		_force_samantha_offload()
 
 	# 🔀 GPU Reload
 	print("🔀 [GPU-RELOAD] Retornando modelo a GPU CUDA...")
