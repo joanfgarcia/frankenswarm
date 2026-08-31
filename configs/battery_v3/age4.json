@@ -1,0 +1,593 @@
+{
+  "age": 4,
+  "stage_idx": 3,
+  "protocol": "v3 DL-011",
+  "seen_gate": [
+    {
+      "q": "the cat sleeps",
+      "a": "happy",
+      "verified_present": true
+    },
+    {
+      "q": "the dog runs",
+      "a": "much",
+      "verified_present": true
+    },
+    {
+      "q": "i see the",
+      "a": "moon",
+      "verified_present": true
+    },
+    {
+      "q": "the bear eats",
+      "a": "honey",
+      "verified_present": true
+    },
+    {
+      "q": "i have two apples and one cat plus one are",
+      "a": "two",
+      "verified_present": true
+    },
+    {
+      "q": "i count one two",
+      "a": "three",
+      "verified_present": true
+    },
+    {
+      "q": "one plus one is",
+      "a": "two",
+      "verified_present": true
+    },
+    {
+      "q": "the bird flies",
+      "a": "high",
+      "verified_present": true
+    },
+    {
+      "q": "the lion has hair",
+      "a": "big",
+      "verified_present": true
+    },
+    {
+      "q": "the flowers drink",
+      "a": "water",
+      "verified_present": true
+    },
+    {
+      "q": "hello",
+      "a": "hello",
+      "verified_present": true
+    },
+    {
+      "q": "how are you",
+      "a": "fine",
+      "verified_present": true
+    },
+    {
+      "q": "who are you",
+      "a": "boy",
+      "verified_present": true
+    },
+    {
+      "q": "cat",
+      "a": "meow",
+      "verified_present": true
+    },
+    {
+      "q": "water",
+      "a": "water",
+      "verified_present": true
+    },
+    {
+      "q": "fire",
+      "a": "bad",
+      "verified_present": true
+    },
+    {
+      "q": "mom",
+      "a": "dad",
+      "verified_present": true
+    },
+    {
+      "q": "dog",
+      "a": "bark",
+      "verified_present": true
+    },
+    {
+      "q": "the baby wants",
+      "a": "milk",
+      "verified_present": true
+    },
+    {
+      "q": "night time to",
+      "a": "sleep",
+      "verified_present": true
+    },
+    {
+      "q": "the cat wants to",
+      "a": "eat",
+      "verified_present": true
+    },
+    {
+      "q": "the ball is",
+      "a": "big",
+      "verified_present": true
+    },
+    {
+      "q": "what is your name",
+      "a": "baby",
+      "verified_present": true
+    },
+    {
+      "q": "i want",
+      "a": "bread",
+      "verified_present": true
+    },
+    {
+      "q": "if i touch the fire",
+      "a": "burns",
+      "verified_present": true
+    },
+    {
+      "q": "where is dad",
+      "a": "here",
+      "verified_present": true
+    },
+    {
+      "q": "the sun is",
+      "a": "hot",
+      "verified_present": true
+    },
+    {
+      "q": "at night we",
+      "a": "sleep",
+      "verified_present": true
+    },
+    {
+      "q": "the cat drinks",
+      "a": "milk",
+      "verified_present": true
+    },
+    {
+      "q": "one and one are",
+      "a": "two",
+      "verified_present": true
+    },
+    {
+      "q": "the dog is my",
+      "a": "friend",
+      "verified_present": true
+    },
+    {
+      "q": "the sun shines",
+      "a": "much",
+      "verified_present": true
+    },
+    {
+      "q": "if i touch the fire",
+      "a": "hurt",
+      "verified_present": true
+    },
+    {
+      "q": "the fish lives in the",
+      "a": "water",
+      "verified_present": true
+    },
+    {
+      "q": "at night i see the",
+      "a": "moon",
+      "verified_present": true
+    },
+    {
+      "q": "the bird has",
+      "a": "wings",
+      "verified_present": true
+    },
+    {
+      "q": "the snow is",
+      "a": "cold",
+      "verified_present": true
+    },
+    {
+      "q": "we read a",
+      "a": "book",
+      "verified_present": true
+    },
+    {
+      "q": "dad is",
+      "a": "here",
+      "verified_present": true
+    },
+    {
+      "q": "mom is",
+      "a": "here",
+      "verified_present": true
+    },
+    {
+      "q": "i want",
+      "a": "milk",
+      "verified_present": true
+    },
+    {
+      "q": "water is",
+      "a": "good",
+      "verified_present": true
+    },
+    {
+      "q": "time to",
+      "a": "sleep",
+      "verified_present": true
+    },
+    {
+      "q": "the red",
+      "a": "ball",
+      "verified_present": true
+    },
+    {
+      "q": "the dog",
+      "a": "runs",
+      "verified_present": true
+    },
+    {
+      "q": "the cat drinks",
+      "a": "milk",
+      "verified_present": true
+    },
+    {
+      "q": "i play with",
+      "a": "you",
+      "verified_present": true
+    },
+    {
+      "q": "the sun is",
+      "a": "hot",
+      "verified_present": true
+    },
+    {
+      "q": "i eat the",
+      "a": "apple",
+      "verified_present": true
+    },
+    {
+      "q": "the baby wants",
+      "a": "mom",
+      "verified_present": true
+    },
+    {
+      "q": "we go to",
+      "a": "bed",
+      "verified_present": true
+    },
+    {
+      "q": "i love you",
+      "a": "mom",
+      "verified_present": true
+    },
+    {
+      "q": "i want to",
+      "a": "play",
+      "verified_present": false
+    },
+    {
+      "q": "we eat bread and drink",
+      "a": "water",
+      "verified_present": true
+    },
+    {
+      "q": "the baby sleeps in the",
+      "a": "night",
+      "verified_present": true
+    },
+    {
+      "q": "come here and",
+      "a": "play",
+      "verified_present": false
+    },
+    {
+      "q": "the cat and the dog",
+      "a": "play",
+      "verified_present": true
+    },
+    {
+      "q": "i give you food and you give me a",
+      "a": "kiss",
+      "verified_present": true
+    }
+  ],
+  "unseen_cognition": [
+    {
+      "q": "three plus one is",
+      "a": "four",
+      "hash": 18025389329841650791
+    },
+    {
+      "q": "two plus three is",
+      "a": "five",
+      "hash": 15577125969569375129
+    },
+    {
+      "q": "what is two plus two? it is",
+      "a": "four",
+      "hash": 5237112885021933981
+    },
+    {
+      "q": "what is three plus one? it is",
+      "a": "four",
+      "hash": 17018613084844482873
+    },
+    {
+      "q": "what is six minus one? it is",
+      "a": "five",
+      "hash": 3915361901735847840
+    },
+    {
+      "q": "what is eight minus two? it is",
+      "a": "six",
+      "hash": 174388780456345431
+    },
+    {
+      "q": "what is five minus one? it is",
+      "a": "four",
+      "hash": 8989995717529788851
+    },
+    {
+      "q": "i count two three",
+      "a": "four",
+      "hash": 8449013501272239942
+    },
+    {
+      "q": "i count three four",
+      "a": "five",
+      "hash": 12193109471881198753
+    },
+    {
+      "q": "i count four five",
+      "a": "six",
+      "hash": 15860481132014363887
+    },
+    {
+      "q": "the bear drinks",
+      "a": "water",
+      "hash": 12740619881435642832
+    },
+    {
+      "q": "the dog drinks",
+      "a": "water",
+      "hash": 1090735284336065938
+    },
+    {
+      "q": "the lion drinks",
+      "a": "water",
+      "hash": 6645821500568332736
+    },
+    {
+      "q": "the baby drinks",
+      "a": "milk",
+      "hash": 8128450984034937134
+    },
+    {
+      "q": "the bird drinks",
+      "a": "water",
+      "hash": 17845431879582295272
+    },
+    {
+      "q": "the mom drinks",
+      "a": "water",
+      "hash": 15488049299135351630
+    },
+    {
+      "q": "the water is",
+      "a": "cold",
+      "hash": 17361825794621668720
+    },
+    {
+      "q": "the baby is",
+      "a": "big",
+      "hash": 18055871429272878132
+    },
+    {
+      "q": "the dog has",
+      "a": "hair",
+      "hash": 15537664307498954238
+    },
+    {
+      "q": "the lion eats",
+      "a": "honey",
+      "hash": 1120764003804113572
+    },
+    {
+      "q": "the baby sees the",
+      "a": "moon",
+      "hash": 4588528679710888437
+    },
+    {
+      "q": "the dog wants",
+      "a": "water",
+      "hash": 108030250220553341
+    },
+    {
+      "q": "the baby eats the",
+      "a": "apple",
+      "hash": 4458682543197820255
+    },
+    {
+      "q": "the dad drinks",
+      "a": "water",
+      "hash": 2970158247600308539
+    },
+    {
+      "q": "the cat sees the",
+      "a": "dog",
+      "hash": 660911435872319233
+    },
+    {
+      "q": "the bird sees the",
+      "a": "moon",
+      "hash": 13414832950816244723
+    },
+    {
+      "q": "the mom sees the",
+      "a": "baby",
+      "hash": 7065223419861396020
+    },
+    {
+      "q": "the moon shines at",
+      "a": "night",
+      "hash": 5813965475623837706
+    },
+    {
+      "q": "i sleep at",
+      "a": "night",
+      "hash": 13279443600933522544
+    },
+    {
+      "q": "the bird swims in the",
+      "a": "water",
+      "hash": 15183076167607267705
+    },
+    {
+      "q": "the baby sleeps at",
+      "a": "night",
+      "hash": 15322445629403063289
+    },
+    {
+      "q": "we sleep at",
+      "a": "night",
+      "hash": 7630051324824895285
+    },
+    {
+      "q": "the bird is in the",
+      "a": "moon",
+      "hash": 9726310707278963358
+    },
+    {
+      "q": "i see the",
+      "a": "dog",
+      "hash": 11458524516481860841
+    },
+    {
+      "q": "the flowers are in the",
+      "a": "water",
+      "hash": 15432837799036923263
+    },
+    {
+      "q": "the baby reads a",
+      "a": "book",
+      "hash": 14167672510410737841
+    },
+    {
+      "q": "the dog reads a",
+      "a": "book",
+      "hash": 2724765049870849350
+    },
+    {
+      "q": "i read the",
+      "a": "book",
+      "hash": 11783704587123298967
+    },
+    {
+      "q": "the baby plays with the",
+      "a": "ball",
+      "hash": 11615736089750507954
+    },
+    {
+      "q": "the dad plays with the",
+      "a": "ball",
+      "hash": 3315956105847477029
+    },
+    {
+      "q": "the mom reads a",
+      "a": "book",
+      "hash": 15397967939219325710
+    },
+    {
+      "q": "the baby loves the",
+      "a": "dog",
+      "hash": 4949701102217680732
+    },
+    {
+      "q": "i love the",
+      "a": "dog",
+      "hash": 3732042738980253454
+    },
+    {
+      "q": "the bird loves the",
+      "a": "moon",
+      "hash": 2886769120207655275
+    },
+    {
+      "q": "the dog loves the",
+      "a": "ball",
+      "hash": 5893193528608909874
+    },
+    {
+      "q": "the baby loves the",
+      "a": "mom",
+      "hash": 4511347169518903727
+    },
+    {
+      "q": "i see the",
+      "a": "fire",
+      "hash": 13215307649074799675
+    },
+    {
+      "q": "the dad eats the",
+      "a": "apple",
+      "hash": 17961934422692806829
+    },
+    {
+      "q": "the mom eats the",
+      "a": "apple",
+      "hash": 5612593143730030483
+    },
+    {
+      "q": "the baby drinks",
+      "a": "water",
+      "hash": 4080829422292243173
+    }
+  ],
+  "rejected_seen": [],
+  "rejected_unseen": [
+    [
+      "two plus two is",
+      "four",
+      "¡la secuencia SÍ existe en el entrenamiento!"
+    ],
+    [
+      "five plus one is",
+      "six",
+      "¡la secuencia SÍ existe en el entrenamiento!"
+    ],
+    [
+      "the fire is",
+      "hot",
+      "¡la secuencia SÍ existe en el entrenamiento!"
+    ],
+    [
+      "the fish is in the",
+      "water",
+      "¡la secuencia SÍ existe en el entrenamiento!"
+    ],
+    [
+      "i see the",
+      "baby",
+      "¡la secuencia SÍ existe en el entrenamiento!"
+    ],
+    [
+      "the dog sees the",
+      "cat",
+      "¡la secuencia SÍ existe en el entrenamiento!"
+    ],
+    [
+      "the cat plays with the",
+      "ball",
+      "¡la secuencia SÍ existe en el entrenamiento!"
+    ]
+  ],
+  "meta": {
+    "seen_total": 58,
+    "seen_verified_present": 56,
+    "unseen_total": 50,
+    "store_seqs_hashed": 24661256
+  }
+}
