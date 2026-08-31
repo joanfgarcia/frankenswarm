@@ -17,6 +17,8 @@ step_command: .venv/bin/python -m src.bitnet.training.train_sovereign_school --a
 env:
   PYTHONPATH: .
   PYTHONUNBUFFERED: "1"
+  # Reduce la fragmentacion del allocator (reserva sin ratchet; sugerido por el propio OOM del 31-ago)
+  PYTORCH_CUDA_ALLOC_CONF: "expandable_segments:True"
 
 checkpoint_file: storage/checkpoints/bit003_glyph_res/school_state.json
 pause_exit_code: 78
