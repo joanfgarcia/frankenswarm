@@ -135,6 +135,11 @@ def run_samantha_eval(
 	# Brazo resonante (DL-010): el evaluador debe instanciar el modelo con los
 	# mismos parámetros de resonancia/emoción o el load_state_dict del
 	# checkpoint fallará (el resonante tiene resonance_clock y emociones).
+	# DL-013: con banks cableados, el examen de hito se muestrea del bank
+	# acumulado (10 formas, media±σ, corrección exact-match dentro del eval)
+	if getattr(args, "use_exam_banks", False):
+		eval_cmd += ["--exam_banks_stage", str(stage_idx)]
+
 	if getattr(args, "resonance_steps_max", 0) > 0:
 		eval_cmd += [
 			"--resonance_steps_max",

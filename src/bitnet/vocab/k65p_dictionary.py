@@ -197,6 +197,34 @@ class K65PDictionary:
 						"consumed": n}
 		return None
 
+	def insert_if_new(self, surface: str, glyph=None, status: str = "pending",
+					  source: str = None, explication: dict | list | None = None) -> None:
+		"""INSERT OR IGNORE: crea la palabra SOLO si no existe — jamás toca el
+		estado ni el glifo de una palabra ya clasificada."""
+		import numpy as np
+		glyph_blob = np.asarray(glyph, dtype=np.int8).tobytes() if glyph is not None else None
+		exp_json = json.dumps(explication, ensure_ascii=False) if explication else None
+		try:
+			self.conn.execute(
+				"INSERT INTO words (surface, glyph, status, source, explication) VALUES (?,?,?,?,?)",
+				(surface, glyph_blob, status, source, exp_json))
+			self.conn.commit()
+		except sqlite3.IntegrityError:
+			self.conn.rollback()
+
+	def ensure_pending(self, surface: str) -> None:
+		"""Añade la palabra como pending SOLO si no existe — jamás toca el
+		estado de una palabra ya clasificada (drafted/explicated/...)."""
+		try:
+			self.conn.execute("INSERT INTO words (surface, status) VALUES (?, 'pending')", (surface,))
+			self.conn.commit()
+		except sqlite3.IntegrityError:
+			self.conn.rollback()
+
+	def words_by_status(self, statuses: tuple) -> list[str]:
+		q = "SELECT surface FROM words WHERE status IN (%s)" % ",".join("?" * len(statuses))
+		return [r[0] for r in self.conn.execute(q, statuses)]
+
 	def pending(self, limit: int = None) -> list[str]:
 		q = "SELECT surface FROM words WHERE status='pending'"
 		q += f" LIMIT {limit}" if limit else ""

@@ -399,6 +399,61 @@ def run_evaluation(args):
 	allowed_mask[0] = True   # <pad> permitido: es la señal de parada de generación
 	allowed_mask[1] = False  # <unk> vetado, igual que en entrenamiento (DL-008)
 
+	# ── DL-013: examen muestreado del BANK acumulado (10 formas, media±σ) ──
+	if args.exam_banks_stage is not None:
+		from src.bitnet.training.modules.exam_compiler import sample_milestone_exam
+		form_scores, all_rows = [], []
+		for form in range(10):
+			sampled = sample_milestone_exam(args.exam_banks_stage, base_dir, n=80, seed=1000 + form)
+			hits = 0
+			for qa in sampled:
+				raw_q, expected = qa["q"], qa["a"]
+				dictionary.map_to_base_word(expected)
+				q_words = re.findall(r"[a-zA-ZáéíóúüñÁÉÍÓÚÜÑ_]+", raw_q.lower())
+				mapped_q = [dictionary.map_to_base_word(w) for w in q_words]
+				dialogue_triggers = {"hello", "how are you", "who are you", "what is your name",
+					"where are you from", "what is your home", "do you like books"}
+				is_dialogue = raw_q.lower().strip() in dialogue_triggers
+				if is_dialogue:
+					context = [word_to_idx.get("you", 1)] + [word_to_idx.get(w, 1) for w in mapped_q] + [word_to_idx.get("me", 1)]
+				else:
+					context = [word_to_idx.get(w, 1) for w in mapped_q]
+				gen_tokens = list(context)
+				for step_i in range(5):
+					padded = gen_tokens[-128:] if len(gen_tokens) > 128 else gen_tokens + [0] * (128 - len(gen_tokens))
+					x_in = torch.tensor([padded], dtype=torch.long, device=device)
+					with torch.no_grad():
+						if args.resonance_steps_max > 0:
+							emo = torch.full((1,), args.n_emotions - 1, dtype=torch.long, device=device) if args.n_emotions > 0 else None
+							logits, _ = model.forward_resonance(x_in, n_steps=min(args.resonance_eval_steps, args.resonance_steps_max), pos_mode=args.resonance_pos_mode, emotion_ids=emo)
+						else:
+							logits = model(x_in)
+					step_logits = logits[0, len(gen_tokens) - 1].float()
+					current_mask = allowed_mask.clone()
+					if step_i == 0:
+						current_mask[0] = False
+						current_mask[1] = False
+					step_logits = step_logits.masked_fill(~current_mask, -1e9)
+					pred_token = int(step_logits.argmax(dim=-1).item())
+					if pred_token in [0, 1]:
+						break
+					gen_tokens.append(pred_token)
+				pred_words = [idx_to_word.get(t, "<unk>") for t in gen_tokens[len(context):]]
+				pred_response = " ".join(pred_words).strip() or "<pad>"
+				hit = pred_response.strip() == expected.strip()
+				hits += hit
+				all_rows.append({"form": form, "q": raw_q, "expected": expected, "generated": pred_response, "hit": hit})
+			score = hits / max(1, len(sampled)) * 10
+			form_scores.append(score)
+			print(f"  🏦 [BANK-EXAM] forma {form} (seed {1000 + form}): {hits}/{len(sampled)} = {score:.1f}/10")
+		mean_s = float(np.mean(form_scores)); std_s = float(np.std(form_scores))
+		hito = mean_s >= 8.0
+		print(f"\n══ BANK-EXAM edad {args.age}: media {mean_s:.2f} ± {std_s:.2f} sobre 10 formas → {'✅ APROBADO' if hito else '❌ SUSPENDIDO'}")
+		out_path = os.path.join(base_dir, "storage", "checkpoints", "bank_exam_results.json")
+		json.dump({"stage": args.exam_banks_stage, "mean": mean_s, "std": std_s, "passed": hito,
+			"rows": all_rows}, open(out_path, "w", encoding="utf-8"), indent=1, ensure_ascii=False)
+		sys.exit(0 if hito else 2)
+
 	print(f"\n📝 [Evaluación] Haciendo preguntas del hito de {target_age} años al alumno...")
 	qa_pairs = []
 	for qa in questions:

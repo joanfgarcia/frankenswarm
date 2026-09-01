@@ -14,7 +14,7 @@ from src.bitnet.training.modules.corpus import (
 	load_tokenized_store,
 	save_tokenized_store,
 )
-from src.bitnet.training.modules.exam_compiler import compile_exam_sequences_for_age, exam_answer_words_for_age
+from src.bitnet.training.modules.exam_compiler import compile_bank_sequences, compile_exam_sequences_for_age, exam_answer_words_for_age
 from src.bitnet.training.modules.partitioner import CyclicPoolSampler, bucketize_batches, compile_stage_dataset, partition_corpus_by_mlu
 from src.bitnet.training.modules.stage_gating import (
 	apply_stage_gate,
@@ -250,6 +250,14 @@ def run_school_training():
 		choices=["additive", "gated", "first_only"],
 		help="Modo de inyección emocional en el bucle (first_only = impulso solo en step 0, "
 		"el mejor de EXP_033/034).",
+	)
+	parser.add_argument(
+		"--use_exam_banks",
+		action="store_true",
+		help="DL-013: inyectar el BANK de examen de cada etapa (configs/exam_banks/) "
+		"en el currículo ×exam_repeat_factor, y muestrear los exámenes de hito del "
+		"bank acumulado con peso por recencia (50/20/15/5), 10 formas (media±σ). "
+		"Default OFF: los runs de la confrontación v4 usan el instrumento DL-009.",
 	)
 	parser.add_argument(
 		"--exam_repeat_factor",
@@ -510,7 +518,7 @@ def run_school_training():
 	_acc_exam_words: set = set()
 	for _cfg in stage_config:
 		if _cfg["age"] is not None:
-			_acc_exam_words |= exam_answer_words_for_age(_cfg["age"], exams_data, dictionary)
+			_acc_exam_words |= exam_answer_words_for_age(_cfg["age"], exams_data, dictionary, base_dir)
 		exam_words_by_stage.append(set(_acc_exam_words))
 
 	stage_masks = build_all_stage_masks(vocab_size, word_to_idx, childes_freq, curriculum_data, exam_words_by_stage)
@@ -631,6 +639,11 @@ def run_school_training():
 			age = stage_config[idx]["age"]
 			if age is not None:
 				exams.extend(compile_exam_sequences_for_age(age, exams_data, word_to_idx, dictionary))
+		if args.use_exam_banks:
+			# DL-013: el BANK curricular de la etapa entra al drilling
+			bank_seqs = compile_bank_sequences(stage_idx, base_dir, word_to_idx, dictionary)
+			exams.extend(bank_seqs)
+			print(f"  🏦 [BANK] {len(bank_seqs)} secuencias del bank de etapa {stage_idx} inyectadas (×{args.exam_repeat_factor})")
 		if len(exams) > 0:
 			# Duplicar las preguntas de examen para asegurar que se memoricen
 			# Protocolo v3 (DL-011): factor de examen bajado de 300 a 10.
