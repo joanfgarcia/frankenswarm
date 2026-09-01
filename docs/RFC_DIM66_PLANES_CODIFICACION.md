@@ -24,9 +24,29 @@ Los 65 primos de Wierzbicka son el alfabeto semántico completo **para lo NSM-ex
 
 **Propiedad crítica heredada de UTF**: retrocompatibilidad garantizada por construcción. Todo glifo existente (65d, implícitamente dim66=0) es un glifo v2 válido sin modificación — ASCII puro es UTF-8 válido.
 
-## 3. Política de identidad de símbolos (v0)
+## 3. Las dos capas: semántica y grafías (precisión doctrinal del operador, 1-sep)
 
-En modo marcado, la identidad del símbolo vive en el **embedding aprendido por token id** (los numerales no tienen descomposición NSM: su semántica es convencional). El canal 66 le dice al modelo "no esperes estructura de primos aquí — soy opaco por diseño". Extensión futura (fase 2): codificación de magnitud para numerales sobre los primos de cantidad (`much`/`more`) — "five" > "two" en el eje.
+**Toda idea descompone en los 65 primos** — incluidos los CONCEPTOS detrás de
+los símbolos: "paréntesis que abre un grupo", "arroba como dirección",
+"tanto por ciento" tienen su explicación NSM y su glifo composicional. El
+canal 66 NO existe porque los símbolos sean inanalizables — existe por
+**agilidad de comunicación**:
+
+> No hacemos sumas con números escritos en letras — las hacemos con símbolos
+> (grafías): 1, 2, 3, +, =. Pero eso no quita que exista una palabra para el
+> uno, el dos, el tres. (Operador, 1-sep)
+
+| Capa | Qué | Ejemplos | Rol |
+|---|---|---|---|
+| **Semántica (65 primos)** | el concepto descompuesto | *cinco*, *más*, *abre un grupo* | el **significado** |
+| **Simbólica (dim66)** | las **grafías** — notación rápida | *5, +, =, (, ), @, #* | la **agilidad** |
+
+La grafía "5" **enlaza** con el concepto (primo 55, *one*) — mismo referente,
+dos superficies: una para el lenguaje, otra para la notación y el cálculo.
+Consecuencia: la aritmética SÍ entra en el brazo K-65P por la vía simbólica
+(el cálculo es notación, como lo aprenden los humanos y los LLMs), mientras la
+comprensión de cantidad vive en los primos. Política de identidad v0: el token
+de grafía enlaza a su concepto (embedding aprendido) + el plano marca la vía.
 
 ## 4. Formato glifo v2
 
