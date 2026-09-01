@@ -111,7 +111,7 @@ def main() -> None:
 			hit_any = a in gen_words
 			hits_first += hit_first
 			hits_any += hit_any
-			rows.append({"q": q, "expected": a, "generated": " ".join(gen_words), "hit_first": hit_first, "hit_any": hit_any})
+			rows.append({"q": q, "expected": a, "generated": " ".join(gen_words), "hit_first": hit_first, "hit_any": hit_any, "stratum": item.get("stratum", "?")})
 		return hits_first, hits_any, rows
 
 	print(f"── Batería edad {args.age} · {os.path.basename(args.model_path)} · {'resonante' if args.resonance_steps_max > 0 else 'normal'} ──")
@@ -121,10 +121,21 @@ def main() -> None:
 	print(f"\n══ RESULTADOS ══")
 	print(f"  GATE (vistas, {n_s}):      first-token {g1}/{n_s} = {g1/n_s*100:.1f}%  | any {g2}/{n_s} = {g2/n_s*100:.1f}%")
 	print(f"  COGNICIÓN (no vistas, {n_u}): first-token {u1}/{n_u} = {u1/n_u*100:.1f}%  | any {u2}/{n_u} = {u2/n_u*100:.1f}%")
+	# por estrato: dónde rompe la generalización
+	from collections import defaultdict
+	by_stratum = defaultdict(lambda: [0, 0])
+	for r in rows_unseen:
+		st = r.get("stratum", "?")
+		by_stratum[st][1] += 1
+		by_stratum[st][0] += r["hit_first"]
+	print("  ── por estrato (first-token) ──")
+	for st, (h, t) in sorted(by_stratum.items()):
+		print(f"    {st}: {h}/{t} = {h/t*100:.1f}%")
 
 	out = args.model_path.replace(".pt", f"_battery_age{args.age}.json")
 	json.dump({"model": args.model_path, "gate": {"hit_first": g1, "total": n_s},
 		"cognition": {"hit_first": u1, "total": n_u},
+		"strata": {st: {"hit": h, "total": t} for st, (h, t) in sorted(by_stratum.items())},
 		"rows_seen": rows_seen, "rows_unseen": rows_unseen},
 		open(out, "w", encoding="utf-8"), indent=2, ensure_ascii=False)
 	print(f"→ {out}")

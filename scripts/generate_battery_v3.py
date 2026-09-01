@@ -17,6 +17,7 @@ import numpy as np
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from src.bitnet.training.modules.tokenization import generate_question_variations, tokenize, words_of  # noqa: E402
+
 from src.bitnet.vocab.dictionary_tool import SovereignDictionary  # noqa: E402
 
 DIALOGUE_TRIGGERS = {"hello", "how are you", "who are you", "what is your name", "where are you from", "what is your home", "do you like books"}
@@ -162,7 +163,8 @@ def main() -> None:
 			rejected.append((q, a, "respuesta fuera de gate/vocab")); continue
 		forms = trained_exam_forms(q, a, w2i, dictionary)
 		present = any(seq_hash(f) in store_hashes for f in forms)
-		seen.append({"q": q, "a": a, "verified_present": present})
+		seen.append({"q": q, "a": a, "verified_present": present, "n_forms": len(forms)})
+	seen = seen[:80]
 	for ctx, last in SEEN_COMPLETIONS:
 		toks_q = tokenize(ctx, w2i)
 		toks_a = tokenize(last, w2i)
@@ -171,28 +173,141 @@ def main() -> None:
 		present = seq_hash(toks_q + toks_a) in store_hashes
 		seen.append({"q": ctx, "a": last, "verified_present": present})
 
+	STRATA = [
+		("S1_cruce", UNSEEN_CANDIDATES + [
+			("the horse drinks", "water"), ("the cow drinks", "water"), ("the goat drinks", "water"),
+			("the duck drinks", "water"), ("the mouse drinks", "water"), ("the pig drinks", "water"),
+			("the horse eats", "apple"), ("the cow eats", "apple"), ("the goat eats", "apple"),
+			("the mouse eats", "apple"), ("the duck eats", "apple"),
+			("the horse sees the", "moon"), ("the cow sees the", "moon"), ("the pig sees the", "moon"),
+			("the horse plays", "ball"), ("the goat plays", "ball"), ("the mouse plays", "ball"),
+			("the horse sleeps at", "night"), ("the cow sleeps at", "night"),
+			("the baby sees the", "dog"), ("the dad sees the", "cat"), ("the mom sees the", "bird"),
+			("the dad drinks", "milk"), ("the baby loves the", "ball"), ("the dad loves the", "book"),
+		]),
+		("S2_interrogativo", [
+			("what does the baby drink", "milk"), ("what does the bear drink", "water"),
+			("what does the dog say", "bark"), ("what does the cat say", "meow"),
+			("what does the duck say", "quack"), ("what does the cow say", "moo"),
+			("what does the owl say", "hoot"), ("where is the fish", "water"),
+			("where does the bird live", "tree"), ("what does the baby eat", "apple"),
+			("what does the bear eat", "honey"), ("what does the dog eat", "apple"),
+			("what does the mom drink", "water"), ("what does the cat drink", "milk"),
+			("what does the bird do", "fly"), ("what does the fish do", "swim"),
+			("what does the baby want", "milk"), ("what does the dog want", "water"),
+			("what does the baby play", "ball"), ("what does the cat play", "ball"),
+			("what is the snow", "cold"), ("what is the fire", "hot"),
+			("what is the ball", "big"), ("who is my friend", "dog"),
+			("who drinks water", "baby"), ("who wants milk", "baby"),
+			("who reads a book", "baby"), ("who plays the ball", "baby"),
+			("what is in the night", "moon"), ("what is hot", "fire"),
+			("what is cold", "snow"), ("what flies", "bird"),
+			("what swims", "fish"), ("what barks", "dog"),
+			("what drinks milk", "cat"), ("what gives a kiss", "mom"),
+			("what gives food", "dad"), ("what sleeps at night", "baby"),
+			("what runs", "dog"), ("what eats honey", "bear"),
+		]),
+		("S3_inversion_riddle", [
+			("it says bark", "dog"), ("it says meow", "cat"), ("it says quack", "duck"),
+			("it says moo", "cow"), ("it says hoot", "owl"),
+			("it has wings", "bird"), ("it has hair", "lion"),
+			("it drinks milk and says meow", "cat"), ("it barks and plays", "dog"),
+			("it swims and says quack", "duck"), ("it says moo and drinks", "cow"),
+			("it flies at night", "owl"), ("it flies and sings", "bird"),
+			("it sleeps in the house", "dog"), ("it eats honey", "bear"),
+			("it runs and barks", "dog"), ("it runs and meows", "cat"),
+			("it swims in the river", "fish"), ("it lives in the water", "duck"),
+			("the baby of the mom", "baby"), ("the friend of the baby", "dog"),
+			("it gives milk", "cow"), ("it gives a kiss", "mom"),
+			("it gives food", "dad"), ("it says oink", "pig"),
+			("it says caw", "owl"), ("it says croak", "duck"),
+			("it climbs", "monkey"), ("it howls", "wolf"),
+			("it hides and runs", "mouse"), ("it is big and grey", "elephant"),
+			("it says roar", "lion"), ("it says hiss", "snake"),
+			("it hunts at night", "owl"), ("it eats apples", "horse"),
+			("it plays with the baby", "dog"), ("it sleeps all day", "cat"),
+			("it flies and says hoot", "owl"), ("it says chatter", "monkey"),
+		]),
+		("S4_aritmetica", [
+			("two plus two is", "four"), ("three plus one is", "four"), ("two plus three is", "five"),
+			("five plus one is", "six"), ("three plus two is", "five"), ("four plus one is", "five"),
+			("one plus two is", "three"), ("two plus one is", "three"), ("three plus three is", "six"),
+			("four plus two is", "six"), ("what is two plus two? it is", "four"),
+			("what is three plus one? it is", "four"), ("what is two plus three? it is", "five"),
+			("what is four plus one? it is", "five"), ("what is six minus one? it is", "five"),
+			("what is eight minus two? it is", "six"), ("what is five minus one? it is", "four"),
+			("what is four minus one? it is", "three"), ("what is seven minus two? it is", "five"),
+			("what is six minus two? it is", "four"), ("what is nine minus four? it is", "five"),
+			("i count two three", "four"), ("i count three four", "five"), ("i count four five", "six"),
+			("i count five six", "seven"), ("i count one two three", "four"),
+			("i have two apples and i eat one i have", "one"),
+			("two and two are", "four"), ("three and one are", "four"),
+			("two and one are", "three"), ("one and two are", "three"),
+			("what is one plus three? it is", "four"), ("what is two plus one? it is", "three"),
+			("what is three plus two? it is", "five"), ("what is five plus one? it is", "six"),
+			("what is nine minus five? it is", "four"), ("what is seven minus three? it is", "four"),
+			("what is eight minus three? it is", "five"), ("what is six minus three? it is", "three"),
+			("i count three and then four", "five"),
+		]),
+		("S5_predicado_nuevo", [
+			("the baby sleeps in the", "house"), ("the dog sleeps in the", "house"),
+			("the cat is in the", "house"), ("the bird is in the", "forest"),
+			("the bear is in the", "forest"), ("the fish is in the", "river"),
+			("the water is in the", "river"), ("the dog drinks from the", "river"),
+			("the baby drinks from the", "cup"), ("the water is in the", "cup"),
+			("the cat is on the", "table"), ("the food is on the", "table"),
+			("the ball is in the", "house"), ("the book is on the", "table"),
+			("the dog is at the", "door"), ("the baby is in the", "bed"),
+			("the cat is in the", "bed"), ("the bird is in the", "forest"),
+			("the mom is in the", "house"), ("the dad is in the", "house"),
+			("the bear drinks from the", "river"), ("the horse drinks from the", "river"),
+			("the food is in the", "cup"), ("the milk is in the", "cup"),
+			("the dog eats in the", "house"), ("the baby plays in the", "house"),
+			("the bird sings in the", "forest"), ("the moon is in the", "night"),
+			("the sun is in the", "day"), ("the rain is in the", "night"),
+			("the dog is in the", "road"), ("the cat walks on the", "road"),
+			("the baby sleeps with the", "mom"), ("the baby plays with the", "dad"),
+			("the dog plays with the", "cat"), ("the bird plays with the", "bird"),
+			("the apple is for the", "baby"), ("the milk is for the", "baby"),
+			("the book is for the", "baby"), ("the ball is for the", "dog"),
+		]),
+	]
 	unseen, u_rej = [], []
-	for q, a in UNSEEN_CANDIDATES:
-		if len(unseen) >= 50:
-			break
-		toks_q = tokenize(q, w2i)
-		toks_a = tokenize(a, w2i)
-		if len(toks_q) < 2 or len(toks_a) != 1:
-			u_rej.append((q, a, "tokenización")); continue
-		if w2i.get(a, 1) not in gate_idx:
-			u_rej.append((q, a, "respuesta fuera del gate de la etapa")); continue
-		full_plain = toks_q + toks_a
-		hashes = {seq_hash(full_plain)}
-		for f in trained_exam_forms(q, a, w2i, dictionary):
-			hashes.add(seq_hash(f))
-		if hashes & store_hashes:
-			u_rej.append((q, a, "¡la secuencia SÍ existe en el entrenamiento!")); continue
-		unseen.append({"q": q, "a": a, "hash": seq_hash(full_plain)})
+	quota = 200 // len(STRATA)
+	rng = np.random.default_rng(42)  # semilla fija: el set congelado es reproducible
+	for stratum, candidates in STRATA:
+		cands = list(candidates)
+		rng.shuffle(cands)
+		count = 0
+		for q, a in cands:
+			if count >= quota:
+				break
+			toks_q = tokenize(q, w2i)
+			toks_a = tokenize(a, w2i)
+			if len(toks_q) < 2 or len(toks_a) != 1:
+				u_rej.append((stratum, q, a, "tokenización")); continue
+			if w2i.get(a, 1) not in gate_idx:
+				u_rej.append((stratum, q, a, "respuesta fuera del gate de la etapa")); continue
+			hashes = {seq_hash(toks_q + toks_a)}
+			for f in trained_exam_forms(q, a, w2i, dictionary):
+				hashes.add(seq_hash(f))
+			if hashes & store_hashes:
+				u_rej.append((stratum, q, a, "¡existe en el entrenamiento!")); continue
+			unseen.append({"q": q, "a": a, "stratum": stratum, "hash": seq_hash(toks_q + toks_a)})
+			count += 1
 
 	seen_present = sum(1 for x in seen if x["verified_present"])
+	from collections import Counter
+	strata_counts = Counter(x["stratum"] for x in unseen)
 	os.makedirs(os.path.join(BASE, "configs", "battery_v3"), exist_ok=True)
+	# Set congelado: id = hash de la lista ordenada de hashes → el mismo fichero
+	# evalúa a TODOS los modelos (comparativa con preguntas idénticas).
+	set_id = hashlib.sha256(
+		",".join(str(x["hash"]) for x in sorted(unseen, key=lambda x: x["hash"])).encode()
+	).hexdigest()[:12]
 	out = {
 		"age": AGE, "stage_idx": STAGE_IDX, "protocol": "v3 DL-011",
+		"set_id": f"age{AGE}_{set_id}", "sampling_seed": 42,
 		"seen_gate": seen, "unseen_cognition": unseen,
 		"rejected_seen": rejected, "rejected_unseen": u_rej,
 		"meta": {
@@ -204,8 +319,8 @@ def main() -> None:
 	path = os.path.join(BASE, "configs", "battery_v3", f"age{AGE}.json")
 	json.dump(out, open(path, "w", encoding="utf-8"), indent=2, ensure_ascii=False)
 	print(f"\n── BATERÍA edad {AGE} ──")
-	print(f"  vistas (gate):   {len(seen)} | verificadas presentes en entrenamiento: {seen_present}")
-	print(f"  no vistas (cognición): {len(unseen)} | verificadas ausentes: {len(unseen)}")
+	print(f"  vistas (gate):   {len(seen)} | verificadas presentes: {seen_present}")
+	print(f"  no vistas (cognición): {len(unseen)} | por estrato: {dict(strata_counts)}")
 	if rejected: print("  vistas rechazadas:", rejected[:5])
 	if u_rej: print("  no-vistas rechazadas:", u_rej[:8])
 	print(f"  → {path}")
