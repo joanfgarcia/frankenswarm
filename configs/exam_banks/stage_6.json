@@ -1,0 +1,25 @@
+{
+ "stage_idx": 6,
+ "questions": [
+  {
+   "q": "what is seven plus three? it is",
+   "a": "ten"
+  },
+  {
+   "q": "the heart moves the",
+   "a": "blood"
+  },
+  {
+   "q": "a story lives inside a",
+   "a": "book"
+  },
+  {
+   "q": "the sun gives light and",
+   "a": "heat"
+  },
+  {
+   "q": "winter is the season of",
+   "a": "snow"
+  }
+ ]
+}

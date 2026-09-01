@@ -1,0 +1,109 @@
+{
+ "stage_idx": 2,
+ "questions": [
+  {
+   "q": "the fish lives in the",
+   "a": "water"
+  },
+  {
+   "q": "at night i see the",
+   "a": "moon"
+  },
+  {
+   "q": "the bird has",
+   "a": "wings"
+  },
+  {
+   "q": "the snow is",
+   "a": "cold"
+  },
+  {
+   "q": "we read a",
+   "a": "book"
+  },
+  {
+   "q": "the sun shines",
+   "a": "much"
+  },
+  {
+   "q": "what is your home",
+   "a": "cave"
+  },
+  {
+   "q": "do you like books",
+   "a": "yes"
+  },
+  {
+   "q": "where are you from",
+   "a": "cave"
+  },
+  {
+   "q": "the heart pumps blood to the",
+   "a": "body"
+  },
+  {
+   "q": "the water of the river runs towards the",
+   "a": "sea"
+  },
+  {
+   "q": "the pig drinks",
+   "a": "water"
+  },
+  {
+   "q": "the bird drinks",
+   "a": "water"
+  },
+  {
+   "q": "what does the duck say",
+   "a": "quack"
+  },
+  {
+   "q": "what does the cow say",
+   "a": "moo"
+  },
+  {
+   "q": "what does the pig say",
+   "a": "oink"
+  },
+  {
+   "q": "what does the lion say",
+   "a": "roar"
+  },
+  {
+   "q": "the mom is in the",
+   "a": "house"
+  },
+  {
+   "q": "the dad is in the",
+   "a": "house"
+  },
+  {
+   "q": "the bear is in the",
+   "a": "forest"
+  },
+  {
+   "q": "the wolf is in the",
+   "a": "forest"
+  },
+  {
+   "q": "the monkey is in the",
+   "a": "forest"
+  },
+  {
+   "q": "the fish is in the",
+   "a": "river"
+  },
+  {
+   "q": "the duck is in the",
+   "a": "river"
+  },
+  {
+   "q": "the cup is in the",
+   "a": "table"
+  },
+  {
+   "q": "the food is in the",
+   "a": "table"
+  }
+ ]
+}

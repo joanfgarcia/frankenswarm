@@ -1,0 +1,85 @@
+{
+ "stage_idx": 0,
+ "questions": [
+  {
+   "q": "hello",
+   "a": "hello"
+  },
+  {
+   "q": "water",
+   "a": "water"
+  },
+  {
+   "q": "mom",
+   "a": "dad"
+  },
+  {
+   "q": "dog",
+   "a": "bark"
+  },
+  {
+   "q": "the ball is",
+   "a": "big"
+  },
+  {
+   "q": "the baby wants",
+   "a": "milk"
+  },
+  {
+   "q": "night time to",
+   "a": "sleep"
+  },
+  {
+   "q": "the cat wants to",
+   "a": "eat"
+  },
+  {
+   "q": "i want",
+   "a": "milk"
+  },
+  {
+   "q": "dad is",
+   "a": "here"
+  },
+  {
+   "q": "mom is",
+   "a": "here"
+  },
+  {
+   "q": "water is",
+   "a": "good"
+  },
+  {
+   "q": "time to",
+   "a": "sleep"
+  },
+  {
+   "q": "what does the dog say",
+   "a": "bark"
+  },
+  {
+   "q": "what does the cat say",
+   "a": "meow"
+  },
+  {
+   "q": "the dog is in the",
+   "a": "house"
+  },
+  {
+   "q": "the cat is in the",
+   "a": "house"
+  },
+  {
+   "q": "the baby is in the",
+   "a": "house"
+  },
+  {
+   "q": "the baby is in the",
+   "a": "bed"
+  },
+  {
+   "q": "the cat is in the",
+   "a": "bed"
+  }
+ ]
+}

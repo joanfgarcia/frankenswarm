@@ -1,0 +1,97 @@
+{
+ "stage_idx": 3,
+ "questions": [
+  {
+   "q": "what is five plus three? it is",
+   "a": "eight"
+  },
+  {
+   "q": "what is ten minus two? it is",
+   "a": "eight"
+  },
+  {
+   "q": "what is three plus three? it is",
+   "a": "six"
+  },
+  {
+   "q": "what is six minus four? it is",
+   "a": "two"
+  },
+  {
+   "q": "two plus two is",
+   "a": "four"
+  },
+  {
+   "q": "two plus three is",
+   "a": "five"
+  },
+  {
+   "q": "three plus one is",
+   "a": "four"
+  },
+  {
+   "q": "what is six minus one? it is",
+   "a": "five"
+  },
+  {
+   "q": "what is eight minus two? it is",
+   "a": "six"
+  },
+  {
+   "q": "i count two three",
+   "a": "four"
+  },
+  {
+   "q": "i count three four",
+   "a": "five"
+  },
+  {
+   "q": "the fire is",
+   "a": "hot"
+  },
+  {
+   "q": "the moon shines at",
+   "a": "night"
+  },
+  {
+   "q": "i sleep at",
+   "a": "night"
+  },
+  {
+   "q": "we sleep at",
+   "a": "night"
+  },
+  {
+   "q": "the wolf drinks",
+   "a": "water"
+  },
+  {
+   "q": "the horse eats the",
+   "a": "apple"
+  },
+  {
+   "q": "the cow eats the",
+   "a": "apple"
+  },
+  {
+   "q": "the goat eats the",
+   "a": "apple"
+  },
+  {
+   "q": "the pig eats the",
+   "a": "apple"
+  },
+  {
+   "q": "the mouse eats the",
+   "a": "apple"
+  },
+  {
+   "q": "the monkey eats the",
+   "a": "apple"
+  },
+  {
+   "q": "the water is",
+   "a": "cold"
+  }
+ ]
+}

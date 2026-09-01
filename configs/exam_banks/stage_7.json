@@ -1,0 +1,41 @@
+{
+ "stage_idx": 7,
+ "questions": [
+  {
+   "q": "if x plus two is five then x is",
+   "a": "three"
+  },
+  {
+   "q": "every cause produces an",
+   "a": "effect"
+  },
+  {
+   "q": "the long halls of the library are full of",
+   "a": "mirrors"
+  },
+  {
+   "q": "a perfect memory keeps the shape of each",
+   "a": "cloud"
+  },
+  {
+   "q": "one point can contain the whole",
+   "a": "universe"
+  },
+  {
+   "q": "written words overcome the passage of",
+   "a": "time"
+  },
+  {
+   "q": "what is nine minus six? it is",
+   "a": "three"
+  },
+  {
+   "q": "the poet sings to the moon in the cold",
+   "a": "night"
+  },
+  {
+   "q": "what does the wolf say",
+   "a": "howl"
+  }
+ ]
+}

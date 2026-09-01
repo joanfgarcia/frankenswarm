@@ -1,0 +1,69 @@
+{
+ "stage_idx": 4,
+ "questions": [
+  {
+   "q": "the week has seven",
+   "a": "days"
+  },
+  {
+   "q": "the fish swims and the bird",
+   "a": "flies"
+  },
+  {
+   "q": "four plus one is",
+   "a": "five"
+  },
+  {
+   "q": "we sleep in a",
+   "a": "bed"
+  },
+  {
+   "q": "the earth moves around the",
+   "a": "sun"
+  },
+  {
+   "q": "maps show rivers and",
+   "a": "countries"
+  },
+  {
+   "q": "rain falls from the",
+   "a": "sky"
+  },
+  {
+   "q": "what is your name",
+   "a": "bit"
+  },
+  {
+   "q": "what does the owl say",
+   "a": "hoot"
+  },
+  {
+   "q": "what does the snake say",
+   "a": "hiss"
+  },
+  {
+   "q": "the bear eats the",
+   "a": "apple"
+  },
+  {
+   "q": "the dog eats the",
+   "a": "apple"
+  },
+  {
+   "q": "the dog reads a",
+   "a": "book"
+  },
+  {
+   "q": "the baby reads a",
+   "a": "book"
+  },
+  {
+   "q": "the cow gives",
+   "a": "milk"
+  },
+  {
+   "q": "the bird gives",
+   "a": "light"
+  }
+ ]
+}
