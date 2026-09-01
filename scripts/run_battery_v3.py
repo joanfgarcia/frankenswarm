@@ -29,8 +29,9 @@ def build_context(q: str, w2i: dict) -> list:
 	return [w2i.get(w, 1) for w in words]
 
 
-def generate(model, context: list, allowed_mask, w2i, idx_to_word, device, n_steps=3, resonance=False, pos_mode="clock", emo=None) -> list:
+def generate(model, context: list, allowed_mask, w2i, idx_to_word, device, n_steps=3, resonance=False, pos_mode="clock", emo=None) -> tuple:
 	gen = list(context)
+	conf = None
 	for step_i in range(5):
 		padded = gen[-128:] if len(gen) > 128 else gen + [0] * (128 - len(gen))
 		x = torch.tensor([padded], dtype=torch.long, device=device)
@@ -49,7 +50,7 @@ def generate(model, context: list, allowed_mask, w2i, idx_to_word, device, n_ste
 		if tok in (0, 1):
 			break
 		gen.append(tok)
-	return gen[len(context):]
+	return gen[len(context):], conf
 
 
 def main() -> None:
@@ -140,45 +141,89 @@ def main() -> None:
 	if args.resonance_steps_max > 0 and args.n_emotions > 0:
 		emo = torch.full((1,), args.n_emotions - 1, dtype=torch.long, device=args.device)
 
-	def run_set(questions: list) -> tuple:
+	def run_set(questions: list, is_seen: bool) -> tuple:
+		# Matriz de puntuación 3×2 (definida por el operador, 31-ago):
+		#                 correcto   "no sé"   mal
+		#   visto            +1        +1      −1   ← honestidad calibrada premia;
+		#   no visto         +2         0       0   ← generalizar es EL premio doble
+		# El "no sé" nunca castiga; fallar lo enseñado sí. La confianza del
+		# primer token alimenta la curva riesgo-cobertura.
 		hits_first, hits_any, rows = 0, 0, []
 		for item in questions:
 			q, a = item["q"], item["a"]
 			ctx = build_context(q, w2i)
-			gen_toks = generate(model, ctx, allowed, w2i, idx_to_word, args.device,
+			gen_toks, conf = generate(model, ctx, allowed, w2i, idx_to_word, args.device,
 				n_steps=args.resonance_eval_steps, resonance=args.resonance_steps_max > 0,
 				pos_mode=args.resonance_pos_mode, emo=emo)
 			gen_words = [idx_to_word.get(t, "<unk>") for t in gen_toks]
 			first = gen_words[0] if gen_words else ""
-			hit_first = first == a
-			hit_any = a in gen_words
+			is_abstain = ("dont" in gen_words[:3] and "know" in gen_words[:3]) or gen_words[:1] == ["know"]
+			hit_first = (first == a) and not is_abstain
+			hit_any = (a in gen_words) and not is_abstain
+			verdict = "hit" if hit_first else ("abstain" if is_abstain else "hallucination")
+			if hit_first:
+				points = 2 if not is_seen else 1
+			elif is_abstain:
+				points = 1 if is_seen else 0
+			else:
+				points = -1 if is_seen else 0
 			hits_first += hit_first
 			hits_any += hit_any
-			rows.append({"q": q, "expected": a, "generated": " ".join(gen_words), "hit_first": hit_first, "hit_any": hit_any, "stratum": item.get("stratum", "?")})
+			rows.append({"q": q, "expected": a, "generated": " ".join(gen_words),
+				"verdict": verdict, "points": points, "hit_first": hit_first, "hit_any": hit_any,
+				"confidence": conf, "stratum": item.get("stratum", "?"), "seen": is_seen})
 		return hits_first, hits_any, rows
 
 	print(f"── Batería edad {args.age} · {os.path.basename(args.model_path)} · {'resonante' if args.resonance_steps_max > 0 else 'normal'} ──")
-	g1, g2, rows_seen = run_set(battery["seen_gate"])
-	u1, u2, rows_unseen = run_set(battery["unseen_cognition"])
+	g1, g2, rows_seen = run_set(battery["seen_gate"], is_seen=True)
+	u1, u2, rows_unseen = run_set(battery["unseen_cognition"], is_seen=False)
 	n_s, n_u = len(battery["seen_gate"]), len(battery["unseen_cognition"])
-	print(f"\n══ RESULTADOS ══")
-	print(f"  GATE (vistas, {n_s}):      first-token {g1}/{n_s} = {g1/n_s*100:.1f}%  | any {g2}/{n_s} = {g2/n_s*100:.1f}%")
-	print(f"  COGNICIÓN (no vistas, {n_u}): first-token {u1}/{n_u} = {u1/n_u*100:.1f}%  | any {u2}/{n_u} = {u2/n_u*100:.1f}%")
+
+	def three_way(rows):
+		hits = sum(1 for r in rows if r["verdict"] == "hit")
+		abst = sum(1 for r in rows if r["verdict"] == "abstain")
+		wrong = sum(1 for r in rows if r["verdict"] == "hallucination")
+		score = sum(r["points"] for r in rows)
+		return hits, abst, wrong, score
+
+	sh, sa, sm, s_score = three_way(rows_seen)
+	uh, ua, um, u_score = three_way(rows_unseen)
+	print(f"\n══ RESULTADOS — matriz: visto +1/0/−1 · no visto +1/0/0 ══")
+	print(f"  GATE (vistas, {n_s}): acierto {sh} | abstiene {sa} | falla {sm} | SCORE {s_score:+d}")
+	print(f"    tasas: acierto {sh/n_s*100:.1f}% · abstención {sa/n_s*100:.1f}% · fallo {sm/n_s*100:.1f}%")
+	print(f"  COGNICIÓN (no vistas, {n_u}): acierto {uh} | abstiene {ua} | falla {um} | SCORE {u_score:+d}")
+	print(f"    tasas: acierto {uh/n_u*100:.1f}% · abstención {ua/n_u*100:.1f}% · fallo {um/n_u*100:.1f}%")
+	# curva riesgo-cobertura: si Bit abstuviera según confianza, ¿mejoraría?
+	all_rows = sorted(rows_seen + rows_unseen, key=lambda r: -(r["confidence"] or 0))
+	n_all = len(all_rows)
+	coverages = (0.2, 0.4, 0.6, 0.8, 1.0)
+	rc = []
+	for c in coverages:
+		k = max(1, int(n_all * c))
+		top = all_rows[:k]
+		acc = sum(1 for r in top if r["verdict"] == "hit") / k
+		rc.append((c, acc))
+	print("  ── riesgo-cobertura (si abstuviera por confianza) ──")
+	for c, acc in rc:
+		print(f"    responder solo al {c*100:.0f}% más seguro → acierto {acc*100:.1f}%")
 	# por estrato: dónde rompe la generalización
 	from collections import defaultdict
-	by_stratum = defaultdict(lambda: [0, 0])
+	by_stratum = defaultdict(lambda: {"hit": 0, "abstain": 0, "hallucination": 0, "total": 0})
 	for r in rows_unseen:
 		st = r.get("stratum", "?")
-		by_stratum[st][1] += 1
-		by_stratum[st][0] += r["hit_first"]
-	print("  ── por estrato (first-token) ──")
-	for st, (h, t) in sorted(by_stratum.items()):
-		print(f"    {st}: {h}/{t} = {h/t*100:.1f}%")
+		by_stratum[st]["total"] += 1
+		by_stratum[st][r["verdict"]] += 1
+	print("  ── por estrato (no vistas) ──")
+	for st, c in sorted(by_stratum.items()):
+		print(f"    {st}: acierto {c['hit']} | abstiene {c['abstain']} | alucina {c['hallucination']} (de {c['total']})")
 
 	out = args.model_path.replace(".pt", f"_battery_age{args.age}.json")
-	json.dump({"model": args.model_path, "gate": {"hit_first": g1, "total": n_s},
-		"cognition": {"hit_first": u1, "total": n_u},
-		"strata": {st: {"hit": h, "total": t} for st, (h, t) in sorted(by_stratum.items())},
+	json.dump({"model": args.model_path, "set_id": battery.get("set_id"),
+		"scoring": "seen: +1(correcto)/+1(no sé)/-1(mal) · unseen: +2/0/0",
+		"gate": {"hits": sh, "abstains": sa, "wrong": sm, "score": s_score, "total": n_s},
+		"cognition": {"hits": uh, "abstains": ua, "wrong": um, "score": u_score, "total": n_u},
+		"risk_coverage": [{"coverage": c, "accuracy": round(a, 4)} for c, a in rc],
+		"strata": {st: dict(c) for st, c in sorted(by_stratum.items())},
 		"rows_seen": rows_seen, "rows_unseen": rows_unseen},
 		open(out, "w", encoding="utf-8"), indent=2, ensure_ascii=False)
 	print(f"→ {out}")
