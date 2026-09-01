@@ -23,16 +23,16 @@ def explication_to_glyph(features: dict[str, int], vocab=None) -> np.ndarray:
 	"""features: {nombre_de_primo: +1 | -1 | 0} (claves canónicas ES, minúsculas).
 	Los primos sin mención quedan a 0. Devuelve el glifo (65,) int8.
 
-	Si `vocab` (lista de palabras del censo) se pasa, se valida que cada primo
-	mencionado exista en la tabla (un typo del LLM no genera glifos silvestres).
+	Un primo desconocido SIEMPRE es error (auditoría 1-sep: la versión inicial
+	se tragaba los typos en silencio salvo que se pasara `vocab` — justo el
+	fallo del que decía proteger). `vocab` se conserva por compatibilidad de
+	firma; ya no cambia el comportamiento.
 	"""
 	glyph = np.zeros(len(SEMANTIC_PRIMES), dtype=np.int8)
 	for name, val in features.items():
 		key = name.strip().lower()
 		if key not in PRIME_IDX:
-			if vocab is not None:
-				raise ValueError(f"primo desconocido {name!r} — no está en los 65")
-			continue
+			raise ValueError(f"primo desconocido {name!r} — no está en los 65")
 		if val not in (-1, 0, 1):
 			raise ValueError(f"valor {val!r} inválido para {name!r} (solo -1/0/1)")
 		glyph[PRIME_IDX[key]] = val

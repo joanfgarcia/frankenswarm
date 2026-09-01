@@ -32,34 +32,40 @@ PRIME_ALIASES = {
 	12: {"thinks", "thinking"}, 13: {"knows"}, 14: {"wants"}, 15: {"feels"},
 	16: {"sees", "look"}, 17: {"hears", "listen"}, 18: {"says", "tell"},
 	21: {"does", "make"}, 22: {"happens", "happened"}, 23: {"moves", "go"},
-	24: {"touches", "touch"}, 25: {"is", "are", "am", "was", "were", "be"},
+	24: {"touches", "touch"},
+	25: {"is", "are", "am", "was", "were", "be", "been", "being"},
 	27: {"lives"}, 28: {"dies"}, 30: {"today", "tonight"}, 31: {"ago", "past"},
 	32: {"later", "then"}, 35: {"minute"}, 37: {"in here"}, 38: {"up", "over"},
 	39: {"down", "under"}, 40: {"away", "far away"}, 41: {"close"},
 	44: {"don't", "doesn't", "not", "no"}, 46: {"may", "could"},
 	49: {"really", "so"}, 50: {"more", "most"}, 51: {"likes", "like"},
-	52: {"the", "a", "an"}, 55: {"a"}, 57: {"a few"}, 58: {"everything", "everybody"},
+	# "a" es determinante → 52 (this); el primo 55 (one) se activa solo con
+	# "one" explícito (auditoría 1-sep: el alias duplicado 52/55 era ambiguo).
+	52: {"the", "a", "an"}, 57: {"a few"}, 58: {"everything", "everybody"},
 	59: {"lots", "plenty"}, 60: {"warm", "hot"}, 61: {"cooler"}, 63: {"sun", "lights"},
 	64: {"dark", "night"},
 }
 
 # Palabras que se DESCARTAN en la traducción (funciones sin primo propio:
-# determinantes ya cubiertos por 52, preposiciones gramaticales, auxiliares)
+# determinantes ya cubiertos por 52, preposiciones gramaticales, auxiliares).
+# was/were/been/being NO se descartan: son formas del cópula → primo 25 (be).
 DROP_WORDS = {"of", "to", "with", "and", "or", "but", "at", "on", "in", "for",
-	"from", "by", "was", "were", "been", "being", "has", "have", "had",
+	"from", "by", "has", "have", "had",
 	"will", "would", "shall", "should", "did", "there", "that", "it",
 	"what", "who", "how", "why", "yes", "oh", "well"}
 
 
 def build_lexicon() -> dict:
-	"""palabra EN (minúscula) → índice de primo. Los alias no canónicos se
-	resuelven al mismo primo; la forma canónica gana."""
+	"""palabra EN (minúscula) → índice de primo. La forma CANÓNICA gana sobre
+	los alias (auditoría 1-sep: el orden estaba invertido y 'a moment' partía
+	en tokens sueltos robándole la superficie a 'moment'/35). Las formas
+	multi-palabra (canónicas o alias) entran como span completo — las resuelve
+	el matcher de spans del diccionario, no el lookup por token."""
 	lex = {}
+	for idx, canon in PRIME_EN.items():
+		lex.setdefault(canon.lower(), idx)
 	for idx, forms in PRIME_ALIASES.items():
 		for f in forms:
-			lex.setdefault(f.lower(), idx)
-	for idx, canon in PRIME_EN.items():
-		for f in canon.split():
 			lex.setdefault(f.lower(), idx)
 	return lex
 

@@ -20,7 +20,6 @@ Uso:
   d.k65p_to_en(glyph)          # → candidatos por solape de primos
   d.stats()                    # progreso de la descomposición
 """
-import hashlib
 import json
 import os
 import sqlite3
@@ -86,15 +85,24 @@ class K65PDictionary:
 			(idx, name_es, name_en))
 		self.conn.commit()
 
+	# Estados curados: un lote automático (LLM drafting) NO puede degradarlos
+	# a drafted/pending. Solo force=True (curación explícita) los toca.
+	CURATED_STATES = ("canonical", "molecule", "prime", "explicated")
+
 	def upsert_word(self, surface: str, glyph=None, explication: dict | list | None = None,
 					status: str = "pending", source: str = None, surfaces_es: list = None,
-					curated_by: str = None) -> int:
+					curated_by: str = None, force: bool = False) -> int:
+		existing = self.conn.execute(
+			"SELECT word_id, status FROM words WHERE surface=?", (surface,)).fetchone()
+		if existing and not force and existing[1] in self.CURATED_STATES and status not in self.CURATED_STATES:
+			# palabra ya curada + upsert no-curado: no se pisa nada.
+			return existing[0]
 		glyph_blob = None
 		if glyph is not None:
 			import numpy as np
 			glyph_blob = np.asarray(glyph, dtype=np.int8).tobytes()
 		exp_json = json.dumps(explication, ensure_ascii=False) if explication is not None else None
-		cur = self.conn.execute(
+		self.conn.execute(
 			"INSERT INTO words (surface, glyph, explication, status, source, curated_by) "
 			"VALUES (?,?,?,?,?,?) "
 			"ON CONFLICT(surface) DO UPDATE SET glyph=COALESCE(excluded.glyph, glyph), "
@@ -102,7 +110,9 @@ class K65PDictionary:
 			"status=excluded.status, source=excluded.source, curated_by=excluded.curated_by, "
 			"updated_at=datetime('now')",
 			(surface, glyph_blob, exp_json, status, source, curated_by))
-		word_id = cur.lastrowid
+		# lastrowid no es fiable tras ON CONFLICT DO UPDATE (rama update):
+		# el id real se lee siempre de la tabla.
+		word_id = self._id(surface)
 		if surfaces_es:
 			for s in surfaces_es:
 				self.conn.execute(
@@ -161,14 +171,17 @@ class K65PDictionary:
 		if glyph is not None:
 			import numpy as np
 			glyph_blob = np.asarray(glyph, dtype=np.int8).tobytes()
-		cur = self.conn.execute(
+		self.conn.execute(
 			"INSERT INTO phrases (span, lang, word_id, glyph, context_note, source) "
 			"VALUES (?,?,?,?,?,?) ON CONFLICT(span, lang) DO UPDATE SET "
 			"word_id=excluded.word_id, glyph=COALESCE(excluded.glyph, glyph), "
-			"context_note=excluded.context_note",
+			"context_note=excluded.context_note, source=excluded.source",
 			(span.strip().lower(), "en", word_id, glyph_blob, context_note, source))
 		self.conn.commit()
-		return cur.lastrowid
+		row = self.conn.execute(
+			"SELECT phrase_id FROM phrases WHERE span=? AND lang='en'",
+			(span.strip().lower(),)).fetchone()
+		return row[0]
 
 	def longest_span_match(self, tokens: list[str]) -> dict | None:
 		"""Traducción consciente del contexto: busca el SPAN más largo que
