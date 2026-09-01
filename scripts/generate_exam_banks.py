@@ -115,13 +115,13 @@ def frames_available(stage: int) -> list:
 		F.append(lambda s: (f"the {s} is here", "now"))
 		F.append(lambda s: (f"what does the {s} say", SAYS.get(s)) if s in SAYS else None)
 	if stage >= 3:
-		F.append(lambda s: (f"the {s} eats the", "apple") if "apple" in s or True else None)
+		F.append(lambda s: (f"the {s} eats the", "apple"))
 		F.append(lambda s: (f"the {s} sleeps at", "night"))
 	if stage >= 4:
 		F.append(lambda s: (f"the {s} can", "jump"))
 		F.append(lambda s: (f"the {s} is in the", "house"))
 	if stage >= 5:
-		F.append(lambda s: (f"the {s} plays", "ball") if "ball" in s or True else None)
+		F.append(lambda s: (f"the {s} plays", "ball"))
 		F.append(lambda s: (f"the {s} drinks from the", "river"))
 	if stage >= 6:
 		F.append(lambda s: (f"the {s} climbs the", "tree"))
@@ -131,17 +131,22 @@ def frames_available(stage: int) -> list:
 	return [f for f in F if f is not None]
 
 
-def bank_for_stage(stage: int, gate_words: set, used_hashes: set, w2i: dict, dictionary) -> tuple:
+def bank_for_stage(stage: int, gate_idx: set, gate_words: set, used_hashes: set, w2i: dict, dictionary) -> tuple:
 	"""Hechos base de la etapa + cruces combinatorios (nuevos sujetos × frames
 	acumulados, sujetos acumulados × frames nuevos). Todo verificado: in-vocab,
-	in-gate de etapa, no duplicado. Cap: 200."""
-	gate_idx = None
+	in-gate de etapa, no duplicado. Cap: 200.
+
+	`gate_idx` son los índices permitidos por la máscara de la etapa: una
+	respuesta fuera del gate es inaprendible (la pérdida excluye targets
+	vetados) e inalcanzable en examen (el argmax enmascarado no puede
+	producirla) — se rechaza. Auditoría 1-sep: este check nació muerto
+	(gate_idx local a None) y dejó pasar burns/howl/hiss."""
 	items, rej = [], []
 
 	def try_add(q: str, a: str):
 		mapped_a = dictionary.map_to_base_word(a)
 		a_idx = w2i.get(mapped_a, 1)
-		if gate_idx is not None and a_idx not in gate_idx:
+		if a_idx not in gate_idx:
 			rej.append((q, a, "fuera de gate")); return False
 		toks_q = tokenize(q, w2i)
 		toks_a = [a_idx]
@@ -199,7 +204,7 @@ def main() -> None:
 	for stage in range(8):
 		gate_idx = set(masks["stage_allowed"][stage])
 		gate_words = {words[i] for i in gate_idx}
-		items, rej = bank_for_stage(stage, gate_words, used_hashes, w2i, dictionary)
+		items, rej = bank_for_stage(stage, gate_idx, gate_words, used_hashes, w2i, dictionary)
 		reasons = Counter(r[-1] for r in rej)
 		banks[stage] = items
 		print(f"  bank etapa {stage}: {len(items)} preguntas | rechazos: {dict(reasons)}")
