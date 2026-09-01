@@ -7,6 +7,60 @@ se añade una entrada nueva que la referencia.
 
 ---
 
+## DL-014 · 2026-09-01 — Doctrina "todo glifo descompone": el programa de descomposición NSM y el diccionario K-65P↔humano
+
+**Problema.** La auditoría del DL-012-addendum (RFC-002) demostró que los
+~19,600 glifos no-canónicos son interpolaciones Ridge de 26 anclas sin
+estructura semántica (intra-grupo ≈ aleatorio; acciones BAJO el azar) — el
+brazo glyph entrenaba con glifos vacíos. Y la confrontación v4 lo confirmó:
+el estándar a 128d superó al glyph a 256d en los tres instrumentos.
+
+**Decisión (operador, 1-sep).** Doctrina: **todo glifo descompone en los 65
+primos — cada trit lleva significado (+1 afirma, −1 contrasta, 0 silencio);
+no hay símbolos opacos**. Cualquier palabra humana converge en los 65 (tesis
+NSM). Se construye el programa de descomposición:
+1. **Codificador NSM** (`nsm_explication.py`): explicación → glifo de 65
+   trits, calibrado 28/28 contra los canónicos (test de ida-vuelta RFC-002 §5).
+2. **Diccionario K-65P↔humano** (`k65p_dictionary.py`, SQLite): words (glifo +
+   explicación + estado canonical/molecule/prime/explicated/drafted/pending),
+   surfaces (alias), phrases (compresión N→1: phrasal verbs y descripciones
+   que colapsan en un concepto — el inglés torticero), relations.
+3. **El generador de explicaciones NSM por lotes** con validación de
+   consistencia (Jaccard esperado entre relacionadas) y curación del operador.
+4. **dim66 reencuadrado**: las grafías (5, +, =) son la vía rápida de
+   comunicación — los CONCEPTOS descomponen igual (precisión doctrinal).
+
+**Estado.** Codificador calibrado, validador operativo (cazó 2
+inconsistencias en el demo), diccionario poblado (19,703 entradas). La
+generación por lotes del mundo núcleo es el siguiente paso.
+
+**Referencias.** `src/bitnet/vocab/nsm_explication.py`, `src/bitnet/vocab/k65p_dictionary.py`, `src/bitnet/translation/en_lexicon.py`, `nsm_syntax_en.py`, `docs/RFC-002` addendum.
+
+---
+
+## DL-013 · 2026-08-31 — El BANK de examen por etapa: el corpus de preguntas curricular
+
+**Problema.** El gate de hito era 10 preguntas (AGE_QUESTIONS) — pocas y
+totalmente predecibles; el universo de hechos drilled era ~58 pares para la
+edad 4. El material de examen necesitaba su propio corpus curricular.
+
+**Decisión (operador, 31-ago).** Un **BANK de preguntas por etapa** (Q→A sobre
+los hechos que cada etapa introduce), del que los exámenes de hito se
+muestrean aleatoriamente con **peso por recencia** (50/20/15/5 entre etapas),
+10 formas por hito con media±σ. Generador combinatorio: partición del mundo
+curricular (animales/objetos/lugares NUEVOS por etapa, filtrados por el gate
+de la etapa) × frames acumulativos, verificación in-vocab/in-gate/única entre
+banks. Total actual: **442 preguntas** (16/42/37/63/68/77/88/51) — el tamaño
+refleja el universo de hechos curado, ampliable por contenido.
+
+**Nota de integridad**: el v4 glyph en curso termina con el gate actual; el
+bank se cablea al entrenamiento y al examen en la siguiente generación de
+runs (el contraste glyph-vs-standard ×1 no se toca a mitad de partido).
+
+**Referencias.** `scripts/generate_exam_banks.py`, `configs/exam_banks/`.
+
+---
+
 ## DL-012 · 2026-08-31 — Canal 66: planos de codificación de glifos (patrón UTF) — símbolos y constantes entran en K-65P sin tocar los 65 primos
 
 **Problema.** Los 65 primos NSM no expresan numerales (`three…nineteen`; solo

@@ -2,6 +2,24 @@
 
 ## [Unreleased]
 
+## [Unreleased]
+
+### 🔬 BIT-003 — primera confrontación honesta: glyph vs standard ×1 + el expediente de tres instrumentos (2026-08-31/09-01)
+
+- **[RESULT] El estándar a 128d superó al glyph a 256d en los tres instrumentos**: bajo el protocolo honesto ×1, el glyph SUSPENDIÓ 2_years a 128d (neurogénesis disparada: 128→256, primera ejercición de la escalera) mientras el estándar aprobó 2 y 3 años a 128d sin crecer. Batería congelada edad 4 (58 vistas + 195 no vistas, 5 estratos): glyph gate 70.7% / cognición 4.1%; standard gate 50.0→69.0% / cognición 5.6→3.1%. Veredicto: **resultado adverso a la hipótesis composicional a esta escala**, con confusores declarados (transitorio post-neurogénesis, una semilla).
+- **[NEW] Matriz de puntuación 3×2 del operador**: visto +1/0/−1 (alucinar lo enseñado es el pecado) · no visto +2/0/0 (generalizar es el premio doble, fallar no castiga). La ignorancia total honesta (+58) supera al Bit actual (+24/+16): el gradiente empuja a aprender, no a alucinar.
+- **[NEW] Gate de retención**: 80 frases aleatorias del pool de etapa, cloze determinista contra la palabra real del corpus — cero curación (el corpus ES el bank). Mide retención de la exposición natural: 30.8% (v4 256d).
+- **[DISCOVERY] Curva riesgo-cobertura**: la señal "sé lo que no sé" existe latente en la confianza de Bit (respondiendo solo al 20% más seguro: 78% de acierto vs 19.4% medio, descenso monótono). Falta el canal de silencio: "i dont know" está en vocab y gateos — el argmax forzado lo impide.
+- **[PROFILE] Por estratos**: cruce ~5-10%, interrogativo/riddles/aritmética/predicado ~0% — la generalización composicional a cero en cualquier representación a esta escala.
+
+### 🧬 K-65P — programa de descomposición NSM y diccionario bidireccional (DL-014, 2026-09-01)
+
+- **[DOCTRINE] "Todo glifo descompone"** (operador): cada trit lleva significado (+1 afirma, −1 contrasta, 0 silencio); cualquier palabra humana converge en los 65 primos. La auditoría Ridge demostró lo contrario en la implementación → el resultado adverso corresponde al atajo, no a la hipótesis (addendum en RFC-002).
+- **[NEW] `nsm_explication.py`**: explicación NSM → glifo de 65 trits, **calibrado 28/28** contra los canónicos (test de ida-vuelta RFC-002 §5); validador de consistencia (Jaccard esperado entre relacionadas) que cazó 2 desalineaciones en el demo.
+- **[NEW] `k65p_dictionary.py` — diccionario SQLite bidireccional phrase-aware**: words (glifo + explicación + estado canonical/molecule/prime/explicated/drafted/pending), surfaces, phrases (compresión N→1: phrasal verbs y descripciones que colapsan en un concepto, `longest_span_match`), relations. Poblado: 19,703 entradas. Es el aterrizaje del programa de descomposición y del traductor EN↔K-65P.
+- **[NEW] Fundación del traductor**: `en_lexicon.py` (142 superficies → 65 primos) + `nsm_syntax_en.py` (gramática NSM-C EN espejo de la ES — 21/21 árboles del RFC §3). El compilador transductor y el programa de descomposición por lotes son los siguientes pasos.
+- **[NEW] `k65p_dictionary` phrases**: compresión N→1 — "give up" (phrasal verb), "it says bark" → dog (riddle 3→1): el inglés torticero se registra como entradas del diccionario, no como excepciones.
+
 ### 🔧 BIT-003 — offload forzado de Samantha tras examen (2026-08-31)
 
 - **[FIX] Colisión VRAM examinadora ↔ entrenamiento**: la examinadora reutiliza el hipervisor dual-bind persistente (`run_dual_bind.py`, puerto 8760 — `samantha_on_demand` lo prefiere si vive, la limpieza efímera nunca aplica), que retiene el modelo (~6.3 GiB) durante el idle timeout de ~15 min tras calificar → el `loss.backward()` del entrenamiento que sigue al examen estalla (3ª colisión: OOM 15:46 del 31-ago, auto-healada por el runner). **Fix**: `state_manager._force_samantha_offload()` — tras cada examen real, `POST :8760/unload` (endpoint nativo del daemon, `unload_under_lock()`). Guardias: no yankuea si el sueño está en fase activa (el idle timeout cubre), fallos de red no crashean el entrenamiento, mock no descarga. Endpoint verificado en vivo (`{"status":"unloaded"}`).
