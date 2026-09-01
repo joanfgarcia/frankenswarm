@@ -20,6 +20,338 @@
   {
    "q": "winter is the season of",
    "a": "snow"
+  },
+  {
+   "q": "the duck drinks",
+   "a": "water"
+  },
+  {
+   "q": "the duck eats",
+   "a": "food"
+  },
+  {
+   "q": "the duck sleeps",
+   "a": "now"
+  },
+  {
+   "q": "the duck is here",
+   "a": "now"
+  },
+  {
+   "q": "what does the duck say",
+   "a": "quack"
+  },
+  {
+   "q": "the duck eats the",
+   "a": "apple"
+  },
+  {
+   "q": "the duck sleeps at",
+   "a": "night"
+  },
+  {
+   "q": "the duck can",
+   "a": "jump"
+  },
+  {
+   "q": "the duck is in the",
+   "a": "house"
+  },
+  {
+   "q": "the duck plays",
+   "a": "ball"
+  },
+  {
+   "q": "the duck drinks from the",
+   "a": "river"
+  },
+  {
+   "q": "the duck climbs the",
+   "a": "tree"
+  },
+  {
+   "q": "the duck hides in the",
+   "a": "forest"
+  },
+  {
+   "q": "the eagle drinks",
+   "a": "water"
+  },
+  {
+   "q": "the eagle eats",
+   "a": "food"
+  },
+  {
+   "q": "the eagle sleeps",
+   "a": "now"
+  },
+  {
+   "q": "the eagle is here",
+   "a": "now"
+  },
+  {
+   "q": "the eagle eats the",
+   "a": "apple"
+  },
+  {
+   "q": "the eagle sleeps at",
+   "a": "night"
+  },
+  {
+   "q": "the eagle can",
+   "a": "jump"
+  },
+  {
+   "q": "the eagle is in the",
+   "a": "house"
+  },
+  {
+   "q": "the eagle plays",
+   "a": "ball"
+  },
+  {
+   "q": "the eagle drinks from the",
+   "a": "river"
+  },
+  {
+   "q": "the eagle climbs the",
+   "a": "tree"
+  },
+  {
+   "q": "the eagle hides in the",
+   "a": "forest"
+  },
+  {
+   "q": "the whale drinks",
+   "a": "water"
+  },
+  {
+   "q": "the whale eats",
+   "a": "food"
+  },
+  {
+   "q": "the whale sleeps",
+   "a": "now"
+  },
+  {
+   "q": "the whale is here",
+   "a": "now"
+  },
+  {
+   "q": "the whale eats the",
+   "a": "apple"
+  },
+  {
+   "q": "the whale sleeps at",
+   "a": "night"
+  },
+  {
+   "q": "the whale can",
+   "a": "jump"
+  },
+  {
+   "q": "the whale is in the",
+   "a": "house"
+  },
+  {
+   "q": "the whale plays",
+   "a": "ball"
+  },
+  {
+   "q": "the whale drinks from the",
+   "a": "river"
+  },
+  {
+   "q": "the whale climbs the",
+   "a": "tree"
+  },
+  {
+   "q": "the whale hides in the",
+   "a": "forest"
+  },
+  {
+   "q": "the i climbs the",
+   "a": "tree"
+  },
+  {
+   "q": "the i hides in the",
+   "a": "forest"
+  },
+  {
+   "q": "the you climbs the",
+   "a": "tree"
+  },
+  {
+   "q": "the you hides in the",
+   "a": "forest"
+  },
+  {
+   "q": "the baby climbs the",
+   "a": "tree"
+  },
+  {
+   "q": "the baby hides in the",
+   "a": "forest"
+  },
+  {
+   "q": "the mom climbs the",
+   "a": "tree"
+  },
+  {
+   "q": "the mom hides in the",
+   "a": "forest"
+  },
+  {
+   "q": "the dad climbs the",
+   "a": "tree"
+  },
+  {
+   "q": "the dad hides in the",
+   "a": "forest"
+  },
+  {
+   "q": "the dog climbs the",
+   "a": "tree"
+  },
+  {
+   "q": "the cat climbs the",
+   "a": "tree"
+  },
+  {
+   "q": "the bird climbs the",
+   "a": "tree"
+  },
+  {
+   "q": "the horse climbs the",
+   "a": "tree"
+  },
+  {
+   "q": "the fish climbs the",
+   "a": "tree"
+  },
+  {
+   "q": "the wolf climbs the",
+   "a": "tree"
+  },
+  {
+   "q": "the bear climbs the",
+   "a": "tree"
+  },
+  {
+   "q": "the mouse climbs the",
+   "a": "tree"
+  },
+  {
+   "q": "the rabbit climbs the",
+   "a": "tree"
+  },
+  {
+   "q": "the fox climbs the",
+   "a": "tree"
+  },
+  {
+   "q": "the snake climbs the",
+   "a": "tree"
+  },
+  {
+   "q": "the cow climbs the",
+   "a": "tree"
+  },
+  {
+   "q": "the pig climbs the",
+   "a": "tree"
+  },
+  {
+   "q": "the elephant climbs the",
+   "a": "tree"
+  },
+  {
+   "q": "the lion climbs the",
+   "a": "tree"
+  },
+  {
+   "q": "the tiger climbs the",
+   "a": "tree"
+  },
+  {
+   "q": "the monkey climbs the",
+   "a": "tree"
+  },
+  {
+   "q": "the owl climbs the",
+   "a": "tree"
+  },
+  {
+   "q": "the dog hides in the",
+   "a": "forest"
+  },
+  {
+   "q": "the cat hides in the",
+   "a": "forest"
+  },
+  {
+   "q": "the bird hides in the",
+   "a": "forest"
+  },
+  {
+   "q": "the horse hides in the",
+   "a": "forest"
+  },
+  {
+   "q": "the fish hides in the",
+   "a": "forest"
+  },
+  {
+   "q": "the wolf hides in the",
+   "a": "forest"
+  },
+  {
+   "q": "the bear hides in the",
+   "a": "forest"
+  },
+  {
+   "q": "the mouse hides in the",
+   "a": "forest"
+  },
+  {
+   "q": "the rabbit hides in the",
+   "a": "forest"
+  },
+  {
+   "q": "the fox hides in the",
+   "a": "forest"
+  },
+  {
+   "q": "the snake hides in the",
+   "a": "forest"
+  },
+  {
+   "q": "the cow hides in the",
+   "a": "forest"
+  },
+  {
+   "q": "the pig hides in the",
+   "a": "forest"
+  },
+  {
+   "q": "the elephant hides in the",
+   "a": "forest"
+  },
+  {
+   "q": "the lion hides in the",
+   "a": "forest"
+  },
+  {
+   "q": "the tiger hides in the",
+   "a": "forest"
+  },
+  {
+   "q": "the monkey hides in the",
+   "a": "forest"
+  },
+  {
+   "q": "the owl hides in the",
+   "a": "forest"
   }
  ]
 }

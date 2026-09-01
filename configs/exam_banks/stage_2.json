@@ -46,64 +46,108 @@
    "a": "sea"
   },
   {
-   "q": "the pig drinks",
+   "q": "the bear drinks",
    "a": "water"
   },
   {
-   "q": "the bird drinks",
+   "q": "the bear eats",
+   "a": "food"
+  },
+  {
+   "q": "the bear sleeps",
+   "a": "now"
+  },
+  {
+   "q": "the bear is here",
+   "a": "now"
+  },
+  {
+   "q": "the mouse drinks",
    "a": "water"
   },
   {
-   "q": "what does the duck say",
-   "a": "quack"
+   "q": "the mouse eats",
+   "a": "food"
   },
   {
-   "q": "what does the cow say",
-   "a": "moo"
+   "q": "the mouse sleeps",
+   "a": "now"
   },
   {
-   "q": "what does the pig say",
-   "a": "oink"
+   "q": "the mouse is here",
+   "a": "now"
   },
   {
-   "q": "what does the lion say",
-   "a": "roar"
+   "q": "the rabbit drinks",
+   "a": "water"
   },
   {
-   "q": "the mom is in the",
-   "a": "house"
+   "q": "the rabbit eats",
+   "a": "food"
   },
   {
-   "q": "the dad is in the",
-   "a": "house"
+   "q": "the rabbit sleeps",
+   "a": "now"
   },
   {
-   "q": "the bear is in the",
-   "a": "forest"
+   "q": "the rabbit is here",
+   "a": "now"
   },
   {
-   "q": "the wolf is in the",
-   "a": "forest"
+   "q": "the i is here",
+   "a": "now"
   },
   {
-   "q": "the monkey is in the",
-   "a": "forest"
+   "q": "the you is here",
+   "a": "now"
   },
   {
-   "q": "the fish is in the",
-   "a": "river"
+   "q": "the baby is here",
+   "a": "now"
   },
   {
-   "q": "the duck is in the",
-   "a": "river"
+   "q": "the mom is here",
+   "a": "now"
   },
   {
-   "q": "the cup is in the",
-   "a": "table"
+   "q": "the dad is here",
+   "a": "now"
   },
   {
-   "q": "the food is in the",
-   "a": "table"
+   "q": "the dog is here",
+   "a": "now"
+  },
+  {
+   "q": "the cat is here",
+   "a": "now"
+  },
+  {
+   "q": "the bird is here",
+   "a": "now"
+  },
+  {
+   "q": "the horse is here",
+   "a": "now"
+  },
+  {
+   "q": "the fish is here",
+   "a": "now"
+  },
+  {
+   "q": "the wolf is here",
+   "a": "now"
+  },
+  {
+   "q": "what does the dog say",
+   "a": "bark"
+  },
+  {
+   "q": "what does the cat say",
+   "a": "meow"
+  },
+  {
+   "q": "what does the wolf say",
+   "a": "howl"
   }
  ]
 }

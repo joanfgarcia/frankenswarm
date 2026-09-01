@@ -22,8 +22,292 @@
    "a": "page"
   },
   {
+   "q": "the tiger drinks",
+   "a": "water"
+  },
+  {
+   "q": "the tiger eats",
+   "a": "food"
+  },
+  {
+   "q": "the tiger sleeps",
+   "a": "now"
+  },
+  {
+   "q": "the tiger is here",
+   "a": "now"
+  },
+  {
+   "q": "the tiger eats the",
+   "a": "apple"
+  },
+  {
+   "q": "the tiger sleeps at",
+   "a": "night"
+  },
+  {
+   "q": "the tiger can",
+   "a": "jump"
+  },
+  {
+   "q": "the tiger is in the",
+   "a": "house"
+  },
+  {
+   "q": "the tiger plays",
+   "a": "ball"
+  },
+  {
+   "q": "the tiger drinks from the",
+   "a": "river"
+  },
+  {
+   "q": "the monkey drinks",
+   "a": "water"
+  },
+  {
+   "q": "the monkey eats",
+   "a": "food"
+  },
+  {
+   "q": "the monkey sleeps",
+   "a": "now"
+  },
+  {
+   "q": "the monkey is here",
+   "a": "now"
+  },
+  {
    "q": "what does the monkey say",
    "a": "chatter"
+  },
+  {
+   "q": "the monkey eats the",
+   "a": "apple"
+  },
+  {
+   "q": "the monkey sleeps at",
+   "a": "night"
+  },
+  {
+   "q": "the monkey can",
+   "a": "jump"
+  },
+  {
+   "q": "the monkey is in the",
+   "a": "house"
+  },
+  {
+   "q": "the monkey plays",
+   "a": "ball"
+  },
+  {
+   "q": "the monkey drinks from the",
+   "a": "river"
+  },
+  {
+   "q": "the owl drinks",
+   "a": "water"
+  },
+  {
+   "q": "the owl eats",
+   "a": "food"
+  },
+  {
+   "q": "the owl sleeps",
+   "a": "now"
+  },
+  {
+   "q": "the owl is here",
+   "a": "now"
+  },
+  {
+   "q": "what does the owl say",
+   "a": "hoot"
+  },
+  {
+   "q": "the owl eats the",
+   "a": "apple"
+  },
+  {
+   "q": "the owl sleeps at",
+   "a": "night"
+  },
+  {
+   "q": "the owl can",
+   "a": "jump"
+  },
+  {
+   "q": "the owl is in the",
+   "a": "house"
+  },
+  {
+   "q": "the owl plays",
+   "a": "ball"
+  },
+  {
+   "q": "the owl drinks from the",
+   "a": "river"
+  },
+  {
+   "q": "the i plays",
+   "a": "ball"
+  },
+  {
+   "q": "the i drinks from the",
+   "a": "river"
+  },
+  {
+   "q": "the you plays",
+   "a": "ball"
+  },
+  {
+   "q": "the you drinks from the",
+   "a": "river"
+  },
+  {
+   "q": "the baby plays",
+   "a": "ball"
+  },
+  {
+   "q": "the baby drinks from the",
+   "a": "river"
+  },
+  {
+   "q": "the mom plays",
+   "a": "ball"
+  },
+  {
+   "q": "the mom drinks from the",
+   "a": "river"
+  },
+  {
+   "q": "the dad plays",
+   "a": "ball"
+  },
+  {
+   "q": "the dad drinks from the",
+   "a": "river"
+  },
+  {
+   "q": "the dog plays",
+   "a": "ball"
+  },
+  {
+   "q": "the cat plays",
+   "a": "ball"
+  },
+  {
+   "q": "the bird plays",
+   "a": "ball"
+  },
+  {
+   "q": "the horse plays",
+   "a": "ball"
+  },
+  {
+   "q": "the fish plays",
+   "a": "ball"
+  },
+  {
+   "q": "the wolf plays",
+   "a": "ball"
+  },
+  {
+   "q": "the bear plays",
+   "a": "ball"
+  },
+  {
+   "q": "the mouse plays",
+   "a": "ball"
+  },
+  {
+   "q": "the rabbit plays",
+   "a": "ball"
+  },
+  {
+   "q": "the fox plays",
+   "a": "ball"
+  },
+  {
+   "q": "the snake plays",
+   "a": "ball"
+  },
+  {
+   "q": "the cow plays",
+   "a": "ball"
+  },
+  {
+   "q": "the pig plays",
+   "a": "ball"
+  },
+  {
+   "q": "the elephant plays",
+   "a": "ball"
+  },
+  {
+   "q": "the lion plays",
+   "a": "ball"
+  },
+  {
+   "q": "the dog drinks from the",
+   "a": "river"
+  },
+  {
+   "q": "the cat drinks from the",
+   "a": "river"
+  },
+  {
+   "q": "the bird drinks from the",
+   "a": "river"
+  },
+  {
+   "q": "the horse drinks from the",
+   "a": "river"
+  },
+  {
+   "q": "the fish drinks from the",
+   "a": "river"
+  },
+  {
+   "q": "the wolf drinks from the",
+   "a": "river"
+  },
+  {
+   "q": "the bear drinks from the",
+   "a": "river"
+  },
+  {
+   "q": "the mouse drinks from the",
+   "a": "river"
+  },
+  {
+   "q": "the rabbit drinks from the",
+   "a": "river"
+  },
+  {
+   "q": "the fox drinks from the",
+   "a": "river"
+  },
+  {
+   "q": "the snake drinks from the",
+   "a": "river"
+  },
+  {
+   "q": "the cow drinks from the",
+   "a": "river"
+  },
+  {
+   "q": "the pig drinks from the",
+   "a": "river"
+  },
+  {
+   "q": "the elephant drinks from the",
+   "a": "river"
+  },
+  {
+   "q": "the lion drinks from the",
+   "a": "river"
   }
  ]
 }

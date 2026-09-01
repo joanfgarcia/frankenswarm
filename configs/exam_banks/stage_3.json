@@ -62,23 +62,151 @@
    "a": "night"
   },
   {
-   "q": "the wolf drinks",
+   "q": "the fox drinks",
    "a": "water"
   },
   {
-   "q": "the horse eats the",
+   "q": "the fox eats",
+   "a": "food"
+  },
+  {
+   "q": "the fox sleeps",
+   "a": "now"
+  },
+  {
+   "q": "the fox is here",
+   "a": "now"
+  },
+  {
+   "q": "the fox eats the",
    "a": "apple"
+  },
+  {
+   "q": "the fox sleeps at",
+   "a": "night"
+  },
+  {
+   "q": "the snake drinks",
+   "a": "water"
+  },
+  {
+   "q": "the snake eats",
+   "a": "food"
+  },
+  {
+   "q": "the snake sleeps",
+   "a": "now"
+  },
+  {
+   "q": "the snake is here",
+   "a": "now"
+  },
+  {
+   "q": "what does the snake say",
+   "a": "hiss"
+  },
+  {
+   "q": "the snake eats the",
+   "a": "apple"
+  },
+  {
+   "q": "the snake sleeps at",
+   "a": "night"
+  },
+  {
+   "q": "the cow drinks",
+   "a": "water"
+  },
+  {
+   "q": "the cow eats",
+   "a": "food"
+  },
+  {
+   "q": "the cow sleeps",
+   "a": "now"
+  },
+  {
+   "q": "the cow is here",
+   "a": "now"
+  },
+  {
+   "q": "what does the cow say",
+   "a": "moo"
   },
   {
    "q": "the cow eats the",
    "a": "apple"
   },
   {
-   "q": "the goat eats the",
+   "q": "the cow sleeps at",
+   "a": "night"
+  },
+  {
+   "q": "the i eats the",
    "a": "apple"
   },
   {
-   "q": "the pig eats the",
+   "q": "the i sleeps at",
+   "a": "night"
+  },
+  {
+   "q": "the you eats the",
+   "a": "apple"
+  },
+  {
+   "q": "the you sleeps at",
+   "a": "night"
+  },
+  {
+   "q": "the baby eats the",
+   "a": "apple"
+  },
+  {
+   "q": "the baby sleeps at",
+   "a": "night"
+  },
+  {
+   "q": "the mom eats the",
+   "a": "apple"
+  },
+  {
+   "q": "the mom sleeps at",
+   "a": "night"
+  },
+  {
+   "q": "the dad eats the",
+   "a": "apple"
+  },
+  {
+   "q": "the dad sleeps at",
+   "a": "night"
+  },
+  {
+   "q": "the dog eats the",
+   "a": "apple"
+  },
+  {
+   "q": "the cat eats the",
+   "a": "apple"
+  },
+  {
+   "q": "the bird eats the",
+   "a": "apple"
+  },
+  {
+   "q": "the horse eats the",
+   "a": "apple"
+  },
+  {
+   "q": "the fish eats the",
+   "a": "apple"
+  },
+  {
+   "q": "the wolf eats the",
+   "a": "apple"
+  },
+  {
+   "q": "the bear eats the",
    "a": "apple"
   },
   {
@@ -86,12 +214,44 @@
    "a": "apple"
   },
   {
-   "q": "the monkey eats the",
+   "q": "the rabbit eats the",
    "a": "apple"
   },
   {
-   "q": "the water is",
-   "a": "cold"
+   "q": "the dog sleeps at",
+   "a": "night"
+  },
+  {
+   "q": "the cat sleeps at",
+   "a": "night"
+  },
+  {
+   "q": "the bird sleeps at",
+   "a": "night"
+  },
+  {
+   "q": "the horse sleeps at",
+   "a": "night"
+  },
+  {
+   "q": "the fish sleeps at",
+   "a": "night"
+  },
+  {
+   "q": "the wolf sleeps at",
+   "a": "night"
+  },
+  {
+   "q": "the bear sleeps at",
+   "a": "night"
+  },
+  {
+   "q": "the mouse sleeps at",
+   "a": "night"
+  },
+  {
+   "q": "the rabbit sleeps at",
+   "a": "night"
   }
  ]
 }

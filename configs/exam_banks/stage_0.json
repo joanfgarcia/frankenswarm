@@ -2,22 +2,6 @@
  "stage_idx": 0,
  "questions": [
   {
-   "q": "hello",
-   "a": "hello"
-  },
-  {
-   "q": "water",
-   "a": "water"
-  },
-  {
-   "q": "mom",
-   "a": "dad"
-  },
-  {
-   "q": "dog",
-   "a": "bark"
-  },
-  {
    "q": "the ball is",
    "a": "big"
   },
@@ -54,32 +38,32 @@
    "a": "sleep"
   },
   {
-   "q": "what does the dog say",
-   "a": "bark"
+   "q": "the dog drinks",
+   "a": "water"
   },
   {
-   "q": "what does the cat say",
-   "a": "meow"
+   "q": "the cat drinks",
+   "a": "water"
   },
   {
-   "q": "the dog is in the",
-   "a": "house"
+   "q": "the i drinks",
+   "a": "water"
   },
   {
-   "q": "the cat is in the",
-   "a": "house"
+   "q": "the you drinks",
+   "a": "water"
   },
   {
-   "q": "the baby is in the",
-   "a": "house"
+   "q": "the baby drinks",
+   "a": "water"
   },
   {
-   "q": "the baby is in the",
-   "a": "bed"
+   "q": "the mom drinks",
+   "a": "water"
   },
   {
-   "q": "the cat is in the",
-   "a": "bed"
+   "q": "the dad drinks",
+   "a": "water"
   }
  ]
 }

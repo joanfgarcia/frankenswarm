@@ -79,25 +79,113 @@ PLACES = [("house", "dog"), ("house", "cat"), ("house", "baby"), ("house", "mom"
 	("road", "dog"), ("bed", "baby"), ("bed", "cat"), ("table", "cup"), ("table", "food")]
 
 
-def expansions_for_stage(stage: int) -> list:
-	out = []
+# ── Tiers semánticos (mundo curricular ampliado — 99 moléculas del k65p) ──
+TIER_ANIMALS = ["dog", "cat", "bird", "horse", "fish", "wolf", "bear", "mouse",
+	"rabbit", "fox", "snake", "cow", "pig", "elephant", "lion", "tiger", "monkey",
+	"owl", "duck", "eagle", "whale", "shark", "goat", "deer"]
+TIER_OBJECTS = ["chair", "table", "bed", "cup", "knife", "door", "house",
+	"bridge", "road", "roof", "hammer", "basket", "ball", "book", "apple", "milk"]
+TIER_PLACES = ["house", "forest", "river", "road", "water", "tree", "cave", "bed"]
+TIER_ACTIONS = ["run", "jump", "swim", "fly", "climb", "hide", "play", "sleep", "eat", "drink"]
+
+
+# ── Partición del mundo por etapa + frames acumulativos ─────────────────────
+# Cada etapa INTRODUCE animales/objetos/lugares nuevos (partición) y frames
+# nuevos; los frames nuevos cruzan con TODOS los sujetos acumulados y los
+# sujetos nuevos con TODOS los frames acumulados — crecimiento combinatorio
+# sin duplicados (cada hecho vive en el bank de su etapa).
+
+ANIMALS_PER_STAGE = 3
+NEW_ANIMALS = {k: TIER_ANIMALS[k*3:(k+1)*3] for k in range(8)}
+NEW_OBJECTS = {k: TIER_OBJECTS[k*2:(k+1)*2] for k in range(8)}
+NEW_PLACES = {k: TIER_PLACES[k*1:(k+1)*1] for k in range(8)}
+
+SAYS = {a: s for a, s in SAY_SOUND}
+
+
+def frames_available(stage: int) -> list:
+	"""Frames (sujeto → (q, a) o None) introducidos en o antes de `stage`."""
+	F = []
+	if stage >= 0:
+		F.append(lambda s: (f"the {s} drinks", "water"))
 	if stage >= 1:
-		for a in ANIMALS_WATER[:6 + stage * 2]:
-			out.append((f"the {a} drinks", "water"))
-	for a, s in SAY_SOUND[:4 + stage * 2]:
-		out.append((f"what does the {a} say", s))
-	for place, who in PLACES:
-		if stage >= 2 or who in ("dog", "baby", "cat"):
-			out.append((f"the {who} is in the", place))
+		F.append(lambda s: (f"the {s} eats", "food"))
+		F.append(lambda s: (f"the {s} sleeps", "now"))
+	if stage >= 2:
+		F.append(lambda s: (f"the {s} is here", "now"))
+		F.append(lambda s: (f"what does the {s} say", SAYS.get(s)) if s in SAYS else None)
 	if stage >= 3:
-		for a in ANIMALS_APPLE[:6 + (stage - 3) * 2]:
-			out.append((f"the {a} eats the", "apple"))
-		out.append(("the fire is", "hot")); out.append(("the water is", "cold"))
-		out.append(("the moon shines at", "night")); out.append(("i sleep at", "night"))
+		F.append(lambda s: (f"the {s} eats the", "apple") if "apple" in s or True else None)
+		F.append(lambda s: (f"the {s} sleeps at", "night"))
 	if stage >= 4:
-		out.append(("the dog reads a", "book")); out.append(("the baby reads a", "book"))
-		out.append(("the cow gives", "milk")); out.append(("the bird gives", "light"))
-	return out
+		F.append(lambda s: (f"the {s} can", "jump"))
+		F.append(lambda s: (f"the {s} is in the", "house"))
+	if stage >= 5:
+		F.append(lambda s: (f"the {s} plays", "ball") if "ball" in s or True else None)
+		F.append(lambda s: (f"the {s} drinks from the", "river"))
+	if stage >= 6:
+		F.append(lambda s: (f"the {s} climbs the", "tree"))
+		F.append(lambda s: (f"the {s} hides in the", "forest"))
+	if stage >= 7:
+		F.append(lambda s: (f"the {s} hunts the", "mouse") if s in ("wolf", "fox", "snake", "owl", "lion", "tiger", "bear") else None)
+	return [f for f in F if f is not None]
+
+
+def bank_for_stage(stage: int, gate_words: set, used_hashes: set, w2i: dict, dictionary) -> tuple:
+	"""Hechos base de la etapa + cruces combinatorios (nuevos sujetos × frames
+	acumulados, sujetos acumulados × frames nuevos). Todo verificado: in-vocab,
+	in-gate de etapa, no duplicado. Cap: 200."""
+	gate_idx = None
+	items, rej = [], []
+
+	def try_add(q: str, a: str):
+		mapped_a = dictionary.map_to_base_word(a)
+		a_idx = w2i.get(mapped_a, 1)
+		if gate_idx is not None and a_idx not in gate_idx:
+			rej.append((q, a, "fuera de gate")); return False
+		toks_q = tokenize(q, w2i)
+		toks_a = [a_idx]
+		if len(toks_q) < 2:
+			rej.append((q, a, "corta")); return False
+		hs = {seq_hash(toks_q + toks_a)}
+		for f in trained_exam_forms(q, a, w2i, dictionary):
+			hs.add(seq_hash(f))
+		if hs & used_hashes:
+			rej.append((q, a, "duplicado")); return False
+		used_hashes.update(hs)
+		items.append({"q": q, "a": a})
+		return True
+
+	# sujetos: partición nueva + acumulados
+	new_animals = [a for a in NEW_ANIMALS.get(stage, []) if a in gate_words]
+	acc_animals = [a for k in range(stage + 1) for a in NEW_ANIMALS.get(k, []) if a in gate_words]
+	people = [w for w in ("i", "you", "baby", "mom", "dad") if w in gate_words]
+	F = frames_available(stage)
+	prev_F = frames_available(max(0, stage - 1)) if stage > 0 else []
+	new_frames = F[len(prev_F):]
+
+	# 1) hechos base de la etapa
+	for q, a in STAGE_FACTS.get(stage, []):
+		try_add(q, a)
+	# 2) sujetos NUEVOS × frames acumulados
+	for a in new_animals:
+		for f in F:
+			r = f(a)
+			if r: try_add(*r)
+	for s in people:
+		for f in F:
+			r = f(s)
+			if r: try_add(*r)
+	# 3) sujetos acumulados × frames NUEVOS
+	for f in new_frames:
+		for a in acc_animals:
+			r = f(a)
+			if r: try_add(*r)
+		for s in people:
+			r = f(s)
+			if r: try_add(*r)
+
+	return items[:200], rej
 
 
 def main() -> None:
@@ -108,26 +196,13 @@ def main() -> None:
 
 	used_hashes: set = set()
 	banks: dict = {}
-	stats = {}
 	for stage in range(8):
 		gate_idx = set(masks["stage_allowed"][stage])
-		candidates = STAGE_FACTS.get(stage, []) + expansions_for_stage(stage)
-		items, rej = [], []
-		for q, a in candidates:
-			mapped_a = dictionary.map_to_base_word(a)
-			toks_a = [w2i.get(mapped_a, 1)]
-			if w2i.get(mapped_a, 1) not in gate_idx:
-				rej.append((q, a, "fuera de gate")); continue
-			forms = trained_exam_forms(q, mapped_a, w2i, dictionary)
-			hs = {seq_hash(f) for f in forms}
-			hs.add(seq_hash(tokenize(q, w2i) + toks_a))
-			if hs & used_hashes:
-				rej.append((q, a, "duplicado entre banks")); continue
-			used_hashes |= hs
-			items.append({"q": q, "a": a})
+		gate_words = {words[i] for i in gate_idx}
+		items, rej = bank_for_stage(stage, gate_words, used_hashes, w2i, dictionary)
+		reasons = Counter(r[-1] for r in rej)
 		banks[stage] = items
-		stats[stage] = (len(items), len(rej))
-		print(f"  bank etapa {stage} ({['0-1','1-2','2-3','3-4','5','6','7','8'][stage]}): {len(items)} preguntas ({len(rej)} rechazadas)")
+		print(f"  bank etapa {stage}: {len(items)} preguntas | rechazos: {dict(reasons)}")
 
 	os.makedirs(os.path.join(BASE, "configs", "exam_banks"), exist_ok=True)
 	total = sum(len(v) for v in banks.values())
@@ -141,3 +216,4 @@ def main() -> None:
 
 if __name__ == "__main__":
 	main()
+

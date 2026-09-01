@@ -34,8 +34,176 @@
    "a": "night"
   },
   {
-   "q": "what does the wolf say",
-   "a": "howl"
+   "q": "the shark drinks",
+   "a": "water"
+  },
+  {
+   "q": "the shark eats",
+   "a": "food"
+  },
+  {
+   "q": "the shark sleeps",
+   "a": "now"
+  },
+  {
+   "q": "the shark is here",
+   "a": "now"
+  },
+  {
+   "q": "the shark eats the",
+   "a": "apple"
+  },
+  {
+   "q": "the shark sleeps at",
+   "a": "night"
+  },
+  {
+   "q": "the shark can",
+   "a": "jump"
+  },
+  {
+   "q": "the shark is in the",
+   "a": "house"
+  },
+  {
+   "q": "the shark plays",
+   "a": "ball"
+  },
+  {
+   "q": "the shark drinks from the",
+   "a": "river"
+  },
+  {
+   "q": "the shark climbs the",
+   "a": "tree"
+  },
+  {
+   "q": "the shark hides in the",
+   "a": "forest"
+  },
+  {
+   "q": "the goat drinks",
+   "a": "water"
+  },
+  {
+   "q": "the goat eats",
+   "a": "food"
+  },
+  {
+   "q": "the goat sleeps",
+   "a": "now"
+  },
+  {
+   "q": "the goat is here",
+   "a": "now"
+  },
+  {
+   "q": "the goat eats the",
+   "a": "apple"
+  },
+  {
+   "q": "the goat sleeps at",
+   "a": "night"
+  },
+  {
+   "q": "the goat can",
+   "a": "jump"
+  },
+  {
+   "q": "the goat is in the",
+   "a": "house"
+  },
+  {
+   "q": "the goat plays",
+   "a": "ball"
+  },
+  {
+   "q": "the goat drinks from the",
+   "a": "river"
+  },
+  {
+   "q": "the goat climbs the",
+   "a": "tree"
+  },
+  {
+   "q": "the goat hides in the",
+   "a": "forest"
+  },
+  {
+   "q": "the deer drinks",
+   "a": "water"
+  },
+  {
+   "q": "the deer eats",
+   "a": "food"
+  },
+  {
+   "q": "the deer sleeps",
+   "a": "now"
+  },
+  {
+   "q": "the deer is here",
+   "a": "now"
+  },
+  {
+   "q": "the deer eats the",
+   "a": "apple"
+  },
+  {
+   "q": "the deer sleeps at",
+   "a": "night"
+  },
+  {
+   "q": "the deer can",
+   "a": "jump"
+  },
+  {
+   "q": "the deer is in the",
+   "a": "house"
+  },
+  {
+   "q": "the deer plays",
+   "a": "ball"
+  },
+  {
+   "q": "the deer drinks from the",
+   "a": "river"
+  },
+  {
+   "q": "the deer climbs the",
+   "a": "tree"
+  },
+  {
+   "q": "the deer hides in the",
+   "a": "forest"
+  },
+  {
+   "q": "the wolf hunts the",
+   "a": "mouse"
+  },
+  {
+   "q": "the bear hunts the",
+   "a": "mouse"
+  },
+  {
+   "q": "the fox hunts the",
+   "a": "mouse"
+  },
+  {
+   "q": "the snake hunts the",
+   "a": "mouse"
+  },
+  {
+   "q": "the lion hunts the",
+   "a": "mouse"
+  },
+  {
+   "q": "the tiger hunts the",
+   "a": "mouse"
+  },
+  {
+   "q": "the owl hunts the",
+   "a": "mouse"
   }
  ]
 }

@@ -46,6 +46,10 @@
    "a": "bread"
   },
   {
+   "q": "if i touch the fire",
+   "a": "burns"
+  },
+  {
    "q": "where is dad",
    "a": "here"
   },
@@ -78,40 +82,92 @@
    "a": "apple"
   },
   {
-   "q": "the bear drinks",
-   "a": "water"
-  },
-  {
-   "q": "the dog drinks",
-   "a": "water"
-  },
-  {
-   "q": "the lion drinks",
-   "a": "water"
-  },
-  {
    "q": "the horse drinks",
    "a": "water"
   },
   {
-   "q": "the cow drinks",
+   "q": "the horse eats",
+   "a": "food"
+  },
+  {
+   "q": "the horse sleeps",
+   "a": "now"
+  },
+  {
+   "q": "the fish drinks",
    "a": "water"
   },
   {
-   "q": "the goat drinks",
-   "a": "water"
+   "q": "the fish eats",
+   "a": "food"
   },
   {
-   "q": "the duck drinks",
-   "a": "water"
+   "q": "the fish sleeps",
+   "a": "now"
   },
   {
-   "q": "the mouse drinks",
-   "a": "water"
+   "q": "the i eats",
+   "a": "food"
   },
   {
-   "q": "the dog is in the",
-   "a": "road"
+   "q": "the i sleeps",
+   "a": "now"
+  },
+  {
+   "q": "the you eats",
+   "a": "food"
+  },
+  {
+   "q": "the you sleeps",
+   "a": "now"
+  },
+  {
+   "q": "the baby eats",
+   "a": "food"
+  },
+  {
+   "q": "the baby sleeps",
+   "a": "now"
+  },
+  {
+   "q": "the mom eats",
+   "a": "food"
+  },
+  {
+   "q": "the mom sleeps",
+   "a": "now"
+  },
+  {
+   "q": "the dad eats",
+   "a": "food"
+  },
+  {
+   "q": "the dad sleeps",
+   "a": "now"
+  },
+  {
+   "q": "the dog eats",
+   "a": "food"
+  },
+  {
+   "q": "the cat eats",
+   "a": "food"
+  },
+  {
+   "q": "the bird eats",
+   "a": "food"
+  },
+  {
+   "q": "the dog sleeps",
+   "a": "now"
+  },
+  {
+   "q": "the cat sleeps",
+   "a": "now"
+  },
+  {
+   "q": "the bird sleeps",
+   "a": "now"
   }
  ]
 }

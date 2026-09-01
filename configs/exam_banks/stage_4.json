@@ -34,36 +34,244 @@
    "a": "bit"
   },
   {
-   "q": "what does the owl say",
-   "a": "hoot"
+   "q": "the pig drinks",
+   "a": "water"
   },
   {
-   "q": "what does the snake say",
-   "a": "hiss"
+   "q": "the pig eats",
+   "a": "food"
   },
   {
-   "q": "the bear eats the",
+   "q": "the pig sleeps",
+   "a": "now"
+  },
+  {
+   "q": "the pig is here",
+   "a": "now"
+  },
+  {
+   "q": "what does the pig say",
+   "a": "oink"
+  },
+  {
+   "q": "the pig eats the",
    "a": "apple"
   },
   {
-   "q": "the dog eats the",
+   "q": "the pig sleeps at",
+   "a": "night"
+  },
+  {
+   "q": "the pig can",
+   "a": "jump"
+  },
+  {
+   "q": "the pig is in the",
+   "a": "house"
+  },
+  {
+   "q": "the elephant drinks",
+   "a": "water"
+  },
+  {
+   "q": "the elephant eats",
+   "a": "food"
+  },
+  {
+   "q": "the elephant sleeps",
+   "a": "now"
+  },
+  {
+   "q": "the elephant is here",
+   "a": "now"
+  },
+  {
+   "q": "the elephant eats the",
    "a": "apple"
   },
   {
-   "q": "the dog reads a",
-   "a": "book"
+   "q": "the elephant sleeps at",
+   "a": "night"
   },
   {
-   "q": "the baby reads a",
-   "a": "book"
+   "q": "the elephant can",
+   "a": "jump"
   },
   {
-   "q": "the cow gives",
-   "a": "milk"
+   "q": "the elephant is in the",
+   "a": "house"
   },
   {
-   "q": "the bird gives",
-   "a": "light"
+   "q": "the lion drinks",
+   "a": "water"
+  },
+  {
+   "q": "the lion eats",
+   "a": "food"
+  },
+  {
+   "q": "the lion sleeps",
+   "a": "now"
+  },
+  {
+   "q": "the lion is here",
+   "a": "now"
+  },
+  {
+   "q": "what does the lion say",
+   "a": "roar"
+  },
+  {
+   "q": "the lion eats the",
+   "a": "apple"
+  },
+  {
+   "q": "the lion sleeps at",
+   "a": "night"
+  },
+  {
+   "q": "the lion can",
+   "a": "jump"
+  },
+  {
+   "q": "the lion is in the",
+   "a": "house"
+  },
+  {
+   "q": "the i can",
+   "a": "jump"
+  },
+  {
+   "q": "the i is in the",
+   "a": "house"
+  },
+  {
+   "q": "the you can",
+   "a": "jump"
+  },
+  {
+   "q": "the you is in the",
+   "a": "house"
+  },
+  {
+   "q": "the baby can",
+   "a": "jump"
+  },
+  {
+   "q": "the baby is in the",
+   "a": "house"
+  },
+  {
+   "q": "the mom can",
+   "a": "jump"
+  },
+  {
+   "q": "the mom is in the",
+   "a": "house"
+  },
+  {
+   "q": "the dad can",
+   "a": "jump"
+  },
+  {
+   "q": "the dad is in the",
+   "a": "house"
+  },
+  {
+   "q": "the dog can",
+   "a": "jump"
+  },
+  {
+   "q": "the cat can",
+   "a": "jump"
+  },
+  {
+   "q": "the bird can",
+   "a": "jump"
+  },
+  {
+   "q": "the horse can",
+   "a": "jump"
+  },
+  {
+   "q": "the fish can",
+   "a": "jump"
+  },
+  {
+   "q": "the wolf can",
+   "a": "jump"
+  },
+  {
+   "q": "the bear can",
+   "a": "jump"
+  },
+  {
+   "q": "the mouse can",
+   "a": "jump"
+  },
+  {
+   "q": "the rabbit can",
+   "a": "jump"
+  },
+  {
+   "q": "the fox can",
+   "a": "jump"
+  },
+  {
+   "q": "the snake can",
+   "a": "jump"
+  },
+  {
+   "q": "the cow can",
+   "a": "jump"
+  },
+  {
+   "q": "the dog is in the",
+   "a": "house"
+  },
+  {
+   "q": "the cat is in the",
+   "a": "house"
+  },
+  {
+   "q": "the bird is in the",
+   "a": "house"
+  },
+  {
+   "q": "the horse is in the",
+   "a": "house"
+  },
+  {
+   "q": "the fish is in the",
+   "a": "house"
+  },
+  {
+   "q": "the wolf is in the",
+   "a": "house"
+  },
+  {
+   "q": "the bear is in the",
+   "a": "house"
+  },
+  {
+   "q": "the mouse is in the",
+   "a": "house"
+  },
+  {
+   "q": "the rabbit is in the",
+   "a": "house"
+  },
+  {
+   "q": "the fox is in the",
+   "a": "house"
+  },
+  {
+   "q": "the snake is in the",
+   "a": "house"
+  },
+  {
+   "q": "the cow is in the",
+   "a": "house"
   }
  ]
 }
