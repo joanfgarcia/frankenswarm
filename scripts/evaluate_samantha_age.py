@@ -313,7 +313,7 @@ def run_evaluation(args):
 
 	if not os.path.exists(args.model_path):
 		print(f"❌ Error: No se encontró el modelo en {args.model_path}")
-		return False, 0.0
+		return None, 0.0
 
 	# 1. Cargar vocabulario y glifos
 	with open(expanded_glyphs_path, encoding="utf-8") as f:
@@ -370,7 +370,7 @@ def run_evaluation(args):
 	questions = AGE_QUESTIONS.get(target_age, [])
 	if not questions:
 		print(f"❌ Error: No hay preguntas definidas para la edad {target_age}")
-		return False, 0.0
+		return None, 0.0
 
 	# Máscara de producción del hito. Camino preferente (DL-009): la máscara de
 	# gateo REAL del entrenamiento, persistida por el trainer — el instrumento
@@ -602,7 +602,7 @@ def run_evaluation(args):
 
 	if not result_json:
 		print("❌ Fallo en la evaluación. No se pudo obtener calificación de Samantha.")
-		return False, 0.0
+		return None, 0.0
 
 	print("\n════════════════════════════════════════════════════════════")
 	print(f"📊 REPORT DE EVALUACIÓN COGNITIVA: {target_age} AÑOS")
@@ -642,5 +642,11 @@ if __name__ == "__main__":
 
 	args = parser.parse_args()
 	passed, score = run_evaluation(args)
-	# Retornar exit code según el resultado
-	exit(0 if passed else 1)
+	# Exit codes (auditoría 1-sep): un crash de infraestructura NO es un
+	# suspenso académico — el falso suspenso de 2_years del glyph v4 disparó
+	# una neurogénesis sin examen real. Contrato con state_manager:
+	#   0 = aprobado · 2 = suspenso CALIFICADO · 3 = error de infraestructura
+	#   (sin nota) · cualquier otro (p.ej. 1 por excepción) = infraestructura.
+	if passed is None:
+		exit(3)
+	exit(0 if passed else 2)

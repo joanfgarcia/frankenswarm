@@ -2,6 +2,7 @@ import json
 import os
 import subprocess
 import sys
+import time
 from dataclasses import dataclass, field
 
 EXAM_MAX_FAILURES = 3  # suspensos del MISMO hito antes de ceder la decisión al operador
@@ -24,6 +25,10 @@ class EvalResult:
 	attempt_num: int = 0
 	next_milestone: str | None = None
 	next_stage_idx: int = 0
+	# El examen no llegó a calificarse (Samantha caída, crash del evaluador…):
+	# NO es un suspenso académico — no incrementa exam_failures ni puede
+	# disparar neurogénesis (auditoría 1-sep: falso suspenso 2_years glyph v4).
+	infra_error: bool = False
 
 
 def plan_exam_failure(state, stage_conf, target_milestone):
@@ -70,6 +75,19 @@ def _force_samantha_offload() -> None:
 			print(f"🧹 [OFFLOAD] Modelo de Samantha descargado del hipervisor: {r.read().decode()[:60]}")
 	except Exception as e:
 		print(f"⚠️ [OFFLOAD] No se pudo forzar la descarga (no crítico): {e}")
+
+
+def _write_signal(base_dir, save_dir, name, payload):
+	"""Señal de hito: fichero global (watchers legados) + copia POR BRAZO.
+
+	Auditoría 1-sep: con dos brazos corriendo en serie, el global se pisan
+	mutuamente (el 3_years del standard sobrescribió la señal del glyph) —
+	la copia en save_dir conserva la historia de cada brazo."""
+	global_path = os.path.join(base_dir, "storage", "checkpoints", name)
+	for path in (global_path, os.path.join(save_dir, name)):
+		with open(path, "w", encoding="utf-8") as mf:
+			json.dump(payload, mf, indent=4)
+	return global_path
 
 
 def run_samantha_eval(
@@ -137,7 +155,15 @@ def run_samantha_eval(
 	env = dict(os.environ)
 	project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
 	env["PYTHONPATH"] = project_root + (":" + env["PYTHONPATH"] if "PYTHONPATH" in env else "")
+	# Contrato de exit codes con evaluate_samantha_age (auditoría 1-sep):
+	# 0 = aprobado · 2 = suspenso CALIFICADO · otro = infraestructura (sin
+	# nota). Un fallo de infra se reintenta una vez; si persiste, se pausa
+	# para el operador SIN contar suspenso ni disparar neurogénesis.
 	eval_res = subprocess.run(eval_cmd, env=env)
+	if eval_res.returncode not in (0, 2):
+		print(f"⚠️ [EXAMEN-INFRA] El evaluador terminó con rc={eval_res.returncode} (sin calificación). Reintento único…")
+		time.sleep(15)
+		eval_res = subprocess.run(eval_cmd, env=env)
 
 	# ── Offload forzado de Samantha (incidencia 31-ago) ──
 	# La examinadora reutiliza el hipervisor dual-bind persistente (puerto
@@ -206,21 +232,15 @@ def run_samantha_eval(
 		torch.save(model.state_dict(), os.path.join(save_dir, f"model_{stage_name}.pt"))
 
 		# Escribir archivo de señal JSON para avisar al usuario
-		milestone_achieved_path = os.path.join(base_dir, "storage", "checkpoints", "milestone_achieved.json")
-		with open(milestone_achieved_path, "w", encoding="utf-8") as mf:
-			json.dump(
-				{
-					"milestone": target_milestone,
-					"next_milestone": next_milestone,
-					"hidden_dim": model.hidden_dim,
-					"num_layers": len(model.core_layers),
-					"stage": stage_name,
-					"status": "achieved",
-					"model_path": checkpoint_milestone_path,
-				},
-				mf,
-				indent=4,
-			)
+		milestone_achieved_path = _write_signal(base_dir, save_dir, "milestone_achieved.json", {
+			"milestone": target_milestone,
+			"next_milestone": next_milestone,
+			"hidden_dim": model.hidden_dim,
+			"num_layers": len(model.core_layers),
+			"stage": stage_name,
+			"status": "achieved",
+			"model_path": checkpoint_milestone_path,
+		})
 
 		print(f"\n🛑 [PAUSA DE DESARROLLO] Estado guardado en: {state_path}")
 		print(f"🎒 Señal de hito guardada en: {milestone_achieved_path}")
@@ -241,6 +261,37 @@ def run_samantha_eval(
 			next_milestone=next_milestone,
 			next_stage_idx=next_stage_idx,
 		)
+	elif eval_res.returncode != 2:
+		# Infraestructura caída dos veces seguidas: el examen NO se ha
+		# calificado. Ni suspenso ni neurogénesis — pausa para el operador
+		# con el estado intacto; al reanudar, el examen re-dispara.
+		with open(state_path, encoding="utf-8") as sf:
+			intact_state = json.load(sf)
+		milestone_failed_path = _write_signal(base_dir, save_dir, "milestone_failed.json", {
+			"milestone": target_milestone,
+			"attempt": intact_state.get("exam_failures", {}).get(target_milestone, 0),
+			"max_attempts": EXAM_MAX_FAILURES,
+			"status": "eval_infra_error",
+			"returncode": eval_res.returncode,
+			"resume_epoch": intact_state.get("current_epoch"),
+			"stage": stage_name,
+		})
+		print(f"\n⚠️ [EXAMEN NO CALIFICADO] Infraestructura de evaluación caída (rc={eval_res.returncode}) tras el reintento.")
+		print(f"📋 Señal guardada en: {milestone_failed_path} (status: eval_infra_error)")
+		print("🛑 [PAUSA DEL OPERADOR] Revisa Samantha/hipervisor y reanuda con `red-pill job resume`: el examen volverá a dispararse.")
+		return EvalResult(
+			passed=False,
+			needs_operator=True,
+			infra_error=True,
+			model=model,
+			state=intact_state,
+			checkpoint_path=current_checkpoint_path,
+			milestone_name=target_milestone,
+			stage_idx=stage_idx,
+			stage_name=stage_name,
+			eval_age=eval_age,
+			attempt_num=intact_state.get("exam_failures", {}).get(target_milestone, 0),
+		)
 	else:
 		# Suspenso = repaso, no fallo del sistema
 		with open(state_path, encoding="utf-8") as sf:
@@ -250,20 +301,14 @@ def run_samantha_eval(
 			json.dump(held_state, sf, indent=4)
 
 		attempt_num = held_state["exam_failures"][target_milestone]
-		milestone_failed_path = os.path.join(base_dir, "storage", "checkpoints", "milestone_failed.json")
-		with open(milestone_failed_path, "w", encoding="utf-8") as mf:
-			json.dump(
-				{
-					"milestone": target_milestone,
-					"attempt": attempt_num,
-					"max_attempts": EXAM_MAX_FAILURES,
-					"status": "needs_operator" if needs_operator else "remedial",
-					"resume_epoch": held_state["current_epoch"],
-					"stage": stage_name,
-				},
-				mf,
-				indent=4,
-			)
+		milestone_failed_path = _write_signal(base_dir, save_dir, "milestone_failed.json", {
+			"milestone": target_milestone,
+			"attempt": attempt_num,
+			"max_attempts": EXAM_MAX_FAILURES,
+			"status": "needs_operator" if needs_operator else "remedial",
+			"resume_epoch": held_state["current_epoch"],
+			"stage": stage_name,
+		})
 
 		print(f"\n❌ [EXAMEN SUSPENDIDO] El alumno ha suspendido el hito de {eval_age} años (intento {attempt_num}/{EXAM_MAX_FAILURES}).")
 		print(f"📋 Señal de suspenso guardada en: {milestone_failed_path}")

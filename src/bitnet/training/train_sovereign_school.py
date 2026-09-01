@@ -1039,6 +1039,11 @@ def run_school_training():
 					if eval_result.passed:
 						print(f"🎓 [ADAPTIVE] Hito {milestone_name} APROBADO en {a_epoch_in_stage} épocas con {model.hidden_dim}d.")
 						advance = True
+					elif getattr(eval_result, "infra_error", False):
+						# El examen no llegó a calificarse: pausa sin suspenso ni
+						# neurogénesis (auditoría 1-sep). Al reanudar re-dispara.
+						print(f"⚠️ [ADAPTIVE] Hito {milestone_name} SIN CALIFICAR (infra caída). Pausa (rc={EXAM_PAUSE_EXIT_CODE}) sin remediación.")
+						exam_pause = True
 					else:
 						next_dim = get_next_dim(model.hidden_dim, stage_config, current_epoch=cfg["end_epoch"])
 						if next_dim is not None and next_dim <= cfg["dim"]:

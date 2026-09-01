@@ -1,0 +1,49 @@
+# BIT-003 · Brazo GLYPH v4.1 ×1 — SOLO hasta 2_years (re-examen del falso suspenso)
+#
+#   red-pill job submit --recipe bit003_glyph_v41_2y_x1
+#
+# Auditoría 1-sep: el suspenso de 2_years del glyph v4 ×1 a 128d fue un crash
+# de infraestructura (Samantha devolvió None + timeout del offload), no una
+# nota — la neurogénesis 128→256 se disparó sin examen real y el checkpoint
+# 128d pre-crecimiento no sobrevivió. Este run repite las etapas 0-2 con el
+# contrato de exit-codes arreglado (0/2/3: un fallo de infra ya NO cuenta
+# como suspenso ni dispara neurogénesis) y responde la pregunta que quedó
+# abierta: ¿pasa el glyph 2_years a 128d bajo ×1? Si suspende, esta vez será
+# con calificación real — y la escalera se ejercitará legítimamente.
+# Mismo protocolo y semilla que v4 (comparable); completa al resolver 2_years.
+
+source: script_job
+title: BIT-003 glyph v4.1 ×1 (re-examen 2_years con examen real, 128d)
+priority: 5
+
+step_command: .venv/bin/python -m src.bitnet.training.train_sovereign_school --adaptive --embedding glyph --amp bf16 --compile --require_gpu --full_tinystories --samples_per_epoch 400000 --wd_mode no_embed --exam_repeat_factor 1 --seed 42 --max_epochs_per_run 20 --state_dir storage/checkpoints/bit003_glyph_v41_x1
+env:
+  PYTHONPATH: .
+  PYTHONUNBUFFERED: "1"
+  # Anti-OOM: reduce la fragmentación del allocator (reserva sin ratchet)
+  PYTORCH_CUDA_ALLOC_CONF: "expandable_segments:True"
+
+checkpoint_file: storage/checkpoints/bit003_glyph_v41_x1/school_state.json
+pause_exit_code: 78
+
+progress:
+  mode: bounded
+  current_key: current_epoch
+  total: 240
+  stage_current_key: current_stage_idx
+  stage_total: 2
+  stage_offset: 1
+  stage_label: etapa
+
+completion:
+  key: milestones_achieved
+  contains: 2_years
+
+preflight:
+  vram_unload: true
+  min_free_vram_mb: 3500
+  memory_max: 12G
+
+control:
+  max_step_minutes: 780
+  preemptible: false
