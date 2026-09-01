@@ -65,6 +65,9 @@ def main() -> None:
 	ap.add_argument("--resonance_eval_steps", type=int, default=3)
 	ap.add_argument("--n_emotions", type=int, default=0)
 	ap.add_argument("--emotion_dim", type=int, default=16)
+	ap.add_argument("--pool_gate", action="store_true", help="Añade el gate de RETENCIÓN: frases aleatorias del pool de etapa (cloze determinista)")
+	ap.add_argument("--gate_n", type=int, default=80)
+	ap.add_argument("--store_path", default="storage/datasets/tokenized_store.npz")
 	ap.add_argument("--emotion_mode", default="first_only")
 	args = ap.parse_args()
 
@@ -92,6 +95,46 @@ def main() -> None:
 	for i in masks["stage_allowed"][args.stage_idx]:
 		allowed[i] = True
 	allowed[0] = True
+
+	# ── Gate de RETENCIÓN: muestra aleatoria del pool de entrenamiento de la etapa ──
+	retention_rows = []
+	if args.pool_gate:
+		import numpy as _np
+		store = _np.load(os.path.join(BASE, args.store_path))
+		flat, offsets = store["flat"], store["offsets"]
+		stage_cache = None
+		cache_dir = os.path.join(BASE, "storage", "datasets", "stage_cache")
+		for h in sorted(os.listdir(cache_dir)):
+			f = os.path.join(cache_dir, h, f"stage_{args.stage_idx}_indices.npz")
+			if os.path.exists(f):
+				idx = _np.load(f); train_idx = idx["train"]; break
+		rng = _np.random.default_rng(42)
+		sel = rng.choice(train_idx, size=min(args.gate_n, len(train_idx)), replace=False)
+		allowed = torch.zeros(len(words), dtype=torch.bool, device=args.device)
+		for i in masks["stage_allowed"][args.stage_idx]:
+			allowed[i] = True
+		allowed[0] = True
+		hits, total = 0, 0
+		for si in sel:
+			a_off, b_off = int(offsets[si]), int(offsets[si + 1])
+			toks = flat[a_off:b_off].tolist()
+			if len(toks) < 3:
+				continue
+			ctx, ans = toks[:-1], toks[-1]
+			x = torch.tensor([ctx], dtype=torch.long, device=args.device)
+			with torch.no_grad():
+				if args.resonance_steps_max > 0:
+					emo = torch.full((1,), args.n_emotions - 1, dtype=torch.long, device=args.device) if args.n_emotions > 0 else None
+					logits, _ = model.forward_resonance(x, n_steps=min(args.resonance_eval_steps, args.resonance_steps_max), pos_mode=args.resonance_pos_mode, emotion_ids=emo)
+				else:
+					logits = model(x)
+			pred = int(logits[0, len(ctx) - 1].float().argmax(dim=-1).item())
+			total += 1
+			hits += int(pred == ans)
+		retention_rows.append({"hits": hits, "total": total})
+		ret_pct = hits / max(1, total) * 100
+		print(f"  RETENCIÓN (pool de etapa, {total} frases): {hits}/{total} = {ret_pct:.1f}%")
+
 
 	emo = None
 	if args.resonance_steps_max > 0 and args.n_emotions > 0:
