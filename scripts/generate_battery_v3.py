@@ -136,6 +136,11 @@ def trained_exam_forms(q: str, a: str, w2i: dict, dictionary) -> list:
 
 
 def main() -> None:
+	import argparse
+	ap = argparse.ArgumentParser()
+	ap.add_argument("--set_version", type=int, default=2, help="Versión del set congelado (v1 = pre-banks, intocable; v2+ = con banks en el universo)")
+	args = ap.parse_args()
+
 	words = json.load(open(os.path.join(BASE, "configs", "expanded_glyphs.json")))["words"]
 	w2i = {w: i for i, w in enumerate(words)}
 	dictionary = SovereignDictionary(os.path.join(BASE, "configs", "expanded_glyphs.json"))
@@ -154,24 +159,58 @@ def main() -> None:
 	curr_json = json.load(open(os.path.join(BASE, "configs", "school_curriculum_structured_en.json")))["curriculum"]
 	for it in curr_json.get("preschool", []):
 		store_hashes.add(seq_hash(tokenize(it["text"], w2i)))
-	print(f"── universo entrenado: {len(store_hashes):,} hashes únicos (store + exámenes + currículo)")
+	# Los BANKS de examen (DL-013) son material de entrenamiento en cuanto se
+	# cableen: sus hechos NO pueden ser "no vistos" (auditoría 1-sep: 28/195
+	# del set v1 colisionaban con los banks). Todas sus formas entran al
+	# universo entrenado.
+	n_bank = 0
+	bank_dir = os.path.join(BASE, "configs", "exam_banks")
+	if os.path.isdir(bank_dir):
+		for fn in sorted(os.listdir(bank_dir)):
+			if not fn.startswith("stage_"):
+				continue
+			for it in json.load(open(os.path.join(bank_dir, fn)))["questions"]:
+				store_hashes.add(seq_hash(tokenize(it["q"], w2i) + [w2i.get(dictionary.map_to_base_word(it["a"]), 1)]))
+				for f in trained_exam_forms(it["q"], it["a"], w2i, dictionary):
+					store_hashes.add(seq_hash(f))
+				n_bank += 1
+	print(f"── universo entrenado: {len(store_hashes):,} hashes únicos (store + exámenes + currículo + {n_bank} preguntas de bank)")
 
 	seen, rejected = [], []
+	seen_qs: set = set()
+	seen_pairs: set = set()
 	for q, a in SEEN_QA:
 		mapped_a = dictionary.map_to_base_word(a)
 		if w2i.get(mapped_a, 1) not in gate_idx:
 			rejected.append((q, a, "respuesta fuera de gate/vocab")); continue
+		if (q, a) in seen_pairs:
+			rejected.append((q, a, "duplicado exacto")); continue
+		if q in seen_qs:
+			# misma pregunta con OTRA respuesta: bajo argmax solo una puede
+			# acertar — la segunda garantiza un fallo del instrumento, no del
+			# modelo (auditoría 1-sep: 'if i touch the fire' → burns Y hurt).
+			rejected.append((q, a, "pregunta duplicada con otra respuesta")); continue
 		forms = trained_exam_forms(q, a, w2i, dictionary)
 		present = any(seq_hash(f) in store_hashes for f in forms)
+		if not present:
+			rejected.append((q, a, "no verificada presente en el universo entrenado")); continue
+		seen_pairs.add((q, a)); seen_qs.add(q)
 		seen.append({"q": q, "a": a, "verified_present": present, "n_forms": len(forms)})
-	seen = seen[:80]
 	for ctx, last in SEEN_COMPLETIONS:
 		toks_q = tokenize(ctx, w2i)
 		toks_a = tokenize(last, w2i)
 		if len(toks_a) != 1 or w2i.get(last, 1) not in gate_idx:
 			rejected.append((ctx, last, "respuesta fuera de gate/vocab")); continue
+		if (ctx, last) in seen_pairs:
+			rejected.append((ctx, last, "duplicado exacto")); continue
+		if ctx in seen_qs:
+			rejected.append((ctx, last, "pregunta duplicada con otra respuesta")); continue
 		present = seq_hash(toks_q + toks_a) in store_hashes
+		if not present:
+			rejected.append((ctx, last, "no verificada presente en el universo entrenado")); continue
+		seen_pairs.add((ctx, last)); seen_qs.add(ctx)
 		seen.append({"q": ctx, "a": last, "verified_present": present})
+	seen = seen[:80]
 
 	STRATA = [
 		("S1_cruce", UNSEEN_CANDIDATES + [
@@ -220,7 +259,9 @@ def main() -> None:
 			("the baby of the mom", "baby"), ("the friend of the baby", "dog"),
 			("it gives milk", "cow"), ("it gives a kiss", "mom"),
 			("it gives food", "dad"), ("it says oink", "pig"),
-			("it says caw", "owl"), ("it says croak", "duck"),
+			# ("it says caw", "owl") y ("it says croak", "duck") RETIRADAS
+			# (auditoría 1-sep): caw es del cuervo y croak de la rana — el
+			# gold era factualmente incorrecto.
 			("it climbs", "monkey"), ("it howls", "wolf"),
 			("it hides and runs", "mouse"), ("it is big and grey", "elephant"),
 			("it says roar", "lion"), ("it says hiss", "snake"),
@@ -273,6 +314,7 @@ def main() -> None:
 		]),
 	]
 	unseen, u_rej = [], []
+	unseen_qs: set = set()
 	quota = 200 // len(STRATA)
 	rng = np.random.default_rng(42)  # semilla fija: el set congelado es reproducible
 	for stratum, candidates in STRATA:
@@ -288,11 +330,16 @@ def main() -> None:
 				u_rej.append((stratum, q, a, "tokenización")); continue
 			if w2i.get(a, 1) not in gate_idx:
 				u_rej.append((stratum, q, a, "respuesta fuera del gate de la etapa")); continue
+			if q in unseen_qs:
+				# misma pregunta con otra respuesta: el argmax solo puede dar
+				# una — la 2ª entra como fallo estructural, no cognitivo.
+				u_rej.append((stratum, q, a, "pregunta duplicada")); continue
 			hashes = {seq_hash(toks_q + toks_a)}
 			for f in trained_exam_forms(q, a, w2i, dictionary):
 				hashes.add(seq_hash(f))
 			if hashes & store_hashes:
 				u_rej.append((stratum, q, a, "¡existe en el entrenamiento!")); continue
+			unseen_qs.add(q)
 			unseen.append({"q": q, "a": a, "stratum": stratum, "hash": seq_hash(toks_q + toks_a)})
 			count += 1
 
@@ -307,7 +354,9 @@ def main() -> None:
 	).hexdigest()[:12]
 	out = {
 		"age": AGE, "stage_idx": STAGE_IDX, "protocol": "v3 DL-011",
-		"set_id": f"age{AGE}_{set_id}", "sampling_seed": 42,
+		"set_version": args.set_version,
+		"set_id": f"age{AGE}_v{args.set_version}_{set_id}", "sampling_seed": 42,
+		"banks_in_universe": n_bank,
 		"seen_gate": seen, "unseen_cognition": unseen,
 		"rejected_seen": rejected, "rejected_unseen": u_rej,
 		"meta": {
@@ -316,7 +365,10 @@ def main() -> None:
 			"store_seqs_hashed": len(store_hashes),
 		},
 	}
-	path = os.path.join(BASE, "configs", "battery_v3", f"age{AGE}.json")
+	# v1 (pre-banks) queda congelado en age{AGE}.json — la confrontación v4 en
+	# curso se mide con él; v2+ (banks en el universo) usa fichero versionado.
+	suffix = "" if args.set_version <= 1 else f"_v{args.set_version}"
+	path = os.path.join(BASE, "configs", "battery_v3", f"age{AGE}{suffix}.json")
 	json.dump(out, open(path, "w", encoding="utf-8"), indent=2, ensure_ascii=False)
 	print(f"\n── BATERÍA edad {AGE} ──")
 	print(f"  vistas (gate):   {len(seen)} | verificadas presentes: {seen_present}")

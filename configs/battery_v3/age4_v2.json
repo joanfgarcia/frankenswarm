@@ -1,0 +1,1778 @@
+{
+  "age": 4,
+  "stage_idx": 3,
+  "protocol": "v3 DL-011",
+  "set_version": 2,
+  "set_id": "age4_v2_f3968a9ca4cd",
+  "sampling_seed": 42,
+  "banks_in_universe": 439,
+  "seen_gate": [
+    {
+      "q": "the cat sleeps",
+      "a": "happy",
+      "verified_present": true,
+      "n_forms": 1
+    },
+    {
+      "q": "the dog runs",
+      "a": "much",
+      "verified_present": true,
+      "n_forms": 1
+    },
+    {
+      "q": "i see the",
+      "a": "moon",
+      "verified_present": true,
+      "n_forms": 1
+    },
+    {
+      "q": "the bear eats",
+      "a": "honey",
+      "verified_present": true,
+      "n_forms": 1
+    },
+    {
+      "q": "i have two apples and one cat plus one are",
+      "a": "two",
+      "verified_present": true,
+      "n_forms": 1
+    },
+    {
+      "q": "i count one two",
+      "a": "three",
+      "verified_present": true,
+      "n_forms": 1
+    },
+    {
+      "q": "one plus one is",
+      "a": "two",
+      "verified_present": true,
+      "n_forms": 1
+    },
+    {
+      "q": "the bird flies",
+      "a": "high",
+      "verified_present": true,
+      "n_forms": 1
+    },
+    {
+      "q": "the lion has hair",
+      "a": "big",
+      "verified_present": true,
+      "n_forms": 1
+    },
+    {
+      "q": "the flowers drink",
+      "a": "water",
+      "verified_present": true,
+      "n_forms": 1
+    },
+    {
+      "q": "hello",
+      "a": "hello",
+      "verified_present": true,
+      "n_forms": 1
+    },
+    {
+      "q": "how are you",
+      "a": "fine",
+      "verified_present": true,
+      "n_forms": 1
+    },
+    {
+      "q": "who are you",
+      "a": "boy",
+      "verified_present": true,
+      "n_forms": 1
+    },
+    {
+      "q": "cat",
+      "a": "meow",
+      "verified_present": true,
+      "n_forms": 1
+    },
+    {
+      "q": "water",
+      "a": "water",
+      "verified_present": true,
+      "n_forms": 1
+    },
+    {
+      "q": "fire",
+      "a": "bad",
+      "verified_present": true,
+      "n_forms": 1
+    },
+    {
+      "q": "mom",
+      "a": "dad",
+      "verified_present": true,
+      "n_forms": 1
+    },
+    {
+      "q": "dog",
+      "a": "bark",
+      "verified_present": true,
+      "n_forms": 1
+    },
+    {
+      "q": "the baby wants",
+      "a": "milk",
+      "verified_present": true,
+      "n_forms": 1
+    },
+    {
+      "q": "night time to",
+      "a": "sleep",
+      "verified_present": true,
+      "n_forms": 1
+    },
+    {
+      "q": "the cat wants to",
+      "a": "eat",
+      "verified_present": true,
+      "n_forms": 1
+    },
+    {
+      "q": "the ball is",
+      "a": "big",
+      "verified_present": true,
+      "n_forms": 1
+    },
+    {
+      "q": "what is your name",
+      "a": "baby",
+      "verified_present": true,
+      "n_forms": 1
+    },
+    {
+      "q": "i want",
+      "a": "bread",
+      "verified_present": true,
+      "n_forms": 1
+    },
+    {
+      "q": "if i touch the fire",
+      "a": "burns",
+      "verified_present": true,
+      "n_forms": 1
+    },
+    {
+      "q": "where is dad",
+      "a": "here",
+      "verified_present": true,
+      "n_forms": 1
+    },
+    {
+      "q": "the sun is",
+      "a": "hot",
+      "verified_present": true,
+      "n_forms": 1
+    },
+    {
+      "q": "at night we",
+      "a": "sleep",
+      "verified_present": true,
+      "n_forms": 1
+    },
+    {
+      "q": "the cat drinks",
+      "a": "milk",
+      "verified_present": true,
+      "n_forms": 1
+    },
+    {
+      "q": "one and one are",
+      "a": "two",
+      "verified_present": true,
+      "n_forms": 1
+    },
+    {
+      "q": "the dog is my",
+      "a": "friend",
+      "verified_present": true,
+      "n_forms": 1
+    },
+    {
+      "q": "the sun shines",
+      "a": "much",
+      "verified_present": true,
+      "n_forms": 1
+    },
+    {
+      "q": "the fish lives in the",
+      "a": "water",
+      "verified_present": true,
+      "n_forms": 1
+    },
+    {
+      "q": "at night i see the",
+      "a": "moon",
+      "verified_present": true,
+      "n_forms": 1
+    },
+    {
+      "q": "the bird has",
+      "a": "wings",
+      "verified_present": true,
+      "n_forms": 1
+    },
+    {
+      "q": "the snow is",
+      "a": "cold",
+      "verified_present": true,
+      "n_forms": 1
+    },
+    {
+      "q": "we read a",
+      "a": "book",
+      "verified_present": true,
+      "n_forms": 1
+    },
+    {
+      "q": "dad is",
+      "a": "here",
+      "verified_present": true
+    },
+    {
+      "q": "mom is",
+      "a": "here",
+      "verified_present": true
+    },
+    {
+      "q": "water is",
+      "a": "good",
+      "verified_present": true
+    },
+    {
+      "q": "time to",
+      "a": "sleep",
+      "verified_present": true
+    },
+    {
+      "q": "the red",
+      "a": "ball",
+      "verified_present": true
+    },
+    {
+      "q": "the dog",
+      "a": "runs",
+      "verified_present": true
+    },
+    {
+      "q": "i play with",
+      "a": "you",
+      "verified_present": true
+    },
+    {
+      "q": "i eat the",
+      "a": "apple",
+      "verified_present": true
+    },
+    {
+      "q": "we go to",
+      "a": "bed",
+      "verified_present": true
+    },
+    {
+      "q": "i love you",
+      "a": "mom",
+      "verified_present": true
+    },
+    {
+      "q": "we eat bread and drink",
+      "a": "water",
+      "verified_present": true
+    },
+    {
+      "q": "the baby sleeps in the",
+      "a": "night",
+      "verified_present": true
+    },
+    {
+      "q": "the cat and the dog",
+      "a": "play",
+      "verified_present": true
+    },
+    {
+      "q": "i give you food and you give me a",
+      "a": "kiss",
+      "verified_present": true
+    }
+  ],
+  "unseen_cognition": [
+    {
+      "q": "what is two plus two? it is",
+      "a": "four",
+      "stratum": "S1_cruce",
+      "hash": 5237112885021933981
+    },
+    {
+      "q": "the baby loves the",
+      "a": "mom",
+      "stratum": "S1_cruce",
+      "hash": 4511347169518903727
+    },
+    {
+      "q": "the lion is in the",
+      "a": "water",
+      "stratum": "S1_cruce",
+      "hash": 10861179562503367774
+    },
+    {
+      "q": "the dad sees the",
+      "a": "cat",
+      "stratum": "S1_cruce",
+      "hash": 16901785418867535483
+    },
+    {
+      "q": "the cat sees the",
+      "a": "dog",
+      "stratum": "S1_cruce",
+      "hash": 660911435872319233
+    },
+    {
+      "q": "the dog reads a",
+      "a": "book",
+      "stratum": "S1_cruce",
+      "hash": 2724765049870849350
+    },
+    {
+      "q": "i see the",
+      "a": "dog",
+      "stratum": "S1_cruce",
+      "hash": 11458524516481860841
+    },
+    {
+      "q": "the bird sees the",
+      "a": "moon",
+      "stratum": "S1_cruce",
+      "hash": 13414832950816244723
+    },
+    {
+      "q": "the mouse eats",
+      "a": "apple",
+      "stratum": "S1_cruce",
+      "hash": 18341017382191108471
+    },
+    {
+      "q": "the dog wants",
+      "a": "water",
+      "stratum": "S1_cruce",
+      "hash": 108030250220553341
+    },
+    {
+      "q": "the mom sees the",
+      "a": "baby",
+      "stratum": "S1_cruce",
+      "hash": 7065223419861396020
+    },
+    {
+      "q": "the dog has",
+      "a": "hair",
+      "stratum": "S1_cruce",
+      "hash": 15537664307498954238
+    },
+    {
+      "q": "the dad loves the",
+      "a": "book",
+      "stratum": "S1_cruce",
+      "hash": 4517923247659025263
+    },
+    {
+      "q": "the horse sees the",
+      "a": "moon",
+      "stratum": "S1_cruce",
+      "hash": 6385123590903222727
+    },
+    {
+      "q": "what is three plus one? it is",
+      "a": "four",
+      "stratum": "S1_cruce",
+      "hash": 17018613084844482873
+    },
+    {
+      "q": "the dad drinks",
+      "a": "milk",
+      "stratum": "S1_cruce",
+      "hash": 10157335278864167637
+    },
+    {
+      "q": "the flowers are in the",
+      "a": "water",
+      "stratum": "S1_cruce",
+      "hash": 15432837799036923263
+    },
+    {
+      "q": "the bird loves the",
+      "a": "moon",
+      "stratum": "S1_cruce",
+      "hash": 2886769120207655275
+    },
+    {
+      "q": "the goat eats",
+      "a": "apple",
+      "stratum": "S1_cruce",
+      "hash": 12953425488300817099
+    },
+    {
+      "q": "the baby is",
+      "a": "big",
+      "stratum": "S1_cruce",
+      "hash": 18055871429272878132
+    },
+    {
+      "q": "the cow sees the",
+      "a": "moon",
+      "stratum": "S1_cruce",
+      "hash": 8267531380664283463
+    },
+    {
+      "q": "the bird swims in the",
+      "a": "water",
+      "stratum": "S1_cruce",
+      "hash": 15183076167607267705
+    },
+    {
+      "q": "i read the",
+      "a": "book",
+      "stratum": "S1_cruce",
+      "hash": 11783704587123298967
+    },
+    {
+      "q": "the baby sees the",
+      "a": "moon",
+      "stratum": "S1_cruce",
+      "hash": 4588528679710888437
+    },
+    {
+      "q": "the dog loves the",
+      "a": "ball",
+      "stratum": "S1_cruce",
+      "hash": 5893193528608909874
+    },
+    {
+      "q": "the baby drinks",
+      "a": "milk",
+      "stratum": "S1_cruce",
+      "hash": 8128450984034937134
+    },
+    {
+      "q": "the dad plays with the",
+      "a": "ball",
+      "stratum": "S1_cruce",
+      "hash": 3315956105847477029
+    },
+    {
+      "q": "the dog is in the",
+      "a": "water",
+      "stratum": "S1_cruce",
+      "hash": 5552718514648338621
+    },
+    {
+      "q": "the bird drinks",
+      "a": "water",
+      "stratum": "S1_cruce",
+      "hash": 17845431879582295272
+    },
+    {
+      "q": "the baby plays with the",
+      "a": "ball",
+      "stratum": "S1_cruce",
+      "hash": 11615736089750507954
+    },
+    {
+      "q": "the mom reads a",
+      "a": "book",
+      "stratum": "S1_cruce",
+      "hash": 15397967939219325710
+    },
+    {
+      "q": "the cow eats",
+      "a": "apple",
+      "stratum": "S1_cruce",
+      "hash": 10547517925400569463
+    },
+    {
+      "q": "the pig sees the",
+      "a": "moon",
+      "stratum": "S1_cruce",
+      "hash": 7398893366595535389
+    },
+    {
+      "q": "i love the",
+      "a": "dog",
+      "stratum": "S1_cruce",
+      "hash": 3732042738980253454
+    },
+    {
+      "q": "i count four five",
+      "a": "six",
+      "stratum": "S1_cruce",
+      "hash": 15860481132014363887
+    },
+    {
+      "q": "the duck eats",
+      "a": "apple",
+      "stratum": "S1_cruce",
+      "hash": 1147922125309231204
+    },
+    {
+      "q": "the baby reads a",
+      "a": "book",
+      "stratum": "S1_cruce",
+      "hash": 14167672510410737841
+    },
+    {
+      "q": "the lion eats",
+      "a": "honey",
+      "stratum": "S1_cruce",
+      "hash": 1120764003804113572
+    },
+    {
+      "q": "the water is",
+      "a": "cold",
+      "stratum": "S1_cruce",
+      "hash": 17361825794621668720
+    },
+    {
+      "q": "the horse eats",
+      "a": "apple",
+      "stratum": "S1_cruce",
+      "hash": 12395817550182197914
+    },
+    {
+      "q": "what does the baby drink",
+      "a": "milk",
+      "stratum": "S2_interrogativo",
+      "hash": 17822168064641615568
+    },
+    {
+      "q": "what does the dog eat",
+      "a": "apple",
+      "stratum": "S2_interrogativo",
+      "hash": 14545718115930190478
+    },
+    {
+      "q": "what flies",
+      "a": "bird",
+      "stratum": "S2_interrogativo",
+      "hash": 5179013968614590047
+    },
+    {
+      "q": "what is the snow",
+      "a": "cold",
+      "stratum": "S2_interrogativo",
+      "hash": 17853553114679000498
+    },
+    {
+      "q": "where does the bird live",
+      "a": "tree",
+      "stratum": "S2_interrogativo",
+      "hash": 158509670122612815
+    },
+    {
+      "q": "what swims",
+      "a": "fish",
+      "stratum": "S2_interrogativo",
+      "hash": 2446094819926568333
+    },
+    {
+      "q": "who wants milk",
+      "a": "baby",
+      "stratum": "S2_interrogativo",
+      "hash": 2250466654677415102
+    },
+    {
+      "q": "what does the cat drink",
+      "a": "milk",
+      "stratum": "S2_interrogativo",
+      "hash": 4729391959065580582
+    },
+    {
+      "q": "what is the fire",
+      "a": "hot",
+      "stratum": "S2_interrogativo",
+      "hash": 9921670947211509743
+    },
+    {
+      "q": "what is cold",
+      "a": "snow",
+      "stratum": "S2_interrogativo",
+      "hash": 11531526345222541137
+    },
+    {
+      "q": "what does the fish do",
+      "a": "swim",
+      "stratum": "S2_interrogativo",
+      "hash": 2063854727397459612
+    },
+    {
+      "q": "what barks",
+      "a": "dog",
+      "stratum": "S2_interrogativo",
+      "hash": 9293532266872572679
+    },
+    {
+      "q": "what is in the night",
+      "a": "moon",
+      "stratum": "S2_interrogativo",
+      "hash": 4178018663147710120
+    },
+    {
+      "q": "what does the baby want",
+      "a": "milk",
+      "stratum": "S2_interrogativo",
+      "hash": 17494678261747073014
+    },
+    {
+      "q": "what does the baby eat",
+      "a": "apple",
+      "stratum": "S2_interrogativo",
+      "hash": 16543059395747112539
+    },
+    {
+      "q": "what does the dog want",
+      "a": "water",
+      "stratum": "S2_interrogativo",
+      "hash": 13630918583430449526
+    },
+    {
+      "q": "what does the bear drink",
+      "a": "water",
+      "stratum": "S2_interrogativo",
+      "hash": 3657797356676225675
+    },
+    {
+      "q": "who plays the ball",
+      "a": "baby",
+      "stratum": "S2_interrogativo",
+      "hash": 7129470891475001121
+    },
+    {
+      "q": "what is the ball",
+      "a": "big",
+      "stratum": "S2_interrogativo",
+      "hash": 13157400031617760870
+    },
+    {
+      "q": "what drinks milk",
+      "a": "cat",
+      "stratum": "S2_interrogativo",
+      "hash": 12089318707075543325
+    },
+    {
+      "q": "what eats honey",
+      "a": "bear",
+      "stratum": "S2_interrogativo",
+      "hash": 3585462166235188994
+    },
+    {
+      "q": "who drinks water",
+      "a": "baby",
+      "stratum": "S2_interrogativo",
+      "hash": 1628561333443540566
+    },
+    {
+      "q": "what does the mom drink",
+      "a": "water",
+      "stratum": "S2_interrogativo",
+      "hash": 17295900926865694072
+    },
+    {
+      "q": "what sleeps at night",
+      "a": "baby",
+      "stratum": "S2_interrogativo",
+      "hash": 13318335297801367053
+    },
+    {
+      "q": "what gives food",
+      "a": "dad",
+      "stratum": "S2_interrogativo",
+      "hash": 10461612638886955606
+    },
+    {
+      "q": "what gives a kiss",
+      "a": "mom",
+      "stratum": "S2_interrogativo",
+      "hash": 4178575630731061374
+    },
+    {
+      "q": "what does the bear eat",
+      "a": "honey",
+      "stratum": "S2_interrogativo",
+      "hash": 8873755328593763724
+    },
+    {
+      "q": "what does the cat play",
+      "a": "ball",
+      "stratum": "S2_interrogativo",
+      "hash": 14292354645415970702
+    },
+    {
+      "q": "who reads a book",
+      "a": "baby",
+      "stratum": "S2_interrogativo",
+      "hash": 11450062730551024321
+    },
+    {
+      "q": "where is the fish",
+      "a": "water",
+      "stratum": "S2_interrogativo",
+      "hash": 10701229370413660937
+    },
+    {
+      "q": "what does the baby play",
+      "a": "ball",
+      "stratum": "S2_interrogativo",
+      "hash": 9502288243721093399
+    },
+    {
+      "q": "what does the bird do",
+      "a": "fly",
+      "stratum": "S2_interrogativo",
+      "hash": 16665015201535383835
+    },
+    {
+      "q": "who is my friend",
+      "a": "dog",
+      "stratum": "S2_interrogativo",
+      "hash": 6990071361172440510
+    },
+    {
+      "q": "what is hot",
+      "a": "fire",
+      "stratum": "S2_interrogativo",
+      "hash": 5395224211278327855
+    },
+    {
+      "q": "what runs",
+      "a": "dog",
+      "stratum": "S2_interrogativo",
+      "hash": 5982179619975033482
+    },
+    {
+      "q": "it drinks milk and says meow",
+      "a": "cat",
+      "stratum": "S3_inversion_riddle",
+      "hash": 2795262632902673784
+    },
+    {
+      "q": "it flies and says hoot",
+      "a": "owl",
+      "stratum": "S3_inversion_riddle",
+      "hash": 12166481377238743579
+    },
+    {
+      "q": "it sleeps all day",
+      "a": "cat",
+      "stratum": "S3_inversion_riddle",
+      "hash": 8160684981431498422
+    },
+    {
+      "q": "it has hair",
+      "a": "lion",
+      "stratum": "S3_inversion_riddle",
+      "hash": 11601505491789096625
+    },
+    {
+      "q": "it hunts at night",
+      "a": "owl",
+      "stratum": "S3_inversion_riddle",
+      "hash": 14594155859395482990
+    },
+    {
+      "q": "it runs and barks",
+      "a": "dog",
+      "stratum": "S3_inversion_riddle",
+      "hash": 3582993635021725750
+    },
+    {
+      "q": "it says oink",
+      "a": "pig",
+      "stratum": "S3_inversion_riddle",
+      "hash": 5402712029179879803
+    },
+    {
+      "q": "it sleeps in the house",
+      "a": "dog",
+      "stratum": "S3_inversion_riddle",
+      "hash": 18205371462493491262
+    },
+    {
+      "q": "it has wings",
+      "a": "bird",
+      "stratum": "S3_inversion_riddle",
+      "hash": 287013768352868515
+    },
+    {
+      "q": "it says hiss",
+      "a": "snake",
+      "stratum": "S3_inversion_riddle",
+      "hash": 8159889815084063569
+    },
+    {
+      "q": "it barks and plays",
+      "a": "dog",
+      "stratum": "S3_inversion_riddle",
+      "hash": 12158271406319713672
+    },
+    {
+      "q": "the baby of the mom",
+      "a": "baby",
+      "stratum": "S3_inversion_riddle",
+      "hash": 2281498168760603050
+    },
+    {
+      "q": "it climbs",
+      "a": "monkey",
+      "stratum": "S3_inversion_riddle",
+      "hash": 6804780332965075068
+    },
+    {
+      "q": "it says moo",
+      "a": "cow",
+      "stratum": "S3_inversion_riddle",
+      "hash": 7877273865036694685
+    },
+    {
+      "q": "it says meow",
+      "a": "cat",
+      "stratum": "S3_inversion_riddle",
+      "hash": 8859311743324360840
+    },
+    {
+      "q": "it says chatter",
+      "a": "monkey",
+      "stratum": "S3_inversion_riddle",
+      "hash": 12329511600516350365
+    },
+    {
+      "q": "it plays with the baby",
+      "a": "dog",
+      "stratum": "S3_inversion_riddle",
+      "hash": 15143681347871388084
+    },
+    {
+      "q": "it says bark",
+      "a": "dog",
+      "stratum": "S3_inversion_riddle",
+      "hash": 9166046851996233476
+    },
+    {
+      "q": "it says hoot",
+      "a": "owl",
+      "stratum": "S3_inversion_riddle",
+      "hash": 6013716368767986588
+    },
+    {
+      "q": "it eats apples",
+      "a": "horse",
+      "stratum": "S3_inversion_riddle",
+      "hash": 1203227974483763241
+    },
+    {
+      "q": "it says roar",
+      "a": "lion",
+      "stratum": "S3_inversion_riddle",
+      "hash": 4138455251621893190
+    },
+    {
+      "q": "it hides and runs",
+      "a": "mouse",
+      "stratum": "S3_inversion_riddle",
+      "hash": 2499971946541108717
+    },
+    {
+      "q": "it runs and meows",
+      "a": "cat",
+      "stratum": "S3_inversion_riddle",
+      "hash": 1447050936543866468
+    },
+    {
+      "q": "it lives in the water",
+      "a": "duck",
+      "stratum": "S3_inversion_riddle",
+      "hash": 494229994072134047
+    },
+    {
+      "q": "it gives food",
+      "a": "dad",
+      "stratum": "S3_inversion_riddle",
+      "hash": 4074031153489479779
+    },
+    {
+      "q": "it swims and says quack",
+      "a": "duck",
+      "stratum": "S3_inversion_riddle",
+      "hash": 17583803289009482539
+    },
+    {
+      "q": "it says quack",
+      "a": "duck",
+      "stratum": "S3_inversion_riddle",
+      "hash": 9264600107048732853
+    },
+    {
+      "q": "the friend of the baby",
+      "a": "dog",
+      "stratum": "S3_inversion_riddle",
+      "hash": 3002194314027549781
+    },
+    {
+      "q": "it says moo and drinks",
+      "a": "cow",
+      "stratum": "S3_inversion_riddle",
+      "hash": 13230367793755201882
+    },
+    {
+      "q": "it gives a kiss",
+      "a": "mom",
+      "stratum": "S3_inversion_riddle",
+      "hash": 4628330669751108131
+    },
+    {
+      "q": "it is big and grey",
+      "a": "elephant",
+      "stratum": "S3_inversion_riddle",
+      "hash": 7486809465103023200
+    },
+    {
+      "q": "it flies at night",
+      "a": "owl",
+      "stratum": "S3_inversion_riddle",
+      "hash": 10316267324497575673
+    },
+    {
+      "q": "it swims in the river",
+      "a": "fish",
+      "stratum": "S3_inversion_riddle",
+      "hash": 16822477036977186341
+    },
+    {
+      "q": "it flies and sings",
+      "a": "bird",
+      "stratum": "S3_inversion_riddle",
+      "hash": 4197863880923687037
+    },
+    {
+      "q": "it eats honey",
+      "a": "bear",
+      "stratum": "S3_inversion_riddle",
+      "hash": 12357431536851441657
+    },
+    {
+      "q": "it gives milk",
+      "a": "cow",
+      "stratum": "S3_inversion_riddle",
+      "hash": 6971094765117685759
+    },
+    {
+      "q": "it howls",
+      "a": "wolf",
+      "stratum": "S3_inversion_riddle",
+      "hash": 1013741018695461519
+    },
+    {
+      "q": "what is five plus one? it is",
+      "a": "six",
+      "stratum": "S4_aritmetica",
+      "hash": 9325360347029092265
+    },
+    {
+      "q": "what is nine minus four? it is",
+      "a": "five",
+      "stratum": "S4_aritmetica",
+      "hash": 13668691989649407970
+    },
+    {
+      "q": "i count five six",
+      "a": "seven",
+      "stratum": "S4_aritmetica",
+      "hash": 17651513664715222527
+    },
+    {
+      "q": "one plus two is",
+      "a": "three",
+      "stratum": "S4_aritmetica",
+      "hash": 9901407321145593967
+    },
+    {
+      "q": "what is eight minus three? it is",
+      "a": "five",
+      "stratum": "S4_aritmetica",
+      "hash": 12745056759549402707
+    },
+    {
+      "q": "what is nine minus five? it is",
+      "a": "four",
+      "stratum": "S4_aritmetica",
+      "hash": 7501716697662167273
+    },
+    {
+      "q": "two and two are",
+      "a": "four",
+      "stratum": "S4_aritmetica",
+      "hash": 16943259382697212825
+    },
+    {
+      "q": "what is one plus three? it is",
+      "a": "four",
+      "stratum": "S4_aritmetica",
+      "hash": 14242388579601097236
+    },
+    {
+      "q": "two plus one is",
+      "a": "three",
+      "stratum": "S4_aritmetica",
+      "hash": 17869356727522788390
+    },
+    {
+      "q": "what is six minus three? it is",
+      "a": "three",
+      "stratum": "S4_aritmetica",
+      "hash": 17358824574452579189
+    },
+    {
+      "q": "i count three and then four",
+      "a": "five",
+      "stratum": "S4_aritmetica",
+      "hash": 4860888871521745826
+    },
+    {
+      "q": "what is seven minus two? it is",
+      "a": "five",
+      "stratum": "S4_aritmetica",
+      "hash": 2898464399078380075
+    },
+    {
+      "q": "what is five minus one? it is",
+      "a": "four",
+      "stratum": "S4_aritmetica",
+      "hash": 8989995717529788851
+    },
+    {
+      "q": "i have two apples and i eat one i have",
+      "a": "one",
+      "stratum": "S4_aritmetica",
+      "hash": 5497182233433794085
+    },
+    {
+      "q": "what is four plus one? it is",
+      "a": "five",
+      "stratum": "S4_aritmetica",
+      "hash": 9898174863832725698
+    },
+    {
+      "q": "i count one two three",
+      "a": "four",
+      "stratum": "S4_aritmetica",
+      "hash": 12274609102294977946
+    },
+    {
+      "q": "what is two plus three? it is",
+      "a": "five",
+      "stratum": "S4_aritmetica",
+      "hash": 10807968565597997198
+    },
+    {
+      "q": "three and one are",
+      "a": "four",
+      "stratum": "S4_aritmetica",
+      "hash": 14315488086423496618
+    },
+    {
+      "q": "four plus two is",
+      "a": "six",
+      "stratum": "S4_aritmetica",
+      "hash": 11928888681507584907
+    },
+    {
+      "q": "what is two plus one? it is",
+      "a": "three",
+      "stratum": "S4_aritmetica",
+      "hash": 15513087299291632890
+    },
+    {
+      "q": "what is four minus one? it is",
+      "a": "three",
+      "stratum": "S4_aritmetica",
+      "hash": 18007303614462575347
+    },
+    {
+      "q": "three plus two is",
+      "a": "five",
+      "stratum": "S4_aritmetica",
+      "hash": 9821083764363062350
+    },
+    {
+      "q": "what is seven minus three? it is",
+      "a": "four",
+      "stratum": "S4_aritmetica",
+      "hash": 4270713961575589054
+    },
+    {
+      "q": "what is three plus two? it is",
+      "a": "five",
+      "stratum": "S4_aritmetica",
+      "hash": 13803794270015655700
+    },
+    {
+      "q": "two and one are",
+      "a": "three",
+      "stratum": "S4_aritmetica",
+      "hash": 14664916896441301265
+    },
+    {
+      "q": "one and two are",
+      "a": "three",
+      "stratum": "S4_aritmetica",
+      "hash": 4600543040002584176
+    },
+    {
+      "q": "what is six minus two? it is",
+      "a": "four",
+      "stratum": "S4_aritmetica",
+      "hash": 690159645741687571
+    },
+    {
+      "q": "three plus three is",
+      "a": "six",
+      "stratum": "S4_aritmetica",
+      "hash": 11603058493028463870
+    },
+    {
+      "q": "the rain is in the",
+      "a": "night",
+      "stratum": "S5_predicado_nuevo",
+      "hash": 14354680934201462367
+    },
+    {
+      "q": "the baby plays in the",
+      "a": "house",
+      "stratum": "S5_predicado_nuevo",
+      "hash": 9515271902676348449
+    },
+    {
+      "q": "the bear is in the",
+      "a": "forest",
+      "stratum": "S5_predicado_nuevo",
+      "hash": 11460783290490441872
+    },
+    {
+      "q": "the food is in the",
+      "a": "cup",
+      "stratum": "S5_predicado_nuevo",
+      "hash": 11598609849057117862
+    },
+    {
+      "q": "the bird is in the",
+      "a": "forest",
+      "stratum": "S5_predicado_nuevo",
+      "hash": 12031929967605069419
+    },
+    {
+      "q": "the book is for the",
+      "a": "baby",
+      "stratum": "S5_predicado_nuevo",
+      "hash": 3864491386475565566
+    },
+    {
+      "q": "the sun is in the",
+      "a": "day",
+      "stratum": "S5_predicado_nuevo",
+      "hash": 15668284359399601291
+    },
+    {
+      "q": "the fish is in the",
+      "a": "river",
+      "stratum": "S5_predicado_nuevo",
+      "hash": 449368038231272382
+    },
+    {
+      "q": "the ball is in the",
+      "a": "house",
+      "stratum": "S5_predicado_nuevo",
+      "hash": 13834555906580225235
+    },
+    {
+      "q": "the water is in the",
+      "a": "river",
+      "stratum": "S5_predicado_nuevo",
+      "hash": 16968963289951495079
+    },
+    {
+      "q": "the cat walks on the",
+      "a": "road",
+      "stratum": "S5_predicado_nuevo",
+      "hash": 14818415469876092293
+    },
+    {
+      "q": "the dog plays with the",
+      "a": "cat",
+      "stratum": "S5_predicado_nuevo",
+      "hash": 4129567870240875055
+    },
+    {
+      "q": "the book is on the",
+      "a": "table",
+      "stratum": "S5_predicado_nuevo",
+      "hash": 16258218000579356866
+    },
+    {
+      "q": "the baby sleeps in the",
+      "a": "house",
+      "stratum": "S5_predicado_nuevo",
+      "hash": 14796797173254579088
+    },
+    {
+      "q": "the food is on the",
+      "a": "table",
+      "stratum": "S5_predicado_nuevo",
+      "hash": 1085431894823032657
+    },
+    {
+      "q": "the milk is in the",
+      "a": "cup",
+      "stratum": "S5_predicado_nuevo",
+      "hash": 12609944392269366446
+    },
+    {
+      "q": "the baby drinks from the",
+      "a": "cup",
+      "stratum": "S5_predicado_nuevo",
+      "hash": 2741308215452294789
+    },
+    {
+      "q": "the ball is for the",
+      "a": "dog",
+      "stratum": "S5_predicado_nuevo",
+      "hash": 15237233779395517734
+    },
+    {
+      "q": "the bird plays with the",
+      "a": "bird",
+      "stratum": "S5_predicado_nuevo",
+      "hash": 11992677791647857439
+    },
+    {
+      "q": "the baby is in the",
+      "a": "bed",
+      "stratum": "S5_predicado_nuevo",
+      "hash": 4679112707339736418
+    },
+    {
+      "q": "the bird sings in the",
+      "a": "forest",
+      "stratum": "S5_predicado_nuevo",
+      "hash": 13203559900895945240
+    },
+    {
+      "q": "the apple is for the",
+      "a": "baby",
+      "stratum": "S5_predicado_nuevo",
+      "hash": 12274661271543686961
+    },
+    {
+      "q": "the cat is in the",
+      "a": "bed",
+      "stratum": "S5_predicado_nuevo",
+      "hash": 8786870553033351639
+    },
+    {
+      "q": "the moon is in the",
+      "a": "night",
+      "stratum": "S5_predicado_nuevo",
+      "hash": 17227581576403072574
+    },
+    {
+      "q": "the dog sleeps in the",
+      "a": "house",
+      "stratum": "S5_predicado_nuevo",
+      "hash": 714288144537748083
+    },
+    {
+      "q": "the baby sleeps with the",
+      "a": "mom",
+      "stratum": "S5_predicado_nuevo",
+      "hash": 9121524368349771525
+    },
+    {
+      "q": "the milk is for the",
+      "a": "baby",
+      "stratum": "S5_predicado_nuevo",
+      "hash": 14694207491107785867
+    },
+    {
+      "q": "the dog eats in the",
+      "a": "house",
+      "stratum": "S5_predicado_nuevo",
+      "hash": 12593507867969547207
+    },
+    {
+      "q": "the dog is at the",
+      "a": "door",
+      "stratum": "S5_predicado_nuevo",
+      "hash": 16807984861032120430
+    }
+  ],
+  "rejected_seen": [
+    [
+      "if i touch the fire",
+      "hurt",
+      "pregunta duplicada con otra respuesta"
+    ],
+    [
+      "i want",
+      "milk",
+      "pregunta duplicada con otra respuesta"
+    ],
+    [
+      "the cat drinks",
+      "milk",
+      "duplicado exacto"
+    ],
+    [
+      "the sun is",
+      "hot",
+      "duplicado exacto"
+    ],
+    [
+      "the baby wants",
+      "mom",
+      "pregunta duplicada con otra respuesta"
+    ],
+    [
+      "i want to",
+      "play",
+      "no verificada presente en el universo entrenado"
+    ],
+    [
+      "come here and",
+      "play",
+      "no verificada presente en el universo entrenado"
+    ]
+  ],
+  "rejected_unseen": [
+    [
+      "S1_cruce",
+      "two plus three is",
+      "five",
+      "¡existe en el entrenamiento!"
+    ],
+    [
+      "S1_cruce",
+      "the mom eats the",
+      "apple",
+      "¡existe en el entrenamiento!"
+    ],
+    [
+      "S1_cruce",
+      "the dad drinks",
+      "water",
+      "¡existe en el entrenamiento!"
+    ],
+    [
+      "S1_cruce",
+      "the horse plays",
+      "ball",
+      "¡existe en el entrenamiento!"
+    ],
+    [
+      "S1_cruce",
+      "the duck drinks",
+      "water",
+      "¡existe en el entrenamiento!"
+    ],
+    [
+      "S1_cruce",
+      "the dog sees the",
+      "cat",
+      "¡existe en el entrenamiento!"
+    ],
+    [
+      "S1_cruce",
+      "two plus two is",
+      "four",
+      "¡existe en el entrenamiento!"
+    ],
+    [
+      "S1_cruce",
+      "the fire is",
+      "hot",
+      "¡existe en el entrenamiento!"
+    ],
+    [
+      "S1_cruce",
+      "i see the",
+      "baby",
+      "pregunta duplicada"
+    ],
+    [
+      "S1_cruce",
+      "the fish is in the",
+      "water",
+      "¡existe en el entrenamiento!"
+    ],
+    [
+      "S1_cruce",
+      "the mom drinks",
+      "water",
+      "¡existe en el entrenamiento!"
+    ],
+    [
+      "S1_cruce",
+      "what is eight minus two? it is",
+      "six",
+      "¡existe en el entrenamiento!"
+    ],
+    [
+      "S1_cruce",
+      "the baby loves the",
+      "ball",
+      "pregunta duplicada"
+    ],
+    [
+      "S1_cruce",
+      "the mouse plays",
+      "ball",
+      "¡existe en el entrenamiento!"
+    ],
+    [
+      "S1_cruce",
+      "the baby eats the",
+      "apple",
+      "¡existe en el entrenamiento!"
+    ],
+    [
+      "S1_cruce",
+      "the cow drinks",
+      "water",
+      "¡existe en el entrenamiento!"
+    ],
+    [
+      "S1_cruce",
+      "the baby drinks",
+      "water",
+      "¡existe en el entrenamiento!"
+    ],
+    [
+      "S1_cruce",
+      "three plus one is",
+      "four",
+      "¡existe en el entrenamiento!"
+    ],
+    [
+      "S1_cruce",
+      "the cow sleeps at",
+      "night",
+      "¡existe en el entrenamiento!"
+    ],
+    [
+      "S1_cruce",
+      "the horse drinks",
+      "water",
+      "¡existe en el entrenamiento!"
+    ],
+    [
+      "S1_cruce",
+      "the mom sees the",
+      "bird",
+      "pregunta duplicada"
+    ],
+    [
+      "S1_cruce",
+      "i count two three",
+      "four",
+      "¡existe en el entrenamiento!"
+    ],
+    [
+      "S1_cruce",
+      "i sleep at",
+      "night",
+      "¡existe en el entrenamiento!"
+    ],
+    [
+      "S1_cruce",
+      "the cat plays with the",
+      "ball",
+      "¡existe en el entrenamiento!"
+    ],
+    [
+      "S1_cruce",
+      "the goat drinks",
+      "water",
+      "¡existe en el entrenamiento!"
+    ],
+    [
+      "S1_cruce",
+      "five plus one is",
+      "six",
+      "¡existe en el entrenamiento!"
+    ],
+    [
+      "S1_cruce",
+      "the baby sleeps at",
+      "night",
+      "¡existe en el entrenamiento!"
+    ],
+    [
+      "S1_cruce",
+      "the moon shines at",
+      "night",
+      "¡existe en el entrenamiento!"
+    ],
+    [
+      "S1_cruce",
+      "the bird eats the",
+      "apple",
+      "¡existe en el entrenamiento!"
+    ],
+    [
+      "S1_cruce",
+      "i count three four",
+      "five",
+      "¡existe en el entrenamiento!"
+    ],
+    [
+      "S1_cruce",
+      "the baby sees the",
+      "dog",
+      "pregunta duplicada"
+    ],
+    [
+      "S1_cruce",
+      "the dad eats the",
+      "apple",
+      "¡existe en el entrenamiento!"
+    ],
+    [
+      "S1_cruce",
+      "what is six minus one? it is",
+      "five",
+      "¡existe en el entrenamiento!"
+    ],
+    [
+      "S1_cruce",
+      "the goat plays",
+      "ball",
+      "¡existe en el entrenamiento!"
+    ],
+    [
+      "S1_cruce",
+      "we sleep at",
+      "night",
+      "¡existe en el entrenamiento!"
+    ],
+    [
+      "S1_cruce",
+      "the mouse drinks",
+      "water",
+      "¡existe en el entrenamiento!"
+    ],
+    [
+      "S1_cruce",
+      "the baby loves the",
+      "dog",
+      "pregunta duplicada"
+    ],
+    [
+      "S1_cruce",
+      "the bear drinks",
+      "water",
+      "¡existe en el entrenamiento!"
+    ],
+    [
+      "S1_cruce",
+      "i see the",
+      "fire",
+      "pregunta duplicada"
+    ],
+    [
+      "S1_cruce",
+      "the lion drinks",
+      "water",
+      "¡existe en el entrenamiento!"
+    ],
+    [
+      "S1_cruce",
+      "the dog drinks",
+      "water",
+      "¡existe en el entrenamiento!"
+    ],
+    [
+      "S2_interrogativo",
+      "what does the duck say",
+      "quack",
+      "¡existe en el entrenamiento!"
+    ],
+    [
+      "S2_interrogativo",
+      "what does the owl say",
+      "hoot",
+      "respuesta fuera del gate de la etapa"
+    ],
+    [
+      "S2_interrogativo",
+      "what does the dog say",
+      "bark",
+      "¡existe en el entrenamiento!"
+    ],
+    [
+      "S2_interrogativo",
+      "what does the cat say",
+      "meow",
+      "¡existe en el entrenamiento!"
+    ],
+    [
+      "S2_interrogativo",
+      "what does the cow say",
+      "moo",
+      "¡existe en el entrenamiento!"
+    ],
+    [
+      "S4_aritmetica",
+      "four plus one is",
+      "five",
+      "¡existe en el entrenamiento!"
+    ],
+    [
+      "S4_aritmetica",
+      "i count three four",
+      "five",
+      "¡existe en el entrenamiento!"
+    ],
+    [
+      "S4_aritmetica",
+      "three plus one is",
+      "four",
+      "¡existe en el entrenamiento!"
+    ],
+    [
+      "S4_aritmetica",
+      "what is six minus one? it is",
+      "five",
+      "¡existe en el entrenamiento!"
+    ],
+    [
+      "S4_aritmetica",
+      "what is eight minus two? it is",
+      "six",
+      "¡existe en el entrenamiento!"
+    ],
+    [
+      "S4_aritmetica",
+      "what is three plus one? it is",
+      "four",
+      "pregunta duplicada"
+    ],
+    [
+      "S4_aritmetica",
+      "two plus three is",
+      "five",
+      "¡existe en el entrenamiento!"
+    ],
+    [
+      "S4_aritmetica",
+      "what is two plus two? it is",
+      "four",
+      "pregunta duplicada"
+    ],
+    [
+      "S4_aritmetica",
+      "i count two three",
+      "four",
+      "¡existe en el entrenamiento!"
+    ],
+    [
+      "S4_aritmetica",
+      "i count four five",
+      "six",
+      "pregunta duplicada"
+    ],
+    [
+      "S4_aritmetica",
+      "five plus one is",
+      "six",
+      "¡existe en el entrenamiento!"
+    ],
+    [
+      "S4_aritmetica",
+      "two plus two is",
+      "four",
+      "¡existe en el entrenamiento!"
+    ],
+    [
+      "S5_predicado_nuevo",
+      "the dog is in the",
+      "road",
+      "pregunta duplicada"
+    ],
+    [
+      "S5_predicado_nuevo",
+      "the bird is in the",
+      "forest",
+      "pregunta duplicada"
+    ],
+    [
+      "S5_predicado_nuevo",
+      "the mom is in the",
+      "house",
+      "¡existe en el entrenamiento!"
+    ],
+    [
+      "S5_predicado_nuevo",
+      "the dad is in the",
+      "house",
+      "¡existe en el entrenamiento!"
+    ],
+    [
+      "S5_predicado_nuevo",
+      "the baby plays with the",
+      "dad",
+      "pregunta duplicada"
+    ],
+    [
+      "S5_predicado_nuevo",
+      "the cat is on the",
+      "table",
+      "¡existe en el entrenamiento!"
+    ],
+    [
+      "S5_predicado_nuevo",
+      "the water is in the",
+      "cup",
+      "pregunta duplicada"
+    ],
+    [
+      "S5_predicado_nuevo",
+      "the cat is in the",
+      "house",
+      "¡existe en el entrenamiento!"
+    ],
+    [
+      "S5_predicado_nuevo",
+      "the horse drinks from the",
+      "river",
+      "¡existe en el entrenamiento!"
+    ],
+    [
+      "S5_predicado_nuevo",
+      "the dog drinks from the",
+      "river",
+      "¡existe en el entrenamiento!"
+    ],
+    [
+      "S5_predicado_nuevo",
+      "the bear drinks from the",
+      "river",
+      "¡existe en el entrenamiento!"
+    ]
+  ],
+  "meta": {
+    "seen_total": 51,
+    "seen_verified_present": 51,
+    "unseen_total": 169,
+    "store_seqs_hashed": 24661660
+  }
+}
