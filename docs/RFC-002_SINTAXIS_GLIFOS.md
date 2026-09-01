@@ -239,10 +239,14 @@ corchetes rotos) con tarea de reparar o rechazar (`<unk>` estructural).
 ## ADDENDUM (31-ago-2026) — Auditoría de la proyección Ridge: sin estructura semántica
 
 **Motivación**: en la confrontación BIT-003 v4 (×1, protocolo honesto), el brazo
-glyph perdió contra el brazo estándar en los tres instrumentos (retención 19.2
-vs 25.6%, gate 43.1 vs 50.0%, cognición 1.5 vs 5.6%) — y necesitaba neurogénesis
-(128→256) para superar el gate de 2 años que el estándar superó a 128. Hipótesis
-del operador: la generación de glifos no respeta la composicionalidad NSM.
+glyph quedó por debajo del estándar en el hito homólogo de 2 años (números
+re-medidos el 09-01 con el runner auditado: retención 19.2 vs 25.6%, gate 44.6
+vs 51.8%, cognición 1.6 vs 5.8% — esta última dentro del ruido, n=189). *Nota de
+la auditoría (09-01)*: la neurogénesis 128→256 del glyph la disparó un crash de
+infraestructura del examen, no una calificación (CHANGELOG 09-01) — "necesitó
+crecer donde el estándar no" queda SIN demostrar (receta `bit003_glyph_v41_2y_x1`
+para re-responderlo). Hipótesis del operador: la generación de glifos no respeta
+la composicionalidad NSM.
 
 **Auditoría cuantitativa** (scripts inline, 31-ago):
 

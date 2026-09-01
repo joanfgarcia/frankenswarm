@@ -4,8 +4,10 @@
 #
 # Protocolo v3 (DL-011) con exam_repeat_factor=1: SIN drilling de examen.
 # Hipótesis del operador (31-ago): con ×300/×10 el gate de hito se pasa por
-# memorización (batería 80/50: vistas 70.7% vs no vistas 12%). Con ×1, si
-# 128d no basta, el examen suspenderá → neurogénesis → la escalera se ejercita.
+# memorización (batería congelada, re-medida 09-01: vistas 69.6% vs no vistas
+# 1.6% en el v3 ×10 — el "12%" citado aquí antes era del set piloto de 50,
+# no reproducible). Con ×1, si 128d no basta, el examen suspenderá →
+# neurogénesis → la escalera se ejercita.
 # Completa al superar el hito de 4 años (no corre hasta 8).
 
 source: script_job

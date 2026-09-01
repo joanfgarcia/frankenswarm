@@ -7,6 +7,48 @@ se añade una entrada nueva que la referencia.
 
 ---
 
+## DL-015 · 2026-09-01 — Auditoría de la confrontación v4: infra ≠ suspenso, instrumento corregido y set v2
+
+**Problema.** La auditoría del 1-sep destapó que las dos afirmaciones fuertes
+de la confrontación estaban contaminadas: (a) el suspenso de 2_years del glyph
+a 128d fue un crash de infraestructura (Samantha devolvió `None`; el `exit(1)`
+genérico se contó como suspenso académico) → la neurogénesis 128→256 se
+disparó sin examen real y el checkpoint 128d no sobrevivió; (b) la "curva
+riesgo-cobertura" era un artefacto (la confianza nunca se calculaba; el sort
+estable ordenaba vistas→no vistas). Además: `<unk>` por puntuación en 23/195
+no-vistas de la batería, duplicados en el set congelado, el check in-gate de
+los banks muerto, y 28/195 "no vistas" colisionando con los banks DL-013.
+
+**Decisión (operador, 1-sep: "necesito que todo esté correcto").**
+1. **Contrato de exit-codes** evaluador↔state_manager: `0` aprobado · `2`
+   suspenso CALIFICADO · otro rc = infraestructura → reintento único y pausa
+   del operador (`eval_infra_error`) sin contar suspenso ni neurogénesis.
+   El trainer pausa (rc 78) en vez de remediar. Tests en
+   `tests/test_exam_failure_policy.py` (8/8).
+2. **Runner de batería corregido y re-tirado** sobre los 6 checkpoints:
+   confianza real (softmax post-máscara), `tokenize()` en el contexto, dedupe,
+   retención + procedencia persistidas, máscara del checkpoint evaluado.
+   Números canónicos: los del CHANGELOG 09-01 (sección corregida en sitio).
+3. **Set congelado v2** (`age4_v2.json`, 51/169): banks en el universo
+   entrenado, sin duplicados, sin golds incorrectos. v1 sigue rigiendo la
+   confrontación v4 en curso; v2 rige desde que los banks se cableen.
+4. **Banks regenerados** con el check in-gate vivo (442→439).
+5. **Re-examen del hueco**: receta `bit003_glyph_v41_2y_x1` (etapas 0-2,
+   mismo protocolo/semilla que v4) para responder con examen real si el
+   glyph pasa 2_years a 128d bajo ×1. Lanzamiento: decisión del operador
+   (GPU ocupada por el standard v4).
+
+**Doctrina nueva**: un fallo de infraestructura JAMÁS es una calificación; y
+todo instrumento que se cite en prosa debe existir como artefacto persistido
+y reproducible (la retención "30.8%" y el "12%" del set piloto solo vivían
+en prosa — el 12% resultó no reproducible).
+
+**Referencias.** CHANGELOG 09-01 (dos retractaciones) · `run_battery_v3.py` ·
+`state_manager.py` · `evaluate_samantha_age.py` · `generate_battery_v3.py` ·
+`generate_exam_banks.py` · log `dd078baf` 530-538 (el crash fundacional).
+
+---
+
 ## DL-014 · 2026-09-01 — Doctrina "todo glifo descompone": el programa de descomposición NSM y el diccionario K-65P↔humano
 
 **Problema.** La auditoría del DL-012-addendum (RFC-002) demostró que los
