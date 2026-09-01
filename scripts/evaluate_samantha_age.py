@@ -3,6 +3,7 @@ import json
 import os
 import re
 import subprocess
+import sys
 
 import numpy as np
 import torch
@@ -448,7 +449,7 @@ def run_evaluation(args):
 			print(f"  🏦 [BANK-EXAM] forma {form} (seed {1000 + form}): {hits}/{len(sampled)} = {score:.1f}/10")
 		mean_s = float(np.mean(form_scores)); std_s = float(np.std(form_scores))
 		hito = mean_s >= 8.0
-		print(f"\n══ BANK-EXAM edad {args.age}: media {mean_s:.2f} ± {std_s:.2f} sobre 10 formas → {'✅ APROBADO' if hito else '❌ SUSPENDIDO'}")
+		print(f"\n══ BANK-EXAM (etapa {args.exam_banks_stage}): media {mean_s:.2f} ± {std_s:.2f} sobre 10 formas → {'✅ APROBADO' if hito else '❌ SUSPENDIDO'}")
 		out_path = os.path.join(base_dir, "storage", "checkpoints", "bank_exam_results.json")
 		json.dump({"stage": args.exam_banks_stage, "mean": mean_s, "std": std_s, "passed": hito,
 			"rows": all_rows}, open(out_path, "w", encoding="utf-8"), indent=1, ensure_ascii=False)
@@ -686,6 +687,7 @@ if __name__ == "__main__":
 	parser.add_argument("--target_age", type=int, required=True, choices=[2, 3, 4, 5, 6, 7, 8], help="Edad objetivo a evaluar")
 	parser.add_argument("--device", type=str, default="cpu", help="Dispositivo para correr el modelo (default: cpu)")
 	parser.add_argument("--test_mock", action="store_true", help="Simular respuestas de Samantha de forma mock")
+	parser.add_argument("--exam_banks_stage", type=int, default=None, help="DL-013: examen muestreado del BANK acumulado (10 formas, media±σ, exact-match)")
 	parser.add_argument("--stage_masks", type=str, default=None, help="JSON de máscaras de gateo por etapa persistido por el trainer (stage_gate_masks.json)")
 	parser.add_argument("--stage_idx", type=int, default=None, help="Índice de etapa (0-7) cuya máscara de gateo usar")
 	parser.add_argument("--resonance_steps_max", type=int, default=0, help="Brazo resonante (DL-010): >0 instancia resonance_clock y usa forward_resonance en inferencia")
