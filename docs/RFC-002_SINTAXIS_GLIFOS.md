@@ -233,3 +233,38 @@ corchetes rotos) con tarea de reparar o rechazar (`<unk>` estructural).
   (`samantha_story_factory.py` emite `(ES, K-65P)`) → mini Bit-NSM → comparación.
 - Encaje futuro: K-65P como interlingua inter-agente del Jungle Reboot (Nico,
   Sofy, Hugo) — el hermano simbólico de Tensors-as-API.
+
+---
+
+## ADDENDUM (31-ago-2026) — Auditoría de la proyección Ridge: sin estructura semántica
+
+**Motivación**: en la confrontación BIT-003 v4 (×1, protocolo honesto), el brazo
+glyph perdió contra el brazo estándar en los tres instrumentos (retención 19.2
+vs 25.6%, gate 43.1 vs 50.0%, cognición 1.5 vs 5.6%) — y necesitaba neurogénesis
+(128→256) para superar el gate de 2 años que el estándar superó a 128. Hipótesis
+del operador: la generación de glifos no respeta la composicionalidad NSM.
+
+**Auditoría cuantitativa** (scripts inline, 31-ago):
+
+1. **El pipeline NO descompone NSM por palabra**: los ~19,600 glifos no-canónicos
+   son una **Ridge entrenada con 26 muestras** (los anclas canónicos) que interpola
+   fastembed → mezcla ponderada de los 26 glifos ancla, ternarizada. El glifo de
+   cualquier palabra es una mezcla de 26 conceptos, no un análisis de primos.
+2. **Sin estructura de categorías**: similitud de glifos intra-grupo vs aleatorio
+   (0.408): animales 0.502, objetos 0.418, agua 0.431, acciones **0.290 (BAJO el
+   azar)**. El espacio de glifos no agrupa semánticamente mejor que el azar.
+3. **Las mezclas son temáticas pero débiles**: bear → cueva/bosque/depredador;
+   river → río/agua/tormenta — coherencia aproximada, sin la estructura de primos
+   que la hipótesis NSM requiere.
+
+**Conclusión**: la proyección estadística de un idioma a glifos NO preserva la
+composicionalidad — el resultado adverso del brazo glyph era el esperado para
+esta implementación, no para la hipótesis K-65P. La hipótesis K-65P vive en la
+**sintaxis** (árboles NSM-C donde la composicionalidad es simbólica), y su test
+requiere el compilador EN→K-65P (fundación construida: `en_lexicon.py`,
+`nsm_syntax_en.py`). Los glifos de palabras fuera de los anclas requieren
+descomposición NSM simbólica o el canal dim66 (DL-012) para convenciones.
+
+**No se tira**: la comparación completa inglés-glyph vs inglés-standard queda
+como resultado documentado de que el atajo estadístico falla — con el pipeline
+de medición (batería congelada + 3 instrumentos) como el activo metodológico.
