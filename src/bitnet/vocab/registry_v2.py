@@ -71,11 +71,39 @@ class VocabularyV2:
 	def _molecule_fps(self) -> dict:
 		return {tuple(m["glyph"]): name for name, m in self.molecules.items()}
 
-	def register(self, surface: str, idea: str, clauses: list[str], anchor_primes: list[str] | None = None, notes: str = "") -> dict:
-		fps = self._fingerprint_of(surface, clauses, anchor_primes or [])
-		self.check_injectivity(fps)
+	def _glyph_of_name(self, name: str) -> np.ndarray:
+		"""Glifo de un primo (identidad) o de una molécula del registro."""
+		from src.bitnet.vocab.structured_explication import _normalize_prime, PRIME_IDX
+		if name in self.molecules:
+			return np.array(self.molecules[name]["glyph"], dtype=np.int8)
+		p = _normalize_prime(name)
+		if p in PRIME_IDX:
+			g = np.zeros(65, dtype=np.int8)
+			g[PRIME_IDX[p]] = 1
+			return g
+		raise ValueError(f"'{name}' no es ni primo ni molécula registrada")
 
-		exp = StructuredExplication(surface, clauses, anchor_primes=anchor_primes or [])
+	def _molecule_glyphs(self) -> dict[str, list[int]]:
+		"""LA MALLA: todos los glifos registrados, disponibles para la proyección."""
+		return {name: m["glyph"] for name, m in self.molecules.items()}
+
+	@staticmethod
+	def _F(head_g: np.ndarray, mod_g: np.ndarray) -> np.ndarray:
+		"""F v1 (candidata, pendiente de calibrar): unión con CABEZA DOMINANTE.
+		No conmutativa en conflictos: donde cabeza y modificador discrepan de
+		signo, gana la cabeza (la categoría define; el modificador matiza)."""
+		out = head_g.copy()
+		mask = head_g == 0
+		out[mask] = mod_g[mask]
+		return out
+
+	def register(self, surface: str, idea: str, clauses: list[str], anchor_primes: list[str] | None = None, notes: str = "") -> dict:
+		exp = StructuredExplication(surface, clauses, anchor_primes=anchor_primes or [],
+			molecule_glyphs=self._molecule_glyphs())
+		if exp.errors:
+			raise ValueError(f"cláusulas inválidas: {exp.errors}")
+		fps = tuple(int(x) for x in exp.to_glyph())
+		self.check_injectivity(fps)
 		entry = {
 			"surface": surface,
 			"idea": idea,  # LA FUENTE: lo que la molécula debe transmitir (DL-016)
@@ -84,6 +112,38 @@ class VocabularyV2:
 			"glyph": list(fps),
 			"role_profile": exp.role_profile(),
 			"kind": exp.kind_candidate(),
+			"notes": notes,
+		}
+		self.molecules[surface] = entry
+		self._save()
+		return entry
+
+	def register_compound(self, surface: str, head: str, own_clauses: list[str], idea: str, notes: str = "") -> dict:
+		"""DL-018: molécula COMPUESTA — [cabeza modificador] = "un tipo de cabeza".
+
+		Wierzbicka inversa: "es una clase de {head}; {own_clauses}". El glifo =
+		F(glifo_cabeza, proyección de las cláusulas propias) — la cabeza aporta
+		su huella entera (la categoría se hereda), las cláusulas aportan lo nuevo.
+		Ley de conservación: los trits de la compuesta deben poder descomponerse
+		en cabeza + cláusulas propias (*todo glifo descompone*, DL-014).
+		"""
+		head_g = self._glyph_of_name(head)
+		exp = StructuredExplication(surface, own_clauses, anchor_primes=[],
+			molecule_glyphs=self._molecule_glyphs())
+		if exp.errors:
+			raise ValueError(f"cláusulas propias inválidas: {exp.errors}")
+		mod_g = exp.to_glyph()  # lo NUEVO que aporta la compuesta
+		fps = tuple(int(x) for x in self._F(head_g, mod_g))
+		self.check_injectivity(fps)
+		entry = {
+			"surface": surface,
+			"idea": idea,
+			"compound": {"head": head, "own_clauses": own_clauses},
+			"clauses": own_clauses,
+			"anchor_primes": [],
+			"glyph": list(fps),
+			"role_profile": exp.role_profile(),
+			"kind": "compound",
 			"notes": notes,
 		}
 		self.molecules[surface] = entry

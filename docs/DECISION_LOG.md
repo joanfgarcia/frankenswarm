@@ -7,6 +7,37 @@ se añade una entrada nueva que la referencia.
 
 ---
 
+## DL-018 · 2026-09-02 — El mecanismo de compuestas: gramática unaria, la malla recursiva y el límite empírico de F
+
+**1. Gramática (k65p/validator.py)**: las moléculas valen como cabezas UNARIAS —
+`[lobo peligro]` (compuesta, "un tipo de lobo") y `[peligro lobo]` (predicación,
+"lobo está en peligro") son la MISMA forma; la distinción compuesta/predicación es
+semántica (posición), no sintáctica. En posición de átomo: `[[lobo peligro] ve carne]`
+como argumento de un predicado. 117 tests verdes (1 actualizado a la nueva doctrina).
+
+**2. La malla recursiva** (`structured_explication.py`): cuando una cláusula usa una
+molécula como cabeza (`[danger predator]`), el glifo de esa molécula PROPAGA sus trits
+(con polaridad) a la proyección. Los glifos ya posicionan los conceptos antes del
+entrenamiento — la malla que describió el operador: compartir trits = proximidad
+semántica a priori; el modelo no aprende *qué es* un lobo, aprende *cómo se usa*.
+
+**3. F v1 (candidata) — unión con cabeza dominante**: la compuesta hereda la huella
+entera de la cabeza (la categoría se hereda, Wierzbicka: "es una clase de X") y las
+cláusulas propias aportan lo nuevo. Ley de conservación: los trits deben poder
+descomponerse en cabeza + cláusulas propias.
+
+**4. HALLAZGO EMPÍRICO — el límite de F puntual**: demostrado con el registro:
+(a) `predator` = F(animal, danger) ✓; (b) `menace` (cabeza invertida) colisiona con
+`predator` — unión conmutativa, inyectividad la rechaza ✓; (c) `still-animal`
+(animal que no se mueve solo) colisiona con `animal` MISMA — la dominancia de cabeza
+se comió el contraste distintivo (mover:−1). **Conclusión: cualquier F que resuelva
+trit-a-trit pierde el orden y puede comerse el contenido nuevo.** El orden de la
+compuesta no cabe en la huella puntual: o la curación evita los pares (inyectividad
+como guardián, funciona hoy) o el plano estructural dim66 (DL-012) recuerda la
+cabeza. La F final se calibra cuando el corpus de compuestas reales exija decidir.
+
+**Registro v2 resultante**: cold-water, ice, animal, danger, predator, still-thing.
+
 ## DL-017 · 2026-09-02 — Tres leyes de la codificación: silencio, inyectividad y la doctrina de F
 
 Del diálogo sobre la codificación de trits (65 primos refundados) se fijan tres leyes:

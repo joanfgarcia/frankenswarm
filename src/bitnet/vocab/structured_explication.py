@@ -80,7 +80,7 @@ BINARY_OPS = {48, 47, 51}
 
 
 class StructuredExplication:
-	def __init__(self, surface: str, clauses: list[str], kind_declared: str | None = None, category: str | None = None, anchor_primes: list[str] | None = None):
+	def __init__(self, surface: str, clauses: list[str], kind_declared: str | None = None, category: str | None = None, anchor_primes: list[str] | None = None, molecule_glyphs: dict[str, list[int]] | None = None):
 		self.surface = surface
 		self.clauses = clauses
 		self.kind_declared = kind_declared
@@ -100,6 +100,13 @@ class StructuredExplication:
 				self.anchor_names.add(str(idx))
 		self.errors: list[str] = []
 		self._trees = []
+		# LA MALLA (doctrina del operador, 2-sep): los glifos ya posicionan los
+		# conceptos antes del entrenamiento. Cuando una cláusula usa una
+		# molécula como cabeza ([danger predator]), el glifo de esa molécula
+		# PROPAGA sus trits a la proyección — la composición es recursiva.
+		self.molecule_glyphs = {
+			k.casefold(): np.array(v, dtype=np.int8) for k, v in (molecule_glyphs or {}).items()
+		}
 		for c in clauses:
 			try:
 				self._trees.append(parse_k65p(c))
@@ -163,6 +170,16 @@ class StructuredExplication:
 				# el ancla RECIBE el atributo (es tema de la atribución):
 				# esto la define como entidad, no como atributo-capaz
 				roles.append((head_name, "receives_attribute", negated))
+		elif anchor_subtree and head_name in self.molecule_glyphs:
+			# LA MALLA: cabeza-molécula → su glifo propaga trits con polaridad
+			mg = self.molecule_glyphs[head_name]
+			sign = -1 if negated else 1
+			for j in range(N_PRIMES):
+				if mg[j] != 0:
+					pname = PRIME_NAME[j]
+					hits[pname] = hits.get(pname, 0) + sign * int(mg[j])
+			# el ancla recibe el predicado-molécula: atribución compuesta
+			roles.append((head_name, "receives_attribute", negated))
 
 		# proyección de argumentos de contenido no genéricos
 		for i, a in enumerate(args):
