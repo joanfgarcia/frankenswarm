@@ -7,6 +7,33 @@ se añade una entrada nueva que la referencia.
 
 ---
 
+## DL-019 · 2026-09-02 — Política de neurogénesis mínima: sin techo, crecimiento del 12.5%, arranque en 16-32
+
+**Problema**: las últimas generaciones nunca ejercitaron la escalera de capacidad —
+128d de inicio bastó siempre (standard 2-4 años sin neurogénesis). El techo por etapa
+(`st_cfg["dim"]`) y la escalera predefinida (`ALL_DIMS`) hacen que la remediación sea
+un salto grosero o nada.
+
+**Decisión del operador**: para el entrenamiento K-65P v2 (Bit refundado) la capacidad
+arranca conservadora (16-32d) y crece LO MÍNIMO necesario, sin dimensión máxima.
+
+**La política** (`src/bitnet/training/neurogenesis_policy.py`):
+1. **Δdim = max(8, dim // 8)** — crecimiento mínimo del 12.5% con suelo de 8:
+   16→24→32→40→48→56→64→72→81→91→102→114→128→144→162→... No existe fórmula canónica
+   en la literatura (lo cercano: progressive widening y saturación de rango efectivo);
+   el ×2 actual es 8× más agresivo que este paso. La fórmula se VALIDARÁ después con
+   participation-ratio de los hidden states (déficit medido, no supuesto).
+2. **Sin techo**: no hay dim máxima. Guardia de cordura (default 4096): superarla
+   pausa para el operador (contrato exit-codes), nunca cap silencioso.
+3. **Punto de medición 65**: el glifo v2 tiene 65 trits; la escalera cruza el ancho de
+   la malla entre 64 y 72 — si hay salto de capacidad al cruzar, es dato de la tesis
+   (la malla sin compresión), no artefacto.
+4. El mecanismo Net2WiderNet existente (preservación de función) se reutiliza tal cual:
+   solo cambia la política de `next_dim`.
+
+Arranque recomendado: **32d** (la malla de 65 trits comprimida 2× — la escalera se
+ejercita sin estrangular el arranque); **16d** como variante agresiva (4× de compresión).
+
 ## DL-018 · 2026-09-02 — El mecanismo de compuestas: gramática unaria, la malla recursiva y el límite empírico de F
 
 **1. Gramática (k65p/validator.py)**: las moléculas valen como cabezas UNARIAS —
