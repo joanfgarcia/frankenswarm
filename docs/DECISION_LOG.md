@@ -7,6 +7,30 @@ se añade una entrada nueva que la referencia.
 
 ---
 
+## DL-017 · 2026-09-02 — Tres leyes de la codificación: silencio, inyectividad y la doctrina de F
+
+Del diálogo sobre la codificación de trits (65 primos refundados) se fijan tres leyes:
+
+1. **El glifo todo-a-cero es SILENCIO** — el único vector sin información, ortogonal a
+   todos los primos. Reservado como abstención/no-sé ("ningún primo aplica"): le da hogar
+   semántico al canal de silencio pendiente (matriz 3×2). Uso inteligente: raro y explícito,
+   solo en contextos curados, nunca relleno. No es un primo — es sintaxis.
+2. **Ley de inyectividad** — no pueden existir dos conceptos con la misma huella de trits,
+   porque la huella es lo ÚNICO que ve el modelo (las cláusulas viajan solo para nosotros).
+   La ley no arregla definiciones: **detecta definiciones incompletas en el momento de
+   crearlas**. Caso fundacional (operador): un `hielo` = `{agua, frío}` es rechazado porque
+   falta su esencia — que se expresa con CONTRASTE: `{agua:+1, frío:+1, mover:−1}` frente
+   a `agua fría` con `mover:+1`. **Los trits −1 hacen definición real.** La ley atrapa
+   también el caso estructural: F con unión conmutativa hace colisionar compuestos con
+   cabeza invertida — si el patrón se repite, F deberá recordar la cabeza (dim66).
+3. **Doctrina de F** (composición de glifos) — documentada, pendiente de calibración:
+   multiplicidad → primos de cantidad (`mucho`/`todo`: 林 = {árbol, mucho}, no árboles
+   duplicados); orden interno → la explicación (el trit es huella comprimida, *todo glifo
+   descompone*); estructura que no quepa en los 65 → plano estructural dim66 (DL-012).
+
+Implementación: `src/bitnet/vocab/registry_v2.py` — registro de moléculas v2 con las tres
+leyes aplicadas en creación.
+
 ## DL-016 · 2026-09-02 — Refundación del vocabulario K-65P desde los 65 primos: los golds entran en cuarentena
 
 **Decisión del operador**: el vocabulario artesanal heredado (28 canonical + 54 drafted +
