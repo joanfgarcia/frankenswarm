@@ -1,0 +1,436 @@
+{
+ "prime": {
+  "all": "ALL",
+  "another": "OTHER",
+  "any": "SOME",
+  "arent": "NOT",
+  "away": "FAR",
+  "because": "BECAUSE",
+  "better": "GOOD",
+  "big": "BIG",
+  "bit": "SMALL",
+  "can": "CAN",
+  "cant": "NOT",
+  "could": "CAN",
+  "danger": "(v2 ya registrada)",
+  "did": "DO",
+  "didnt": "NOT",
+  "do": "DO",
+  "does": "DO",
+  "doesnt": "NOT",
+  "doing": "DO",
+  "dont": "NOT",
+  "down": "BELOW",
+  "fine": "GOOD",
+  "go": "MOVE",
+  "goes": "MOVE",
+  "going": "MOVE",
+  "good": "GOOD",
+  "he": "SOMEONE",
+  "her": "SOMEONE",
+  "here": "HERE",
+  "heres": "HERE",
+  "him": "SOMEONE",
+  "his": "SOMEONE",
+  "hot": "HOT",
+  "i": "I",
+  "if": "IF",
+  "ill": "I",
+  "im": "I",
+  "in": "INSIDE",
+  "into": "INSIDE",
+  "isnt": "NOT",
+  "it": "SOMETHING",
+  "its": "SOMETHING",
+  "ive": "I",
+  "know": "KNOW",
+  "like": "LIKE",
+  "little": "SMALL",
+  "look": "SEE",
+  "looks": "SEE",
+  "maybe": "MAYBE",
+  "me": "I",
+  "might": "CAN",
+  "more": "MORE",
+  "move": "MOVE",
+  "much": "MUCH",
+  "my": "MINE",
+  "nice": "GOOD",
+  "no": "NOT",
+  "not": "NOT",
+  "now": "NOW",
+  "okay": "GOOD",
+  "one": "ONE",
+  "ones": "ONE",
+  "other": "OTHER",
+  "our": "SOMEONE",
+  "over": "ABOVE",
+  "predator": "(v2 ya registrada)",
+  "really": "VERY",
+  "right": "TRUE",
+  "said": "SAY",
+  "say": "SAY",
+  "says": "SAY",
+  "see": "SEE",
+  "she": "SOMEONE",
+  "should": "CAN",
+  "some": "SOME",
+  "something": "SOMETHING",
+  "tell": "SAY",
+  "thats": "THIS",
+  "their": "SOMEONE",
+  "them": "SOMEONE",
+  "then": "AFTER",
+  "these": "THIS",
+  "they": "SOMEONE",
+  "thing": "THING",
+  "things": "THING",
+  "think": "THINK",
+  "this": "THIS",
+  "those": "THIS",
+  "time": "MOMENT",
+  "today": "NOW",
+  "too": "MORE",
+  "two": "TWO",
+  "up": "ABOVE",
+  "us": "SOMEONE",
+  "very": "VERY",
+  "wanna": "WANT",
+  "want": "WANT",
+  "wants": "WANT",
+  "water": "WATER",
+  "we": "SOMEONE",
+  "went": "MOVE",
+  "when": "WHEN",
+  "where": "WHERE",
+  "wheres": "WHERE",
+  "wont": "NOT",
+  "would": "CAN",
+  "yes": "TRUE",
+  "you": "YOU",
+  "your": "YOU",
+  "youre": "YOU",
+  "youve": "YOU"
+ },
+ "molecule": {
+  "apple": "a round sweet fruit",
+  "baby": "a very young person",
+  "ball": "a round thing children play with",
+  "bark": "the sound of the dog",
+  "bed": "the thing one sleeps on",
+  "blue": "the color of the sky",
+  "book": "things with words inside to read",
+  "box": "a thing with empty inside, for putting things",
+  "boy": "a young male person",
+  "bread": "the food made of flour",
+  "car": "a thing with wheels that moves people",
+  "cat": "a small animal that says meow, lives with people",
+  "cave": "a dark place inside the earth",
+  "child": "a young person",
+  "color": "what makes things look different: red, blue...",
+  "dad": "the male parent",
+  "daddy": "the male parent",
+  "dog": "an animal that says bark, lives with people",
+  "drink": "put water in the body",
+  "earth": "the ground; the big thing we stand on",
+  "eat": "put food in the body",
+  "fire": "hot light that can burn and kill",
+  "food": "the things living beings eat",
+  "forest": "many trees together",
+  "friend": "a person one feels good with",
+  "give": "make someone have something",
+  "help": "do something so someone can do it",
+  "home": "the place where the family lives",
+  "house": "the place where people live",
+  "hurt": "the body feels bad",
+  "kid": "a young person",
+  "kiss": "touch with the mouth to feel-good",
+  "make": "do something so a new thing exists",
+  "man": "an adult male person",
+  "meow": "the sound of the cat",
+  "milk": "the white drink from the mom animal",
+  "mom": "the female parent; the one who cares for the child",
+  "moon": "the bright thing in the dark sky",
+  "need": "want something very much: without it, something bad happens",
+  "night": "the time when it is dark",
+  "play": "do things for feel-good, not for need",
+  "put": "move a thing to a place and touch it there",
+  "rain": "water that falls from above",
+  "read": "see the words of a book and know them",
+  "red": "the color of blood/fire",
+  "river": "water that moves on the earth",
+  "sit": "the body goes down and rests on something",
+  "sleep": "the body rests: eyes closed, not moving",
+  "stone": "a hard thing that does not move by itself",
+  "storm": "bad weather: much water and wind from the sky",
+  "sun": "the bright thing above, far, that makes the day",
+  "take": "touch a thing and move it to oneself",
+  "toys": "the things children play with",
+  "train": "the big thing on rails that moves people",
+  "tree": "a tall living thing with parts that are green",
+  "try": "do something wanting it to work, not knowing if it can",
+  "turn": "the body or a thing changes direction",
+  "way": "the place where one moves from here to there",
+  "wound": "the place in the body where it hurts"
+ },
+ "frame": {
+  "again": {
+   "frame": "one-more-time",
+   "k65p": "[more [one moment]]",
+   "nsm": "AGAIN = un momento más"
+  },
+  "and": {
+   "frame": "group",
+   "k65p": "[G {a} {b}]",
+   "nsm": "conjunción = grupo G de átomos"
+  },
+  "back": {
+   "frame": "move-back",
+   "k65p": "[move {x}] [before [move {x}]]",
+   "nsm": "BACK = mover hacia lo anterior"
+  },
+  "called": {
+   "frame": "say-name",
+   "k65p": "[say {x} [G name {y}]]",
+   "nsm": "'se llama X'"
+  },
+  "come": {
+   "frame": "move-toward",
+   "k65p": "[move {x}] [here {x}]",
+   "nsm": "COME = moverse hacia aquí"
+  },
+  "drinks": {
+   "frame": "morph→drink",
+   "k65p": "→ clasificar como 'drink'",
+   "nsm": "flexión/contracción: se normaliza antes del mapa"
+  },
+  "find": {
+   "frame": "know-where",
+   "k65p": "[know {x} [where {y}]] [not [before [know {x} [where {y}]]]]",
+   "nsm": "FIND = sé dónde está y no lo sabía"
+  },
+  "first": {
+   "frame": "before-all",
+   "k65p": "[before all]",
+   "nsm": "FIRST"
+  },
+  "full": {
+   "frame": "quantity-locative",
+   "k65p": "[much inside {x}]",
+   "nsm": "FULL = mucho dentro"
+  },
+  "had": {
+   "frame": "morph→have",
+   "k65p": "→ clasificar como 'have'",
+   "nsm": "flexión/contracción: se normaliza antes del mapa"
+  },
+  "has": {
+   "frame": "morph→have",
+   "k65p": "→ clasificar como 'have'",
+   "nsm": "flexión/contracción: se normaliza antes del mapa"
+  },
+  "have": {
+   "frame": "possession",
+   "k65p": "[exist {y}] [mine {y} {x}]",
+   "nsm": "HAVE no es primo (NSM): 'y existe y es mío/de X'"
+  },
+  "havent": {
+   "frame": "morph→have",
+   "k65p": "→ clasificar como 'have'",
+   "nsm": "flexión/contracción: se normaliza antes del mapa"
+  },
+  "hes": {
+   "frame": "morph→he",
+   "k65p": "→ clasificar como 'he'",
+   "nsm": "flexión/contracción: se normaliza antes del mapa"
+  },
+  "how": {
+   "frame": "want-know-how",
+   "k65p": "[want {x} [know {x} [like {y} [do {z}]]]]",
+   "nsm": "HOW = de qué manera"
+  },
+  "learn": {
+   "frame": "come-to-know",
+   "k65p": "[know {x} {y}] [not [before [know {x} {y}]]]",
+   "nsm": "LEARN = sé ahora lo que no sabía antes"
+  },
+  "let": {
+   "frame": "want-can",
+   "k65p": "[want {x} [can {y} {z}]]",
+   "nsm": "LET = quiero que puedas"
+  },
+  "lets": {
+   "frame": "morph→let",
+   "k65p": "→ clasificar como 'let'",
+   "nsm": "flexión/contracción: se normaliza antes del mapa"
+  },
+  "love": {
+   "frame": "feel-good-toward",
+   "k65p": "[feel {x} [G {y} good]]",
+   "nsm": "X feels something good toward Y (explicación NSM de LOVE)"
+  },
+  "mommy": {
+   "frame": "morph→mom",
+   "k65p": "→ clasificar como 'mom'",
+   "nsm": "flexión/contracción: se normaliza antes del mapa"
+  },
+  "mummy": {
+   "frame": "morph→mom",
+   "k65p": "→ clasificar como 'mom'",
+   "nsm": "flexión/contracción: se normaliza antes del mapa"
+  },
+  "out": {
+   "frame": "outside",
+   "k65p": "[not inside {x}]",
+   "nsm": "OUTSIDE = no dentro"
+  },
+  "plays": {
+   "frame": "morph→play",
+   "k65p": "→ clasificar como 'play'",
+   "nsm": "flexión/contracción: se normaliza antes del mapa"
+  },
+  "remember": {
+   "frame": "know-before",
+   "k65p": "[know {x} [before [know {x} {y}]]]",
+   "nsm": "REMEMBER = sabía antes y sé ahora"
+  },
+  "runs": {
+   "frame": "morph→run",
+   "k65p": "→ clasificar como 'run'",
+   "nsm": "flexión/contracción: se normaliza antes del mapa"
+  },
+  "safe": {
+   "frame": "negation-of-danger",
+   "k65p": "[not danger {x}]",
+   "nsm": "SAFE = no peligro"
+  },
+  "shall": {
+   "frame": "morph→will",
+   "k65p": "→ clasificar como 'will'",
+   "nsm": "flexión/contracción: se normaliza antes del mapa"
+  },
+  "shes": {
+   "frame": "morph→she",
+   "k65p": "→ clasificar como 'she'",
+   "nsm": "flexión/contracción: se normaliza antes del mapa"
+  },
+  "show": {
+   "frame": "cause-to-see",
+   "k65p": "[do {x}] [see {y} {z}]",
+   "nsm": "SHOW = hacer ver"
+  },
+  "sleeps": {
+   "frame": "morph→sleep",
+   "k65p": "→ clasificar como 'sleep'",
+   "nsm": "flexión/contracción: se normaliza antes del mapa"
+  },
+  "teach": {
+   "frame": "cause-to-know",
+   "k65p": "[say {x} {y} {z}] [know {z} {y}]",
+   "nsm": "TEACH = decir para que sepa"
+  },
+  "theres": {
+   "frame": "existential",
+   "k65p": "[exist {y}]",
+   "nsm": "'there is' = EXIST"
+  },
+  "theyre": {
+   "frame": "morph→they",
+   "k65p": "→ clasificar como 'they'",
+   "nsm": "flexión/contracción: se normaliza antes del mapa"
+  },
+  "weve": {
+   "frame": "morph→we",
+   "k65p": "→ clasificar como 'we'",
+   "nsm": "flexión/contracción: se normaliza antes del mapa"
+  },
+  "what": {
+   "frame": "want-know",
+   "k65p": "[want {x} [know {x} [do {y} [what]]]]",
+   "nsm": "PREGUNTA = quiero saber (la palabra interrogativa es el hueco cuestionado)"
+  },
+  "whats": {
+   "frame": "morph→what",
+   "k65p": "→ clasificar como 'what'",
+   "nsm": "flexión/contracción: se normaliza antes del mapa"
+  },
+  "who": {
+   "frame": "want-know-who",
+   "k65p": "[want {x} [know {x} [someone]]]",
+   "nsm": "WHO"
+  },
+  "whos": {
+   "frame": "morph→who",
+   "k65p": "→ clasificar como 'who'",
+   "nsm": "flexión/contracción: se normaliza antes del mapa"
+  },
+  "why": {
+   "frame": "want-know-because",
+   "k65p": "[want {x} [know {x} [because [happen {y}]]]]",
+   "nsm": "WHY"
+  },
+  "will": {
+   "frame": "future",
+   "k65p": "[after [do {x}]]",
+   "nsm": "FUTURE via AFTER (NSM no tiene futuro como primo)"
+  },
+  "with": {
+   "frame": "companion",
+   "k65p": "[G {x} {y}]",
+   "nsm": "'jugar conmigo' = grupo compartido"
+  },
+  "without": {
+   "frame": "not-companion",
+   "k65p": "[not [G {x} {y}]]",
+   "nsm": "WITHOUT"
+  }
+ },
+ "drop": [
+  "a",
+  "about",
+  "ah",
+  "an",
+  "are",
+  "as",
+  "at",
+  "be",
+  "been",
+  "but",
+  "else",
+  "for",
+  "from",
+  "gonna",
+  "got",
+  "hafta",
+  "hello",
+  "huh",
+  "is",
+  "just",
+  "of",
+  "off",
+  "oh",
+  "on",
+  "or",
+  "please",
+  "so",
+  "that",
+  "the",
+  "there",
+  "to",
+  "uh",
+  "um",
+  "was",
+  "well",
+  "were",
+  "which",
+  "yeah"
+ ],
+ "name": {
+  "thomas": "TinyStories character — ¿molécula por entidad o marcador de nombre?"
+ },
+ "unmapped": [
+  "get",
+  "group"
+ ],
+ "gate_size": 253
+}
