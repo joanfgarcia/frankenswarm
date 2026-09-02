@@ -1,0 +1,16 @@
+{
+  "surface": "water",
+  "surface_es": "agua",
+  "kind_declared": "entity",
+  "category": "thing",
+  "anchor_primes": ["WATER"],
+  "clauses": [
+    "[want people water]",
+    "[see people water]",
+    "[below [move water]]",
+    "[cold water]",
+    "[good water]",
+    "[live something water]"
+  ],
+  "notas": "v1.3 (2-sep). FUENTE en inglés (convención del operador: humano lee inglés, máquina genera la forma numérica canónica con linearize). 'live something water' = 'algo vive en el agua' — PENDIENTE de decisión del operador (lectura hábitat vs lectura necesaria-para-la-vida)."
+}

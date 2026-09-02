@@ -7,6 +7,32 @@ se añade una entrada nueva que la referencia.
 
 ---
 
+## DL-016 · 2026-09-02 — Refundación del vocabulario K-65P desde los 65 primos: los golds entran en cuarentena
+
+**Decisión del operador**: el vocabulario artesanal heredado (28 canonical + 54 drafted +
+40 molecule del diccionario, marcados `LEGADO-2SEP` en la BD) está **contaminado por la
+era de supervivencia** — son bolsas de rasgos sin idea fuente registrada (los "gold" del
+`glyph_vocabulary.py` eran juicios planos del demo de la tribu, no oraciones). Se descartan
+como norma de calibración. Cuarentena reversible, no borrado.
+
+**La nueva doctrina del vocabulario** (orden de dependencia correcto):
+
+1. **Capa 0 — los 65 primos**: glifos identidad (one-hot), valencias del validador, kinds.
+   La única capa que existe sin idea fuente: los primos son indefinibles por definición.
+2. **Capa 1+ — moléculas**: solo nacen de una **idea fuente en inglés** (curada por el
+   operador) → cláusulas K-65P (interpretación; si la gramática no basta, operador nuevo,
+   decisión doctrinal) → **glifo = proyección de las cláusulas** (consecuencia, no input).
+3. **El gold viejo = solo referencia de auditoría**: donde discrepe de 1-2, se revisa el
+   gold (documentado), nunca la idea.
+4. Cuando se retome la jungla (tribu), usará los glifos que salgan del vocabulario
+   refundado — la jungla se adapta a K-65P, no al revés.
+
+**Lo que ya existe del programa estructurado y sobrevive al reset**: `structured_explication.py`
+(cláusulas → perfil de roles + kind + glifo), el generador de vista legible (`render`),
+el bucle explication→glifo. **Lo que cae**: la calibración contra los 28 gold como objetivo.
+**Lo que sube de prioridad**: el mecanismo de **compuestas/clase-de** — con 65 primos y
+nada más, toda molécula nueva es composición; es la pieza que da el 3^65.
+
 ## DL-015 · 2026-09-01 — Auditoría de la confrontación v4: infra ≠ suspenso, instrumento corregido y set v2
 
 **Problema.** La auditoría del 1-sep destapó que las dos afirmaciones fuertes
