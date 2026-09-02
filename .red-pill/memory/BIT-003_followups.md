@@ -1,4 +1,53 @@
-# BIT-003 · Estado 1-sep (post-auditoría DL-015)
+# BIT-003 · Estado 2-sep (confrontación edad-2 + K-65P)
+
+## RESET K-65P (DL-016/DL-017, 2-sep): vocabulario refundado desde los 65 primos
+- Los "gold" heredados (28 canonical + 54 drafted + 40 molecule, marcados `LEGADO-2SEP` en la BD) entran en CUARENTENA: eran bolsas de rasgos sin idea fuente, contaminados por la era supervivencia. Ya no calibran nada.
+- Nuevo orden: idea fuente en INGLÉS (operador cura) → cláusulas K-65P → glifo = proyección. Fuente editable en inglés, forma canónica numérica generada (convención del operador).
+- Capa 0 construida: tabla de 65 primos (identidad, valencias, kind) en configs/k65p_v2/primos.json.
+- **Tres leyes DL-017 implementadas** (registry_v2.py): L1 glifo todo-a-cero = SILENCIO reservado (abstención, cierra el canal de silencio); L2 inyectividad (huella única contra primos y moléculas — atrapa colisiones exactas, NO definiciones incompletas: eso es curación); L3 los trits −1 son definición (hielo={agua,frío,mover:−1} ≠ agua fría con mover:+1).
+- Primeras 2 moléculas v2: cold-water, ice (demo del pipeline).
+- **DL-018 implementado**: gramática unaria de moléculas en k65p/validator (commit c9ada8d, 117 tests) — [lobo peligro]=compuesta vs [peligro lobo]=predicación, distinción semántica; malla recursiva (las cabezas-molécula propagan trits); F v1 cabeza-dominante. **Hallazgo empírico**: F puntual no preserva orden ni contrastes nuevos (menace y still-animal colisionan) — inyectividad como guardián, dim66 como solución estructural cuando se calibre.
+- Registro v2: cold-water, ice, animal, danger, predator, still-thing (configs/k65p_v2/moleculas.json).
+- Prioridad: mecanismo de COMPUESTAS/clase-de — con 65 primos y nada más, toda molécula es composición (3^65). Diseño conversado: (lobo peligro)=compuesta vs (peligro lobo)=predicación, F pendiente de calibrar (multiplicidad→primos de cantidad; orden→explicación; si no basta→dim66).
+- La jungla (tribu) usará los glifos del vocabulario refundado cuando se retome.
+
+## PLAN refundación→modelo (acordado 2-sep, orden de dependencia)
+1. **Vocabulario v2 inicial** (~30-40 moléculas): Aleth redacta ideas fuente EN inglés en tiers Wierzbicka; operador cura; registro con inyectividad.
+2. **Corpus v2**: mini-documentos con orden-dependencia de consecuencias (cura el corpus orden-rígido), compuestas en uso, contextos de silencio (L1).
+3. **Bit v2 K-65P nativo**: Escuela Soberana adaptada al vocabulario v2, embeddings precargados con la malla, gating por tiers. **Neurogénesis DL-019**: arranque 32d (variante agresiva 16d), Δdim=max(8,dim//8) [+12.5%], SIN techo (guardia 4096 → pausa operador), punto de medición en d=65 (ancho de la malla). Módulo: neurogenesis_policy.py.
+4. **Instrumento**: permutación v2 + batería — métrica: Δ perms válidas sube de +0.11, OOD generaliza. Hipótesis falsable: *compartimiento principiado transfiere; arbitrario interfiere*.
+5. **Banco de comunicación A↔B**: canal inglés vs K-65P, información que sobrevive al cuello de botella discreto.
+- Paralelo: 3_years glyph / 5_years standard abiertos (runs acabaron sin responder); push pendiente de rama feat/bit003-corpus-csr.
+- **PASO 0 NUEVO (propuesta operador)**: corpus mínimo = "traducción justa" del corpus gateado de etapa 0-1 (máx 2 años) para la primera cata. Ver assessment: el gate de etapa 0 DEFINE el set de moléculas de arranque.
+
+## Confrontación edad-2 congelada (age2_v2: 39 vistas / 163 no-vistas) — misma batería, ambos 128d ×1
+| instrumento | glyph v41 · 2y @128d | standard v4 · 2y @128d | lectura |
+|---|---|---|---|
+| gate | 59.0% | 61.5% | ruido (p≈1.0) |
+| cognición | 4.3% (7/163) | **9.8%** (16/163) | p≈0.048, limítrofe |
+| retención | 25.3% | **39.2%** | p≈0.07, limítrofe |
+| S4 aritmética | 0% | **14.3%** | |
+| S5 predicado | **6.9%** | 3.4% | única señal del glyph, n=29 |
+- El standard gana dirección en todo. Gap de val por etapa (stage_history): 0-1 → 2.01 vs 1.68; 1-2 → 3.02 vs 2.22. **El gap se dobla con el currículo** — firma de la hipótesis de interferencia (glifos correlacionados = crosstalk en 128d). El glyph cerró 1-2 antes (46 vs 66 ép): dejó de mejorar antes, no eficiencia.
+- Generador de batería parametrizado por edad (`generate_battery_v3.py --age/--stage_idx`); age2_v2.json (S1:40 S2:34 S3:32 S4:28 S5:29).
+
+## F2 cerrado: retractación definitiva de DL-015
+- `bit003_glyph_v41_2y_x1`: **2_years APROBADO @128d** (46 ép de etapa), 0 neurogénesis, contrato exit-codes activo. El suspenso original era infra pura. La confrontación vuelve al terreno igualado a 128d — y ahí gana el standard (tabla arriba).
+
+## Runs — ambos jobs terminaron por cierre de cola, SIN sus preguntas decisivas
+- glyph v41 (eaeee8dc): acabó época 125, etapa 2-3 — **sin examen de 3_years** (pregunta abierta).
+- standard v4 (897ec6e3): acabó época 241, etapa 4 — hitos 2/3/4y @128d sin neurogénesis, **sin 5_years**. Examen 4y: 10.00/10.
+- v3 ×10 (250de371) PAUSED resumable. GPU libre (0%, 16 MiB) al 2-sep.
+
+## K-65P — DOBLINEAGE, no traducción (cambio de doctrina, 2-sep)
+- **Sí existe un Bit entrenado nativo en K-65P**: la Escuela Soberana (`storage/checkpoints/sovereign_school_k65p/`, 256d, 162 ép, `target_milestone: completed`, protocolo DL-006) con corpus factory Prolog de 10.9k secuencias (3k/3.6k/4.2k por etapa) + 105 OOD holdout. Adversarial: 100% generaciones válidas, OOD acc 47.4%, ataque1 50.8% vs bigrama 44% — separación mínima del baseline.
+- **DL-004 ya deprecó la traducción literal ES→K-65P por fidelidad nula** — el generador composicional la sustituyó. El en_lexicon del brazo frankenswarm es un TOKENIZADOR (palabra→glifo), no la traducción interpretativa de K-65P.
+- La visión del operador (glifo=concepto, no palabra; frase→molécula compuesta con MENOS glifos; permutación→otra molécula) YA vive en el lineage Escuela Soberana (grupos G, gramática S-expr head-first). Los experimentos frankenswarm (tokenizer) NO miden ese potencial — por eso no aparece.
+- **Radicales ideográficos = trits compartidos, verificado**: agua/fuego/comida/sol comparten posiciones 4 y 8 de sus 65 trits (componentes semánticos = primos compartidos). La intuición kanji del operador está estructuralmente incorporada; testeable con correlación Hamming↔semántica sobre el léxico (pendiente).
+- Pendientes K-65P: (a) test de permutación (¿perplexity distingue secuencias canónicas de permutadas?), (b) batería cognitiva K-65P nativa sobre la Escuela Soberana (comprensión de compuestos, OOD como S6), (c) investigación ideográfica (kanji/cuneiforme/jeroglífico) como fuente de diseño.
+
+# Estado 1-sep (post-auditoría DL-015) — ARCHIVO
+⚠️ Ítems 1-2 de Próximos ya hechos; ítem 4 (traductor EN→K-65P) SUPERSEDED por la doctrina doblineage de arriba — el puente entre lineages no es un traductor.
 
 ## AUDITORÍA 1-SEP: dos retractaciones + instrumento corregido (DL-015)
 - El suspenso de 2_years del glyph v4 a 128d fue un CRASH de infra (Samantha → None), no una nota: la neurogénesis 128→256 se disparó sin examen real. Contrato de exit-codes nuevo (0/2/3) + reintento + pausa `eval_infra_error`; el trainer ya no remedia sin calificación. 8/8 tests.

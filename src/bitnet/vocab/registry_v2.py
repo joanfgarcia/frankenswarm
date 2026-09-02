@@ -127,6 +127,15 @@ class VocabularyV2:
 		Ley de conservación: los trits de la compuesta deben poder descomponerse
 		en cabeza + cláusulas propias (*todo glifo descompone*, DL-014).
 		"""
+		# guardia anti-ciclos (auditoría 3-sep): la cadena cabeza→cabeza no
+		# puede regresar a la superficie que se registra (A→B→A imposible)
+		seen, h = {surface.casefold()}, head
+		while h in self.molecules and "compound" in self.molecules[h]:
+			h = self.molecules[h]["compound"]["head"]
+			if h.casefold() in seen:
+				raise InjectionError(f"ciclo de compuestas: {surface} → ... → {h} → {surface}")
+			seen.add(h.casefold())
+
 		head_g = self._glyph_of_name(head)
 		exp = StructuredExplication(surface, own_clauses, anchor_primes=[],
 			molecule_glyphs=self._molecule_glyphs())

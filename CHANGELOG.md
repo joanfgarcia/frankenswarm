@@ -1,6 +1,14 @@
 # Frankenswarm Changelog
 
 ## [Unreleased]
+### 🧬 K-65P v2 — refundación del vocabulario, tres leyes de codificación, compuestas y política de neurogénesis (02-03 sep)
+- **DL-016** `b19bf2c`: refundación desde los 65 primos — golds (28+54+40) en cuarentena `LEGADO-2SEP` (bolsas de rasgos sin idea fuente). Nuevo orden: idea fuente EN → cláusulas K-65P → glifo = proyección. Capa 0: `configs/k65p_v2/primos.json`.
+- **DL-017** `7400287`: tres leyes — SILENCIO (glifo cero reservado a la abstención), inyectividad (huella única; atrapa colisiones exactas, no definiciones incompletas), contraste −1 definicional (hielo ≠ agua fría por `mover:−1`). `registry_v2.py`.
+- **DL-018** `7d7ace2`: compuestas — moléculas como cabezas unarias en el validador k65p (`c9ada8d`, 117 tests), malla recursiva (las cabezas-molécula propagan trits), F v1 cabeza-dominante. **Hallazgo empírico**: F puntual no preserva orden ni contrastes nuevos; inyectividad como guardián, dim66 como solución estructural.
+- **DL-019** `a6b5c7a`: neurogénesis mínima — Δdim=max(8, dim//8) [+12.5%], sin techo (guardia 4096 → pausa operador), punto de medición en d=65 (ancho de la malla). **Cableada al trainer 3-sep** (auditoría externa: estaba spec-sin-efecto).
+- **Curación gate-0** `22a46bc`: clasificación de las 253 palabras (111 primos / 59 moléculas / 42 marcos NSM / 38 caen) + 15 traducciones justas de patrones top (`docs/cata_gate0_curation.md`).
+- **Auditoría externa 3-sep, remediada**: en_lexicon NSM-fixes ('a/an'→ONE no THIS; interrogativos fuera del drop — el estrato que puntuó 0/39), guardia anti-ciclos en compuestas, 4 frases-riddle fuera del diccionario (contaminaban el instrumento de generalización).
+
 
 ### 🔍 BIT-003 — auditoría de la confrontación v4: dos retractaciones, instrumento re-tirado y contrato de exit-codes (2026-09-01)
 

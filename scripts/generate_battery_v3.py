@@ -139,7 +139,12 @@ def main() -> None:
 	import argparse
 	ap = argparse.ArgumentParser()
 	ap.add_argument("--set_version", type=int, default=2, help="Versión del set congelado (v1 = pre-banks, intocable; v2+ = con banks en el universo)")
+	ap.add_argument("--age", type=int, default=4, choices=[2, 3, 4], help="Edad del hito (2-4: bucket preschool)")
+	ap.add_argument("--stage_idx", type=int, default=None, help="Etapa del gateo (default: age-1)")
 	args = ap.parse_args()
+	global AGE, STAGE_IDX
+	AGE = args.age
+	STAGE_IDX = args.stage_idx if args.stage_idx is not None else AGE - 1
 
 	words = json.load(open(os.path.join(BASE, "configs", "expanded_glyphs.json")))["words"]
 	w2i = {w: i for i, w in enumerate(words)}
@@ -153,7 +158,9 @@ def main() -> None:
 	# El universo entrenado = store + exámenes (con variaciones/mapeo) + currículo
 	# preescolar. Los exámenes/currículo NO viven en el store: se inyectan en
 	# compile_data_for_stage (×exam_repeat_factor).
-	for q, a in SEEN_QA:
+	age_slice = {2: 10, 3: 20, 4: 30}[AGE]  # AGE_QUESTIONS: 10 por edad, 2→3→4
+	seen_source = EXAM_QA + AGE_QA[:age_slice]
+	for q, a in seen_source:
 		for f in trained_exam_forms(q, a, w2i, dictionary):
 			store_hashes.add(seq_hash(f))
 	curr_json = json.load(open(os.path.join(BASE, "configs", "school_curriculum_structured_en.json")))["curriculum"]
@@ -179,7 +186,7 @@ def main() -> None:
 	seen, rejected = [], []
 	seen_qs: set = set()
 	seen_pairs: set = set()
-	for q, a in SEEN_QA:
+	for q, a in seen_source:
 		mapped_a = dictionary.map_to_base_word(a)
 		if w2i.get(mapped_a, 1) not in gate_idx:
 			rejected.append((q, a, "respuesta fuera de gate/vocab")); continue

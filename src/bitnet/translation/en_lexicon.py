@@ -39,9 +39,10 @@ PRIME_ALIASES = {
 	39: {"down", "under"}, 40: {"away", "far away"}, 41: {"close"},
 	44: {"don't", "doesn't", "not", "no"}, 46: {"may", "could"},
 	49: {"really", "so"}, 50: {"more", "most"}, 51: {"likes", "like"},
-	# "a" es determinante → 52 (this); el primo 55 (one) se activa solo con
-	# "one" explícito (auditoría 1-sep: el alias duplicado 52/55 era ambiguo).
-	52: {"the", "a", "an"}, 57: {"a few"}, 58: {"everything", "everybody"},
+	# NSM-fix (3-sep, auditoría externa): 'a/an' → ONE(55) (el indefinido NO es
+	# deíctico); 'the' cae (la definitud no tiene marcador en K-65P). THIS(52)
+	# queda reservado al demostrativo genuino ('this/these').
+	52: {"this", "these"}, 55: {"a", "an", "one"}, 57: {"a few"}, 58: {"everything", "everybody"},
 	59: {"lots", "plenty"}, 60: {"warm", "hot"}, 61: {"cooler"}, 63: {"sun", "lights"},
 	64: {"dark", "night"},
 }
@@ -49,10 +50,14 @@ PRIME_ALIASES = {
 # Palabras que se DESCARTAN en la traducción (funciones sin primo propio:
 # determinantes ya cubiertos por 52, preposiciones gramaticales, auxiliares).
 # was/were/been/being NO se descartan: son formas del cópula → primo 25 (be).
+# NSM-fix (3-sep): fuera del drop los interrogativos y 'it'/'yes'/'that' —
+# what→SOMETHING(4), who→SOMEONE(2), why→BECAUSE(47), how→LIKE(51),
+# it→SOMETHING(4), yes→TRUE(20), that→THIS(52). Los marcos want-know de la
+# doctrina gate-0 viven en la capa de sintaxis, no aquí.
 DROP_WORDS = {"of", "to", "with", "and", "or", "but", "at", "on", "in", "for",
-	"from", "by", "has", "have", "had",
-	"will", "would", "shall", "should", "did", "there", "that", "it",
-	"what", "who", "how", "why", "yes", "oh", "well"}
+	"from", "by", "has", "have", "had", "the",
+	"will", "would", "shall", "should", "did", "there",
+	"oh", "well"}
 
 
 def build_lexicon() -> dict:

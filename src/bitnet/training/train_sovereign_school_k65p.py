@@ -57,6 +57,7 @@ except ImportError:
 	sys.exit(1)
 
 from src.bitnet.growth.net2net import net2wider_model
+from src.bitnet.training.neurogenesis_policy import next_dim as neurogenesis_next
 from src.bitnet.model.modeling_bitnet import BitNet4LayerModel
 from src.bitnet.training.modules.stage_config import get_stage_config
 
@@ -765,7 +766,9 @@ def run_school_training_k65p():
 				else:
 					state["exam_failures"][m_name] = state["exam_failures"].get(m_name, 0) + 1
 					# Remediación DL-006: la neurogénesis SOLO responde a un suspenso.
-					next_dim = next((d for d in ALL_DIMS if d > model.hidden_dim and d <= st_cfg["dim"]), None)
+					# DL-019 (3-sep): política mínima sin techo — Δ=max(8, dim//8),
+					# guardia de cordura → None = pausa para el operador.
+					next_dim = neurogenesis_next(model.hidden_dim)
 					if next_dim is not None:
 						old_dim = model.hidden_dim
 						print(f"✗ Hito {m_name} SUSPENDIDO ({summary}). Remediación: neurogénesis y repetición de etapa.")
