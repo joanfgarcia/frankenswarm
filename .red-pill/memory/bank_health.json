@@ -1,0 +1,30 @@
+{
+  "workspace": "frankenswarm",
+  "generated_at": "2026-09-03T18:40:27",
+  "apply": false,
+  "metrics": {
+    "active_files": 8,
+    "active_bytes": 72610,
+    "biggest_file": {
+      "path": "BIT-003_fix_plan.md",
+      "bytes": 50201
+    }
+  },
+  "index": {
+    "refs_total": 2,
+    "broken_refs": [],
+    "orphans": [
+      "BIT-003_audit_findings.md",
+      "BIT-003_fix_plan.md",
+      "BIT-003_followups.md",
+      "BIT-003_gating_state.md",
+      "BIT-003_remediation_plan.md"
+    ],
+    "non_canonical_refs": []
+  },
+  "duplicates": [],
+  "archived": [],
+  "archive_candidates": [],
+  "archive_suppressed_no_index": false,
+  "thresholds_tripped": []
+}

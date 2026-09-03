@@ -7,6 +7,24 @@ se añade una entrada nueva que la referencia.
 
 ---
 
+## DL-020 · 2026-09-03 — VERY gana posición combinatoria; definiciones en cadena con moléculas
+
+**Motivo** (curación del operador, ejemplo `child: a young person / baby: a very young
+child`): las definiciones en cadena — baby referencia child, child referencia person —
+son la doctrina Goddard de *semantic molecules*: permitidas en NSM si cada molécula
+funda en primos. La malla ya propagaba moléculas-cabeza (DL-018); ahora también
+**argumentos de contenido** (`structured_explication.py`).
+
+**El hueco que destapó el ejemplo**: `[very small baby]` era inválida — VERY (49) no
+tenía posición combinatoria en la v0, así que las distinciones graduales (very young
+vs young) no podían producir huellas distintas. **Fix (k65p validator, DL-020)**: VERY
+se une a los operadores unarios — `[very [small baby]]` = "muy pequeño" (intensificador
+sobre cláusula atributiva).
+
+**Cadena demostrada**: person(primo SOMEONE) → child={someone,small} →
+baby={someone,small,very} — la genealogía queda EN la huella (baby ⊃ child ⊃ person).
+La guardia anti-ciclos + inyectividad protegen la cadena (A→B→A imposible).
+
 ## DL-019 · 2026-09-02 — Política de neurogénesis mínima: sin techo, crecimiento del 12.5%, arranque en 16-32
 
 **Problema**: las últimas generaciones nunca ejercitaron la escalera de capacidad —

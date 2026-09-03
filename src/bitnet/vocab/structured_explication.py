@@ -75,7 +75,7 @@ ROLE_FRAMES = {  # prime_id → (nombre del rol del 1er argumento, nombre del 2�
 
 EVALUATORS = {8, 9, 10, 11, 26, 60, 61, 64}
 NEGATION = 44  # no
-UNARY_OPS = {44, 45, 46, 31, 30, 32, 37, 41, 40, 38, 39, 43}
+UNARY_OPS = {44, 45, 46, 31, 30, 32, 37, 41, 40, 38, 39, 43, 49}  # +49 VERY (DL-020)
 BINARY_OPS = {48, 47, 51}
 
 
@@ -197,9 +197,21 @@ class StructuredExplication:
 			if head_id in UNARY_OPS or head_id in BINARY_OPS:
 				hits[name] = hits.get(name, 0) + (-1 if negated else 1)
 			elif anchor_atom:
-				# argumento de una cláusula sobre el ancla: contenido
-				# (los rellenos concretos caracterizan la definición)
-				hits[name] = hits.get(name, 0) + (-1 if negated else 1)
+				# LA MALLA (DL-018, extendida 3-sep): los argumentos de contenido
+				# que son MOLÉCULAS también propagan su glifo — la definición en
+				# cadena (baby→child→person) es doctrina Goddard: semantic
+				# molecules dentro de explicaciones, todo funda en primos
+				if name in self.molecule_glyphs:
+					mg = self.molecule_glyphs[name]
+					sign = -1 if negated else 1
+					for j in range(N_PRIMES):
+						if mg[j] != 0:
+							pn = PRIME_NAME[j]
+							hits[pn] = hits.get(pn, 0) + sign * int(mg[j])
+				else:
+					# argumento de una cláusula sobre el ancla: contenido
+					# (los rellenos concretos caracterizan la definición)
+					hits[name] = hits.get(name, 0) + (-1 if negated else 1)
 
 	def project_flat(self, anchors: set | None = None) -> dict[str, int]:
 		anchors = anchors or self.anchor_names
