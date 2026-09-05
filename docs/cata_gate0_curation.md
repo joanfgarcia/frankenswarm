@@ -171,7 +171,11 @@ Cada molécula solo referencia las ya definidas, así que el lote se cura por ca
 ## Preguntas abiertas para el operador
 
 1. ~~**Thomas** (nombres propios)~~ → **RESUELTA (DL-021)**: marcador de nombre — `[N thomas]`, símbolo sin huella, fuera de la malla. Los nombres jamás encabezan; las relaciones encabezan.
-2. **El hueco interrogativo** (WHAT en preguntas): ¿lo dejamos como posición cuestionada implícita o pedimos un marcador estructural?
+2. ~~**El hueco interrogativo**~~ → **RESUELTA (DL-023)**: marcador `[Q cláusula]` con
+   glifo diseñado que arrastra querer+saber (preguntar = querer saber, NSM). La fuerza
+   ilocutiva (curiosidad/duda/sorpresa/reto) es del intérprete, que arrastra las
+   moléculas de intención específicas dentro del marcado. 'get': solo-en-contexto —
+   la unidad de traducción es la frase-idea interpretada, nunca la palabra aislada.
 3. ~~**Colores**~~ → **RESUELTA (DL-022)**: paleta del pintor (blanco/rojo/amarillo/azul/negro
    + marrón y mezclas) sobre los primos luz/oscuro/caliente/frío; arrastre emoción→color
    (la asimetría de contaminación: la pelota roja queda limpia, la ira lleva su rojo).

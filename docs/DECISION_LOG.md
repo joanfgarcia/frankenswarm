@@ -7,6 +7,37 @@ se añade una entrada nueva que la referencia.
 
 ---
 
+## DL-023 · 2026-09-03 — El pipeline Bit y la intención: [Q] con glifo diseñado; la traducción es interpretación
+
+**El pipeline (visión del operador, debate de arquitectura)**:
+```
+input humano → intérprete L→K-65P → K-65P in (caché) → inferencia Bit (MoE,
+aunque sea un modelo detrás) → K-65P out (caché) → intérprete K-65P→L → output
+```
+- La traducción es INTERPRETACIÓN: la unidad es la frase-idea, no la palabra —
+  'get' no tiene destino léxico (resuelto en la cata: solo-en-contexto). K-65P no
+  soporta ambigüedad porque la ambigüedad se resuelve ANTES, en el intérprete.
+- El intérprete es un proyecto aparte (un LLM entrenado por lengua humana); la
+  cata gate-0 curada a mano es su dato de bootstrap.
+- Objeción registrada (Vauquois): cuanta más alta la interlingua, más duro el
+  análisis — la frontera interpretar/entender es la investigación viva. División
+  de trabajo: intérprete=percepción, Bit=cognición.
+- Dos memorias, no una: el estado interno (SSM 24/7) es el hipocampo — rápido,
+  volátil; la caché K-65P es el córtex — persistente y auditable (todo glifo
+  descompone, también las memorias). La caché = KB de hechos revisables + log
+  episódico con [N nombres] y tiempo. Consolidación = sueño (metabolismo red-pill).
+- Ambigüedad interactiva: los marcos want-know + SILENCIO permiten que Bit
+  pregunte hacia atrás en vez de forzar interpretación falsamente segura.
+
+**El marcador de intención [Q ...]** (resuelve la pregunta 2 de la cata):
+la fuerza ilocutiva ("eres tonto" vs "¿eres tonto?") es responsabilidad del
+intérprete — curiosidad, duda, sorpresa, reto. Sintaxis como los nombres:
+`[Q cláusula]` — exactamente una cláusula, sin nesting, la intención específica
+viaja en las moléculas que el intérprete arrastra dentro; **el glifo del token Q
+porta el núcleo querer+saber** — la explicación NSM de preguntar (la misma
+doctrina del arrastre DL-022: el embedding del marcador arrastra las moléculas
+equivalentes de intención).
+
 ## DL-022 · 2026-09-03 — Paleta del pintor y la capa emocional: arrastre emoción→color, many-to-many
 
 **Decisión de dirección (operador confirmado)**: las EMOCIONES arrastran los trits de
