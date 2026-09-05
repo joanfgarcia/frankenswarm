@@ -7,6 +7,39 @@ se añade una entrada nueva que la referencia.
 
 ---
 
+## DL-021 · 2026-09-03 — Nombres propios como símbolos: el marcador [N] y la base de hechos
+
+**Doctrina del operador** (dos casos): (1) hechos-relación entre nombres que se
+memorizan y se cumplen "siempre" — `X es la capital de Y` con tuplas
+{París, Francia}, {Homero, Ilíada}... — la fórmula es el predicado (capital/2,
+author/2), las tuplas son hechos de la KB, revisables (hasta reorganización
+política); (2) nombres como instancias episódicas — "Juan tiene un perro que se
+llama Jacky": cualquier Juan, cualquier Jacky; importa el marco, no el par.
+Hecho vs episódico: MISMA sintaxis, distinto uso estadístico — el modelo separa
+por frecuencia, no por marcaje.
+
+**El diseño** (debate cerrado con el operador, opción `[N nombre]` sobre
+`{nombre}`/`@nombre`): un marcador estructural más (como G) — un solo tipo de
+corchete, la taxonomía de argumentos unificada por la cabeza (átomo=primo/molécula,
+cabeza-molécula=compuesta, cabeza-N=símbolo inerte), pureza S-expr intacta.
+
+Reglas (k65p validator + bridge, DL-021):
+- `[N partes...]`: aridad ≥1, solo átomos desnudos (sin cláusulas, sin N anidado,
+  sin G); el corchete completo ES el símbolo — los artículos dentro son partes
+  (`[N the netherlands]`); identidad = secuencia ordenada de partes
+- Nombres **jamás como cabeza** — la relación encabeza: `[have [N juan] dog]`
+- Partes exentas del léxico; **colisión con primos prohibida** (un nombre es una
+  dirección, no un concepto — sin huella, fuera de la malla)
+- Relaciones: molécula con 2-3 args **solo si el hecho involucra un término [N]**
+  — sin nombres sigue la unaria estricta de DL-018 (bolsas fuera)
+- Bridge: `[N juan francisco garcía]` → átomo `juan_francisco_garcia` (unión '_')
+- Aliases (Jacky/Jack, orden de nombres): **relaciones en la KB** (same-person/2),
+  no sintaxis
+
+KB demo: `configs/k65p_v2/facts/kb_demo.pl` + `scripts/kb_names_demo.py` —
+capital/2, author/2, have/2, same-person/2 con los ejemplos del operador.
+Thomas (cata gate-0): marcador de nombre, no molécula — pregunta cerrada.
+
 ## DL-020 · 2026-09-03 — VERY gana posición combinatoria; definiciones en cadena con moléculas
 
 **Motivo** (curación del operador, ejemplo `child: a young person / baby: a very young

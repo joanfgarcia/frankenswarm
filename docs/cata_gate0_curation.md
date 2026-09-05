@@ -145,7 +145,7 @@
 
 ## Preguntas abiertas para el operador
 
-1. **Thomas** (nombres propios): ¿molécula por entidad (huella propia) o marcador de nombre genérico?
+1. ~~**Thomas** (nombres propios)~~ → **RESUELTA (DL-021)**: marcador de nombre — `[N thomas]`, símbolo sin huella, fuera de la malla. Los nombres jamás encabezan; las relaciones encabezan.
 2. **El hueco interrogativo** (WHAT en preguntas): ¿lo dejamos como posición cuestionada implícita o pedimos un marcador estructural?
 3. **Colores** (blue/red): ¿moléculas por color o caen a la primera cata?
 4. **'get'** (el verbo más ambiguo del inglés): ¿molécula o frame take/come según contexto?
