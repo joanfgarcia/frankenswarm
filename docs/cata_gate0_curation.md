@@ -1,6 +1,19 @@
 # Cata gate-0: clasificación y traducción justa (borrador para curación)
 
-> DL-016/017/018 aplicados. Fuente: pool de etapa 0-1 (1.66M frases, 247 palabras reales).
+> DL-016→022 aplicados. Fuente: pool de etapa 0-1 (1.66M frases, 247 palabras reales).
+> **Actualizado 3-sep**: nombres propios (DL-021), paleta y emociones sembradas (DL-022),
+> definiciones en cadena (DL-020). Vocabulario v2 vivo: 16 moléculas sembradas
+> (`scripts/seed_vocab_v2.py`, reproducible).
+
+## Estado de la siembra v2 (lo que ya NO hace falta curar)
+
+Registradas y sembradas (`configs/k65p_v2/moleculas.json`):
+- **Del gate (5/59)**: fire, sun, earth, blue, red
+- **Paleta extra (DL-022)**: black, white, yellow, brown, purple, green — el pintor completo
+- **Emociones film 1 (DL-022)**: joy, sadness, anger, fear, disgust — arrastre emoción→color
+  (asco many-to-many: verde canon Pixar + marrón estudios/biología)
+- **Pre-aprobadas por el operador (DL-020)**: child, baby — la cadena definicional
+  person(primo) → child → baby; a re-sembrar con el lote
 
 
 ## Resumen
@@ -8,10 +21,10 @@
 | destino | n | nota |
 |---|---|---|
 | primo directo/flexionado | 111 | mapeo literal, incl. water/hot/move/want/see/say |
-| **molécula v2 a curar** | 59 | idea fuente en inglés; tú curas |
+| **molécula v2 a curar** | 59 → **54 pendientes** | 5 ya sembradas (fire/sun/earth/blue/red); child/baby pre-aprobadas (DL-020) |
 | marco composicional | 42 | la traducción justa NSM (love, have, preguntas, again...) |
 | cae justamente | 38 | artículos, copulativos, interjecciones |
-| nombre propio | 1 | Thomas — decisión pendiente |
+| nombre propio | 1 | Thomas → `[N thomas]` (DL-021, resuelto) |
 | sin clasificar | 2 | get (verbo ambiguo), group (→ marcador G) |
 
 ## Los 59 candidatos a molécula (tú curas: aprueba / corrige la idea / rechaza)
@@ -23,7 +36,7 @@
 | ball | a round thing children play with |
 | bark | the sound of the dog |
 | bed | the thing one sleeps on |
-| blue | the color of the sky |
+| ~~blue~~ | ~~the color of the sky~~ → **REGISTRADA (DL-022)** |
 | book | things with words inside to read |
 | box | a thing with empty inside, for putting things |
 | boy | a young male person |
@@ -37,9 +50,9 @@
 | daddy | the male parent |
 | dog | an animal that says bark, lives with people |
 | drink | put water in the body |
-| earth | the ground; the big thing we stand on |
+| ~~earth~~ | ~~the ground; the big thing we stand on~~ → **REGISTRADA (DL-022)** |
 | eat | put food in the body |
-| fire | hot light that can burn and kill |
+| ~~fire~~ | ~~hot light that can burn and kill~~ → **REGISTRADA (DL-022)** |
 | food | the things living beings eat |
 | forest | many trees together |
 | friend | a person one feels good with |
@@ -62,13 +75,13 @@
 | put | move a thing to a place and touch it there |
 | rain | water that falls from above |
 | read | see the words of a book and know them |
-| red | the color of blood/fire |
+| ~~red~~ | ~~the color of blood/fire~~ → **REGISTRADA (DL-022)** |
 | river | water that moves on the earth |
 | sit | the body goes down and rests on something |
 | sleep | the body rests: eyes closed, not moving |
 | stone | a hard thing that does not move by itself |
 | storm | bad weather: much water and wind from the sky |
-| sun | the bright thing above, far, that makes the day |
+| ~~sun~~ | ~~the bright thing above, far, that makes the day~~ → **REGISTRADA (DL-022)** |
 | take | touch a thing and move it to oneself |
 | toys | the things children play with |
 | train | the big thing on rails that moves people |
@@ -143,10 +156,28 @@
 | *he is in the house* | `[inside SOMEONE house]` | locativo = primo INSIDE |
 | *it is hot* | `[hot something]` | atribución directa del primo HOT |
 
+## Orden de curación recomendado (capas definicionales — DL-020)
+
+Cada molécula solo referencia las ya definidas, así que el lote se cura por capas:
+1. **Gente y familia** (8): mom, dad, baby✝, child✝, boy, kid, man, friend
+2. **Animales y sonidos** (5): dog, cat, bark, meow (+animal ya en seed demos)
+3. **Naturaleza** (6): tree, forest, river, rain, storm, night, moon, stone, cave
+4. **Cosas** (11): ball, apple, bed, book, box, bread, car, food, house, home, milk, toys, train
+5. **Acciones** (12): eat, drink, play, sleep, give, help, kiss, make, need, put, read, sit, take, try, turn
+6. **Cualidades/estados** (3): color, hurt, wound, way
+
+✝ child/baby ya tienen borrador aprobado (cadena person→child→baby, DL-020).
+
 ## Preguntas abiertas para el operador
 
 1. ~~**Thomas** (nombres propios)~~ → **RESUELTA (DL-021)**: marcador de nombre — `[N thomas]`, símbolo sin huella, fuera de la malla. Los nombres jamás encabezan; las relaciones encabezan.
 2. **El hueco interrogativo** (WHAT en preguntas): ¿lo dejamos como posición cuestionada implícita o pedimos un marcador estructural?
-3. **Colores** (blue/red): ¿moléculas por color o caen a la primera cata?
+3. ~~**Colores**~~ → **RESUELTA (DL-022)**: paleta del pintor (blanco/rojo/amarillo/azul/negro
+   + marrón y mezclas) sobre los primos luz/oscuro/caliente/frío; arrastre emoción→color
+   (la asimetría de contaminación: la pelota roja queda limpia, la ira lleva su rojo).
 4. **'get'** (el verbo más ambiguo del inglés): ¿molécula o frame take/come según contexto?
 5. **'oh no' / 'yeah'**: ¿caen o son contextos de SILENCIO/alarm?
+6. **child/baby** (DL-020): ¿las re-sembramos tal cual (cadena person→child→baby) o
+   esperan a la curación del lote gente?
+7. **Los sonidos** (bark/meow): ¿moléculas de sonido o marcos `[say dog [G bark]]`
+   ("el perro dice bark")? El marco es más NSM-justo: el sonido es lo que se dice.
