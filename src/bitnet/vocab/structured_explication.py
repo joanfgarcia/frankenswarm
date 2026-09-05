@@ -194,24 +194,27 @@ class StructuredExplication:
 				if negated:
 					hits[name] = hits.get(name, 0) - 1
 				continue
+			# LA MALLA unificada (DL-018/020/022): CUALQUIER argumento de
+			# contenido propaga — molécula → su glifo completo (cadena
+			# definicional baby→child→person, prototipos fire→red); primo o
+			# palabra → juicio directo
 			if head_id in UNARY_OPS or head_id in BINARY_OPS:
-				hits[name] = hits.get(name, 0) + (-1 if negated else 1)
+				self._contribute(name, negated, hits)
 			elif anchor_atom:
-				# LA MALLA (DL-018, extendida 3-sep): los argumentos de contenido
-				# que son MOLÉCULAS también propagan su glifo — la definición en
-				# cadena (baby→child→person) es doctrina Goddard: semantic
-				# molecules dentro de explicaciones, todo funda en primos
-				if name in self.molecule_glyphs:
-					mg = self.molecule_glyphs[name]
-					sign = -1 if negated else 1
-					for j in range(N_PRIMES):
-						if mg[j] != 0:
-							pn = PRIME_NAME[j]
-							hits[pn] = hits.get(pn, 0) + sign * int(mg[j])
-				else:
-					# argumento de una cláusula sobre el ancla: contenido
-					# (los rellenos concretos caracterizan la definición)
-					hits[name] = hits.get(name, 0) + (-1 if negated else 1)
+				self._contribute(name, negated, hits)
+
+	def _contribute(self, name: str, negated: bool, hits: dict) -> None:
+		"""Contribución de un argumento de contenido: si es molécula, la malla
+		propaga su glifo (con polaridad); si no, cuenta como juicio."""
+		sign = -1 if negated else 1
+		if name in self.molecule_glyphs:
+			mg = self.molecule_glyphs[name]
+			for j in range(N_PRIMES):
+				if mg[j] != 0:
+					pn = PRIME_NAME[j]
+					hits[pn] = hits.get(pn, 0) + sign * int(mg[j])
+		else:
+			hits[name] = hits.get(name, 0) + sign
 
 	def project_flat(self, anchors: set | None = None) -> dict[str, int]:
 		anchors = anchors or self.anchor_names

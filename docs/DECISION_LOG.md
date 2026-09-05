@@ -7,6 +7,38 @@ se añade una entrada nueva que la referencia.
 
 ---
 
+## DL-022 · 2026-09-03 — Paleta del pintor y la capa emocional: arrastre emoción→color, many-to-many
+
+**Decisión de dirección (operador confirmado)**: las EMOCIONES arrastran los trits de
+sus colores, no al revés — la asimetría de contaminación: si red arrastrara ira,
+"red ball" llevaría emoción a cada mención; con el arrastre invertido, la ira lleva
+su color y la pelota roja queda limpia.
+
+**La base**: los 5 del pintor (blanco/rojo/amarillo/azul/negro — Berlin & Kay, los
+categoremas humanos) sobre `luz`(63)/`oscuro`(64) y `caliente`/`frío` — los primos YA
+diferencian la paleta (rojo=cálido, azul=frío). El negro NO es el vector cero
+(ley L1: silencio): es contraste puro `{luz:−1}`. Mezclas duales: los secundarios
+(púrpura, verde) son moléculas con doble prototipo — el trit agregado registra la
+ambivalencia (frío:−1+1=0) — una MEZCLA no es "un tipo de": el F cabeza-dominante
+es herencia de categoría, no blend. Límite documentado: orange≡yellow colisionan
+(ambos cálidos) — pendiente de plano estructural si el corpus lo exige.
+
+**El mapeo emocional, science-first con canon**: revisión sistemática (132 estudios,
+128 años, 42.266 participantes, 30 países — Jonauskaitė & Möhr 2025): amarillo-alegría
+90% de estudios, rojo-ira 73%, azul-tristeza 53%, correspondencia universal r=.88.
+**Asco many-to-many**: verde (canon Pixar — brócoli de Riley, sincronía con red-pill)
+Y marrón (estudios + biología del asco: Rozin, contaminación) — ambas tradiciones en
+el arrastre, fuentes en la KB. El eje activación EMERGIÓ del arrastre: ira caliente
+(frío:−1) → tristeza fría (+1) → miedo/asco ambivalentes (0) — la neurociencia
+codificada sin pedirla.
+
+**La convención definicional de estados**: las emociones se definen como estados
+sentidos — `[feel people joy]` (el ancla como estado-argumento de feel), no
+cláusulas sin ancla. Núcleo NSM + intensidad/valencia + arrastre de color.
+
+Semilla reproducible: `scripts/seed_vocab_v2.py` — 16 moléculas (fire, sun, earth,
+paleta 6, mezclas 2, emociones 5), cero colisiones.
+
 ## DL-021 · 2026-09-03 — Nombres propios como símbolos: el marcador [N] y la base de hechos
 
 **Doctrina del operador** (dos casos): (1) hechos-relación entre nombres que se
