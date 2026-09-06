@@ -15,8 +15,11 @@ seed = json.loads((BASE / "configs" / "k65p_v2" / "moleculas.json").read_text(en
 # ⚠ = hueco doctrinal detectado al redactar (ver Preguntas nuevas)
 DRAFTS = [
 	# ── capa A: la base animal ──
-	("animal", "a living thing that moves by itself and can act — and is not people",
-	 "vive; se mueve; puede hacer; no es gente", ["[live animal]", "[move animal]", "[can [do animal]]", "[not [G people animal]]"], "A"),
+	("animal", "a living thing that moves by itself and can act — a little like someone, but not of the people",
+	 "como alguien (poco); es alguien; no es de la gente; vive; se mueve; puede hacer",
+	 ["[like animal someone]", "[G someone animal]", "[not [G people animal]]", "[live animal]", "[move animal]", "[can [do animal]]"], "A"),
+	("vegetal", "a living thing not at all like someone",
+	 "vive; no es como alguien; no es alguien", ["[live vegetal]", "[not [like vegetal someone]]"], "A"),
 	# ── capa B: gente y familia (compuestos de SOMEONE) ──
 	("child", "a young person", "es joven; es pequeño; es de la gente (el alguien llega por young: ya no hace falta [G someone child])", ["[young child]", "[small child]", "[G people child]"], "B"),
 	("baby", "a very young child", "muy joven; muy pequeño; es una clase de child", ["[very [young baby]]", "[very [small baby]]", "[G child baby]"], "B"),
@@ -68,8 +71,9 @@ DRAFTS = [
 	("cat", "a domestic animal that says meow",
 	 "es de la familia animal; dice meow; es doméstico", ["[G animal cat]", "[say cat meow]", "[G domestic cat]"], "C"),
 	# ── capa D: naturaleza ──
-	("tree", "a tall living thing with green parts",
-	 "vive; es grande; tiene partes verdes", ["[live tree]", "[big tree]", "[G green tree]"], "D"),
+	("tree", "a tall living vegetal with green parts that needs light to live",
+	 "vive; es grande; tiene partes verdes; es vegetal; es de la luz",
+	 ["[live tree]", "[big tree]", "[G green tree]", "[G vegetal tree]", "[G light tree]"], "D"),
 	("forest", "many trees together (collection = group + quantity, DL-017)",
 	 "árboles juntos; muchos juntos", ["[G tree forest]", "[G much forest]"], "D"),
 	("river", "water that moves", "es de la familia del agua; se mueve", ["[G water river]", "[move river]"], "D"),

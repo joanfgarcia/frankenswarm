@@ -107,7 +107,8 @@
 | capa | molécula | idea fuente (EN) | descomposición NSM | K-65P (borrador) |
 |---|---|---|---|---|
 | **A — la base animal** | | | | |
-| animal | a living thing that moves by itself and can act — and is not people | vive; se mueve; puede hacer; no es gente | `[live animal] [move animal] [can [do animal]] [not [G people animal]]` |
+| animal | a living thing that moves by itself and can act — a little like someone, but not of the people | como alguien (poco); es alguien; no es de la gente; vive; se mueve; puede hacer | `[like animal someone] [G someone animal] [not [G people animal]] [live animal] [move animal] [can [do animal]]` |
+| vegetal | a living thing not at all like someone | vive; no es como alguien; no es alguien | `[live vegetal] [not [like vegetal someone]]` |
 | **B — gente y familia** | | | | |
 | child | a young person | es joven; es pequeño; es de la gente (el alguien llega por young: ya no hace falta [G someone child]) | `[young child] [small child] [G people child]` |
 | baby | a very young child | muy joven; muy pequeño; es una clase de child | `[very [young baby]] [very [small baby]] [G child baby]` |
@@ -134,7 +135,7 @@
 | dog | a domestic animal that says bark | es de la familia animal; dice bark; es doméstico | `[G animal dog] [say dog bark] [G domestic dog]` |
 | cat | a domestic animal that says meow | es de la familia animal; dice meow; es doméstico | `[G animal cat] [say cat meow] [G domestic cat]` |
 | **D — naturaleza** | | | | |
-| tree | a tall living thing with green parts | vive; es grande; tiene partes verdes | `[live tree] [big tree] [G green tree]` |
+| tree | a tall living vegetal with green parts that needs light to live | vive; es grande; tiene partes verdes; es vegetal; es de la luz | `[live tree] [big tree] [G green tree] [G vegetal tree] [G light tree]` |
 | forest | many trees together (collection = group + quantity, DL-017) | árboles juntos; muchos juntos | `[G tree forest] [G much forest]` |
 | river | water that moves | es de la familia del agua; se mueve | `[G water river] [move river]` |
 | rain | water that falls from above | es agua; se mueve hacia abajo | `[G water rain] [below [move rain]]` |
