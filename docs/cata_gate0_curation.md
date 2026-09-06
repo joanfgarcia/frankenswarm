@@ -81,7 +81,8 @@
 | **fire** | hot light that can burn | es de la familia de la luz; es caliente; no es frío; puede hacer algo malo (quemar) | `[G light fire] [hot fire] [not [cold fire]] [can [do fire [G something bad]]]` |
 | **sun** | the very big bright thing above, far away, of the fire family | es de la familia del fuego; es muy grande; está muy lejos; está arriba | `[G fire sun] [very [big sun]] [very [far [exist sun]]] [above [exist sun]]` |
 | **earth** | the very big ground everything lives on, near under our feet, that does not move | es cosa; es muy grande; la gente vive en él abajo; es lo cercano que se toca; no se mueve | `[G thing earth] [very [big earth]] [below [live people earth]] [very [near [touch people earth]]] [not [move earth]]` |
-| **black** | without light; like dying and like cold; what cannot be seen | es oscuro; no es de la familia de la luz; como morir; como el frío; lo que no se ve | `[dark black] [not [G light black]] [like black die] [like black cold] [not [see people black]]` |
+| **blind** | someone who cannot see | alguien que no ve | `[not [see blind something]]` |
+| **black** | without light; like dying and like cold; like blindness | es oscuro; no es de la familia de la luz; como morir; como el frío; como la ceguera | `[dark black] [not [G light black]] [like black die] [like black cold] [like black blind]` |
 | **white** | all the light | toda la luz (saturación) | `[very [G light white]]` |
 | **red** | light like fire | es de la luz; como el fuego | `[G light red] [like red fire]` |
 | **yellow** | light like the sun | es de la luz; como el sol | `[G light yellow] [like yellow sun]` |
