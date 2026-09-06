@@ -120,7 +120,7 @@ def main() -> None:
 	L.append("|---|---|---|---|")
 	NSM_SEED = {
 		"fire": "es de la familia de la luz; es caliente; no es frío; puede hacer algo malo (quemar)",
-		"sun": "muy caliente; no es frío",
+		"sun": "es de la familia del fuego; es muy grande; está muy lejos; está arriba",
 		"earth": "es cosa; no se mueve",
 		"black": "es oscuro; no es de la familia de la luz",
 		"white": "toda la luz (saturación)",

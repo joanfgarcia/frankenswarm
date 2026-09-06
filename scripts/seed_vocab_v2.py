@@ -28,7 +28,8 @@ SEED = [
 	("fire", "hot light that can burn",
 		["[G light fire]", "[hot fire]", "[not [cold fire]]",
 		 "[can [do fire [G something bad]]]"]),  # "es de la luz; es caliente; no es frío; puede hacer algo malo"
-	("sun", "the very hot bright thing above", ["[very [hot sun]]", "[not [cold sun]]"]),
+	("sun", "the very big bright thing above, far away, of the fire family",
+		["[G fire sun]", "[very [big sun]]", "[very [far [exist sun]]]", "[above [exist sun]]"]),
 	("earth", "the ground; the big thing that does not move", ["[G thing earth]", "[not [move earth]]", "[big earth]"]),
 	# ── capa 2: paleta del pintor ──
 	("black", "without light", ["[dark black]", "[not [G light black]]"]),
