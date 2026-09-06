@@ -205,8 +205,11 @@ pero fuera de la siembra hasta que las relaciones simétricas tengan diseño.
 2. ~~Hueco interrogativo~~ → RESUELTA (DL-023): `[Q cláusula]` con glifo querer+saber; la fuerza ilocutiva es del intérprete.
 3. ~~Colores~~ → RESUELTA (DL-022): paleta del pintor + arrastre emoción→color.
 4. ~~'get'~~ → RESUELTA (DL-023): solo-en-contexto — la unidad de traducción es la frase-idea.
-5. **'oh no' / 'yeah'** → PARCIAL: 'yeah' = TRUE (igual que 'yes', ya en el mapa).
-   'oh no' sigue abierto: ¿cae como interjección o es contexto de alarma?
+5. ~~**'oh no' / 'yeah'**~~ → FUERA DE LA LISTA DEL CURADOR (potestad del intérprete):
+   'yeah' = TRUE al léxico (como 'yes'); 'oh no' lo resuelve el intérprete por
+   instancia (alarma/consternación/sorpresa según contexto e intención).
+   Principio (DL-023): el curador define moléculas+gramática; el intérprete decide
+   pragmática, interjecciones y fuerza ilocutiva.
 6. ~~**child/baby**~~ → RESUELTA (verificado contra la semilla real): child es
    sembrable YA tal cual (`young` está sembrado); baby va justo detrás de child.
    Solo falta tu visto bueno a su forma actual.
