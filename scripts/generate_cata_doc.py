@@ -122,7 +122,7 @@ def main() -> None:
 		"fire": "es de la familia de la luz; es caliente; no es frío; puede hacer algo malo (quemar)",
 		"sun": "es de la familia del fuego; es muy grande; está muy lejos; está arriba",
 		"earth": "es cosa; es muy grande; la gente vive en él abajo; es lo cercano que se toca; no se mueve",
-		"black": "es oscuro; no es de la familia de la luz",
+		"black": "es oscuro; no es de la familia de la luz; como morir; como el frío; lo que no se ve",
 		"white": "toda la luz (saturación)",
 		"red": "es de la luz; como el fuego",
 		"yellow": "es de la luz; como el sol",
