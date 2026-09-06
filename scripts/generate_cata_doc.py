@@ -18,8 +18,8 @@ DRAFTS = [
 	("animal", "a living thing that moves by itself and can act — and is not people",
 	 "vive; se mueve; puede hacer; no es gente", ["[live animal]", "[move animal]", "[can [do animal]]", "[not [G people animal]]"], "A"),
 	# ── capa B: gente y familia (compuestos de SOMEONE) ──
-	("child", "a young person", "es alguien; es pequeño", ["[small child]"], "B"),
-	("baby", "a very young child", "es una clase de child; muy pequeño", ["[very [small baby]]"], "B"),
+	("child", "a young person", "es alguien; es pequeño; es de la gente", ["[small child]", "[G people child]", "[G someone child]"], "B"),
+	("baby", "a very young child", "es una clase de child; muy pequeño", ["[very [small baby]]", "[G child baby]"], "B"),
 	("parent", "a person who feels something good toward their baby (care = feel-good-toward, NSM)",
 	 "es alguien; siente algo bueno hacia el bebé", ["[feel parent [G baby good]]"], "B"),
 	("friend", "a person one feels good with",

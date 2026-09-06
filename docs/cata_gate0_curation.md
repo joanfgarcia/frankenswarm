@@ -106,8 +106,8 @@
 | **A — la base animal** | | | | |
 | animal | a living thing that moves by itself and can act — and is not people | vive; se mueve; puede hacer; no es gente | `[live animal] [move animal] [can [do animal]] [not [G people animal]]` |
 | **B — gente y familia** | | | | |
-| child | a young person | es alguien; es pequeño | `[small child]` |
-| baby | a very young child | es una clase de child; muy pequeño | `[very [small baby]]` |
+| child | a young person | es alguien; es pequeño; es de la gente | `[small child] [G people child] [G someone child]` |
+| baby | a very young child | es una clase de child; muy pequeño | `[very [small baby]] [G child baby]` |
 | parent | a person who feels something good toward their baby (care = feel-good-toward, NSM) | es alguien; siente algo bueno hacia el bebé | `[feel parent [G baby good]]` |
 | friend | a person one feels good with | es alguien; se siente algo bueno juntos | `[feel people [G friend good]]` |
 | **C — animales y sonidos** | | | | |

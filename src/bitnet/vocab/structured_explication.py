@@ -219,6 +219,11 @@ class StructuredExplication:
 			roles.append((head_name, "receives_attribute", negated))
 
 		# proyección de argumentos de contenido no genéricos
+		# REGLA DE GRUPO (3-sep, auditoría del operador): dentro de un grupo-G
+		# los miembros son PERTENENCIA definicional, no relleno de rol — los
+		# placeholders genéricos (gente/alguien) SÍ cuentan en [G ...].
+		# [G people child] aporta gente:+1; [want people X] no aporta nada.
+		is_group = head_name in ("G", "g")
 		for i, a in enumerate(args):
 			if isinstance(a, list):
 				self._walk(a, polarity, anchors, hits, roles)
@@ -226,8 +231,9 @@ class StructuredExplication:
 			name = self._resolve(a.name)
 			if name in anchors:
 				continue
-			if name in GENERIC_ROLES and not negated:
-				# placeholder genérico: no caracteriza el concepto
+			if name in GENERIC_ROLES and not is_group:
+				# placeholder genérico de ROL: no caracteriza el concepto
+				# (salvo negado: [not [G people X]] = "X no es de la gente")
 				if negated:
 					hits[name] = hits.get(name, 0) - 1
 				continue
