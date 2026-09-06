@@ -127,7 +127,7 @@
 | cat | a domestic animal that says meow | es de la familia animal; dice meow; es doméstico | `[G cat animal] [say cat meow] [G cat domestic]` |
 | **D — naturaleza** | | | | |
 | tree | a tall living vegetal with green parts that needs light to live | vive; es grande; tiene partes verdes; es vegetal; es de la luz | `[live tree] [big tree] [G tree green] [G tree vegetal] [G tree light]` |
-| forest | many trees together (collection = group + quantity, DL-017) | árboles juntos; muchos juntos | `[G forest tree] [G forest much]` |
+| forest | many trees together (collection = group + quantity, DL-017) | árboles juntos; muchos juntos | `[G forest tree] [G forest much] [G forest dark]` |
 | river | water that moves | es de la familia del agua; se mueve | `[G river water] [move river]` |
 | rain | water that falls from above | es agua; se mueve hacia abajo | `[G rain water] [below [move rain]]` |
 | storm | bad much-water weather | es agua; es malo; es mucho | `[G storm water] [bad storm] [G storm much]` |
@@ -154,18 +154,18 @@
 | turn | the body or a thing changes side | el cuerpo se mueve; cambia de lado | `[move turn] [G turn side] [G turn body]` |
 | way | the thing one moves along from here | es cosa; desde aquí; se mueve por él | `[G way thing] [G way here] [move way]` |
 | **F — cosas** | | | | |
-| ball | a thing children play with | es cosa; se juega con ella; de niños | `[G ball play] [G ball child]` |
+| ball | a thing children play with | es cosa; se juega con ella; de niños | `[G ball thing] [G ball move] [G ball play] [G ball child]` |
 | apple | a sweet food eaten with the mouth (sweet = very-good; mouth → capa de partes del cuerpo) | es comida; es MUY buena; se come | `[G apple food] [very [good apple]] [do people [G apple eat]]` |
-| bread | the food from the earth | es comida; viene de la tierra | `[G bread food] [G bread earth]` |
+| bread | the food from the earth | es comida; viene de la tierra | `[G bread food] [G bread earth] [G bread brown]` |
 | bed | the thing one sleeps on | es cosa; de la familia de dormir | `[G bed thing] [G bed sleep]` |
 | book | things with words inside to read | es cosa; tiene palabras; se lee; tiene dentro | `[G book word] [G book read] [G book inside]` |
-| box | the thing for putting things in | es cosa; de la familia de put | `[G box thing] [G box put]` |
+| box | the thing for putting things in | es cosa; de la familia de put | `[G box thing] [G box inside] [G box put]` |
 | car | a thing that moves people | es cosa; se mueve; lleva gente | `[G car thing] [move car] [G car people]` |
 | train | the big thing that moves people | es cosa; se mueve; lleva gente; es grande | `[G train thing] [move train] [G train people] [big train]` |
 | house | the place where people live | es cosa; la gente vive en él | `[G house thing] [live people house]` |
 | home | the place where the family lives — a good house | es cosa; la gente vive; es bueno | `[G home thing] [live people home] [good home]` |
-| milk | the white food one drinks | es comida; es blanca; de la familia de beber | `[G milk food] [G milk white] [G milk drink]` |
-| toys | the things children play with | es cosa; se juega; de niños | `[G toys thing] [G toys play] [G toys child]` |
+| milk | the white food one drinks | es comida; es blanca; de la familia de beber | `[G milk food] [G milk white] [G milk drink] [G milk agua] [G milk cold]` |
+| toys | the things children play with | es cosa; se juega; de niños | `[G toys thing] [G toys small] [G toys play] [G toys child]` |
 | **G — cualidades y cuerpo** | | | | |
 | color | what things look like in the light | es cosa; se ve; es de la luz | `[G color thing] [see people color] [G color light]` |
 | hurt | the body feels bad | el cuerpo siente algo malo | `[feel body hurt] [bad hurt]` |
