@@ -78,7 +78,7 @@
 
 | molécula | idea fuente (EN) | descomposición NSM | K-65P |
 |---|---|---|---|
-| **fire** | hot light that can burn | es caliente; no es frío | `[hot fire] [not [cold fire]]` |
+| **fire** | hot light that can burn | es de la familia de la luz; es caliente; no es frío; puede hacer algo malo (quemar) | `[G light fire] [hot fire] [not [cold fire]] [can [do fire [G something bad]]]` |
 | **sun** | the very hot bright thing above | muy caliente; no es frío | `[very [hot sun]] [not [cold sun]]` |
 | **earth** | the ground; the big thing that does not move | es cosa; no se mueve | `[G thing earth] [not [move earth]] [big earth]` |
 | **black** | without light | es oscuro; no es de la familia de la luz | `[dark black] [not [G light black]]` |
@@ -124,27 +124,27 @@
 | **E — comida y acciones** | | | | |
 | food | the things living beings eat — what keeps alive | es cosa; es buena | `[G thing food] [good food]` |
 | play | do things for feel-good | se hace; es bueno | `[do people play] [good play]` |
-| eat | put food in the body | se hace; es de la familia de la comida | `[do people eat] [G food eat]` |
-| drink | put water in the body | se hace; es de la familia del agua | `[do people drink] [G water drink]` |
-| sleep | the body rests and does not move | no se mueve; es un momento | `[not [move sleep]] [G moment sleep]` |
+| eat | put food in the body | se hace; es de la familia de la comida; es del cuerpo | `[do people eat] [G food eat] [G body eat]` |
+| drink | put water in the body | se hace; es de la familia del agua; es del cuerpo | `[do people drink] [G water drink] [G body drink]` |
+| sleep | the body rests and does not move | el cuerpo no se mueve; es un momento | `[not [move sleep]] [G moment sleep] [G body sleep]` |
 | give | do, touching, something good for someone | se hace; se toca; es bueno | `[do people give] [touch people give] [G good give]` |
 | help | do something so someone feels good and can do it | se hace; se siente algo bueno | `[do people help] [feel people [G help good]]` |
-| kiss | touch with the mouth to feel-good | se toca; se siente algo bueno | `[touch people kiss] [feel people [G kiss good]]` |
+| kiss | touch with the mouth to feel-good (mouth → capa de partes del cuerpo) | se toca; se siente algo bueno | `[touch people kiss] [feel people [G kiss good]]` |
 | make | do so a new thing exists | se hace; hace existir | `[do people make] [G exist make]` |
 | need | want something very much | se quiere; es muy bueno tenerlo | `[want people need] [very [good need]]` |
-| put | move a thing to a place and touch it there | se hace; se mueve; se toca | `[do people put] [move people put] [touch people put]` |
-| read | see words and know them | se ve; se sabe | `[see people read] [know people read]` |
-| sit | the body moves down and then does not move | se mueve hacia abajo; luego no se mueve | `[below [move sit]] [not [move sit]]` |
+| put | move a thing to a place and touch it there | se hace; se mueve; se toca; en un lado | `[do people put] [move people put] [touch people put] [G side put]` |
+| read | see words and know them | se ven las palabras; se saben | `[see people read] [know people read] [G word read]` |
+| sit | the body moves down and then does not move | el cuerpo se mueve hacia abajo; luego no se mueve | `[below [move sit]] [not [move sit]] [G body sit]` |
 | take | touch a thing and move it to oneself | se toca; se mueve | `[touch people take] [move people take]` |
-| try | do wanting it to work, not knowing if it can | se hace; se quiere; no se sabe si se puede | `[do people try] [want people try] [not [know people [can [do try]]]]` |
-| turn | the body or a thing changes side | se mueve; cambia de lado | `[move turn] [G side turn]` |
+| try | do wanting it to work, not knowing if it can — and if it works, it turns out good | se hace; se quiere; no se sabe si se puede; y si sale, queda bueno | `[do people try] [want people try] [not [know people [can [do try]]]] [if [do people try] [good try]]` |
+| turn | the body or a thing changes side | el cuerpo se mueve; cambia de lado | `[move turn] [G side turn] [G body turn]` |
 | way | the thing one moves along from here | es cosa; desde aquí; se mueve por él | `[G thing way] [G here way] [move way]` |
 | **F — cosas** | | | | |
 | ball | a thing children play with | es cosa; se juega con ella; de niños | `[G play ball] [G child ball]` |
-| apple | a sweet food — very good in the mouth (sweet = very-good) | es comida; es MUY buena (dulce = very-good) | `[G food apple] [very [good apple]]` |
+| apple | a sweet food eaten with the mouth (sweet = very-good; mouth → capa de partes del cuerpo) | es comida; es MUY buena; se come | `[G food apple] [very [good apple]] [do people [G eat apple]]` |
 | bread | the food from the earth | es comida; viene de la tierra | `[G food bread] [G earth bread]` |
 | bed | the thing one sleeps on | es cosa; de la familia de dormir | `[G thing bed] [G sleep bed]` |
-| book | things with words inside to read | es cosa; tiene palabras; se lee | `[G word book] [G read book]` |
+| book | things with words inside to read | es cosa; tiene palabras; se lee; tiene dentro | `[G word book] [G read book] [G inside book]` |
 | box | the thing for putting things in | es cosa; de la familia de put | `[G thing box] [G put box]` |
 | car | a thing that moves people | es cosa; se mueve; lleva gente | `[G thing car] [move car] [G people car]` |
 | train | the big thing that moves people | es cosa; se mueve; lleva gente; es grande | `[G thing train] [move train] [G people train] [big train]` |
@@ -176,6 +176,31 @@
 8. **⚠ NUEVA — El eje de género no existe en los 65 primos**: mom/dad y boy/man colisionan sin él. Opciones: (a) un solo concepto *parent* con mom/dad como surfaces hasta que exista la capa, (b) diseñar género como moléculas (NSM: "una clase de gente que puede hacer bebés" vs "no"), (c) esperar. Mi recomendación: (a) para la cata — *parent* cubre mom y dad sin doctrina forzada.
 9. **⚠ NUEVA — El eje del gusto no existe** (dulce/amargo): apple se distingue de bread por prototipos (apple=buena, bread=de la tierra) — suficiente para la cata, pero un día el corpus de comida lo pedirá.
 10. **⚠ NUEVA — El arrastre arrastra también los contrastes**: las referencias a moléculas traen sus trits −1 (earth=mover:−1 contaminó river en un borrador; resuelto usando la familia `[G water river]` en vez de citar earth). Convención: **preferir familia-G a referencia directa cuando el rol es locativo/categorial**, reservar la referencia directa para cuando el contenido ES definicional.
+
+## Convención de referencia K-65P (cómo "seguir hablando de lo dicho" sin marcador nuevo)
+
+**No hace falta un marcador tipo G o N para la anáfora** — tres mecanismos existentes
+la cubren (auditoría del ejemplo fire, 3-sep):
+1. **El ancla ES la anáfora**: la palabra definida repetida en sus cláusulas (`[hot fire]`
+   + `[G light fire]` — los dos `fire` son "el mismo fuego", como el esto/ello NSM).
+2. **El grupo-G ES la pertenencia a familia**: `[G light fire]` = "el fuego es de la
+   familia de la luz" — el "es luz" que la idea pedía y las cláusulas no tenían.
+3. **El anidamiento ES la referencia a lo dicho**: `[think people [can [happen bad]]]`
+   — la cláusula interior es el objeto de la exterior (el "eso" de los predicados
+   mentales). Los primos THIS(52)/SAME(53) existen para los casos explícitos.
+4. **Regla modal** (refinamiento DL-014): la negación de un predicado MENTAL niega
+   el estado, no el complemento — "no sé si puedo hacerlo" niega el SABER; el hacer
+   hipotético no cancela el hacer afirmado (`try` = hacer queriendo sin saber, no
+   "hacer cancelado"). La negación de contenido FÍSICO sí atribuye el contraste
+   (`[not [move sleep]]` → mover:−1, el patrón hielo).
+5. **Regla de completitud**: todo contenido material de la idea fuente debe aparecer
+   en las cláusulas (lo que no aparece, el glifo no lo sabrá) — y cada trit debe
+   trazarse a una palabra de la idea. La auditoría idea→huella forma parte de la
+   generación de este documento.
+6. **Inglés para humanos, números para la máquina**: las cláusulas curadas usan
+   nombres EN (`[below ...]`, `[can ...]`) — nunca ids numéricos, que colisionan
+   visualmente (`[43 ...]` es dentro, NO poder — confusión real detectada en fire).
+   La forma canónica numérica la genera `linearize()`.
 
 ## El pipeline tras tu curación
 

@@ -25,7 +25,9 @@ from src.bitnet.vocab.registry_v2 import VocabularyV2  # noqa: E402
 
 SEED = [
 	# ── capa 1: prototipos ──
-	("fire", "hot light that can burn", ["[hot fire]", "[not [cold fire]]"]),
+	("fire", "hot light that can burn",
+		["[G light fire]", "[hot fire]", "[not [cold fire]]",
+		 "[can [do fire [G something bad]]]"]),  # "es de la luz; es caliente; no es frío; puede hacer algo malo"
 	("sun", "the very hot bright thing above", ["[very [hot sun]]", "[not [cold sun]]"]),
 	("earth", "the ground; the big thing that does not move", ["[G thing earth]", "[not [move earth]]", "[big earth]"]),
 	# ── capa 2: paleta del pintor ──

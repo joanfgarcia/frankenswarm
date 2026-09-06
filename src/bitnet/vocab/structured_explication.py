@@ -30,7 +30,7 @@ k65p_src = base_dir.parent / "k65p" / "src"
 if k65p_src.exists():
 	sys.path.append(str(k65p_src))
 
-from k65p.core import parse_k65p  # noqa: E402
+from k65p.core import Atom, parse_k65p  # noqa: E402
 from k65p.primes import N_PRIMES, PRIMES, SYMBOL_TO_ID  # noqa: E402
 from k65p.validator import parse_k65p as _p  # noqa: F401  (alias histórico)
 from k65p.validator import validate  # noqa: E402
@@ -75,6 +75,13 @@ ROLE_FRAMES = {  # prime_id → (nombre del rol del 1er argumento, nombre del 2�
 
 EVALUATORS = {8, 9, 10, 11, 26, 60, 61, 64}
 NEGATION = 44  # no
+MENTAL = {12, 13, 14, 15, 16, 17, 18}  # pensar saber querer sentir ver oír decir
+
+# REGLA MODAL (DL-014 refinado 3-sep): la negación de un predicado MENTAL niega
+# el estado, no el complemento — "no sé si puedo hacerlo" niega el SABER, pero
+# el hacer de su interior es hipotético, no negado: el contenido hipotético NO
+# define (polaridad vacía bajo él). La negación de contenido FÍSICO sí atribuye
+# el contraste al ancla ([not [move sleep]] → mover:−1, el patrón hielo).
 UNARY_OPS = {44, 45, 46, 31, 30, 32, 37, 41, 40, 38, 39, 43, 49}  # +49 VERY (DL-020)
 BINARY_OPS = {48, 47, 51}
 
@@ -127,6 +134,20 @@ class StructuredExplication:
 		return key
 
 	@staticmethod
+	@staticmethod
+	def _head_id(atom) -> int | None:
+		name_cf = atom.name.casefold()
+		if name_cf.lstrip("-").isdigit():
+			return int(name_cf)
+		return SYMBOL_TO_ID.get(name_cf)
+
+	@staticmethod
+	def _has_anchor_list(node, anchors: set) -> bool:
+		if isinstance(node, list):
+			return any(StructuredExplication._has_anchor_list(c, anchors) for c in node[1:])
+		return node.name.casefold() in anchors if hasattr(node, "name") else False
+
+	@staticmethod
 	def _has_anchor(node, anchors: set) -> bool:
 		"""¿Aparece algún nombre del ancla en cualquier punto del subárbol?"""
 		if isinstance(node, list):
@@ -150,7 +171,19 @@ class StructuredExplication:
 
 		if head_id == NEGATION:
 			for a in args:
-				self._walk(a, -abs(polarity), anchors, hits, roles)
+				if (isinstance(a, list) and a and isinstance(a[0], Atom)
+						and self._head_id(a[0]) in MENTAL):
+					# el estado negado SÍ define (know:−1); su complemento no:
+					# [not [know people [can [do try]]]] niega el SABER de try,
+					# pero hacer/poder son hipotéticos, no negados (try = hacer
+					# queriendo sin saber — no "hacer cancelado")
+					mhid = self._head_id(a[0])
+					mname = self._resolve(a[0].name)
+					if self._has_anchor_list(a, anchors):
+						hits[mname] = hits.get(mname, 0) - abs(polarity)
+						roles.append((mname, ROLE_FRAMES[mhid][0], True))
+				else:
+					self._walk(a, -abs(polarity), anchors, hits, roles)
 			return
 
 		# ¿el ancla participa en esta cláusula? A nivel de átomo directo define
