@@ -36,9 +36,11 @@ SEED = [
 	# ── capa 2: paleta del pintor ──
 	("blind", "if someone is blind, then they cannot see",
 		["[if [G blind someone] [not [can [see blind]]]]"]),
-	("black", "without light; like dying and like cold; like blindness",
+	("void", "what does not exist",
+		["[not [exist void]]"]),
+	("black", "without light; like dying and like cold; like blindness; like the void",
 		["[dark black]", "[not [G light black]]", "[like black die]", "[like black cold]",
-		 "[like black blind]"]),
+		 "[like black blind]", "[like black void]"]),
 	("red", "light like fire", ["[G light red]", "[like red fire]"]),
 	("yellow", "light like the sun", ["[G light yellow]", "[like yellow sun]"]),
 	("blue", "light like water, cold", ["[G light blue]", "[cold blue]"]),

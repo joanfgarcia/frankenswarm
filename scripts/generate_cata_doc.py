@@ -90,6 +90,7 @@ DRAFTS = [
 
 # superposiciones léxicas (synónimos → surfaces, no moléculas nuevas)
 SYNONYMS = {
+	"null": "void (el valor nulo ES el vacío: definirlo aparte colisionaría — misma definición, misma huella)",
 	"daddy": "dad (mismo concepto: parent — pendiente decisión de género, ⚠ P8)",
 	"mommy": "mom (mismo concepto: parent — pendiente ⚠ P8)",
 	"mummy": "mom (idem)",
@@ -122,7 +123,8 @@ def main() -> None:
 		"fire": "es de la familia de la luz; es caliente; no es frío; puede hacer algo malo (quemar)",
 		"sun": "es de la familia del fuego; es muy grande; está muy lejos; está arriba",
 		"earth": "es cosa; es muy grande; la gente vive en él abajo; es lo cercano que se toca; no se mueve",
-		"black": "es oscuro; no es de la familia de la luz; como morir; como el frío; como la ceguera",
+		"black": "es oscuro; no es de la familia de la luz; como morir; como el frío; como la ceguera; como el vacío",
+		"void": "lo que no existe",
 		"blind": "si alguien es ciego, entonces no puede ver",
 		"white": "toda la luz; como vivir (eje vida/muerte con black↔morir); como lo limpio",
 		"dirty": "como lo no-bueno; como el marrón; es malo",

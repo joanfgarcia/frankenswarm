@@ -82,7 +82,8 @@
 | **sun** | the very big bright thing above, far away, of the fire family | es de la familia del fuego; es muy grande; está muy lejos; está arriba | `[G fire sun] [very [big sun]] [very [far [exist sun]]] [above [exist sun]]` |
 | **earth** | the very big ground everything lives on, near under our feet, that does not move | es cosa; es muy grande; la gente vive en él abajo; es lo cercano que se toca; no se mueve | `[G thing earth] [very [big earth]] [below [live people earth]] [very [near [touch people earth]]] [not [move earth]]` |
 | **blind** | if someone is blind, then they cannot see | si alguien es ciego, entonces no puede ver | `[if [G blind someone] [not [can [see blind]]]]` |
-| **black** | without light; like dying and like cold; like blindness | es oscuro; no es de la familia de la luz; como morir; como el frío; como la ceguera | `[dark black] [not [G light black]] [like black die] [like black cold] [like black blind]` |
+| **void** | what does not exist | lo que no existe | `[not [exist void]]` |
+| **black** | without light; like dying and like cold; like blindness; like the void | es oscuro; no es de la familia de la luz; como morir; como el frío; como la ceguera; como el vacío | `[dark black] [not [G light black]] [like black die] [like black cold] [like black blind] [like black void]` |
 | **red** | light like fire | es de la luz; como el fuego | `[G light red] [like red fire]` |
 | **yellow** | light like the sun | es de la luz; como el sol | `[G light yellow] [like yellow sun]` |
 | **blue** | light like water, cold | es de la luz; es fría | `[G light blue] [cold blue]` |
@@ -162,6 +163,7 @@
 
 ## 4. Superposiciones léxicas (sinónimos → surfaces, no moléculas nuevas)
 
+- **null** → void (el valor nulo ES el vacío: definirlo aparte colisionaría — misma definición, misma huella)
 - **daddy** → dad (mismo concepto: parent — pendiente decisión de género, ⚠ P8)
 - **mommy** → mom (mismo concepto: parent — pendiente ⚠ P8)
 - **mummy** → mom (idem)
