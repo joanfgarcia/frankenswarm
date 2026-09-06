@@ -117,6 +117,12 @@
 | female | someone in whom babies live (NSM: can bear) | es alguien; los bebés viven en ella | `[G someone female] [live baby female]` |
 | son | a male offspring | es offspring; es macho | `[male son] [G offspring son]` |
 | daughter | a female offspring | es offspring; es hembra | `[female daughter] [G offspring daughter]` |
+| mom | a female parent | es hembra; es de la clase parent | `[female mom] [G parent mom]` |
+| dad | a male parent | es macho; es de la clase parent | `[male dad] [G parent dad]` |
+| grandpa | an old male parent (the parent of a parent) | es macho; es parent; es viejo | `[male grandpa] [G parent grandpa] [G old grandpa]` |
+| grandma | an old female parent (the parent of a parent) | es hembra; es parent; es vieja | `[female grandma] [G parent grandma] [G old grandma]` |
+| uncle | a male son of a grandparent (the parent's brother) | es macho; es son; es de la familia grandpa | `[male uncle] [G son uncle] [G grandpa uncle]` |
+| aunt | a female daughter of a grandparent (the parent's sister) | es hembra; es daughter; es de la familia grandpa | `[female aunt] [G daughter aunt] [G grandpa aunt]` |
 | friend | a known person one feels good with | alguien conoce a friend; ese alguien se siente bien con friend; es alguien | `[know someone friend] [feel people [G friend good]] [G someone friend]` |
 | **C — animales y sonidos** | | | | |
 | bark | the sound of the dog — a big sound people hear | la gente lo oye; es un sonido grande | `[hear people bark] [big bark]` |
