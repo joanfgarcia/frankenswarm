@@ -34,6 +34,12 @@ SEED = [
 		["[G thing earth]", "[very [big earth]]", "[below [live people earth]]",
 		 "[very [near [touch people earth]]]", "[not [move earth]]"]),
 	# ── capa 2: paleta del pintor ──
+	("new", "like the short-time thing",
+		["[like new [G short_time thing]]"]),
+	("young", "like the short-time someone",
+		["[like young [G short_time someone]]"]),
+	("old", "like the long-time thing and the long-time someone",
+		["[like old [G long_time thing]]", "[like old [G long_time someone]]"]),
 	("blind", "if someone is blind, then they cannot see",
 		["[if [G blind someone] [not [can [see blind]]]]"]),
 	("void", "what does not exist",

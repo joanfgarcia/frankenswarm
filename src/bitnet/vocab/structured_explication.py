@@ -240,10 +240,13 @@ class StructuredExplication:
 			# LA MALLA unificada (DL-018/020/022): CUALQUIER argumento de
 			# contenido propaga — molécula → su glifo completo (cadena
 			# definicional baby→child→person, prototipos fire→red); primo o
-			# palabra → juicio directo
+			# palabra → juicio directo.
+			# REGLA DE GRUPO-TÉRMINO (3-sep): un grupo-G como argumento aporta sus
+			# miembros lleve ancla o no — el prototipo se invoca entero
+			# ([like new [G short_time thing]]: new es como la cosa-de-poco-tiempo).
 			if head_id in UNARY_OPS or head_id in BINARY_OPS:
 				self._contribute(name, negated, hits)
-			elif anchor_atom:
+			elif anchor_atom or is_group:
 				self._contribute(name, negated, hits)
 
 	def _contribute(self, name: str, negated: bool, hits: dict) -> None:

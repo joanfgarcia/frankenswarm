@@ -81,6 +81,9 @@
 | **fire** | hot light that can burn | es de la familia de la luz; es caliente; no es frío; puede hacer algo malo (quemar) | `[G light fire] [hot fire] [not [cold fire]] [can [do fire [G something bad]]]` |
 | **sun** | the very big bright thing above, far away, of the fire family | es de la familia del fuego; es muy grande; está muy lejos; está arriba | `[G fire sun] [very [big sun]] [very [far [exist sun]]] [above [exist sun]]` |
 | **earth** | the very big ground everything lives on, near under our feet, that does not move | es cosa; es muy grande; la gente vive en él abajo; es lo cercano que se toca; no se mueve | `[G thing earth] [very [big earth]] [below [live people earth]] [very [near [touch people earth]]] [not [move earth]]` |
+| **new** | like the short-time thing | como la cosa de poco-tiempo | `[like new [G short_time thing]]` |
+| **young** | like the short-time someone | como el alguien de poco-tiempo | `[like young [G short_time someone]]` |
+| **old** | like the long-time thing and the long-time someone | como lo de mucho-tiempo (cosa y alguien) | `[like old [G long_time thing]] [like old [G long_time someone]]` |
 | **blind** | if someone is blind, then they cannot see | si alguien es ciego, entonces no puede ver | `[if [G blind someone] [not [can [see blind]]]]` |
 | **void** | what does not exist | lo que no existe | `[not [exist void]]` |
 | **black** | without light; like dying and like cold; like blindness; like the void | es oscuro; no es de la familia de la luz; como morir; como el frío; como la ceguera; como el vacío | `[dark black] [not [G light black]] [like black die] [like black cold] [like black blind] [like black void]` |
@@ -106,8 +109,8 @@
 | **A — la base animal** | | | | |
 | animal | a living thing that moves by itself and can act — and is not people | vive; se mueve; puede hacer; no es gente | `[live animal] [move animal] [can [do animal]] [not [G people animal]]` |
 | **B — gente y familia** | | | | |
-| child | a young person | es alguien; es pequeño; es de la gente | `[small child] [G people child] [G someone child]` |
-| baby | a very young child | es una clase de child; muy pequeño | `[very [small baby]] [G child baby]` |
+| child | a young person | es joven; es pequeño; es de la gente (el alguien llega por young: ya no hace falta [G someone child]) | `[young child] [small child] [G people child]` |
+| baby | a very young child | muy joven; muy pequeño; es una clase de child | `[very [young baby]] [very [small baby]] [G child baby]` |
 | parent | a person who feels something good toward their baby (care = feel-good-toward, NSM) | es alguien; siente algo bueno hacia el bebé | `[feel parent [G baby good]]` |
 | friend | a person one feels good with | es alguien; se siente algo bueno juntos | `[feel people [G friend good]]` |
 | **C — animales y sonidos** | | | | |
