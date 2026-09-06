@@ -38,8 +38,8 @@ DRAFTS = [
 	# ── capa C: animales y sonidos ──
 	("domestic", "living with people, in a good way",
 	 "vive con la gente; es bueno", ["[live domestic people]", "[good domestic]"], "C"),
-	("dog", "a domestic animal that says bark",
-	 "es de la familia animal; dice bark; es doméstico", ["[G dog animal]", "[say dog bark]", "[G dog domestic]"], "C"),
+	("dog", "a domestic animal that says bark — and is a friend (in cultures where dogs are companions)",
+	 "es de la familia animal; dice bark; es doméstico; es friend", ["[G dog animal]", "[say dog bark]", "[G dog domestic]", "[friend dog]"], "C"),
 	("cat", "a domestic animal that says meow",
 	 "es de la familia animal; dice meow; es doméstico", ["[G cat animal]", "[say cat meow]", "[G cat domestic]"], "C"),
 	# ── capa D: naturaleza ──
