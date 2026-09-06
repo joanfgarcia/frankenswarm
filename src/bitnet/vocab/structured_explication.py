@@ -256,9 +256,17 @@ class StructuredExplication:
 
 	def _contribute(self, name: str, negated: bool, hits: dict) -> None:
 		"""Contribución de un argumento de contenido: si es molécula, la malla
-		propaga su glifo (con polaridad); si no, cuenta como juicio."""
+		propaga su glifo (con polaridad); si no, cuenta como juicio.
+		REGLA DE IDENTIDADES (3-sep): bajo negación, los argumentos-molécula NO
+		propagan — negar la relación no niega la identidad: [not [live baby male]]
+		niega el VIVIR-en (vivir:−1), no al bebé (sus trits no se tocan). Las
+		cabezas-molécula negadas SÍ propagan (la predicación negada define:
+		[not [danger X]] = X es no-peligroso). Los primos-átomo sí contrastan
+		siempre ([not [G people animal]] → gente:−1, el patrón animal)."""
 		sign = -1 if negated else 1
 		if name in self.molecule_glyphs:
+			if negated:
+				return
 			mg = self.molecule_glyphs[name]
 			for j in range(N_PRIMES):
 				if mg[j] != 0:

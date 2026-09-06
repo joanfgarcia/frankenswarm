@@ -24,6 +24,12 @@ DRAFTS = [
 	 "es alguien; siente algo bueno hacia el bebé; hace por el bebé", ["[feel parent [G baby good]]", "[do parent [G baby good]]"], "B"),
 	("offspring", "someone who belongs to a parent; who comes from a body (hijo-descendiente, NO baby-niño)",
 	 "es alguien; es de parent; viene de un cuerpo", ["[G someone offspring]", "[G parent offspring]", "[G body offspring]"], "B"),
+	("male", "someone in whom babies do not live (NSM: the male cannot bear)",
+	 "es alguien; los bebés no viven en él", ["[G someone male]", "[not [live baby male]]"], "B"),
+	("female", "someone in whom babies live (NSM: can bear)",
+	 "es alguien; los bebés viven en ella", ["[G someone female]", "[live baby female]"], "B"),
+	("son", "a male offspring", "es offspring; es macho", ["[male son]", "[G offspring son]"], "B"),
+	("daughter", "a female offspring", "es offspring; es hembra", ["[female daughter]", "[G offspring daughter]"], "B"),
 	("friend", "a known person one feels good with",
 	 "alguien conoce a friend; ese alguien se siente bien con friend; es alguien",
 	 ["[know someone friend]", "[feel people [G friend good]]", "[G someone friend]"], "B"),
@@ -183,7 +189,16 @@ def main() -> None:
 5. **'oh no' / 'yeah'**: ¿caen o son contextos de SILENCIO/alarm?
 6. **child/baby** (DL-020): ¿re-siembra tal cual o esperan a la capa B del lote?
 7. **Sonidos** (bark/meow): borrados como MOLÉCULAS con distinción por tamaño (bark=grande, meow=pequeño — los animales los arrastran por la malla). ¿Apruebas el convenio?
-8. **⚠ NUEVA — El eje de género no existe en los 65 primos**: mom/dad y boy/man colisionan sin él. Opciones: (a) un solo concepto *parent* con mom/dad como surfaces hasta que exista la capa, (b) diseñar género como moléculas (NSM: "una clase de gente que puede hacer bebés" vs "no"), (c) esperar. Mi recomendación: (a) para la cata — *parent* cubre mom y dad sin doctrina forzada.
+8. ~~**El eje de género**~~ → **RESUELTO (opción b)**: male = `[G someone male] [not [live baby male]]`
+   ("alguien en quien no viven bebés") → {alguien}−{vivir}; female = `[G someone female]
+   [live baby female]` ("alguien en quien viven bebés") → {alguien, vivir}+baby.
+   son/daughter = offspring ∓ vivir (difieren EXACTAMENTE en el signo de vivir).
+   mom/dad quedan como surfaces de parent hasta que la capa de género entre en la siembra.
+11. ~~Reciprocidad~~ + **sibling**: hermano NO cabe en forma unaria (colapsaría con
+    parent: le faltaría la mismidad — necesitaría SAME u operador) → hermano es
+    **molécula-relación sibling/2** (`[sibling [N x] [N y]]`) con axioma de simetría
+    en la KB (la doctrina de reciprocidad pendiente). Las relaciones simétricas viven
+    en la base de hechos, no en el léxico unario.
 9. **⚠ NUEVA — El eje del gusto no existe** (dulce/amargo): apple se distingue de bread por prototipos (apple=buena, bread=de la tierra) — suficiente para la cata, pero un día el corpus de comida lo pedirá.
 10. **⚠ NUEVA — El arrastre arrastra también los contrastes**: las referencias a moléculas traen sus trits −1 (earth=mover:−1 contaminó river en un borrador; resuelto usando la familia `[G water river]` en vez de citar earth). Convención: **preferir familia-G a referencia directa cuando el rol es locativo/categorial**, reservar la referencia directa para cuando el contenido ES definicional.
 
