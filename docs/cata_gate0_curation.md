@@ -80,7 +80,7 @@
 |---|---|---|---|
 | **fire** | hot light that can burn | es de la familia de la luz; es caliente; no es frío; puede hacer algo malo (quemar) | `[G light fire] [hot fire] [not [cold fire]] [can [do fire [G something bad]]]` |
 | **sun** | the very big bright thing above, far away, of the fire family | es de la familia del fuego; es muy grande; está muy lejos; está arriba | `[G fire sun] [very [big sun]] [very [far [exist sun]]] [above [exist sun]]` |
-| **earth** | the ground; the big thing that does not move | es cosa; no se mueve | `[G thing earth] [not [move earth]] [big earth]` |
+| **earth** | the very big ground everything lives on, near under our feet, that does not move | es cosa; es muy grande; la gente vive en él abajo; es lo cercano que se toca; no se mueve | `[G thing earth] [very [big earth]] [below [live people earth]] [very [near [touch people earth]]] [not [move earth]]` |
 | **black** | without light | es oscuro; no es de la familia de la luz | `[dark black] [not [G light black]]` |
 | **white** | all the light | toda la luz (saturación) | `[very [G light white]]` |
 | **red** | light like fire | es de la luz; como el fuego | `[G light red] [like red fire]` |
