@@ -15,8 +15,8 @@ seed = json.loads((BASE / "configs" / "k65p_v2" / "moleculas.json").read_text(en
 # ⚠ = hueco doctrinal detectado al redactar (ver Preguntas nuevas)
 DRAFTS = [
 	# ── capa A: la base animal ──
-	("animal", "a living thing that moves by itself and can act",
-	 "vive; se mueve; puede hacer", ["[live animal]", "[move animal]", "[can [do animal]]"], "A"),
+	("animal", "a living thing that moves by itself and can act — and is not people",
+	 "vive; se mueve; puede hacer; no es gente", ["[live animal]", "[move animal]", "[can [do animal]]", "[not [G people animal]]"], "A"),
 	# ── capa B: gente y familia (compuestos de SOMEONE) ──
 	("child", "a young person", "es alguien; es pequeño", ["[small child]"], "B"),
 	("baby", "a very young child", "es una clase de child; muy pequeño", ["[very [small baby]]"], "B"),

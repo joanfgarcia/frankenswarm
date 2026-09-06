@@ -104,7 +104,7 @@
 | capa | molécula | idea fuente (EN) | descomposición NSM | K-65P (borrador) |
 |---|---|---|---|---|
 | **A — la base animal** | | | | |
-| animal | a living thing that moves by itself and can act | vive; se mueve; puede hacer | `[live animal] [move animal] [can [do animal]]` |
+| animal | a living thing that moves by itself and can act — and is not people | vive; se mueve; puede hacer; no es gente | `[live animal] [move animal] [can [do animal]] [not [G people animal]]` |
 | **B — gente y familia** | | | | |
 | child | a young person | es alguien; es pequeño | `[small child]` |
 | baby | a very young child | es una clase de child; muy pequeño | `[very [small baby]]` |
