@@ -20,8 +20,10 @@ DRAFTS = [
 	# ── capa B: gente y familia (compuestos de SOMEONE) ──
 	("child", "a young person", "es joven; es pequeño; es de la gente (el alguien llega por young: ya no hace falta [G someone child])", ["[young child]", "[small child]", "[G people child]"], "B"),
 	("baby", "a very young child", "muy joven; muy pequeño; es una clase de child", ["[very [young baby]]", "[very [small baby]]", "[G child baby]"], "B"),
-	("parent", "a person who feels something good toward their baby (care = feel-good-toward, NSM)",
-	 "es alguien; siente algo bueno hacia el bebé", ["[feel parent [G baby good]]"], "B"),
+	("parent", "a person who feels something good toward their baby and acts for it (care = feel-good + do-for, NSM)",
+	 "es alguien; siente algo bueno hacia el bebé; hace por el bebé", ["[feel parent [G baby good]]", "[do parent [G baby good]]"], "B"),
+	("offspring", "someone who belongs to a parent; who comes from a body (hijo-descendiente, NO baby-niño)",
+	 "es alguien; es de parent; viene de un cuerpo", ["[G someone offspring]", "[G parent offspring]", "[G body offspring]"], "B"),
 	("friend", "a known person one feels good with",
 	 "alguien conoce a friend; ese alguien se siente bien con friend; es alguien",
 	 ["[know someone friend]", "[feel people [G friend good]]", "[G someone friend]"], "B"),
