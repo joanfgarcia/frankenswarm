@@ -130,7 +130,7 @@
 | forest | many trees together (collection = group + quantity, DL-017) | árboles juntos; muchos juntos | `[G forest tree] [G forest much] [G forest dark]` |
 | river | water that moves | es de la familia del agua; se mueve | `[G river water] [move river]` |
 | rain | water that falls from above | es agua; se mueve hacia abajo | `[G rain water] [below [move rain]]` |
-| storm | bad much-water weather | es agua; es malo; es mucho | `[G storm water] [bad storm] [G storm much]` |
+| storm | bad much-rain weather, like dark | es de la familia de rain; es malo; es mucho; como lo oscuro | `[G storm rain] [bad storm] [G storm much] [like storm dark]` |
 | night | the time when it is dark | es oscuro; es un momento | `[dark night] [G night moment]` |
 | moon | the light in the dark sky | es de la luz; es del oscuro — la luz de la noche | `[G moon light] [G moon dark]` |
 | stone | a hard thing that does not move by itself | es cosa; no se mueve | `[G stone thing] [not [move stone]]` |

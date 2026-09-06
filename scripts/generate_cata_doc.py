@@ -50,7 +50,7 @@ DRAFTS = [
 	 "árboles juntos; muchos juntos", ["[G forest tree]", "[G forest much]", "[G forest dark]"], "D"),
 	("river", "water that moves", "es de la familia del agua; se mueve", ["[G river water]", "[move river]"], "D"),
 	("rain", "water that falls from above", "es agua; se mueve hacia abajo", ["[G rain water]", "[below [move rain]]"], "D"),
-	("storm", "bad much-water weather", "es agua; es malo; es mucho", ["[G storm water]", "[bad storm]", "[G storm much]"], "D"),
+	("storm", "bad much-rain weather, like dark", "es de la familia de rain; es malo; es mucho; como lo oscuro", ["[G storm rain]", "[bad storm]", "[G storm much]", "[like storm dark]"], "D"),
 	("night", "the time when it is dark", "es oscuro; es un momento", ["[dark night]", "[G night moment]"], "D"),
 	("moon", "the light in the dark sky", "es de la luz; es del oscuro — la luz de la noche",
 	 ["[G moon light]", "[G moon dark]"], "D"),
