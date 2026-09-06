@@ -91,7 +91,7 @@ BINARY_OPS = {48, 47, 51}
 
 
 class StructuredExplication:
-	def __init__(self, surface: str, clauses: list[str], kind_declared: str | None = None, category: str | None = None, anchor_primes: list[str] | None = None, molecule_glyphs: dict[str, list[int]] | None = None):
+	def __init__(self, surface: str, clauses: list[str], kind_declared: str | None = None, category: str | None = None, anchor_primes: list[str] | None = None, molecule_glyphs: dict[str, list[int]] | None = None, drag_clauses: list[str] | None = None):
 		self.surface = surface
 		self.clauses = clauses
 		self.kind_declared = kind_declared
@@ -124,6 +124,22 @@ class StructuredExplication:
 			except SyntaxError as exc:
 				self.errors.append(f"{c!r}: {exc}")
 		for c in clauses:
+			errs = validate(c)
+			if errs:
+				self.errors.extend(errs)
+		# ARRASTRE vs NÚCLEO (auditoría 3-sep): las cláusulas de arrastre
+		# (asociativas: el color de la emoción) proyectan igual que el núcleo
+		# en el glifo completo, pero se registran por separado para poder
+		# ablacionar en los instrumentos (el arrastre pesa lo mismo y eso es
+		# peligroso: joy se parecería más a sun que a sadness).
+		self.drag_clauses = drag_clauses or []
+		self._drag_trees = []
+		for c in self.drag_clauses:
+			try:
+				self._drag_trees.append(parse_k65p(c))
+			except SyntaxError as exc:
+				self.errors.append(f"{c!r}: {exc}")
+		for c in self.drag_clauses:
 			errs = validate(c)
 			if errs:
 				self.errors.extend(errs)
@@ -275,17 +291,20 @@ class StructuredExplication:
 		else:
 			hits[name] = hits.get(name, 0) + sign
 
-	def project_flat(self, anchors: set | None = None) -> dict[str, int]:
+	def project_flat(self, anchors: set | None = None, include_drags: bool = True) -> dict[str, int]:
 		anchors = anchors or self.anchor_names
 		hits: dict[str, int] = {}
 		roles: list = []
 		for tree in self._trees:
 			self._walk(tree, 1, anchors, hits, roles)
+		if include_drags:
+			for tree in self._drag_trees:
+				self._walk(tree, 1, anchors, hits, roles)
 		self.roles_seen = roles
 		return hits
 
-	def to_glyph(self, anchors: set | None = None) -> np.ndarray:
-		hits = self.project_flat(anchors)
+	def to_glyph(self, anchors: set | None = None, include_drags: bool = True) -> np.ndarray:
+		hits = self.project_flat(anchors, include_drags=include_drags)
 		g = np.zeros(N_PRIMES, dtype=np.int8)
 		for name in self.anchor_primes:
 			if name in PRIME_IDX:

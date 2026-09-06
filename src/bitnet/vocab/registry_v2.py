@@ -97,9 +97,9 @@ class VocabularyV2:
 		out[mask] = mod_g[mask]
 		return out
 
-	def register(self, surface: str, idea: str, clauses: list[str], anchor_primes: list[str] | None = None, notes: str = "") -> dict:
+	def register(self, surface: str, idea: str, clauses: list[str], anchor_primes: list[str] | None = None, notes: str = "", drag_clauses: list[str] | None = None) -> dict:
 		exp = StructuredExplication(surface, clauses, anchor_primes=anchor_primes or [],
-			molecule_glyphs=self._molecule_glyphs())
+			molecule_glyphs=self._molecule_glyphs(), drag_clauses=drag_clauses or [])
 		if exp.errors:
 			raise ValueError(f"cláusulas inválidas: {exp.errors}")
 		fps = tuple(int(x) for x in exp.to_glyph())
@@ -108,8 +108,10 @@ class VocabularyV2:
 			"surface": surface,
 			"idea": idea,  # LA FUENTE: lo que la molécula debe transmitir (DL-016)
 			"clauses": clauses,
+			"drags": drag_clauses or [],  # ARRASTRE asociativo (ablacionable en instrumentos)
 			"anchor_primes": anchor_primes or [],
-			"glyph": list(fps),
+			"glyph": list(fps),  # completo: núcleo + arrastre
+			"glyph_core": [int(x) for x in exp.to_glyph(include_drags=False)],
 			"role_profile": exp.role_profile(),
 			"kind": exp.kind_candidate(),
 			"notes": notes,

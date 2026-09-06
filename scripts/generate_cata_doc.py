@@ -17,47 +17,25 @@ DRAFTS = [
 	# ── capa A: la base animal ──
 	("animal", "a living thing that moves by itself and can act — a little like someone, but not of the people",
 	 "como alguien (poco); es alguien; no es de la gente; vive; se mueve; puede hacer",
-	 ["[like animal someone]", "[G someone animal]", "[not [G people animal]]", "[live animal]", "[move animal]", "[can [do animal]]"], "A"),
+	 ["[like animal someone]", "[G animal someone]", "[not [G animal people]]", "[live animal]", "[move animal]", "[can [do animal]]"], "A"),
 	("vegetal", "a living thing not at all like someone",
 	 "vive; no es como alguien; no es alguien", ["[live vegetal]", "[not [like vegetal someone]]"], "A"),
 	# ── capa B: gente y familia (compuestos de SOMEONE) ──
-	("child", "a young person", "es joven; es pequeño; es de la gente (el alguien llega por young: ya no hace falta [G someone child])", ["[young child]", "[small child]", "[G people child]"], "B"),
-	("baby", "a very young child", "muy joven; muy pequeño; es una clase de child", ["[very [young baby]]", "[very [small baby]]", "[G child baby]"], "B"),
+	("child", "a young person", "es joven; es pequeño; es de la gente (el alguien llega por young: ya no hace falta [G child someone])", ["[young child]", "[small child]", "[G child people]"], "B"),
+	("baby", "a very young child", "muy joven; muy pequeño; es una clase de child", ["[very [young baby]]", "[very [small baby]]", "[G baby child]"], "B"),
 	("parent", "a person who feels something good toward their baby and acts for it (care = feel-good + do-for, NSM)",
 	 "es alguien; siente algo bueno hacia el bebé; hace por el bebé", ["[feel parent [G baby good]]", "[do parent [G baby good]]"], "B"),
 	("offspring", "someone who belongs to a parent; who comes from a body (hijo-descendiente, NO baby-niño)",
-	 "es alguien; es de parent; viene de un cuerpo", ["[G someone offspring]", "[G parent offspring]", "[G body offspring]"], "B"),
+	 "es alguien; es de parent; viene de un cuerpo", ["[G offspring someone]", "[G offspring parent]", "[G offspring body]"], "B"),
 	("male", "someone in whom babies do not live (NSM: the male cannot bear)",
-	 "es alguien; los bebés no viven en él", ["[G someone male]", "[not [live baby male]]"], "B"),
+	 "es alguien; los bebés no viven en él", ["[G male someone]", "[not [live baby male]]"], "B"),
 	("female", "someone in whom babies live (NSM: can bear)",
-	 "es alguien; los bebés viven en ella", ["[G someone female]", "[live baby female]"], "B"),
-	("son", "a male offspring who belongs to a parent", "es offspring; es macho; es DE parent (pertenencia)",
-	 ["[male son]", "[G offspring son]", "[G parent son]"], "B"),
-	("daughter", "a female offspring who belongs to a parent", "es offspring; es hembra; es DE parent (pertenencia)",
-	 ["[female daughter]", "[G offspring daughter]", "[G parent daughter]"], "B"),
-	("mom", "a female parent",
-	 "es hembra; es de la clase parent", ["[female mom]", "[G parent mom]"], "B"),
-	("dad", "a male parent",
-	 "es macho; es de la clase parent", ["[male dad]", "[G parent dad]"], "B"),
-	("grandpa", "an old male parent (the parent of a parent)",
-	 "es macho; es parent; es viejo", ["[male grandpa]", "[G parent grandpa]", "[G old grandpa]"], "B"),
-	("grandma", "an old female parent (the parent of a parent)",
-	 "es hembra; es parent; es vieja", ["[female grandma]", "[G parent grandma]", "[G old grandma]"], "B"),
-	("uncle", "a male son of a grandparent (the parent's brother)",
-	 "es macho; es son; es de la familia grandpa", ["[male uncle]", "[G son uncle]", "[G grandpa uncle]"], "B"),
-	("aunt", "a female daughter of a grandparent (the parent's sister)",
-	 "es hembra; es daughter; es de la familia grandpa", ["[female aunt]", "[G daughter aunt]", "[G grandpa aunt]"], "B"),
+	 "es alguien; los bebés viven en ella", ["[G female someone]", "[live baby female]"], "B"),
 	# cousin: NO cabe en forma unaria (colisiona con uncle: child∪uncle ≡ son como conjuntos) —
 	# es molécula-relación cousin-of/2 sobre nombres, con la simetría en la KB (igual que sibling/2).
-	("sibling", "those who share parents — the same ones",
-	 "es alguien; es de parent; son los mismos", ["[G someone sibling]", "[G parent sibling]", "[G same sibling]"], "B"),
-	("brother", "a male sibling whose mom and dad are the same (ones)",
-	 "es macho; es sibling", ["[male brother]", "[G sibling brother]"], "B"),
-	("sister", "a female sibling whose mom and dad are the same (ones)",
-	 "es hembra; es sibling", ["[female sister]", "[G sibling sister]"], "B"),
 	("friend", "a known person one feels good with",
 	 "alguien conoce a friend; ese alguien se siente bien con friend; es alguien",
-	 ["[know someone friend]", "[feel people [G friend good]]", "[G someone friend]"], "B"),
+	 ["[know someone friend]", "[feel people [G friend good]]", "[G friend someone]"], "B"),
 	# ⚠ boy/man: sin primos de género no se distinguen (ver Preguntas 8)
 	# ── capa C: animales y sonidos ──
 	("domestic", "living with people, in a good way",
@@ -67,65 +45,97 @@ DRAFTS = [
 	("meow", "a small sound people hear",
 	 "la gente lo oye; es un sonido pequeño", ["[hear people meow]", "[small meow]"], "C"),
 	("dog", "a domestic animal that says bark",
-	 "es de la familia animal; dice bark; es doméstico", ["[G animal dog]", "[say dog bark]", "[G domestic dog]"], "C"),
+	 "es de la familia animal; dice bark; es doméstico", ["[G dog animal]", "[say dog bark]", "[G dog domestic]"], "C"),
 	("cat", "a domestic animal that says meow",
-	 "es de la familia animal; dice meow; es doméstico", ["[G animal cat]", "[say cat meow]", "[G domestic cat]"], "C"),
+	 "es de la familia animal; dice meow; es doméstico", ["[G cat animal]", "[say cat meow]", "[G cat domestic]"], "C"),
 	# ── capa D: naturaleza ──
 	("tree", "a tall living vegetal with green parts that needs light to live",
 	 "vive; es grande; tiene partes verdes; es vegetal; es de la luz",
-	 ["[live tree]", "[big tree]", "[G green tree]", "[G vegetal tree]", "[G light tree]"], "D"),
+	 ["[live tree]", "[big tree]", "[G tree green]", "[G tree vegetal]", "[G tree light]"], "D"),
 	("forest", "many trees together (collection = group + quantity, DL-017)",
-	 "árboles juntos; muchos juntos", ["[G tree forest]", "[G much forest]"], "D"),
-	("river", "water that moves", "es de la familia del agua; se mueve", ["[G water river]", "[move river]"], "D"),
-	("rain", "water that falls from above", "es agua; se mueve hacia abajo", ["[G water rain]", "[below [move rain]]"], "D"),
-	("storm", "bad much-water weather", "es agua; es malo; es mucho", ["[G water storm]", "[bad storm]", "[G much storm]"], "D"),
-	("night", "the time when it is dark", "es oscuro; es un momento", ["[dark night]", "[G moment night]"], "D"),
+	 "árboles juntos; muchos juntos", ["[G forest tree]", "[G forest much]"], "D"),
+	("river", "water that moves", "es de la familia del agua; se mueve", ["[G river water]", "[move river]"], "D"),
+	("rain", "water that falls from above", "es agua; se mueve hacia abajo", ["[G rain water]", "[below [move rain]]"], "D"),
+	("storm", "bad much-water weather", "es agua; es malo; es mucho", ["[G storm water]", "[bad storm]", "[G storm much]"], "D"),
+	("night", "the time when it is dark", "es oscuro; es un momento", ["[dark night]", "[G night moment]"], "D"),
 	("moon", "the light in the dark sky", "es de la luz; es del oscuro — la luz de la noche",
-	 ["[G light moon]", "[G dark moon]"], "D"),
+	 ["[G moon light]", "[G moon dark]"], "D"),
 	("stone", "a hard thing that does not move by itself",
-	 "es cosa; no se mueve", ["[G thing stone]", "[not [move stone]]"], "D"),
-	("cave", "a dark thing", "es oscuro; es cosa", ["[dark cave]", "[G thing cave]"], "D"),
+	 "es cosa; no se mueve", ["[G stone thing]", "[not [move stone]]"], "D"),
+	("cave", "a dark thing", "es oscuro; es cosa", ["[dark cave]", "[G cave thing]"], "D"),
 	# ── capa E: acciones ──
-	("food", "the things living beings eat — what keeps alive", "es cosa; es buena", ["[G thing food]", "[good food]"], "E"),
+	("food", "the things living beings eat — what keeps alive", "es cosa; es buena", ["[G food thing]", "[good food]"], "E"),
 	("play", "do things for feel-good", "se hace; es bueno", ["[do people play]", "[good play]"], "E"),
-	("eat", "put food in the body", "se hace; es de la familia de la comida; es del cuerpo", ["[do people eat]", "[G food eat]", "[G body eat]"], "E"),
-	("drink", "put water in the body", "se hace; es de la familia del agua; es del cuerpo", ["[do people drink]", "[G water drink]", "[G body drink]"], "E"),
-	("sleep", "the body rests and does not move", "el cuerpo no se mueve; es un momento", ["[not [move sleep]]", "[G moment sleep]", "[G body sleep]"], "E"),
-	("give", "do, touching, something good for someone", "se hace; se toca; es bueno", ["[do people give]", "[touch people give]", "[G good give]"], "E"),
+	("eat", "put food in the body", "se hace; es de la familia de la comida; es del cuerpo", ["[do people eat]", "[G eat food]", "[G eat body]"], "E"),
+	("drink", "put water in the body", "se hace; es de la familia del agua; es del cuerpo", ["[do people drink]", "[G drink water]", "[G drink body]"], "E"),
+	("sleep", "the body rests and does not move", "el cuerpo no se mueve; es un momento", ["[not [move sleep]]", "[G sleep moment]", "[G sleep body]"], "E"),
+	("give", "do, touching, something good for someone", "se hace; se toca; es bueno", ["[do people give]", "[touch people give]", "[G give good]"], "E"),
 	("help", "do something so someone feels good and can do it", "se hace; se siente algo bueno", ["[do people help]", "[feel people [G help good]]"], "E"),
 	("kiss", "touch with the mouth to feel-good (mouth → capa de partes del cuerpo)", "se toca; se siente algo bueno", ["[touch people kiss]", "[feel people [G kiss good]]"], "E"),
-	("make", "do so a new thing exists", "se hace; hace existir", ["[do people make]", "[G exist make]"], "E"),
+	("make", "do so a new thing exists", "se hace; hace existir", ["[do people make]", "[G make exist]"], "E"),
 	("need", "want something very much", "se quiere; es muy bueno tenerlo", ["[want people need]", "[very [good need]]"], "E"),
-	("put", "move a thing to a place and touch it there", "se hace; se mueve; se toca; en un lado", ["[do people put]", "[move people put]", "[touch people put]", "[G side put]"], "E"),
-	("read", "see words and know them", "se ven las palabras; se saben", ["[see people read]", "[know people read]", "[G word read]"], "E"),
+	("put", "move a thing to a place and touch it there", "se hace; se mueve; se toca; en un lado", ["[do people put]", "[move people put]", "[touch people put]", "[G put side]"], "E"),
+	("read", "see words and know them", "se ven las palabras; se saben", ["[see people read]", "[know people read]", "[G read word]"], "E"),
 	("sit", "the body moves down and then does not move", "el cuerpo se mueve hacia abajo; luego no se mueve",
-	 ["[below [move sit]]", "[not [move sit]]", "[G body sit]"], "E"),
+	 ["[below [move sit]]", "[not [move sit]]", "[G sit body]"], "E"),
 	("take", "touch a thing and move it to oneself", "se toca; se mueve", ["[touch people take]", "[move people take]"], "E"),
 	("try", "do wanting it to work, not knowing if it can — and if it works, it turns out good", "se hace; se quiere; no se sabe si se puede; y si sale, queda bueno",
 	 ["[do people try]", "[want people try]", "[not [know people [can [do try]]]]", "[if [do people try] [good try]]"], "E"),
-	("turn", "the body or a thing changes side", "el cuerpo se mueve; cambia de lado", ["[move turn]", "[G side turn]", "[G body turn]"], "E"),
-	("way", "the thing one moves along from here", "es cosa; desde aquí; se mueve por él", ["[G thing way]", "[G here way]", "[move way]"], "E"),
+	("turn", "the body or a thing changes side", "el cuerpo se mueve; cambia de lado", ["[move turn]", "[G turn side]", "[G turn body]"], "E"),
+	("way", "the thing one moves along from here", "es cosa; desde aquí; se mueve por él", ["[G way thing]", "[G way here]", "[move way]"], "E"),
 	# ── capa F: cosas (referencian acciones ya definidas) ──
-	("ball", "a thing children play with", "es cosa; se juega con ella; de niños", ["[G play ball]", "[G child ball]"], "F"),
-	("apple", "a sweet food eaten with the mouth (sweet = very-good; mouth → capa de partes del cuerpo)", "es comida; es MUY buena; se come", ["[G food apple]", "[very [good apple]]", "[do people [G eat apple]]"], "F"),
-	("bread", "the food from the earth", "es comida; viene de la tierra", ["[G food bread]", "[G earth bread]"], "F"),
-	("bed", "the thing one sleeps on", "es cosa; de la familia de dormir", ["[G thing bed]", "[G sleep bed]"], "F"),
-	("book", "things with words inside to read", "es cosa; tiene palabras; se lee; tiene dentro", ["[G word book]", "[G read book]", "[G inside book]"], "F"),
-	("box", "the thing for putting things in", "es cosa; de la familia de put", ["[G thing box]", "[G put box]"], "F"),
-	("car", "a thing that moves people", "es cosa; se mueve; lleva gente", ["[G thing car]", "[move car]", "[G people car]"], "F"),
-	("train", "the big thing that moves people", "es cosa; se mueve; lleva gente; es grande", ["[G thing train]", "[move train]", "[G people train]", "[big train]"], "F"),
-	("house", "the place where people live", "es cosa; la gente vive en él", ["[G thing house]", "[live people house]"], "F"),
+	("ball", "a thing children play with", "es cosa; se juega con ella; de niños", ["[G ball play]", "[G ball child]"], "F"),
+	("apple", "a sweet food eaten with the mouth (sweet = very-good; mouth → capa de partes del cuerpo)", "es comida; es MUY buena; se come", ["[G apple food]", "[very [good apple]]", "[do people [G apple eat]]"], "F"),
+	("bread", "the food from the earth", "es comida; viene de la tierra", ["[G bread food]", "[G bread earth]"], "F"),
+	("bed", "the thing one sleeps on", "es cosa; de la familia de dormir", ["[G bed thing]", "[G bed sleep]"], "F"),
+	("book", "things with words inside to read", "es cosa; tiene palabras; se lee; tiene dentro", ["[G book word]", "[G book read]", "[G book inside]"], "F"),
+	("box", "the thing for putting things in", "es cosa; de la familia de put", ["[G box thing]", "[G box put]"], "F"),
+	("car", "a thing that moves people", "es cosa; se mueve; lleva gente", ["[G car thing]", "[move car]", "[G car people]"], "F"),
+	("train", "the big thing that moves people", "es cosa; se mueve; lleva gente; es grande", ["[G train thing]", "[move train]", "[G train people]", "[big train]"], "F"),
+	("house", "the place where people live", "es cosa; la gente vive en él", ["[G house thing]", "[live people house]"], "F"),
 	("home", "the place where the family lives — a good house", "es cosa; la gente vive; es bueno",
-	 ["[G thing home]", "[live people home]", "[good home]"], "F"),
-	("milk", "the white food one drinks", "es comida; es blanca; de la familia de beber", ["[G food milk]", "[G white milk]", "[G drink milk]"], "F"),
-	("toys", "the things children play with", "es cosa; se juega; de niños", ["[G thing toys]", "[G play toys]", "[G child toys]"], "F"),
+	 ["[G home thing]", "[live people home]", "[good home]"], "F"),
+	("milk", "the white food one drinks", "es comida; es blanca; de la familia de beber", ["[G milk food]", "[G milk white]", "[G milk drink]"], "F"),
+	("toys", "the things children play with", "es cosa; se juega; de niños", ["[G toys thing]", "[G toys play]", "[G toys child]"], "F"),
 	# ── capa G: cualidades y cuerpo ──
-	("color", "what things look like in the light", "es cosa; se ve; es de la luz", ["[G thing color]", "[see people color]", "[G light color]"], "G"),
+	("color", "what things look like in the light", "es cosa; se ve; es de la luz", ["[G color thing]", "[see people color]", "[G color light]"], "G"),
 	("hurt", "the body feels bad", "el cuerpo siente algo malo", ["[feel body hurt]", "[bad hurt]"], "G"),
-	("wound", "the place in the body that hurts", "es del cuerpo; es malo", ["[G body wound]", "[bad wound]"], "G"),
+	("wound", "the place in the body that hurts", "es del cuerpo; es malo", ["[G wound body]", "[bad wound]"], "G"),
 ]
 
 # superposiciones léxicas (synónimos → surfaces, no moléculas nuevas)
+
+# ── DIFERIDAS a la doctrina de reciprocidad/relacional (auditoría 3-sep) ──
+# Sibling necesita sibling/2 + simetría; el resto del parentesco migra con él
+# para no re-sembrar bajo L2. Se validan igual (gramática verde) pero NO son sembrables.
+# ORDEN definicional dentro del bloque (mom→…→sister): la batería registra en orden.
+DEFERRED_DRAFTS = [
+	("mom", "a female parent",
+	 "es hembra; es de la clase parent", ["[female mom]", "[G mom parent]"], "B"),
+	("dad", "a male parent",
+	 "es macho; es de la clase parent", ["[male dad]", "[G dad parent]"], "B"),
+	("grandpa", "an old male parent (the parent of a parent)",
+	 "es macho; es parent; es viejo", ["[male grandpa]", "[G grandpa parent]", "[G grandpa old]"], "B"),
+	("grandma", "an old female parent (the parent of a parent)",
+	 "es hembra; es parent; es vieja", ["[female grandma]", "[G grandma parent]", "[G grandma old]"], "B"),
+	("son", "a male offspring who belongs to a parent", "es offspring; es macho; es DE parent (pertenencia)",
+	 ["[male son]", "[G son offspring]", "[G son parent]"], "B"),
+	("daughter", "a female offspring who belongs to a parent", "es offspring; es hembra; es DE parent (pertenencia)",
+	 ["[female daughter]", "[G daughter offspring]", "[G daughter parent]"], "B"),
+	("uncle", "a male son of a grandparent (the parent's brother)",
+	 "es macho; es son; es de la familia grandpa", ["[male uncle]", "[G uncle son]", "[G uncle grandpa]"], "B"),
+	("aunt", "a female daughter of a grandparent (the parent's sister)",
+	 "es hembra; es daughter; es de la familia grandpa", ["[female aunt]", "[G aunt daughter]", "[G aunt grandpa]"], "B"),
+	("sibling", "those who share parents — the same ones",
+	 "es alguien; es de parent; son los mismos", ["[G sibling someone]", "[G sibling parent]", "[G sibling same]"], "B"),
+	("brother", "a male sibling whose mom and dad are the same (ones)",
+	 "es macho; es sibling", ["[male brother]", "[G brother sibling]"], "B"),
+	("sister", "a female sibling whose mom and dad are the same (ones)",
+	 "es hembra; es sibling", ["[female sister]", "[G sister sibling]"], "B"),
+
+
+]
+
 SYNONYMS = {
 	"null": "void (el valor nulo ES el vacío: definirlo aparte colisionaría — misma definición, misma huella)",
 	"daddy": "dad (mismo concepto: parent — pendiente decisión de género, ⚠ P8)",
@@ -165,7 +175,7 @@ def main() -> None:
 		"new": "como la cosa de poco-tiempo",
 		"young": "como el alguien de poco-tiempo",
 		"old": "como lo de mucho-tiempo (cosa y alguien)",
-		"blind": "si alguien es ciego, entonces no puede ver",
+		"blind": "si alguien es ciego, entonces no puede ver (el antecedente es predicación, no grupo)",
 		"white": "toda la luz; como vivir (eje vida/muerte con black↔morir); como lo limpio",
 		"dirty": "como lo no-bueno; como el marrón; es malo",
 		"clean": "no es sucio — definido por oposición (la oposición entera de dirty, trits invertidos)",
@@ -183,11 +193,13 @@ def main() -> None:
 	}
 	for name, m in seed.items():
 		cl = " ".join(m["clauses"])
-		L.append(f"| **{name}** | {m['idea']} | {NSM_SEED.get(name, '')} | `{cl}` |")
+		dr = (" + *arrastre:* " + " ".join(m.get("drags", []))) if m.get("drags") else ""
+		L.append(f"| **{name}** | {m['idea']} | {NSM_SEED.get(name, '')} | `{cl}`{dr} |")
 	L.append("")
 
 	# ── 3. borradores por capas ──
 	L.append("## 3. Borradores pendientes de tu validación (por capas — cada capa solo referencia lo definido)\n")
+	L.append("*(el parentesco diferido vive en §3b — no sembrar hasta la doctrina de reciprocidad)*\n")
 	L.append("| capa | molécula | idea fuente (EN) | descomposición NSM | K-65P (borrador) |")
 	L.append("|---|---|---|---|---|")
 	last = None
@@ -197,6 +209,18 @@ def main() -> None:
 				"D": "D — naturaleza", "E": "E — comida y acciones", "F": "F — cosas", "G": "G — cualidades y cuerpo"}
 			L.append(f"| **{titles[layer]}** | | | | |")
 			last = layer
+		cl = " ".join(clauses)
+		L.append(f"| {w} | {idea} | {nsm} | `{cl}` |")
+	L.append("")
+
+	# ── 3b. diferidos a la doctrina relacional ──
+	L.append("## 3b. Diferidos a la doctrina de reciprocidad/relacional (NO sembrar)\n")
+	L.append("Sibling necesita sibling/2 + axioma de simetría; el parentesco migra con él")
+	L.append("para no re-sembrar bajo L2 (la inyectividad impediría cambiar huellas). Gramática verde,")
+	L.append("pero fuera de la siembra hasta que las relaciones simétricas tengan diseño.\n")
+	L.append("| molécula | idea fuente (EN) | descomposición NSM | K-65P (diseño en espera) |")
+	L.append("|---|---|---|---|")
+	for w, idea, nsm, clauses, layer in DEFERRED_DRAFTS:
 		cl = " ".join(clauses)
 		L.append(f"| {w} | {idea} | {nsm} | `{cl}` |")
 	L.append("")

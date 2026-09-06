@@ -26,60 +26,62 @@ from src.bitnet.vocab.registry_v2 import VocabularyV2  # noqa: E402
 SEED = [
 	# ── capa 1: prototipos ──
 	("fire", "hot light that can burn",
-		["[G light fire]", "[hot fire]", "[not [cold fire]]",
+		["[G fire light]", "[hot fire]", "[not [cold fire]]",
 		 "[can [do fire [G something bad]]]"]),  # "es de la luz; es caliente; no es frío; puede hacer algo malo"
 	("sun", "the very big bright thing above, far away, of the fire family",
-		["[G fire sun]", "[very [big sun]]", "[very [far [exist sun]]]", "[above [exist sun]]"]),
+		["[G sun fire]", "[very [big sun]]", "[very [far [exist sun]]]", "[above [exist sun]]"]),
 	("earth", "the very big ground everything lives on, near under our feet, that does not move",
-		["[G thing earth]", "[very [big earth]]", "[below [live people earth]]",
+		["[G earth thing]", "[very [big earth]]", "[below [live people earth]]",
 		 "[very [near [touch people earth]]]", "[not [move earth]]"]),
 	# ── capa 2: paleta del pintor ──
 	("new", "like the short-time thing",
-		["[like new [G short_time thing]]"]),
+		["[like new [G thing short_time]]"]),
 	("young", "like the short-time someone",
-		["[like young [G short_time someone]]"]),
+		["[like young [G someone short_time]]"]),
 	("old", "like the long-time thing and the long-time someone",
-		["[like old [G long_time thing]]", "[like old [G long_time someone]]"]),
-	("blind", "if someone is blind, then they cannot see",
-		["[if [G blind someone] [not [can [see blind]]]]"]),
+		["[like old [G thing long_time]]", "[like old [G someone long_time]]"]),
+	("blind", "if someone is blind, then they cannot see (condition as predication, not group)",
+		["[if [blind someone] [not [can [see blind]]]]"]),
 	("void", "what does not exist",
 		["[not [exist void]]"]),
 	("black", "without light; like dying and like cold; like blindness; like the void",
-		["[dark black]", "[not [G light black]]", "[like black die]", "[like black cold]",
+		["[dark black]", "[not [G black light]]", "[like black die]", "[like black cold]",
 		 "[like black blind]", "[like black void]"]),
-	("red", "light like fire", ["[G light red]", "[like red fire]"]),
-	("yellow", "light like the sun", ["[G light yellow]", "[like yellow sun]"]),
-	("blue", "light like water, cold", ["[G light blue]", "[cold blue]"]),
-	("brown", "the dark color of the earth", ["[like brown earth]", "[not [very [G light brown]]]"]),
+	("red", "light like fire", ["[G red light]", "[like red fire]"]),
+	("yellow", "light like the sun", ["[G yellow light]", "[like yellow sun]"]),
+	("blue", "light like water, cold", ["[G blue light]", "[cold blue]"]),
+	("brown", "the dark color of the earth", ["[like brown earth]", "[not [very [G brown light]]]"]),
 	("dirty", "like what is not good; like brown (its badness carried by [bad dirty])",
 		["[like [not [good something]] dirty]", "[like dirty brown]", "[bad dirty]"]),
 	("clean", "not dirty — defined by opposition (dirty must come first)",
 		["[not [dirty clean]]"]),
 	("white", "all the light; like living (life/death axis with black↔die); like clean — AFTER clean (definitional layering)",
-		["[very [G light white]]", "[like white live]", "[like white clean]"]),
+		["[very [G white light]]", "[like white live]", "[like white clean]"]),
 	# ── capa 3: mezclas duales ──
-	("purple", "the light mix of red and blue", ["[G light purple]", "[like purple red]", "[like purple blue]"]),
-	("green", "the light mix of blue and yellow", ["[G light green]", "[like green blue]", "[like green yellow]"]),
+	("purple", "the light mix of red and blue", ["[G purple light]", "[like purple red]", "[like purple blue]"]),
+	("green", "the light mix of blue and yellow", ["[G green light]", "[like green blue]", "[like green yellow]"]),
 	# ── capa 4: emociones (núcleo NSM como estado sentido + arrastre de color) ──
 	("joy", "the state people feel when something very good happens; canon: yellow",
-		["[feel people joy]", "[very [good joy]]", "[yellow joy]"]),
+		["[feel people joy]", "[very [good joy]]"], ["[yellow joy]"]),
 	("sadness", "the state people feel when something bad happens; canon: blue, studies: blue-sadness 53%",
-		["[feel people sadness]", "[bad sadness]", "[blue sadness]"]),
+		["[feel people sadness]", "[bad sadness]"], ["[blue sadness]"]),
 	("anger", "the hot bad state; canon: red, studies: red-anger 73%",
-		["[feel people anger]", "[bad anger]", "[hot anger]", "[red anger]"]),
+		["[feel people anger]", "[bad anger]", "[hot anger]"], ["[red anger]"]),
 	("fear", "the bad state of expecting bad; canon: purple, studies: fear→purple/grey/black",
-		["[feel people fear]", "[bad fear]", "[purple fear]"]),
+		["[feel people fear]", "[bad fear]"], ["[purple fear]"]),
 	("disgust", "the bad state of rejecting contamination; canon: green (broccoli), studies: brown (excrement) — many-to-many",
-		["[feel people disgust]", "[bad disgust]", "[green disgust]", "[brown disgust]"]),
+		["[feel people disgust]", "[bad disgust]"], ["[green disgust]", "[brown disgust]"]),
 ]
 
 
 def main() -> None:
 	v = VocabularyV2()
-	for surface, idea, clauses in SEED:
+	for entry in SEED:
+		surface, idea, clauses = entry[0], entry[1], entry[2]
+		drags = entry[3] if len(entry) > 3 else []
 		try:
-			v.register(surface, idea, clauses)
-			print(f"  ✓ {surface}")
+			v.register(surface, idea, clauses, drag_clauses=drags)
+			print(f"  ✓ {surface}" + (f" (+{len(drags)} arrastre)" if drags else ""))
 		except Exception as e:
 			print(f"  ✗ {surface}: {e}")
 			raise
