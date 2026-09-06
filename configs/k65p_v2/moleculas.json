@@ -263,9 +263,9 @@
  },
  "blind": {
   "surface": "blind",
-  "idea": "someone who cannot see",
+  "idea": "if someone is blind, then they cannot see",
   "clauses": [
-   "[not [see blind something]]"
+   "[if [G blind someone] [not [can [see blind]]]]"
   ],
   "anchor_primes": [],
   "glyph": [
@@ -315,7 +315,7 @@
    0,
    0,
    0,
-   0,
+   -1,
    0,
    0,
    0,
@@ -403,7 +403,7 @@
    0,
    0,
    0,
-   0,
+   -1,
    0,
    0,
    0,

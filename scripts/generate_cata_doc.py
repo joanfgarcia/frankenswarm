@@ -123,7 +123,7 @@ def main() -> None:
 		"sun": "es de la familia del fuego; es muy grande; está muy lejos; está arriba",
 		"earth": "es cosa; es muy grande; la gente vive en él abajo; es lo cercano que se toca; no se mueve",
 		"black": "es oscuro; no es de la familia de la luz; como morir; como el frío; como la ceguera",
-		"blind": "alguien que no ve",
+		"blind": "si alguien es ciego, entonces no puede ver",
 		"white": "toda la luz (saturación)",
 		"red": "es de la luz; como el fuego",
 		"yellow": "es de la luz; como el sol",

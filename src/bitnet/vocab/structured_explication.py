@@ -76,6 +76,10 @@ ROLE_FRAMES = {  # prime_id → (nombre del rol del 1er argumento, nombre del 2�
 EVALUATORS = {8, 9, 10, 11, 26, 60, 61, 64}
 NEGATION = 44  # no
 MENTAL = {12, 13, 14, 15, 16, 17, 18}  # pensar saber querer sentir ver oír decir
+STRUCTURAL_HEADS = {48}  # si: andamiaje hipotético puro — como G, no predica
+# (DL-023 refinado): el conectivo condicional no es contenido del concepto;
+# sí lo son sus ramas. (porque/like son asertivos y sí cuentan: la causalidad
+# y la similitud SÍ se predican del ancla.)
 
 # REGLA MODAL (DL-014 refinado 3-sep): la negación de un predicado MENTAL niega
 # el estado, no el complemento — "no sé si puedo hacerlo" niega el SABER, pero
@@ -192,7 +196,7 @@ class StructuredExplication:
 		anchor_atom = bool(anchors & set(names))
 		anchor_subtree = any(self._has_anchor(a, anchors) for a in args)
 
-		if anchor_subtree and head_id is not None:
+		if anchor_subtree and head_id is not None and head_id not in STRUCTURAL_HEADS:
 			# la cláusula predica algo del ancla → el primo de la cabeza cuenta
 			hits[head_name] = hits.get(head_name, 0) + (-1 if negated else 1)
 			# rastreo de roles: ¿qué rol llena el ancla?

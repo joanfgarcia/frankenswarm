@@ -34,8 +34,8 @@ SEED = [
 		["[G thing earth]", "[very [big earth]]", "[below [live people earth]]",
 		 "[very [near [touch people earth]]]", "[not [move earth]]"]),
 	# ── capa 2: paleta del pintor ──
-	("blind", "someone who cannot see",
-		["[not [see blind something]]"]),
+	("blind", "if someone is blind, then they cannot see",
+		["[if [G blind someone] [not [can [see blind]]]]"]),
 	("black", "without light; like dying and like cold; like blindness",
 		["[dark black]", "[not [G light black]]", "[like black die]", "[like black cold]",
 		 "[like black blind]"]),
