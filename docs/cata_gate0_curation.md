@@ -156,15 +156,15 @@
 | **F — cosas** | | | | |
 | ball | a thing children play with | es cosa; se juega con ella; de niños | `[G ball thing] [G ball move] [G ball play] [G ball child]` |
 | apple | a sweet food eaten with the mouth (sweet = very-good; mouth → capa de partes del cuerpo) | es comida; es MUY buena; se come | `[G apple food] [very [good apple]] [do people [G apple eat]]` |
-| bread | the food from the earth | es comida; viene de la tierra | `[G bread food] [G bread earth] [G bread brown]` |
-| bed | the thing one sleeps on | es cosa; de la familia de dormir | `[G bed thing] [G bed sleep]` |
+| bread | the hot good brown food from the earth | es comida; viene de la tierra; es marrón; es caliente; es buena | `[G bread food] [G bread earth] [G bread brown] [G bread hot] [G bread good]` |
+| bed | the thing one sleeps on, for the dark hours | es cosa; de la familia de dormir; es de lo oscuro | `[G bed thing] [G bed sleep] [G bed dark]` |
 | book | things with words inside to read | es cosa; tiene palabras; se lee; tiene dentro | `[G book word] [G book read] [G book inside]` |
 | box | the thing for putting things in | es cosa; de la familia de put | `[G box thing] [G box inside] [G box put]` |
 | car | a thing that moves people | es cosa; se mueve; lleva gente | `[G car thing] [move car] [G car people]` |
 | train | the big thing that moves people | es cosa; se mueve; lleva gente; es grande | `[G train thing] [move train] [G train people] [big train]` |
 | house | the place where people live | es cosa; la gente vive en él | `[G house thing] [live people house]` |
 | home | the place where the family lives — a good house | es cosa; la gente vive; es bueno | `[G home thing] [live people home] [good home]` |
-| milk | the white food one drinks | es comida; es blanca; de la familia de beber | `[G milk food] [G milk white] [G milk drink] [G milk agua] [G milk cold]` |
+| milk | the white food one drinks | es comida; es blanca; de la familia de beber | `[G milk food] [G milk white] [G milk drink] [G milk water] [G milk cold]` |
 | toys | the things children play with | es cosa; se juega; de niños | `[G toys thing] [G toys small] [G toys play] [G toys child]` |
 | **G — cualidades y cuerpo** | | | | |
 | color | what things look like in the light | es cosa; se ve; es de la luz | `[G color thing] [see people color] [G color light]` |
