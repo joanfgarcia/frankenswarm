@@ -199,10 +199,15 @@ class StructuredExplication:
 		if anchor_subtree and head_id is not None and head_id not in STRUCTURAL_HEADS:
 			# la cláusula predica algo del ancla → el primo de la cabeza cuenta
 			hits[head_name] = hits.get(head_name, 0) + (-1 if negated else 1)
-			# rastreo de roles: ¿qué rol llena el ancla?
+			# rastreo de roles: el ancla llena el rol DE SU POSICIÓN (no siempre
+			# el rol 1: [know someone friend] pone a friend como CONTENIDO —
+			# conocido, no conocedor — y eso es lo que el perfil debe decir)
 			if head_id in ROLE_FRAMES:
-				role1, role2 = ROLE_FRAMES[head_id]
-				roles.append((head_name, role1, negated))
+				frames = ROLE_FRAMES[head_id]
+				positions = [i for i, a in enumerate(args)
+					if not isinstance(a, list) and a.name.casefold() in anchors]
+				role = frames[min(positions[0], len(frames) - 1)] if positions else frames[0]
+				roles.append((head_name, role, negated))
 			elif head_id in EVALUATORS:
 				# el ancla RECIBE el atributo (es tema de la atribución):
 				# esto la define como entidad, no como atributo-capaz

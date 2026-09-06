@@ -112,7 +112,7 @@
 | child | a young person | es joven; es pequeño; es de la gente (el alguien llega por young: ya no hace falta [G someone child]) | `[young child] [small child] [G people child]` |
 | baby | a very young child | muy joven; muy pequeño; es una clase de child | `[very [young baby]] [very [small baby]] [G child baby]` |
 | parent | a person who feels something good toward their baby (care = feel-good-toward, NSM) | es alguien; siente algo bueno hacia el bebé | `[feel parent [G baby good]]` |
-| friend | a person one feels good with | es alguien; se siente algo bueno juntos | `[feel people [G friend good]]` |
+| friend | a known person one feels good with | alguien conoce a friend; ese alguien se siente bien con friend; es alguien | `[know someone friend] [feel people [G friend good]] [G someone friend]` |
 | **C — animales y sonidos** | | | | |
 | bark | the sound of the dog — a big sound people hear | la gente lo oye; es un sonido grande | `[hear people bark] [big bark]` |
 | meow | the sound of the cat — a small sound people hear | la gente lo oye; es un sonido pequeño | `[hear people meow] [small meow]` |
@@ -209,6 +209,10 @@ la cubren (auditoría del ejemplo fire, 3-sep):
    nombres EN (`[below ...]`, `[can ...]`) — nunca ids numéricos, que colisionan
    visualmente (`[43 ...]` es dentro, NO poder — confusión real detectada en fire).
    La forma canónica numérica la genera `linearize()`.
+
+11. **Reciprocidad (doctrina pendiente, NO para ahora)**: friend(A,B) ⟺ friend(B,A) —
+    las relaciones simétricas necesitan diseño propio (¿axioma de simetría en la KB?
+    ¿cláusula espejo en la definición?). Se diseña cuando toque, no como parche.
 
 ## El pipeline tras tu curación
 
