@@ -1,187 +1,182 @@
-# Cata gate-0: clasificación y traducción justa (borrador para curación)
+# Cata gate-0: clasificación y traducción justa (para curación)
 
-> DL-016→022 aplicados. Fuente: pool de etapa 0-1 (1.66M frases, 247 palabras reales).
-> **Actualizado 3-sep**: nombres propios (DL-021), paleta y emociones sembradas (DL-022),
-> definiciones en cadena (DL-020). Vocabulario v2 vivo: 16 moléculas sembradas
-> (`scripts/seed_vocab_v2.py`, reproducible).
+> DL-016→023. Actualizado 3-sep. Ideas fuente en inglés (convención);
+> descomposición NSM y cláusulas K-65P por molécula. Vocabulario v2 vivo:
+> 16 moléculas sembradas (`scripts/seed_vocab_v2.py`).
 
-## Estado de la siembra v2 (lo que ya NO hace falta curar)
+## 1. Los 65 primos (Capa 0 — indefinibles por definición)
 
-Registradas y sembradas (`configs/k65p_v2/moleculas.json`):
-- **Del gate (5/59)**: fire, sun, earth, blue, red
-- **Paleta extra (DL-022)**: black, white, yellow, brown, purple, green — el pintor completo
-- **Emociones film 1 (DL-022)**: joy, sadness, anger, fear, disgust — arrastre emoción→color
-  (asco many-to-many: verde canon Pixar + marrón estudios/biología)
-- **Pre-aprobadas por el operador (DL-020)**: child, baby — la cadena definicional
-  person(primo) → child → baby; a re-sembrar con el lote
+| id | en | es | categoría | valencia |
+|---|---|---|---|---|
+| 0 | i | yo | atom |  |
+| 1 | you | tú | atom |  |
+| 2 | someone | alguien | atom |  |
+| 3 | people | gente | atom |  |
+| 4 | something | algo | atom |  |
+| 5 | thing | cosa | atom |  |
+| 6 | body | cuerpo | atom |  |
+| 7 | part | parte | atom |  |
+| 8 | good | bueno | evaluator |  |
+| 9 | bad | malo | evaluator |  |
+| 10 | big | grande | evaluator |  |
+| 11 | small | pequeño | evaluator |  |
+| 12 | think | pensar | predicate | 1–2: experiencer, content |
+| 13 | know | saber | predicate | 1–2: experiencer, content |
+| 14 | want | querer | predicate | 2–2: experiencer, content |
+| 15 | feel | sentir | predicate | 2–2: experiencer, state |
+| 16 | see | ver | predicate | 1–2: experiencer, theme |
+| 17 | hear | oír | predicate | 1–2: experiencer, theme |
+| 18 | say | decir | predicate | 2–3: agent, content, addressee |
+| 19 | word | palabra | atom |  |
+| 20 | true | verdad | atom |  |
+| 21 | do | hacer | predicate | 1–3: agent, action, patient |
+| 22 | happen | pasar | predicate | 1–2: theme, experiencer |
+| 23 | move | mover | predicate | 1–3: theme, origin, destination |
+| 24 | touch | tocar | predicate | 2–2: agent, patient |
+| 25 | exist | existir | predicate | 1–2: theme, place |
+| 26 | mine | mío | evaluator |  |
+| 27 | live | vivir | predicate | 1–2: theme, place |
+| 28 | die | morir | predicate | 1–1: theme |
+| 29 | when | cuándo | atom |  |
+| 30 | now | ahora | unary_operator |  |
+| 31 | before | antes | unary_operator |  |
+| 32 | after | después | unary_operator |  |
+| 33 | long_time | mucho_tiempo | atom |  |
+| 34 | short_time | poco_tiempo | atom |  |
+| 35 | moment | momento | atom |  |
+| 36 | where | dónde | atom |  |
+| 37 | here | aquí | unary_operator |  |
+| 38 | above | arriba | unary_operator |  |
+| 39 | below | abajo | unary_operator |  |
+| 40 | far | lejos | unary_operator |  |
+| 41 | near | cerca | unary_operator |  |
+| 42 | side | lado | atom |  |
+| 43 | inside | dentro | unary_operator |  |
+| 44 | not | no | unary_operator |  |
+| 45 | maybe | quizá | unary_operator |  |
+| 46 | can | poder | unary_operator |  |
+| 47 | because | porque | binary_connector |  |
+| 48 | if | si | binary_connector |  |
+| 49 | very | muy | atom |  |
+| 50 | more | más | atom |  |
+| 51 | like | como | binary_connector |  |
+| 52 | this | este | atom |  |
+| 53 | same | mismo | atom |  |
+| 54 | other | otro | atom |  |
+| 55 | one | uno | atom |  |
+| 56 | two | dos | atom |  |
+| 57 | some | algunos | atom |  |
+| 58 | all | todo | atom |  |
+| 59 | much | mucho | atom |  |
+| 60 | hot | caliente | evaluator |  |
+| 61 | cold | frío | evaluator |  |
+| 62 | water | agua_prima | atom |  |
+| 63 | light | luz | atom |  |
+| 64 | dark | oscuro | evaluator |  |
 
+## 2. Moléculas confirmadas (sembradas — `configs/k65p_v2/moleculas.json`)
 
-## Resumen
+| molécula | idea fuente (EN) | descomposición NSM | K-65P |
+|---|---|---|---|
+| **fire** | hot light that can burn | es caliente; no es frío | `[hot fire] [not [cold fire]]` |
+| **sun** | the very hot bright thing above | muy caliente; no es frío | `[very [hot sun]] [not [cold sun]]` |
+| **earth** | the ground; the big thing that does not move | es cosa; no se mueve | `[G thing earth] [not [move earth]] [big earth]` |
+| **black** | without light | es oscuro; no es de la familia de la luz | `[dark black] [not [G light black]]` |
+| **white** | all the light | toda la luz (saturación) | `[very [G light white]]` |
+| **red** | light like fire | es de la luz; como el fuego | `[G light red] [like red fire]` |
+| **yellow** | light like the sun | es de la luz; como el sol | `[G light yellow] [like yellow sun]` |
+| **blue** | light like water, cold | es de la luz; es fría | `[G light blue] [cold blue]` |
+| **brown** | the dark color of the earth | como la tierra; no es luz plena | `[like brown earth] [not [very [G light brown]]]` |
+| **purple** | the light mix of red and blue | es de la luz; como el rojo; como el azul (frío: ambivalente = 0) | `[G light purple] [like purple red] [like purple blue]` |
+| **green** | the light mix of blue and yellow | es de la luz; como el azul; como el amarillo | `[G light green] [like green blue] [like green yellow]` |
+| **joy** | the state people feel when something very good happens; canon: yellow | la gente siente alegría; es muy buena; su color es el amarillo | `[feel people joy] [very [good joy]] [yellow joy]` |
+| **sadness** | the state people feel when something bad happens; canon: blue, studies: blue-sadness 53% | la gente siente tristeza; es mala; su color es el azul | `[feel people sadness] [bad sadness] [blue sadness]` |
+| **anger** | the hot bad state; canon: red, studies: red-anger 73% | la gente siente ira; es mala; es caliente; su color es el rojo | `[feel people anger] [bad anger] [hot anger] [red anger]` |
+| **fear** | the bad state of expecting bad; canon: purple, studies: fear→purple/grey/black | la gente siente miedo; es malo; su color es el morado | `[feel people fear] [bad fear] [purple fear]` |
+| **disgust** | the bad state of rejecting contamination; canon: green (broccoli), studies: brown (excrement) — many-to-many | la gente siente asco; es malo; sus colores son el verde (canon) y el marrón (estudios) | `[feel people disgust] [bad disgust] [green disgust] [brown disgust]` |
 
-| destino | n | nota |
-|---|---|---|
-| primo directo/flexionado | 111 | mapeo literal, incl. water/hot/move/want/see/say |
-| **molécula v2 a curar** | 59 → **54 pendientes** | 5 ya sembradas (fire/sun/earth/blue/red); child/baby pre-aprobadas (DL-020) |
-| marco composicional | 42 | la traducción justa NSM (love, have, preguntas, again...) |
-| cae justamente | 38 | artículos, copulativos, interjecciones |
-| nombre propio | 1 | Thomas → `[N thomas]` (DL-021, resuelto) |
-| sin clasificar | 2 | get (verbo ambiguo), group (→ marcador G) |
+## 3. Borradores pendientes de tu validación (por capas — cada capa solo referencia lo definido)
 
-## Los 59 candidatos a molécula (tú curas: aprueba / corrige la idea / rechaza)
+| capa | molécula | idea fuente (EN) | descomposición NSM | K-65P (borrador) |
+|---|---|---|---|---|
+| **A — la base animal** | | | | |
+| animal | a living thing that moves by itself and can act | vive; se mueve; puede hacer | `[live animal] [move animal] [can [do animal]]` |
+| **B — gente y familia** | | | | |
+| child | a young person | es alguien; es pequeño | `[small child]` |
+| baby | a very young child | es una clase de child; muy pequeño | `[very [small baby]]` |
+| parent | a person who feels something good toward their baby (care = feel-good-toward, NSM) | es alguien; siente algo bueno hacia el bebé | `[feel parent [G baby good]]` |
+| friend | a person one feels good with | es alguien; se siente algo bueno juntos | `[feel people [G friend good]]` |
+| **C — animales y sonidos** | | | | |
+| bark | the sound of the dog — a big sound people hear | la gente lo oye; es un sonido grande | `[hear people bark] [big bark]` |
+| meow | the sound of the cat — a small sound people hear | la gente lo oye; es un sonido pequeño | `[hear people meow] [small meow]` |
+| dog | an animal that says bark and lives with people | es animal; dice bark; vive con la gente | `[say dog bark] [live dog people]` |
+| cat | an animal that says meow and lives with people | es animal; dice meow; vive con la gente | `[say cat meow] [live cat people]` |
+| **D — naturaleza** | | | | |
+| tree | a tall living thing with green parts | vive; es grande; tiene partes verdes | `[live tree] [big tree] [G green tree]` |
+| forest | many trees together (collection = group + quantity, DL-017) | árboles juntos; muchos juntos | `[G tree forest] [G much forest]` |
+| river | water that moves | es de la familia del agua; se mueve | `[G water river] [move river]` |
+| rain | water that falls from above | es agua; se mueve hacia abajo | `[G water rain] [below [move rain]]` |
+| storm | bad much-water weather | es agua; es malo; es mucho | `[G water storm] [bad storm] [G much storm]` |
+| night | the time when it is dark | es oscuro; es un momento | `[dark night] [G moment night]` |
+| moon | the light in the dark sky | es de la luz; es del oscuro — la luz de la noche | `[G light moon] [G dark moon]` |
+| stone | a hard thing that does not move by itself | es cosa; no se mueve | `[G thing stone] [not [move stone]]` |
+| cave | a dark thing | es oscuro; es cosa | `[dark cave] [G thing cave]` |
+| **E — comida y acciones** | | | | |
+| food | the things living beings eat — what keeps alive | es cosa; es buena | `[G thing food] [good food]` |
+| play | do things for feel-good | se hace; es bueno | `[do people play] [good play]` |
+| eat | put food in the body | se hace; es de la familia de la comida | `[do people eat] [G food eat]` |
+| drink | put water in the body | se hace; es de la familia del agua | `[do people drink] [G water drink]` |
+| sleep | the body rests and does not move | no se mueve; es un momento | `[not [move sleep]] [G moment sleep]` |
+| give | do, touching, something good for someone | se hace; se toca; es bueno | `[do people give] [touch people give] [G good give]` |
+| help | do something so someone feels good and can do it | se hace; se siente algo bueno | `[do people help] [feel people [G help good]]` |
+| kiss | touch with the mouth to feel-good | se toca; se siente algo bueno | `[touch people kiss] [feel people [G kiss good]]` |
+| make | do so a new thing exists | se hace; hace existir | `[do people make] [G exist make]` |
+| need | want something very much | se quiere; es muy bueno tenerlo | `[want people need] [very [good need]]` |
+| put | move a thing to a place and touch it there | se hace; se mueve; se toca | `[do people put] [move people put] [touch people put]` |
+| read | see words and know them | se ve; se sabe | `[see people read] [know people read]` |
+| sit | the body moves down and then does not move | se mueve hacia abajo; luego no se mueve | `[below [move sit]] [not [move sit]]` |
+| take | touch a thing and move it to oneself | se toca; se mueve | `[touch people take] [move people take]` |
+| try | do wanting it to work, not knowing if it can | se hace; se quiere; no se sabe si se puede | `[do people try] [want people try] [not [know people [can [do try]]]]` |
+| turn | the body or a thing changes side | se mueve; cambia de lado | `[move turn] [G side turn]` |
+| way | the thing one moves along from here | es cosa; desde aquí; se mueve por él | `[G thing way] [G here way] [move way]` |
+| **F — cosas** | | | | |
+| ball | a thing children play with | es cosa; se juega con ella; de niños | `[G play ball] [G child ball]` |
+| apple | a sweet food — very good in the mouth (sweet = very-good) | es comida; es MUY buena (dulce = very-good) | `[G food apple] [very [good apple]]` |
+| bread | the food from the earth | es comida; viene de la tierra | `[G food bread] [G earth bread]` |
+| bed | the thing one sleeps on | es cosa; de la familia de dormir | `[G thing bed] [G sleep bed]` |
+| book | things with words inside to read | es cosa; tiene palabras; se lee | `[G word book] [G read book]` |
+| box | the thing for putting things in | es cosa; de la familia de put | `[G thing box] [G put box]` |
+| car | a thing that moves people | es cosa; se mueve; lleva gente | `[G thing car] [move car] [G people car]` |
+| train | the big thing that moves people | es cosa; se mueve; lleva gente; es grande | `[G thing train] [move train] [G people train] [big train]` |
+| house | the place where people live | es cosa; la gente vive en él | `[G thing house] [live people house]` |
+| home | the place where the family lives — a good house | es cosa; la gente vive; es bueno | `[G thing home] [live people home] [good home]` |
+| milk | the white food one drinks | es comida; es blanca; de la familia de beber | `[G food milk] [G white milk] [G drink milk]` |
+| toys | the things children play with | es cosa; se juega; de niños | `[G thing toys] [G play toys] [G child toys]` |
+| **G — cualidades y cuerpo** | | | | |
+| color | what things look like in the light | es cosa; se ve; es de la luz | `[G thing color] [see people color] [G light color]` |
+| hurt | the body feels bad | el cuerpo siente algo malo | `[feel body hurt] [bad hurt]` |
+| wound | the place in the body that hurts | es del cuerpo; es malo | `[G body wound] [bad wound]` |
 
-| palabra | idea fuente (borrador) |
-|---|---|
-| apple | a round sweet fruit |
-| baby | a very young person |
-| ball | a round thing children play with |
-| bark | the sound of the dog |
-| bed | the thing one sleeps on |
-| ~~blue~~ | ~~the color of the sky~~ → **REGISTRADA (DL-022)** |
-| book | things with words inside to read |
-| box | a thing with empty inside, for putting things |
-| boy | a young male person |
-| bread | the food made of flour |
-| car | a thing with wheels that moves people |
-| cat | a small animal that says meow, lives with people |
-| cave | a dark place inside the earth |
-| child | a young person |
-| color | what makes things look different: red, blue... |
-| dad | the male parent |
-| daddy | the male parent |
-| dog | an animal that says bark, lives with people |
-| drink | put water in the body |
-| ~~earth~~ | ~~the ground; the big thing we stand on~~ → **REGISTRADA (DL-022)** |
-| eat | put food in the body |
-| ~~fire~~ | ~~hot light that can burn and kill~~ → **REGISTRADA (DL-022)** |
-| food | the things living beings eat |
-| forest | many trees together |
-| friend | a person one feels good with |
-| give | make someone have something |
-| help | do something so someone can do it |
-| home | the place where the family lives |
-| house | the place where people live |
-| hurt | the body feels bad |
-| kid | a young person |
-| kiss | touch with the mouth to feel-good |
-| make | do something so a new thing exists |
-| man | an adult male person |
-| meow | the sound of the cat |
-| milk | the white drink from the mom animal |
-| mom | the female parent; the one who cares for the child |
-| moon | the bright thing in the dark sky |
-| need | want something very much: without it, something bad happens |
-| night | the time when it is dark |
-| play | do things for feel-good, not for need |
-| put | move a thing to a place and touch it there |
-| rain | water that falls from above |
-| read | see the words of a book and know them |
-| ~~red~~ | ~~the color of blood/fire~~ → **REGISTRADA (DL-022)** |
-| river | water that moves on the earth |
-| sit | the body goes down and rests on something |
-| sleep | the body rests: eyes closed, not moving |
-| stone | a hard thing that does not move by itself |
-| storm | bad weather: much water and wind from the sky |
-| ~~sun~~ | ~~the bright thing above, far, that makes the day~~ → **REGISTRADA (DL-022)** |
-| take | touch a thing and move it to oneself |
-| toys | the things children play with |
-| train | the big thing on rails that moves people |
-| tree | a tall living thing with parts that are green |
-| try | do something wanting it to work, not knowing if it can |
-| turn | the body or a thing changes direction |
-| way | the place where one moves from here to there |
-| wound | the place in the body where it hurts |
+## 4. Superposiciones léxicas (sinónimos → surfaces, no moléculas nuevas)
 
-## Los marcos (la parte interpretativa — revisa las fórmulas)
-
-- **again** → `[more [one moment]]` — AGAIN = un momento más
-- **and** → `[G {a} {b}]` — conjunción = grupo G de átomos
-- **back** → `[move {x}] [before [move {x}]]` — BACK = mover hacia lo anterior
-- **called** → `[say {x} [G name {y}]]` — 'se llama X'
-- **come** → `[move {x}] [here {x}]` — COME = moverse hacia aquí
-- **drinks** → `→ clasificar como 'drink'` — flexión/contracción: se normaliza antes del mapa
-- **find** → `[know {x} [where {y}]] [not [before [know {x} [where {y}]]]]` — FIND = sé dónde está y no lo sabía
-- **first** → `[before all]` — FIRST
-- **full** → `[much inside {x}]` — FULL = mucho dentro
-- **had** → `→ clasificar como 'have'` — flexión/contracción: se normaliza antes del mapa
-- **has** → `→ clasificar como 'have'` — flexión/contracción: se normaliza antes del mapa
-- **have** → `[exist {y}] [mine {y} {x}]` — HAVE no es primo (NSM): 'y existe y es mío/de X'
-- **havent** → `→ clasificar como 'have'` — flexión/contracción: se normaliza antes del mapa
-- **hes** → `→ clasificar como 'he'` — flexión/contracción: se normaliza antes del mapa
-- **how** → `[want {x} [know {x} [like {y} [do {z}]]]]` — HOW = de qué manera
-- **learn** → `[know {x} {y}] [not [before [know {x} {y}]]]` — LEARN = sé ahora lo que no sabía antes
-- **let** → `[want {x} [can {y} {z}]]` — LET = quiero que puedas
-- **lets** → `→ clasificar como 'let'` — flexión/contracción: se normaliza antes del mapa
-- **love** → `[feel {x} [G {y} good]]` — X feels something good toward Y (explicación NSM de LOVE)
-- **mommy** → `→ clasificar como 'mom'` — flexión/contracción: se normaliza antes del mapa
-- **mummy** → `→ clasificar como 'mom'` — flexión/contracción: se normaliza antes del mapa
-- **out** → `[not inside {x}]` — OUTSIDE = no dentro
-- **plays** → `→ clasificar como 'play'` — flexión/contracción: se normaliza antes del mapa
-- **remember** → `[know {x} [before [know {x} {y}]]]` — REMEMBER = sabía antes y sé ahora
-- **runs** → `→ clasificar como 'run'` — flexión/contracción: se normaliza antes del mapa
-- **safe** → `[not danger {x}]` — SAFE = no peligro
-- **shall** → `→ clasificar como 'will'` — flexión/contracción: se normaliza antes del mapa
-- **shes** → `→ clasificar como 'she'` — flexión/contracción: se normaliza antes del mapa
-- **show** → `[do {x}] [see {y} {z}]` — SHOW = hacer ver
-- **sleeps** → `→ clasificar como 'sleep'` — flexión/contracción: se normaliza antes del mapa
-- **teach** → `[say {x} {y} {z}] [know {z} {y}]` — TEACH = decir para que sepa
-- **theres** → `[exist {y}]` — 'there is' = EXIST
-- **theyre** → `→ clasificar como 'they'` — flexión/contracción: se normaliza antes del mapa
-- **weve** → `→ clasificar como 'we'` — flexión/contracción: se normaliza antes del mapa
-- **what** → `[want {x} [know {x} [do {y} [what]]]]` — PREGUNTA = quiero saber (la palabra interrogativa es el hueco cuestionado)
-- **whats** → `→ clasificar como 'what'` — flexión/contracción: se normaliza antes del mapa
-- **who** → `[want {x} [know {x} [someone]]]` — WHO
-- **whos** → `→ clasificar como 'who'` — flexión/contracción: se normaliza antes del mapa
-- **why** → `[want {x} [know {x} [because [happen {y}]]]]` — WHY
-- **will** → `[after [do {x}]]` — FUTURE via AFTER (NSM no tiene futuro como primo)
-- **with** → `[G {x} {y}]` — 'jugar conmigo' = grupo compartido
-- **without** → `[not [G {x} {y}]]` — WITHOUT
-
-## Ejemplos de traducción justa (patrones top del pool)
-
-| frase real del corpus | K-65P v2 | nota |
-|---|---|---|
-| *she said* | `[say someone]` | SAY con solo el agente |
-| *i love you* | `[feel I [G YOU VERY GOOD]]` | LOVE = explicar NSM: siento algo muy bueno hacia ti |
-| *what are you doing* | `[want I [know I [do YOU WHAT]]]` | PREGUNTA = quiero saber; WHAT = hueco cuestionado |
-| *go away* | `[move YOU] [not [near I]]` | solo con primos: muévete, no cerca de mí |
-| *mom said* | `[say mom]` | mom = molécula cabeza-agente |
-| *you are a good friend* | `[friend YOU] [good YOU]` | molécula como cabeza unaria + atribución; sin copulativo |
-| *do you want to play with me* | `[want I [know I [want YOU [G play I]]]]` | pregunta + compuesta G 'play with me' |
-| *i dont know* | `[not [know I]]  → ␀ SILENCIO` | el ancla natural de la ley L1 (abstención) |
-| *are you okay* | `[want I [know I [good YOU]]]` | pregunta sobre el atributo good |
-| *yes please* | `[TRUE]` | please cae; yes = TRUE |
-| *there is a big tree* | `[exist tree] [big tree]` | 'there is' = EXIST; artículo cae |
-| *i want to eat* | `[want I [eat I]]` | molécula eat como contenido de want |
-| *the dog drinks water* | `[drink dog] [drink water dog]` | WATER es primo: 'el agua' va de primo |
-| *he is in the house* | `[inside SOMEONE house]` | locativo = primo INSIDE |
-| *it is hot* | `[hot something]` | atribución directa del primo HOT |
-
-## Orden de curación recomendado (capas definicionales — DL-020)
-
-Cada molécula solo referencia las ya definidas, así que el lote se cura por capas:
-1. **Gente y familia** (8): mom, dad, baby✝, child✝, boy, kid, man, friend
-2. **Animales y sonidos** (5): dog, cat, bark, meow (+animal ya en seed demos)
-3. **Naturaleza** (6): tree, forest, river, rain, storm, night, moon, stone, cave
-4. **Cosas** (11): ball, apple, bed, book, box, bread, car, food, house, home, milk, toys, train
-5. **Acciones** (12): eat, drink, play, sleep, give, help, kiss, make, need, put, read, sit, take, try, turn
-6. **Cualidades/estados** (3): color, hurt, wound, way
-
-✝ child/baby ya tienen borrador aprobado (cadena person→child→baby, DL-020).
+- **daddy** → dad (mismo concepto: parent — pendiente decisión de género, ⚠ P8)
+- **mommy** → mom (mismo concepto: parent — pendiente ⚠ P8)
+- **mummy** → mom (idem)
+- **kid** → child (mismo concepto; kid queda como surface)
 
 ## Preguntas abiertas para el operador
 
-1. ~~**Thomas** (nombres propios)~~ → **RESUELTA (DL-021)**: marcador de nombre — `[N thomas]`, símbolo sin huella, fuera de la malla. Los nombres jamás encabezan; las relaciones encabezan.
-2. ~~**El hueco interrogativo**~~ → **RESUELTA (DL-023)**: marcador `[Q cláusula]` con
-   glifo diseñado que arrastra querer+saber (preguntar = querer saber, NSM). La fuerza
-   ilocutiva (curiosidad/duda/sorpresa/reto) es del intérprete, que arrastra las
-   moléculas de intención específicas dentro del marcado. 'get': solo-en-contexto —
-   la unidad de traducción es la frase-idea interpretada, nunca la palabra aislada.
-3. ~~**Colores**~~ → **RESUELTA (DL-022)**: paleta del pintor (blanco/rojo/amarillo/azul/negro
-   + marrón y mezclas) sobre los primos luz/oscuro/caliente/frío; arrastre emoción→color
-   (la asimetría de contaminación: la pelota roja queda limpia, la ira lleva su rojo).
-4. **'get'** (el verbo más ambiguo del inglés): ¿molécula o frame take/come según contexto?
+1. ~~Thomas~~ → RESUELTA (DL-021): `[N thomas]`, marcador de nombre.
+2. ~~Hueco interrogativo~~ → RESUELTA (DL-023): `[Q cláusula]` con glifo querer+saber; la fuerza ilocutiva es del intérprete.
+3. ~~Colores~~ → RESUELTA (DL-022): paleta del pintor + arrastre emoción→color.
+4. ~~'get'~~ → RESUELTA (DL-023): solo-en-contexto — la unidad de traducción es la frase-idea.
 5. **'oh no' / 'yeah'**: ¿caen o son contextos de SILENCIO/alarm?
-6. **child/baby** (DL-020): ¿las re-sembramos tal cual (cadena person→child→baby) o
-   esperan a la curación del lote gente?
-7. **Los sonidos** (bark/meow): ¿moléculas de sonido o marcos `[say dog [G bark]]`
-   ("el perro dice bark")? El marco es más NSM-justo: el sonido es lo que se dice.
+6. **child/baby** (DL-020): ¿re-siembra tal cual o esperan a la capa B del lote?
+7. **Sonidos** (bark/meow): borrados como MOLÉCULAS con distinción por tamaño (bark=grande, meow=pequeño — los animales los arrastran por la malla). ¿Apruebas el convenio?
+8. **⚠ NUEVA — El eje de género no existe en los 65 primos**: mom/dad y boy/man colisionan sin él. Opciones: (a) un solo concepto *parent* con mom/dad como surfaces hasta que exista la capa, (b) diseñar género como moléculas (NSM: "una clase de gente que puede hacer bebés" vs "no"), (c) esperar. Mi recomendación: (a) para la cata — *parent* cubre mom y dad sin doctrina forzada.
+9. **⚠ NUEVA — El eje del gusto no existe** (dulce/amargo): apple se distingue de bread por prototipos (apple=buena, bread=de la tierra) — suficiente para la cata, pero un día el corpus de comida lo pedirá.
+10. **⚠ NUEVA — El arrastre arrastra también los contrastes**: las referencias a moléculas traen sus trits −1 (earth=mover:−1 contaminó river en un borrador; resuelto usando la familia `[G water river]` en vez de citar earth). Convención: **preferir familia-G a referencia directa cuando el rol es locativo/categorial**, reservar la referencia directa para cuando el contenido ES definicional.
+
+## El pipeline tras tu curación
+
+Capas aprobadas → `seed_vocab_v2.py` extendido → compilador de patrones (los marcos × rellenos del pool) → corpus mínimo validado → **cata: Bit v2 a 32d** con la escalera DL-019 y el test de permutación como primera lectura.

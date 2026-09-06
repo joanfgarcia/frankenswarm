@@ -27,7 +27,7 @@ SEED = [
 	# ── capa 1: prototipos ──
 	("fire", "hot light that can burn", ["[hot fire]", "[not [cold fire]]"]),
 	("sun", "the very hot bright thing above", ["[very [hot sun]]", "[not [cold sun]]"]),
-	("earth", "the ground; the big thing that does not move", ["[G thing earth]", "[not [move earth]]"]),
+	("earth", "the ground; the big thing that does not move", ["[G thing earth]", "[not [move earth]]", "[big earth]"]),
 	# ── capa 2: paleta del pintor ──
 	("black", "without light", ["[dark black]", "[not [G light black]]"]),
 	("white", "all the light", ["[very [G light white]]"]),

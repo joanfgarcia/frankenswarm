@@ -174,7 +174,8 @@
   "idea": "the ground; the big thing that does not move",
   "clauses": [
    "[G thing earth]",
-   "[not [move earth]]"
+   "[not [move earth]]",
+   "[big earth]"
   ],
   "anchor_primes": [],
   "glyph": [
@@ -188,7 +189,7 @@
    0,
    0,
    0,
-   0,
+   1,
    0,
    0,
    0,
@@ -249,9 +250,9 @@
    "patient_capable": false,
    "experiencer_capable": false,
    "attribute_capable": false,
-   "receives_attributes": false
+   "receives_attributes": true
   },
-  "kind": "event",
+  "kind": "entity",
   "notes": ""
  },
  "black": {
@@ -697,7 +698,7 @@
    0,
    0,
    0,
-   0,
+   1,
    0,
    0,
    0,
@@ -1301,7 +1302,7 @@
    0,
    0,
    1,
-   0,
+   1,
    0,
    0,
    0,
