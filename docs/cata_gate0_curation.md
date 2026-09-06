@@ -199,27 +199,30 @@ pero fuera de la siembra hasta que las relaciones simétricas tengan diseño.
 - **mummy** → mom (idem)
 - **kid** → child (mismo concepto; kid queda como surface)
 
-## Preguntas abiertas para el operador
+## Preguntas abiertas para el operador (revisadas 3-sep: lo resuelto por el camino se marca)
 
 1. ~~Thomas~~ → RESUELTA (DL-021): `[N thomas]`, marcador de nombre.
 2. ~~Hueco interrogativo~~ → RESUELTA (DL-023): `[Q cláusula]` con glifo querer+saber; la fuerza ilocutiva es del intérprete.
 3. ~~Colores~~ → RESUELTA (DL-022): paleta del pintor + arrastre emoción→color.
 4. ~~'get'~~ → RESUELTA (DL-023): solo-en-contexto — la unidad de traducción es la frase-idea.
-5. **'oh no' / 'yeah'**: ¿caen o son contextos de SILENCIO/alarm?
-6. **child/baby** (DL-020): ¿re-siembra tal cual o esperan a la capa B del lote?
-7. **Sonidos** (bark/meow): borrados como MOLÉCULAS con distinción por tamaño (bark=grande, meow=pequeño — los animales los arrastran por la malla). ¿Apruebas el convenio?
-8. ~~**El eje de género**~~ → **RESUELTO (opción b)**: male = `[G someone male] [not [live baby male]]`
-   ("alguien en quien no viven bebés") → {alguien}−{vivir}; female = `[G someone female]
-   [live baby female]` ("alguien en quien viven bebés") → {alguien, vivir}+baby.
-   son/daughter = offspring ∓ vivir (difieren EXACTAMENTE en el signo de vivir).
-   mom/dad quedan como surfaces de parent hasta que la capa de género entre en la siembra.
-11. ~~Reciprocidad~~ + **sibling**: hermano NO cabe en forma unaria (colapsaría con
-    parent: le faltaría la mismidad — necesitaría SAME u operador) → hermano es
-    **molécula-relación sibling/2** (`[sibling [N x] [N y]]`) con axioma de simetría
-    en la KB (la doctrina de reciprocidad pendiente). Las relaciones simétricas viven
-    en la base de hechos, no en el léxico unario.
-9. **⚠ NUEVA — El eje del gusto no existe** (dulce/amargo): apple se distingue de bread por prototipos (apple=buena, bread=de la tierra) — suficiente para la cata, pero un día el corpus de comida lo pedirá.
-10. **⚠ NUEVA — El arrastre arrastra también los contrastes**: las referencias a moléculas traen sus trits −1 (earth=mover:−1 contaminó river en un borrador; resuelto usando la familia `[G water river]` en vez de citar earth). Convención: **preferir familia-G a referencia directa cuando el rol es locativo/categorial**, reservar la referencia directa para cuando el contenido ES definicional.
+5. **'oh no' / 'yeah'** → PARCIAL: 'yeah' = TRUE (igual que 'yes', ya en el mapa).
+   'oh no' sigue abierto: ¿cae como interjección o es contexto de alarma?
+6. ~~**child/baby**~~ → RESUELTA (verificado contra la semilla real): child es
+   sembrable YA tal cual (`young` está sembrado); baby va justo detrás de child.
+   Solo falta tu visto bueno a su forma actual.
+7. **Sonidos** (bark/meow): técnicamente sembrables YA (verificado: hear+big/small
+   sin dependencias). La pregunta que queda es solo de convenio: ¿apruebas
+   bark=grande / meow=pequeño como distinción definicional?
+8. ~~**El eje de género**~~ → RESUELTO (opción b): male/female/son/daughter verificados.
+   mom/dad quedan como surfaces de parent hasta la siembra.
+9. **El eje del gusto** (dulce/amargo): ABIERTO a futuro — apple/bread resueltos por
+   prototipos para la cata, pero el corpus de comida lo pedirá.
+10. ~~**El arrastre arrastra contrastes**~~ → DOCUMENTADO como convención: preferir
+    familia-G a referencia directa en rol locativo/categorial; la referencia
+    directa cuando el contenido ES definicional.
+11. **Reciprocidad + sibling/cousin**: DIFERIDO por diseño — relaciones /2 sobre
+    nombres con simetría en la KB (sibling/2, cousin-of/2). No es pregunta pendiente
+    de respuesta sino de implementación futura.
 
 ## Convención de referencia K-65P (cómo "seguir hablando de lo dicho" sin marcador nuevo)
 
