@@ -71,6 +71,15 @@ SEED = [
 		["[feel people fear]", "[bad fear]"], ["[purple fear]"]),
 	("disgust", "the bad state of rejecting contamination; canon: green (broccoli), studies: brown (excrement) — many-to-many",
 		["[feel people disgust]", "[bad disgust]"], ["[green disgust]", "[brown disgust]"]),
+	# ── capa 5: gente y sonidos (lote aprobado por el operador 3-sep) ──
+	("child", "a young person",
+		["[young child]", "[small child]", "[G people child]"]),
+	("baby", "a very young child",
+		["[very [young baby]]", "[very [small baby]]", "[G child baby]"]),
+	("bark", "the sound of the dog — a big (loud, scandalous) sound even if the dog is small",
+		["[hear people bark]", "[big bark]"]),
+	("meow", "the sound of the cat — a small sound people hear",
+		["[hear people meow]", "[small meow]"]),
 ]
 
 

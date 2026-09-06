@@ -21,8 +21,6 @@ DRAFTS = [
 	("vegetal", "a living thing not at all like someone",
 	 "vive; no es como alguien; no es alguien", ["[live vegetal]", "[not [like vegetal someone]]"], "A"),
 	# ── capa B: gente y familia (compuestos de SOMEONE) ──
-	("child", "a young person", "es joven; es pequeño; es de la gente (el alguien llega por young: ya no hace falta [G child someone])", ["[young child]", "[small child]", "[G child people]"], "B"),
-	("baby", "a very young child", "muy joven; muy pequeño; es una clase de child", ["[very [young baby]]", "[very [small baby]]", "[G baby child]"], "B"),
 	("parent", "a person who feels something good toward their baby and acts for it (care = feel-good + do-for, NSM)",
 	 "es alguien; siente algo bueno hacia el bebé; hace por el bebé", ["[feel parent [G baby good]]", "[do parent [G baby good]]"], "B"),
 	("offspring", "someone who belongs to a parent; who comes from a body (hijo-descendiente, NO baby-niño)",
@@ -40,10 +38,6 @@ DRAFTS = [
 	# ── capa C: animales y sonidos ──
 	("domestic", "living with people, in a good way",
 	 "vive con la gente; es bueno", ["[live domestic people]", "[good domestic]"], "C"),
-	("bark", "a big sound people hear",
-	 "la gente lo oye; es un sonido grande", ["[hear people bark]", "[big bark]"], "C"),
-	("meow", "a small sound people hear",
-	 "la gente lo oye; es un sonido pequeño", ["[hear people meow]", "[small meow]"], "C"),
 	("dog", "a domestic animal that says bark",
 	 "es de la familia animal; dice bark; es doméstico", ["[G dog animal]", "[say dog bark]", "[G dog domestic]"], "C"),
 	("cat", "a domestic animal that says meow",
@@ -190,6 +184,10 @@ def main() -> None:
 		"anger": "la gente siente ira; es mala; es caliente; su color es el rojo",
 		"fear": "la gente siente miedo; es malo; su color es el morado",
 		"disgust": "la gente siente asco; es malo; sus colores son el verde (canon) y el marrón (estudios)",
+		"child": "es joven; es pequeño; es de la gente",
+		"baby": "muy joven; muy pequeño; es una clase de child",
+		"bark": "la gente lo oye; es un sonido grande (fuerte aunque el perro sea pequeño)",
+		"meow": "la gente lo oye; es un sonido pequeño",
 	}
 	for name, m in seed.items():
 		cl = " ".join(m["clauses"])
