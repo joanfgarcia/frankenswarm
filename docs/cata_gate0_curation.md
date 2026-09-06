@@ -115,14 +115,17 @@
 | offspring | someone who belongs to a parent; who comes from a body (hijo-descendiente, NO baby-niño) | es alguien; es de parent; viene de un cuerpo | `[G someone offspring] [G parent offspring] [G body offspring]` |
 | male | someone in whom babies do not live (NSM: the male cannot bear) | es alguien; los bebés no viven en él | `[G someone male] [not [live baby male]]` |
 | female | someone in whom babies live (NSM: can bear) | es alguien; los bebés viven en ella | `[G someone female] [live baby female]` |
-| son | a male offspring | es offspring; es macho | `[male son] [G offspring son]` |
-| daughter | a female offspring | es offspring; es hembra | `[female daughter] [G offspring daughter]` |
+| son | a male offspring who belongs to a parent | es offspring; es macho; es DE parent (pertenencia) | `[male son] [G offspring son] [G parent son]` |
+| daughter | a female offspring who belongs to a parent | es offspring; es hembra; es DE parent (pertenencia) | `[female daughter] [G offspring daughter] [G parent daughter]` |
 | mom | a female parent | es hembra; es de la clase parent | `[female mom] [G parent mom]` |
 | dad | a male parent | es macho; es de la clase parent | `[male dad] [G parent dad]` |
 | grandpa | an old male parent (the parent of a parent) | es macho; es parent; es viejo | `[male grandpa] [G parent grandpa] [G old grandpa]` |
 | grandma | an old female parent (the parent of a parent) | es hembra; es parent; es vieja | `[female grandma] [G parent grandma] [G old grandma]` |
 | uncle | a male son of a grandparent (the parent's brother) | es macho; es son; es de la familia grandpa | `[male uncle] [G son uncle] [G grandpa uncle]` |
 | aunt | a female daughter of a grandparent (the parent's sister) | es hembra; es daughter; es de la familia grandpa | `[female aunt] [G daughter aunt] [G grandpa aunt]` |
+| sibling | those who share parents — the same ones | es alguien; es de parent; son los mismos | `[G someone sibling] [G parent sibling] [G same sibling]` |
+| brother | a male sibling whose mom and dad are the same (ones) | es macho; es sibling | `[male brother] [G sibling brother]` |
+| sister | a female sibling whose mom and dad are the same (ones) | es hembra; es sibling | `[female sister] [G sibling sister]` |
 | friend | a known person one feels good with | alguien conoce a friend; ese alguien se siente bien con friend; es alguien | `[know someone friend] [feel people [G friend good]] [G someone friend]` |
 | **C — animales y sonidos** | | | | |
 | bark | the sound of the dog — a big sound people hear | la gente lo oye; es un sonido grande | `[hear people bark] [big bark]` |
@@ -230,7 +233,15 @@ la cubren (auditoría del ejemplo fire, 3-sep):
    visualmente (`[43 ...]` es dentro, NO poder — confusión real detectada en fire).
    La forma canónica numérica la genera `linearize()`.
 
-11. **Reciprocidad (doctrina pendiente, NO para ahora)**: friend(A,B) ⟺ friend(B,A) —
+11. **Parentesco relacional (diseñado, implementación diferida con la reciprocidad)**:
+    sibling/2 y cousin-of/2 sobre `[N ...]` (`[sibling [N x] [N y]]`,
+    `[cousin-of [N x] [N y]]`) con axiomas de simetría en la KB.
+    **Materno ≠ paterno por construcción del sistema de símbolos**: `[N grandpaX]`
+    y `[N grandpaY]` son átomos distintos por grafía (Prolog-style) — no hace
+    falta ningún hecho de distinción: `[son-of [N dad] [N grandpaX]]` y
+    `[son-of [N mom] [N grandpaY]]` ya dicen que los abuelos son distintos.
+    Los conceptos (grandpa) son unarios; las instancias ([N ...]) son símbolos.
+12. **Reciprocidad (doctrina pendiente, NO para ahora)**: friend(A,B) ⟺ friend(B,A) —
     las relaciones simétricas necesitan diseño propio (¿axioma de simetría en la KB?
     ¿cláusula espejo en la definición?). Se diseña cuando toque, no como parche.
 

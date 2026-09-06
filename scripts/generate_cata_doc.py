@@ -28,8 +28,10 @@ DRAFTS = [
 	 "es alguien; los bebés no viven en él", ["[G someone male]", "[not [live baby male]]"], "B"),
 	("female", "someone in whom babies live (NSM: can bear)",
 	 "es alguien; los bebés viven en ella", ["[G someone female]", "[live baby female]"], "B"),
-	("son", "a male offspring", "es offspring; es macho", ["[male son]", "[G offspring son]"], "B"),
-	("daughter", "a female offspring", "es offspring; es hembra", ["[female daughter]", "[G offspring daughter]"], "B"),
+	("son", "a male offspring who belongs to a parent", "es offspring; es macho; es DE parent (pertenencia)",
+	 ["[male son]", "[G offspring son]", "[G parent son]"], "B"),
+	("daughter", "a female offspring who belongs to a parent", "es offspring; es hembra; es DE parent (pertenencia)",
+	 ["[female daughter]", "[G offspring daughter]", "[G parent daughter]"], "B"),
 	("mom", "a female parent",
 	 "es hembra; es de la clase parent", ["[female mom]", "[G parent mom]"], "B"),
 	("dad", "a male parent",
@@ -42,6 +44,14 @@ DRAFTS = [
 	 "es macho; es son; es de la familia grandpa", ["[male uncle]", "[G son uncle]", "[G grandpa uncle]"], "B"),
 	("aunt", "a female daughter of a grandparent (the parent's sister)",
 	 "es hembra; es daughter; es de la familia grandpa", ["[female aunt]", "[G daughter aunt]", "[G grandpa aunt]"], "B"),
+	# cousin: NO cabe en forma unaria (colisiona con uncle: child∪uncle ≡ son como conjuntos) —
+	# es molécula-relación cousin-of/2 sobre nombres, con la simetría en la KB (igual que sibling/2).
+	("sibling", "those who share parents — the same ones",
+	 "es alguien; es de parent; son los mismos", ["[G someone sibling]", "[G parent sibling]", "[G same sibling]"], "B"),
+	("brother", "a male sibling whose mom and dad are the same (ones)",
+	 "es macho; es sibling", ["[male brother]", "[G sibling brother]"], "B"),
+	("sister", "a female sibling whose mom and dad are the same (ones)",
+	 "es hembra; es sibling", ["[female sister]", "[G sibling sister]"], "B"),
 	("friend", "a known person one feels good with",
 	 "alguien conoce a friend; ese alguien se siente bien con friend; es alguien",
 	 ["[know someone friend]", "[feel people [G friend good]]", "[G someone friend]"], "B"),
@@ -239,7 +249,15 @@ la cubren (auditoría del ejemplo fire, 3-sep):
    visualmente (`[43 ...]` es dentro, NO poder — confusión real detectada en fire).
    La forma canónica numérica la genera `linearize()`.
 
-11. **Reciprocidad (doctrina pendiente, NO para ahora)**: friend(A,B) ⟺ friend(B,A) —
+11. **Parentesco relacional (diseñado, implementación diferida con la reciprocidad)**:
+    sibling/2 y cousin-of/2 sobre `[N ...]` (`[sibling [N x] [N y]]`,
+    `[cousin-of [N x] [N y]]`) con axiomas de simetría en la KB.
+    **Materno ≠ paterno por construcción del sistema de símbolos**: `[N grandpaX]`
+    y `[N grandpaY]` son átomos distintos por grafía (Prolog-style) — no hace
+    falta ningún hecho de distinción: `[son-of [N dad] [N grandpaX]]` y
+    `[son-of [N mom] [N grandpaY]]` ya dicen que los abuelos son distintos.
+    Los conceptos (grandpa) son unarios; las instancias ([N ...]) son símbolos.
+12. **Reciprocidad (doctrina pendiente, NO para ahora)**: friend(A,B) ⟺ friend(B,A) —
     las relaciones simétricas necesitan diseño propio (¿axioma de simetría en la KB?
     ¿cláusula espejo en la definición?). Se diseña cuando toque, no como parche.
 
