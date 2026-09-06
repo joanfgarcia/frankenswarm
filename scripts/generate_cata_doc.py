@@ -57,14 +57,16 @@ DRAFTS = [
 	 ["[know someone friend]", "[feel people [G friend good]]", "[G someone friend]"], "B"),
 	# ⚠ boy/man: sin primos de género no se distinguen (ver Preguntas 8)
 	# ── capa C: animales y sonidos ──
-	("bark", "the sound of the dog — a big sound people hear",
+	("domestic", "living with people, in a good way",
+	 "vive con la gente; es bueno", ["[live domestic people]", "[good domestic]"], "C"),
+	("bark", "a big sound people hear",
 	 "la gente lo oye; es un sonido grande", ["[hear people bark]", "[big bark]"], "C"),
-	("meow", "the sound of the cat — a small sound people hear",
+	("meow", "a small sound people hear",
 	 "la gente lo oye; es un sonido pequeño", ["[hear people meow]", "[small meow]"], "C"),
-	("dog", "an animal that says bark and lives with people",
-	 "es animal; dice bark; vive con la gente", ["[say dog bark]", "[live dog people]"], "C"),
-	("cat", "an animal that says meow and lives with people",
-	 "es animal; dice meow; vive con la gente", ["[say cat meow]", "[live cat people]"], "C"),
+	("dog", "a domestic animal that says bark",
+	 "es de la familia animal; dice bark; es doméstico", ["[G animal dog]", "[say dog bark]", "[G domestic dog]"], "C"),
+	("cat", "a domestic animal that says meow",
+	 "es de la familia animal; dice meow; es doméstico", ["[G animal cat]", "[say cat meow]", "[G domestic cat]"], "C"),
 	# ── capa D: naturaleza ──
 	("tree", "a tall living thing with green parts",
 	 "vive; es grande; tiene partes verdes", ["[live tree]", "[big tree]", "[G green tree]"], "D"),
