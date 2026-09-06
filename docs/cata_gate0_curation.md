@@ -83,11 +83,13 @@
 | **earth** | the very big ground everything lives on, near under our feet, that does not move | es cosa; es muy grande; la gente vive en él abajo; es lo cercano que se toca; no se mueve | `[G thing earth] [very [big earth]] [below [live people earth]] [very [near [touch people earth]]] [not [move earth]]` |
 | **blind** | if someone is blind, then they cannot see | si alguien es ciego, entonces no puede ver | `[if [G blind someone] [not [can [see blind]]]]` |
 | **black** | without light; like dying and like cold; like blindness | es oscuro; no es de la familia de la luz; como morir; como el frío; como la ceguera | `[dark black] [not [G light black]] [like black die] [like black cold] [like black blind]` |
-| **white** | all the light | toda la luz (saturación) | `[very [G light white]]` |
 | **red** | light like fire | es de la luz; como el fuego | `[G light red] [like red fire]` |
 | **yellow** | light like the sun | es de la luz; como el sol | `[G light yellow] [like yellow sun]` |
 | **blue** | light like water, cold | es de la luz; es fría | `[G light blue] [cold blue]` |
 | **brown** | the dark color of the earth | como la tierra; no es luz plena | `[like brown earth] [not [very [G light brown]]]` |
+| **dirty** | like what is not good; like brown (its badness carried by [bad dirty]) | como lo no-bueno; como el marrón; es malo | `[like [not [good something]] dirty] [like dirty brown] [bad dirty]` |
+| **clean** | not dirty — defined by opposition (dirty must come first) | no es sucio — definido por oposición (la oposición entera de dirty, trits invertidos) | `[not [dirty clean]]` |
+| **white** | all the light; like living (life/death axis with black↔die); like clean — AFTER clean (definitional layering) | toda la luz; como vivir (eje vida/muerte con black↔morir); como lo limpio | `[very [G light white]] [like white live] [like white clean]` |
 | **purple** | the light mix of red and blue | es de la luz; como el rojo; como el azul (frío: ambivalente = 0) | `[G light purple] [like purple red] [like purple blue]` |
 | **green** | the light mix of blue and yellow | es de la luz; como el azul; como el amarillo | `[G light green] [like green blue] [like green yellow]` |
 | **joy** | the state people feel when something very good happens; canon: yellow | la gente siente alegría; es muy buena; su color es el amarillo | `[feel people joy] [very [good joy]] [yellow joy]` |
