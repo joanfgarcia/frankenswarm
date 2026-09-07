@@ -80,7 +80,7 @@
 |---|---|---|---|
 | **fire** | hot light that can burn | es de la familia de la luz; es caliente; no es frío; puede hacer algo malo (quemar) | `[G fire light] [hot fire] [not [cold fire]] [can [do fire [G something bad]]]` |
 | **sky** | the big place above where sun, moon and stars live |  | `[G thing sky] [big sky] [above [exist sky]]` |
-| **sun** | the very big bright thing above, far away, of the fire family | es de la familia del fuego; es muy grande; está muy lejos; está arriba | `[G sun fire] [very [big sun]] [very [far [exist sun]]] [above [exist sun]]` |
+| **sun** | the very big bright thing above, far away, of the fire family, in the sky | es de la familia del fuego; es muy grande; está muy lejos; está arriba | `[G sun fire] [very [big sun]] [very [far [exist sun]]] [above [exist sun]] [G sun sky]` |
 | **earth** | the very big ground everything lives on, near under our feet, that does not move | es cosa; es muy grande; la gente vive en él abajo; es lo cercano que se toca; no se mueve | `[G earth thing] [very [big earth]] [below [live people earth]] [very [near [touch people earth]]] [not [move earth]]` |
 | **new** | like the short-time thing | como la cosa de poco-tiempo | `[like new [G thing short_time]]` |
 | **young** | like the short-time someone | como el alguien de poco-tiempo | `[like young [G someone short_time]]` |
@@ -136,7 +136,7 @@
 | storm | bad much-rain weather from the sky, like dark | es de la familia de rain; es malo; es mucho; como lo oscuro; es del cielo | `[G storm rain] [bad storm] [G storm much] [like storm dark] [G storm sky]` |
 | quiet | neither spoken nor heard | no se dice; no se oye | `[not [G say quiet]] [not [G hear quiet]]` |
 | night | the quiet dark time | es oscuro; es un momento; es quiet | `[dark night] [G night moment] [G night quiet]` |
-| moon | the light in the dark sky | es de la luz; es del oscuro — la luz de la noche | `[G moon light] [G moon dark] [big moon] [G moon far] [G moon night]` |
+| moon | the light in the dark sky | es de la luz; es del oscuro — la luz de la noche; es del cielo | `[G moon light] [G moon dark] [big moon] [G moon far] [G moon night] [G moon sky]` |
 | star | a small bright light in the night sky | es luz; es pequeña; es del cielo | `[G star light] [G star small] [G star sky]` |
 | stone | a hard thing that does not move by itself | es cosa; no se mueve | `[G stone thing] [not [move stone]] [not [like stone water]] [G stone earth]` |
 | cave | a dark thing | es oscuro; es cosa | `[dark cave] [G cave thing] [G cave inside] [G cave earth] [like cave house]` |

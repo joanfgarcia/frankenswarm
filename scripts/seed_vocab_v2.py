@@ -30,8 +30,8 @@ SEED = [
 		 "[can [do fire [G something bad]]]"]),  # "es de la luz; es caliente; no es frío; puede hacer algo malo"
 	("sky", "the big place above where sun, moon and stars live",
 		["[G thing sky]", "[big sky]", "[above [exist sky]]"]),
-	("sun", "the very big bright thing above, far away, of the fire family",
-		["[G sun fire]", "[very [big sun]]", "[very [far [exist sun]]]", "[above [exist sun]]"]),
+	("sun", "the very big bright thing above, far away, of the fire family, in the sky",
+		["[G sun fire]", "[very [big sun]]", "[very [far [exist sun]]]", "[above [exist sun]]", "[G sun sky]"]),
 	("earth", "the very big ground everything lives on, near under our feet, that does not move",
 		["[G earth thing]", "[very [big earth]]", "[below [live people earth]]",
 		 "[very [near [touch people earth]]]", "[not [move earth]]"]),
