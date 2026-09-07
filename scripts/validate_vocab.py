@@ -67,7 +67,7 @@ def main() -> int:
 				problems.append((f"L1/L2(seed)", surface, str(ex)[:80]))
 				continue
 			fps[g] = surface
-			v.molecules[surface] = {"glyph": list(g), "clauses": clauses}
+			v.molecules[surface] = {"glyph": list(g), "clauses": clauses, "drags": drags}
 		for w, idea, nsm, clauses, layer in DRAFTS + DEFERRED_DRAFTS:
 			for c in clauses:
 				if validate(c):

@@ -32,9 +32,7 @@ DRAFTS = [
 	 "es child; es macho", ["[G boy child]", "[G boy male]"], "B"),
 	("man", "a big male someone (an adult)",
 	 "es alguien; es macho; es grande", ["[G man someone]", "[G man male]", "[G man big]"], "B"),
-	("friend", "a known person one feels good with",
-	 "alguien conoce a friend; ese alguien se siente bien con friend; es alguien",
-	 ["[know someone friend]", "[feel people [G friend good]]", "[G friend someone]"], "B"),
+	# (friend sembrada: ver seed_vocab_v2.py)
 	# ⚠ boy/man: sin primos de género no se distinguen (ver Preguntas 8)
 	# ── capa C: animales y sonidos ──
 	# ── capa D: naturaleza ──
@@ -198,6 +196,7 @@ def main() -> None:
 		"baby": "muy joven; muy pequeño; es una clase de child",
 		"bark": "la gente lo oye; es un sonido grande (fuerte aunque el perro sea pequeño)",
 		"meow": "la gente lo oye; es un sonido pequeño",
+		"friend": "alguien conoce a friend; ese alguien se siente bien con friend; es alguien",
 		"animal": "como alguien (poco); es alguien; no es de la gente; vive; se mueve; puede hacer",
 		"domestic": "vive con la gente; es bueno",
 		"dog": "es de la familia animal; dice bark; es doméstico; es friend",
