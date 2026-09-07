@@ -85,6 +85,27 @@ DRAFTS = [
 	 ["[do people try]", "[want people try]", "[not [know people [can [do try]]]]", "[if [do people try] [good try]]"], "E"),
 	("turn", "the body or a thing changes side", "el cuerpo se mueve; cambia de lado", ["[move turn]", "[G turn side]", "[G turn body]"], "E"),
 	("way", "the thing one moves along from here", "es cosa; desde aquí; se mueve por él", ["[G way thing]", "[G way here]", "[move way]"], "E"),
+	# ── capa T: taxonomía animal (tras E: mammal necesita milk) ──
+	("mammal", "an animal whose babies drink its milk",
+	 "es animal; es de la familia de la leche", ["[G animal mammal]", "[G milk mammal]", "[G live mammal]", "[G hot mammal]"], "T"),
+	("fish", "a cold animal that lives in water",
+	 "es animal; vive en el agua; es frío (sangre fría)", ["[G animal fish]", "[live fish water]", "[G cold fish]"], "T"),
+	("bird", "an animal that moves above",
+	 "es animal; se mueve arriba", ["[G animal bird]", "[above [move bird]]"], "T"),
+	("reptile", "a crawling cold animal (cold-blooded)",
+	 "es animal; se mueve abajo; no es caliente", ["[G animal reptile]", "[below [move reptile]]", "[not [hot reptile]]"], "T"),
+	("amphibian", "an animal that lives in water and on earth",
+	 "es animal; vive en el agua y en la tierra", ["[G animal amphibian]", "[live amphibian water]", "[live amphibian earth]"], "T"),
+	("terrestrial", "an animal that lives on earth",
+	 "es animal; vive en la tierra", ["[G animal terrestrial]", "[live terrestrial earth]", "[G move terrestrial]"], "T"),
+	("aquatic", "an animal that lives in water",
+	 "es animal; vive en el agua", ["[G animal aquatic]", "[live aquatic water]"], "T"),
+	("flier", "an animal that moves above and far (range)",
+	 "es animal; se mueve arriba; va lejos", ["[G animal flier]", "[above [move flier]]", "[far [move flier]]"], "T"),
+	("prey", "an animal that is food (for someone)",
+	 "es animal; es comida", ["[G animal prey]", "[G food prey]", "[G move prey]"], "T"),
+	("predator", "an animal that kills prey and eats it",
+	 "es animal; hace morir a la presa; come presa", ["[G animal predator]", "[do predator [G die prey]]", "[do predator [G eat prey]]"], "T"),
 	# ── capa F: cosas (referencian acciones ya definidas) ──
 	("ball", "a thing children play with", "es cosa; se juega con ella; de niños", ["[G ball thing]", "[G ball move]", "[G ball play]", "[G ball child]"], "F"),
 	("apple", "a sweet food eaten with the mouth, also sour when small and green (covers sweet and sour kinds)", "es comida; es MUY buena; se come; como lo agrio-pequeño; como lo dulce-pequeño", ["[G apple food]", "[very [good apple]]", "[do people [G apple eat]]", "[like apple [G sour small]]", "[like apple [G sweet small]]"], "F"),
@@ -217,7 +238,7 @@ def main() -> None:
 	for w, idea, nsm, clauses, layer in DRAFTS:
 		if layer != last:
 			titles = {"A": "A — la base animal", "B": "B — gente y familia", "C": "C — animales y sonidos",
-				"D": "D — naturaleza", "E": "E — comida y acciones", "F": "F — cosas", "G": "G — cualidades y cuerpo"}
+				"D": "D — naturaleza", "E": "E — comida y acciones", "F": "F — cosas", "G": "G — cualidades y cuerpo", "T": "T — taxonomía animal"}
 			L.append(f"| **{titles[layer]}** | | | | |")
 			last = layer
 		cl = " ".join(clauses)

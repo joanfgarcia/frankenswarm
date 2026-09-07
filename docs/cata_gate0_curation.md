@@ -164,6 +164,17 @@
 | try | do wanting it to work, not knowing if it can — and if it works, it turns out good | se hace; se quiere; no se sabe si se puede; y si sale, queda bueno | `[do people try] [want people try] [not [know people [can [do try]]]] [if [do people try] [good try]]` |
 | turn | the body or a thing changes side | el cuerpo se mueve; cambia de lado | `[move turn] [G turn side] [G turn body]` |
 | way | the thing one moves along from here | es cosa; desde aquí; se mueve por él | `[G way thing] [G way here] [move way]` |
+| **T — taxonomía animal** | | | | |
+| mammal | an animal whose babies drink its milk | es animal; es de la familia de la leche | `[G animal mammal] [G milk mammal] [G live mammal] [G hot mammal]` |
+| fish | a cold animal that lives in water | es animal; vive en el agua; es frío (sangre fría) | `[G animal fish] [live fish water] [G cold fish]` |
+| bird | an animal that moves above | es animal; se mueve arriba | `[G animal bird] [above [move bird]]` |
+| reptile | a crawling cold animal (cold-blooded) | es animal; se mueve abajo; no es caliente | `[G animal reptile] [below [move reptile]] [not [hot reptile]]` |
+| amphibian | an animal that lives in water and on earth | es animal; vive en el agua y en la tierra | `[G animal amphibian] [live amphibian water] [live amphibian earth]` |
+| terrestrial | an animal that lives on earth | es animal; vive en la tierra | `[G animal terrestrial] [live terrestrial earth] [G move terrestrial]` |
+| aquatic | an animal that lives in water | es animal; vive en el agua | `[G animal aquatic] [live aquatic water]` |
+| flier | an animal that moves above and far (range) | es animal; se mueve arriba; va lejos | `[G animal flier] [above [move flier]] [far [move flier]]` |
+| prey | an animal that is food (for someone) | es animal; es comida | `[G animal prey] [G food prey] [G move prey]` |
+| predator | an animal that kills prey and eats it | es animal; hace morir a la presa; come presa | `[G animal predator] [do predator [G die prey]] [do predator [G eat prey]]` |
 | **F — cosas** | | | | |
 | ball | a thing children play with | es cosa; se juega con ella; de niños | `[G ball thing] [G ball move] [G ball play] [G ball child]` |
 | apple | a sweet food eaten with the mouth, also sour when small and green (covers sweet and sour kinds) | es comida; es MUY buena; se come; como lo agrio-pequeño; como lo dulce-pequeño | `[G apple food] [very [good apple]] [do people [G apple eat]] [like apple [G sour small]] [like apple [G sweet small]]` |
