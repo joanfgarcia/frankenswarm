@@ -191,7 +191,7 @@
 | **G — cualidades y cuerpo** | | | | |
 | color | what things look like in the light | es cosa; se ve; es de la luz | `[G color thing] [see people color] [G color light]` |
 | hurt | the body feels bad | el cuerpo siente algo malo | `[feel body hurt] [bad hurt]` |
-| wound | the place in the body that hurts; big ones may kill; it hurts | es del cuerpo; es malo; es grande si puede matar; duele | `[G wound body] [bad wound] [if [G wound big someoneX] [maybe [die someoneX]]] [hurt wound] [G wound mine]` |
+| wound | the place in the body that hurts; big ones may kill; it hurts | es del cuerpo; es malo; es grande si puede matar; duele | `[G wound body] [bad wound] [if [G wound big xsomeone] [maybe [die Xsomeone]]] [hurt wound] [G wound mine]` |
 
 ## 3b. Diferidos a la doctrina de reciprocidad/relacional (NO sembrar)
 
@@ -205,8 +205,8 @@ pero fuera de la siembra hasta que las relaciones simétricas tengan diseño.
 | dad | a male parent | es macho; es de la clase parent | `[male dad] [G dad parent]` |
 | grandpa | an old male parent (the parent of a parent) | es macho; es parent; es viejo | `[male grandpa] [G grandpa parent] [G grandpa old]` |
 | grandma | an old female parent (the parent of a parent) | es hembra; es parent; es vieja | `[female grandma] [G grandma parent] [G grandma old]` |
-| son | a male offspring who belongs to a parent | es offspring; es macho; es DE parent (pertenencia) | `[male son] [G son offspring] [G son parent]` |
-| daughter | a female offspring who belongs to a parent | es offspring; es hembra; es DE parent (pertenencia) | `[female daughter] [G daughter offspring] [G daughter parent]` |
+| son | a male offspring who belongs to a parent | es offspring; es macho; es DE parent; es de alguien | `[male son] [G son offspring] [G son parent] [mine son]` |
+| daughter | a female offspring who belongs to a parent | es offspring; es hembra; es DE parent; es de alguien | `[female daughter] [G daughter offspring] [G daughter parent] [mine daughter]` |
 | uncle | a male son of a grandparent (the parent's brother) | es macho; es son; es de la familia grandpa | `[male uncle] [G uncle son] [G uncle grandpa]` |
 | aunt | a female daughter of a grandparent (the parent's sister) | es hembra; es daughter; es de la familia grandpa | `[female aunt] [G aunt daughter] [G aunt grandpa]` |
 | sibling | those who share parents — the same ones | es alguien; es de parent; son los mismos | `[G sibling someone] [G sibling parent] [G sibling same]` |

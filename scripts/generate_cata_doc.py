@@ -123,7 +123,7 @@ DRAFTS = [
 	# ── capa G: cualidades y cuerpo ──
 	("color", "what things look like in the light", "es cosa; se ve; es de la luz", ["[G color thing]", "[see people color]", "[G color light]"], "G"),
 	("hurt", "the body feels bad", "el cuerpo siente algo malo", ["[feel body hurt]", "[bad hurt]"], "G"),
-	("wound", "the place in the body that hurts; big ones may kill; it hurts", "es del cuerpo; es malo; es grande si puede matar; duele", ["[G wound body]", "[bad wound]", "[if [G wound big someoneX] [maybe [die someoneX]]]", "[hurt wound]", "[G wound mine]"], "G"),
+	("wound", "the place in the body that hurts; big ones may kill; it hurts", "es del cuerpo; es malo; es grande si puede matar; duele", ["[G wound body]", "[bad wound]", "[if [G wound big xsomeone] [maybe [die Xsomeone]]]", "[hurt wound]", "[G wound mine]"], "G"),
 ]
 
 # superposiciones léxicas (synónimos → surfaces, no moléculas nuevas)
@@ -141,10 +141,10 @@ DEFERRED_DRAFTS = [
 	 "es macho; es parent; es viejo", ["[male grandpa]", "[G grandpa parent]", "[G grandpa old]"], "B"),
 	("grandma", "an old female parent (the parent of a parent)",
 	 "es hembra; es parent; es vieja", ["[female grandma]", "[G grandma parent]", "[G grandma old]"], "B"),
-	("son", "a male offspring who belongs to a parent", "es offspring; es macho; es DE parent (pertenencia)",
-	 ["[male son]", "[G son offspring]", "[G son parent]"], "B"),
-	("daughter", "a female offspring who belongs to a parent", "es offspring; es hembra; es DE parent (pertenencia)",
-	 ["[female daughter]", "[G daughter offspring]", "[G daughter parent]"], "B"),
+	("son", "a male offspring who belongs to a parent", "es offspring; es macho; es DE parent; es de alguien",
+	 ["[male son]", "[G son offspring]", "[G son parent]", "[mine son]"], "B"),
+	("daughter", "a female offspring who belongs to a parent", "es offspring; es hembra; es DE parent; es de alguien",
+	 ["[female daughter]", "[G daughter offspring]", "[G daughter parent]", "[mine daughter]"], "B"),
 	("uncle", "a male son of a grandparent (the parent's brother)",
 	 "es macho; es son; es de la familia grandpa", ["[male uncle]", "[G uncle son]", "[G uncle grandpa]"], "B"),
 	("aunt", "a female daughter of a grandparent (the parent's sister)",

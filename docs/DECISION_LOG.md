@@ -7,6 +7,23 @@ se añade una entrada nueva que la referencia.
 
 ---
 
+## DL-024 · 2026-09-03 — Variables (x-minúscula), belong/2 y el orden operador-primero
+
+**Orden confirmado** (pregunta del operador): en S-expressions el operador va
+primero y los argumentos en orden de valencia — `belong/2` = (tema, dueño):
+`[belong X Y]` = "X es de Y" ("xsomething belongs to i").
+
+**Variables**: átomos x-minúscula (`xsomething`, `xsomeone`) — unificada la
+convención (antes flotaban `someoneX` y `Xsomething`):
+- Habilitan relaciones (una cláusula con variables es REGLA/esquema, no bolsa:
+  `[belong xsomething i]` es válido; `[fuego agua tierra]` sigue fuera)
+- Exentas del chequeo de léxico (no son conceptos)
+- Cruzan la bridge como variables Prolog (mayúscula obligatoria):
+  `[if [mine xsomething] [belong xsomething i]]` → `implies(mine(Xsomething),belong(Xsomething,i)).`
+- La regla `mine(X) → belong(X, me)` vive en la KB (Horn), no en el léxico:
+  la pertenencia-así es `[mine X]` (evaluador), la pertenencia-a-quién es
+  familia-G (conceptos) o belong/2 (instancias sobre nombres).
+
 ## DL-023 · 2026-09-03 — El pipeline Bit y la intención: [Q] con glifo diseñado; la traducción es interpretación
 
 **El pipeline (visión del operador, debate de arquitectura)**:
