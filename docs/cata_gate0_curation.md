@@ -129,15 +129,17 @@
 | man | a big male someone (an adult) | es alguien; es macho; es grande | `[G man someone] [G man male] [G man big]` |
 | **D — naturaleza** | | | | |
 | tree | a tall living vegetal with green parts that needs light to live | vive; es grande; tiene partes verdes; es vegetal; es de la luz | `[live tree] [big tree] [G tree green] [G tree vegetal] [G tree light]` |
-| forest | many trees together (collection = group + quantity, DL-017) | árboles juntos; muchos juntos | `[G forest tree] [G forest much] [G forest dark]` |
+| forest | many trees together (collection = group + quantity, DL-017) | árboles juntos; muchos juntos | `[G forest tree] [G forest much] [G forest dark] [live animal forest]` |
 | river | water that moves | es de la familia del agua; se mueve | `[G river water] [move river]` |
 | sea | very big water that does not move, of the earth (the opposite of river) | es agua; no se mueve; es muy grande; es de la tierra | `[G sea water] [not [move sea]] [very [big sea]] [G sea earth]` |
-| rain | water that falls from above | es agua; se mueve hacia abajo | `[G rain water] [below [move rain]]` |
+| rain | water that falls from above | es agua; se mueve hacia abajo | `[G rain water] [below [move rain]] [G rain sky]` |
 | storm | bad much-rain weather from the sky, like dark | es de la familia de rain; es malo; es mucho; como lo oscuro; es del cielo | `[G storm rain] [bad storm] [G storm much] [like storm dark] [G storm sky]` |
-| night | the time when it is dark | es oscuro; es un momento | `[dark night] [G night moment]` |
-| moon | the light in the dark sky | es de la luz; es del oscuro — la luz de la noche | `[G moon light] [G moon dark]` |
-| stone | a hard thing that does not move by itself | es cosa; no se mueve | `[G stone thing] [not [move stone]]` |
-| cave | a dark thing | es oscuro; es cosa | `[dark cave] [G cave thing]` |
+| quiet | neither spoken nor heard | no se dice; no se oye | `[not [G say quiet]] [not [G hear quiet]]` |
+| night | the quiet dark time | es oscuro; es un momento; es quiet | `[dark night] [G night moment] [G night quiet]` |
+| moon | the light in the dark sky | es de la luz; es del oscuro — la luz de la noche | `[G moon light] [G moon dark] [big moon] [G moon far] [G moon night]` |
+| star | a small bright light in the night sky | es luz; es pequeña; es del cielo | `[G star light] [G star small] [G star sky]` |
+| stone | a hard thing that does not move by itself | es cosa; no se mueve | `[G stone thing] [not [move stone]] [not [like stone water]] [G stone earth]` |
+| cave | a dark thing | es oscuro; es cosa | `[dark cave] [G cave thing] [G cave inside] [G cave earth] [like cave house]` |
 | **E — comida y acciones** | | | | |
 | food | the things living beings eat — what keeps alive | es cosa; es buena | `[G food thing] [good food]` |
 | play | do things for feel-good | se hace; es bueno | `[do people play] [good play]` |
