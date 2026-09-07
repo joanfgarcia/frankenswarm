@@ -13,10 +13,10 @@ se añade una entrada nueva que la referencia.
 primero y los argumentos en orden de valencia — `belong/2` = (tema, dueño):
 `[belong X Y]` = "X es de Y" ("xsomething belongs to i").
 
-**Variables**: átomos x-minúscula (`xsomething`, `xsomeone`) — unificada la
-convención (antes flotaban `someoneX` y `Xsomething`):
+**Variables**: X-mayúscula canónica (`Xsomething`), x-minúscula tolerada (el operador
+escribe rápido — el validador acepta ambas y la bridge normaliza a Prolog):
 - Habilitan relaciones (una cláusula con variables es REGLA/esquema, no bolsa:
-  `[belong xsomething i]` es válido; `[fuego agua tierra]` sigue fuera)
+  `[belong Xsomething i]` es válido; `[fuego agua tierra]` sigue fuera)
 - Exentas del chequeo de léxico (no son conceptos)
 - Cruzan la bridge como variables Prolog (mayúscula obligatoria):
   `[if [mine xsomething] [belong xsomething i]]` → `implies(mine(Xsomething),belong(Xsomething,i)).`

@@ -191,7 +191,7 @@
 | **G — cualidades y cuerpo** | | | | |
 | color | what things look like in the light | es cosa; se ve; es de la luz | `[G color thing] [see people color] [G color light]` |
 | hurt | the body feels bad | el cuerpo siente algo malo | `[feel body hurt] [bad hurt]` |
-| wound | the place in the body that hurts; big ones may kill; it hurts | es del cuerpo; es malo; es grande si puede matar; duele | `[G wound body] [bad wound] [if [G wound big xsomeone] [maybe [die Xsomeone]]] [hurt wound] [G wound mine]` |
+| wound | the place in the body that hurts; big ones may kill; it hurts | es del cuerpo; es malo; es grande si puede matar; duele | `[G wound body] [bad wound] [if [G wound big Xsomeone] [maybe [die Xsomeone]]] [hurt wound] [G wound mine]` |
 
 ## 3b. Diferidos a la doctrina de reciprocidad/relacional (NO sembrar)
 
