@@ -104,8 +104,13 @@
 | **disgust** | the bad state of rejecting contamination; canon: green (broccoli), studies: brown (excrement) — many-to-many | la gente siente asco; es malo; sus colores son el verde (canon) y el marrón (estudios) | `[feel people disgust] [bad disgust]` + *arrastre:* [green disgust] [brown disgust] |
 | **child** | a young person | es joven; es pequeño; es de la gente | `[young child] [small child] [G people child]` |
 | **baby** | a very young child | muy joven; muy pequeño; es una clase de child | `[very [young baby]] [very [small baby]] [G child baby]` |
-| **bark** | the sound of the dog — a big (loud, scandalous) sound even if the dog is small | la gente lo oye; es un sonido grande (fuerte aunque el perro sea pequeño) | `[hear people bark] [big bark]` |
-| **meow** | the sound of the cat — a small sound people hear | la gente lo oye; es un sonido pequeño | `[hear people meow] [small meow]` |
+| **animal** | a living thing that moves by itself and can act — a little like someone, but not of the people | como alguien (poco); es alguien; no es de la gente; vive; se mueve; puede hacer | `[like animal someone] [G animal someone] [not [G people animal]] [live animal] [move animal] [can [do animal]]` |
+| **domestic** | living with people, in a good way | vive con la gente; es bueno | `[live domestic people] [good domestic]` |
+| **friend** | a known someone one feels good with |  | `[know someone friend] [feel people [G friend good]] [G someone friend]` |
+| **dog** | a domestic animal that says bark — and is a friend (in cultures where dogs are companions) | es de la familia animal; dice bark; es doméstico; es friend | `[G dog animal] [say dog bark] [G dog domestic] [friend dog]` |
+| **cat** | a domestic animal that says meow | es de la familia animal; dice meow; es doméstico | `[G cat animal] [say cat meow] [G cat domestic]` |
+| **bark** | the sound of the dog — a big (loud, scandalous) sound even if the dog is small | la gente lo oye; es un sonido grande (fuerte aunque el perro sea pequeño) | `[hear people bark] [big bark] [G dog bark]` |
+| **meow** | the sound of the cat — a small sound people hear | la gente lo oye; es un sonido pequeño | `[hear people meow] [small meow] [G cat meow]` |
 
 ## 3. Borradores pendientes de tu validación (por capas — cada capa solo referencia lo definido)
 
@@ -114,18 +119,15 @@
 | capa | molécula | idea fuente (EN) | descomposición NSM | K-65P (borrador) |
 |---|---|---|---|---|
 | **A — la base animal** | | | | |
-| animal | a living thing that moves by itself and can act — a little like someone, but not of the people | como alguien (poco); es alguien; no es de la gente; vive; se mueve; puede hacer | `[like animal someone] [G animal someone] [not [G animal people]] [live animal] [move animal] [can [do animal]]` |
 | vegetal | a living thing not at all like someone | vive; no es como alguien; no es alguien | `[live vegetal] [not [like vegetal someone]]` |
 | **B — gente y familia** | | | | |
 | parent | a person who feels something good toward their baby and acts for it (care = feel-good + do-for, NSM) | es alguien; siente algo bueno hacia el bebé; hace por el bebé | `[feel parent [G baby good]] [do parent [G baby good]]` |
 | offspring | someone who belongs to a parent; who comes from a body (hijo-descendiente, NO baby-niño) | es alguien; es de parent; viene de un cuerpo | `[G offspring someone] [G offspring parent] [G offspring body]` |
 | male | someone in whom babies do not live (NSM: the male cannot bear) | es alguien; los bebés no viven en él | `[G male someone] [not [live baby male]]` |
 | female | someone in whom babies live (NSM: can bear) | es alguien; los bebés viven en ella | `[G female someone] [live baby female]` |
+| boy | a young male person | es child; es macho | `[G boy child] [G boy male]` |
+| man | a big male someone (an adult) | es alguien; es macho; es grande | `[G man someone] [G man male] [G man big]` |
 | friend | a known person one feels good with | alguien conoce a friend; ese alguien se siente bien con friend; es alguien | `[know someone friend] [feel people [G friend good]] [G friend someone]` |
-| **C — animales y sonidos** | | | | |
-| domestic | living with people, in a good way | vive con la gente; es bueno | `[live domestic people] [good domestic]` |
-| dog | a domestic animal that says bark — and is a friend (in cultures where dogs are companions) | es de la familia animal; dice bark; es doméstico; es friend | `[G dog animal] [say dog bark] [G dog domestic] [friend dog]` |
-| cat | a domestic animal that says meow | es de la familia animal; dice meow; es doméstico | `[G cat animal] [say cat meow] [G cat domestic]` |
 | **D — naturaleza** | | | | |
 | tree | a tall living vegetal with green parts that needs light to live | vive; es grande; tiene partes verdes; es vegetal; es de la luz | `[live tree] [big tree] [G tree green] [G tree vegetal] [G tree light]` |
 | forest | many trees together (collection = group + quantity, DL-017) | árboles juntos; muchos juntos | `[G forest tree] [G forest much] [G forest dark]` |

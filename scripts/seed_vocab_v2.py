@@ -78,10 +78,20 @@ SEED = [
 		["[young child]", "[small child]", "[G people child]"]),
 	("baby", "a very young child",
 		["[very [young baby]]", "[very [small baby]]", "[G child baby]"]),
+	("animal", "a living thing that moves by itself and can act — a little like someone, but not of the people",
+		["[like animal someone]", "[G animal someone]", "[not [G people animal]]", "[live animal]", "[move animal]", "[can [do animal]]"]),
+	("domestic", "living with people, in a good way",
+		["[live domestic people]", "[good domestic]"]),
+	("friend", "a known someone one feels good with",
+		["[know someone friend]", "[feel people [G friend good]]", "[G someone friend]"]),
+	("dog", "a domestic animal that says bark — and is a friend (in cultures where dogs are companions)",
+		["[G dog animal]", "[say dog bark]", "[G dog domestic]", "[friend dog]"]),
+	("cat", "a domestic animal that says meow",
+		["[G cat animal]", "[say cat meow]", "[G cat domestic]"]),
 	("bark", "the sound of the dog — a big (loud, scandalous) sound even if the dog is small",
-		["[hear people bark]", "[big bark]"]),
+		["[hear people bark]", "[big bark]", "[G dog bark]"]),
 	("meow", "the sound of the cat — a small sound people hear",
-		["[hear people meow]", "[small meow]"]),
+		["[hear people meow]", "[small meow]", "[G cat meow]"]),
 ]
 
 
@@ -96,8 +106,34 @@ def main() -> None:
 		except Exception as e:
 			print(f"  ✗ {surface}: {e}")
 			raise
+	# fail-fast: toda molécula referenciada debe existir (nada cae en silencio)
+	import re as _re
+	known = set(v.molecules) | {r[0].lower() for r in __import__('k65p.primes', fromlist=['PRIMES']).PRIMES} | {r[1].lower() for r in __import__('k65p.primes', fromlist=['PRIMES']).PRIMES}
+	missing = set()
+	for _m in v.molecules.values():
+		for _c in _m["clauses"] + _m.get("drags", []):
+			for _t in _re.findall(r'[a-zA-Z_]+', _c):
+				_tl = _t.casefold()
+				if _tl in ("g", "G") or _tl.lstrip("-").isdigit() or _tl in known:
+					continue
+				try:
+					from src.bitnet.vocab.structured_explication import SYMBOL_TO_ID as _S
+					if _tl in _S:
+						continue
+				except ImportError:
+					pass
+				missing.add((_m["surface"], _t))
+	assert not missing, f"referencias colgadas: {sorted(missing)}"
+	v.reproject_all()
+	from src.bitnet.vocab.registry_v2 import InjectionError as _IE
+	seen = {}
+	for _n, _m in v.molecules.items():
+		_g = tuple(_m["glyph"])
+		if _g in seen:
+			raise _IE(f"colisión tras punto fijo: '{_n}' ≡ '{seen[_g]}'")
+		seen[_g] = _n
 	n = len(v.molecules)
-	print(f"\n✓ {n} moléculas sembradas → configs/k65p_v2/moleculas.json")
+	print(f"\n✓ {n} moléculas sembradas (punto fijo) → configs/k65p_v2/moleculas.json")
 	gl = {m["surface"]: sum(1 for t in m["glyph"] if t != 0) for m in v.molecules.values()}
 	print("  trits activos por molécula:", gl)
 

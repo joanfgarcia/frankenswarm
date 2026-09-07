@@ -15,9 +15,6 @@ seed = json.loads((BASE / "configs" / "k65p_v2" / "moleculas.json").read_text(en
 # ⚠ = hueco doctrinal detectado al redactar (ver Preguntas nuevas)
 DRAFTS = [
 	# ── capa A: la base animal ──
-	("animal", "a living thing that moves by itself and can act — a little like someone, but not of the people",
-	 "como alguien (poco); es alguien; no es de la gente; vive; se mueve; puede hacer",
-	 ["[like animal someone]", "[G animal someone]", "[not [G animal people]]", "[live animal]", "[move animal]", "[can [do animal]]"], "A"),
 	("vegetal", "a living thing not at all like someone",
 	 "vive; no es como alguien; no es alguien", ["[live vegetal]", "[not [like vegetal someone]]"], "A"),
 	# ── capa B: gente y familia (compuestos de SOMEONE) ──
@@ -31,17 +28,15 @@ DRAFTS = [
 	 "es alguien; los bebés viven en ella", ["[G female someone]", "[live baby female]"], "B"),
 	# cousin: NO cabe en forma unaria (colisiona con uncle: child∪uncle ≡ son como conjuntos) —
 	# es molécula-relación cousin-of/2 sobre nombres, con la simetría en la KB (igual que sibling/2).
+	("boy", "a young male person",
+	 "es child; es macho", ["[G boy child]", "[G boy male]"], "B"),
+	("man", "a big male someone (an adult)",
+	 "es alguien; es macho; es grande", ["[G man someone]", "[G man male]", "[G man big]"], "B"),
 	("friend", "a known person one feels good with",
 	 "alguien conoce a friend; ese alguien se siente bien con friend; es alguien",
 	 ["[know someone friend]", "[feel people [G friend good]]", "[G friend someone]"], "B"),
 	# ⚠ boy/man: sin primos de género no se distinguen (ver Preguntas 8)
 	# ── capa C: animales y sonidos ──
-	("domestic", "living with people, in a good way",
-	 "vive con la gente; es bueno", ["[live domestic people]", "[good domestic]"], "C"),
-	("dog", "a domestic animal that says bark — and is a friend (in cultures where dogs are companions)",
-	 "es de la familia animal; dice bark; es doméstico; es friend", ["[G dog animal]", "[say dog bark]", "[G dog domestic]", "[friend dog]"], "C"),
-	("cat", "a domestic animal that says meow",
-	 "es de la familia animal; dice meow; es doméstico", ["[G cat animal]", "[say cat meow]", "[G cat domestic]"], "C"),
 	# ── capa D: naturaleza ──
 	("tree", "a tall living vegetal with green parts that needs light to live",
 	 "vive; es grande; tiene partes verdes; es vegetal; es de la luz",
@@ -203,6 +198,10 @@ def main() -> None:
 		"baby": "muy joven; muy pequeño; es una clase de child",
 		"bark": "la gente lo oye; es un sonido grande (fuerte aunque el perro sea pequeño)",
 		"meow": "la gente lo oye; es un sonido pequeño",
+		"animal": "como alguien (poco); es alguien; no es de la gente; vive; se mueve; puede hacer",
+		"domestic": "vive con la gente; es bueno",
+		"dog": "es de la familia animal; dice bark; es doméstico; es friend",
+		"cat": "es de la familia animal; dice meow; es doméstico",
 	}
 	for name, m in seed.items():
 		cl = " ".join(m["clauses"])

@@ -97,6 +97,121 @@ class VocabularyV2:
 		out[mask] = mod_g[mask]
 		return out
 
+	def _reference_graph(self) -> dict[str, set[str]]:
+		"""Grafo de referencias: molécula → moléculas que nombran sus cláusulas."""
+		import re as _re
+		graph: dict[str, set[str]] = {}
+		names = set(self.molecules)
+		for surface, m in self.molecules.items():
+			refs = set()
+			for c in m["clauses"] + m.get("drags", []):
+				for t in _re.findall(r"[a-zA-Z_]+", c):
+					tl = t.casefold()
+					if tl != surface.casefold() and tl in names:
+						refs.add(tl)
+			graph[surface.casefold()] = refs
+		return graph
+
+	@staticmethod
+	def _scc_tarjan(graph: dict[str, set[str]]) -> list[list[str]]:
+		"""Componentes fuertemente conexas (Tarjan iterativo)."""
+		index_of, low, on_stack = {}, {}, set()
+		stack, sccs, counter = [], [], [0]
+		for root in graph:
+			if root in index_of:
+				continue
+			work = [(root, iter(sorted(graph.get(root, ()))))]
+			while work:
+				node, it = work[-1]
+				if node not in index_of:
+					index_of[node] = low[node] = counter[0]
+					counter[0] += 1
+					stack.append(node)
+					on_stack.add(node)
+				advanced = False
+				for nxt in it:
+					if nxt not in index_of:
+						work.append((nxt, iter(sorted(graph.get(nxt, ())))))
+						advanced = True
+						break
+					elif nxt in on_stack:
+						low[node] = min(low[node], index_of[nxt])
+				if advanced:
+					continue
+				work.pop()
+				if work:
+					parent = work[-1][0]
+					low[parent] = min(low[parent], low[node])
+				if low[node] == index_of[node]:
+					comp = []
+					while True:
+						w = stack.pop()
+						on_stack.discard(w)
+						comp.append(w)
+						if w == node:
+							break
+					sccs.append(comp)
+		return sccs
+
+	def reproject_all(self, max_iters: int = 20) -> dict[str, int]:
+		"""Punto fijo por componentes (SCC): arrastre TOTAL en aristas DAG,
+		solo-PROPIO dentro de ciclos. Las referencias mutuas (dog↔bark) comparten
+		solo su contenido propio — si no, convergerían al mismo glifo y el modelo
+		no distinguiría 'dog' de 'bark'. Determinista, sin dependencia de orden.
+		Devuelve {superficie: tamaño_de_su_SCC}."""
+		from src.bitnet.vocab.structured_explication import StructuredExplication as _SE
+		graph = self._reference_graph()
+		sccs = self._scc_tarjan(graph)
+		comp_of = {n: i for i, comp in enumerate(sccs) for n in comp}
+		# orden topológico de componentes (dependencias primero)
+		deps: dict[int, set[int]] = {i: set() for i in range(len(sccs))}
+		for i, comp in enumerate(sccs):
+			for n in comp:
+				for r in graph.get(n, ()):
+					j = comp_of.get(r, -1)
+					if j != -1 and j != i:
+						deps[i].add(j)
+		ordered, seen = [], set()
+		def visit(i: int) -> None:
+			if i in seen:
+				return
+			seen.add(i)
+			for j in sorted(deps[i]):
+				visit(j)
+			ordered.append(i)
+		for i in range(len(sccs)):
+			visit(i)
+		# fase 1: glifos propios de TODAS (mapa vacío — sin arrastre)
+		own: dict[str, list[int]] = {}
+		for surface, m in self.molecules.items():
+			exp = _SE(surface, m["clauses"], anchor_primes=m.get("anchor_primes", []),
+				molecule_glyphs={}, drag_clauses=m.get("drags", []))
+			if exp.errors:
+				continue
+			own[surface.casefold()] = [int(x) for x in exp.to_glyph()]
+		# fase 2: por componentes en orden — DAG: glifos completos; ciclo: solo propios
+		full: dict[str, list[int]] = {}
+		for i in ordered:
+			comp = sccs[i]
+			avail = dict(full)
+			for n in comp:
+				avail[n] = own.get(n, [0] * 65)
+			for surface in comp:
+				m = next(mm for ss, mm in self.molecules.items() if ss.casefold() == surface)
+				exp = _SE(m.get("surface", surface), m["clauses"],
+					anchor_primes=m.get("anchor_primes", []),
+					molecule_glyphs={k: v for k, v in avail.items()},
+					drag_clauses=m.get("drags", []))
+				if exp.errors:
+					continue
+				full[surface] = [int(x) for x in exp.to_glyph()]
+		for surface, m in self.molecules.items():
+			if surface.casefold() in full:
+				m["glyph"] = full[surface.casefold()]
+		self._save()
+		multi = {i: comp for i, comp in enumerate(sccs) if len(comp) > 1}
+		return {n: len(sccs[comp_of[n]]) for comp in multi.values() for n in comp}
+
 	def register(self, surface: str, idea: str, clauses: list[str], anchor_primes: list[str] | None = None, notes: str = "", drag_clauses: list[str] | None = None) -> dict:
 		exp = StructuredExplication(surface, clauses, anchor_primes=anchor_primes or [],
 			molecule_glyphs=self._molecule_glyphs(), drag_clauses=drag_clauses or [])

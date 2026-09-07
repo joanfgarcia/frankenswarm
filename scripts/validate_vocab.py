@@ -49,6 +49,7 @@ def main() -> int:
 	with tempfile.TemporaryDirectory() as td:
 		v.molecules_path = Path(td) / "scratch.json"
 		v.molecules = {}  # rascable limpio: la tabla de primos sí se conserva
+		_scratch_dup_check = None
 		fps: dict = {}
 		n_bad, problems = 0, []
 		for e in SEED:
@@ -85,7 +86,20 @@ def main() -> int:
 		print(f"gramática: {'OK ✓' if n_bad == 0 else str(n_bad) + ' ERRORES'}")
 		for p in problems:
 			print(" ", p)
-		print(f"registrables: {len(fps)} (semilla + borradores + diferidos)")
+		print(f"registrables (una pasada): {len(fps)} (semilla + borradores + diferidos)")
+
+		# punto fijo por componentes + verificación FINAL (la semántica canónica:
+		# el orden de registro no debe decidir; las SCC comparten solo lo propio)
+		v.reproject_all()
+		final, dups = {}, []
+		for _n, _m in v.molecules.items():
+			_g = tuple(_m["glyph"])
+			if _g in final:
+				dups.append((_n, "≡", final[_g]))
+			else:
+				final[_g] = _n
+		print("inyectividad tras punto fijo:", "OK ✓" if not dups else dups)
+		print(f"vocabulario v2 registrable: {len(final)} moléculas")
 
 		# informe de contenido-propio (robustez ante evaporación de referencias)
 		print("\n── contenido-propio (<2 trits primo sin malla = frágil si evaporan refs) ──")
