@@ -96,7 +96,7 @@ DRAFTS = [
 	("ball", "a thing children play with", "es cosa; se juega con ella; de niños", ["[G ball thing]", "[G ball move]", "[G ball play]", "[G ball child]"], "F"),
 	("apple", "a sweet food eaten with the mouth, also sour when small and green (covers sweet and sour kinds)", "es comida; es MUY buena; se come; como lo agrio-pequeño; como lo dulce-pequeño", ["[G apple food]", "[very [good apple]]", "[do people [G apple eat]]", "[like apple [G sour small]]", "[like apple [G sweet small]]"], "F"),
 	("bread", "the hot good brown food from the earth", "es comida; viene de la tierra; es marrón; es caliente; es buena", ["[G bread food]", "[G bread earth]", "[G bread brown]", "[G bread hot]", "[G bread good]"], "F"),
-	("bed", "the thing one sleeps on, for the dark hours", "es cosa; de la familia de dormir; es de lo oscuro", ["[G bed thing]", "[G bed sleep]", "[G bed dark]"], "F"),
+	("bed", "the thing one sleeps on, for the night hours", "es cosa; de la familia de dormir; es de la noche", ["[G bed thing]", "[G bed sleep]", "[G bed night]"], "F"),
 	("book", "things with words inside to read", "es cosa; tiene palabras; se lee; tiene dentro", ["[G book word]", "[G book read]", "[G book inside]"], "F"),
 	("box", "the thing for putting things in", "es cosa; de la familia de put", ["[G box thing]", "[G box inside]", "[G box put]"], "F"),
 	("car", "a thing that moves people", "es cosa; se mueve; lleva gente", ["[G car thing]", "[move car]", "[G car people]"], "F"),
@@ -109,7 +109,7 @@ DRAFTS = [
 	# ── capa G: cualidades y cuerpo ──
 	("color", "what things look like in the light", "es cosa; se ve; es de la luz", ["[G color thing]", "[see people color]", "[G color light]"], "G"),
 	("hurt", "the body feels bad", "el cuerpo siente algo malo", ["[feel body hurt]", "[bad hurt]"], "G"),
-	("wound", "the place in the body that hurts; big ones may kill; it hurts", "es del cuerpo; es malo; es grande si puede matar; duele", ["[G wound body]", "[bad wound]", "[if [big wound] [maybe [die someoneX]]]", "[hurt wound]"], "G"),
+	("wound", "the place in the body that hurts; big ones may kill; it hurts", "es del cuerpo; es malo; es grande si puede matar; duele", ["[G wound body]", "[bad wound]", "[if [big wound] [maybe [die someoneX]]]", "[hurt wound]", "[G wound mine]"], "G"),
 ]
 
 # superposiciones léxicas (synónimos → surfaces, no moléculas nuevas)
