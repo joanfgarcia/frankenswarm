@@ -245,7 +245,7 @@ def main() -> None:
 			L.append(f"| **{titles[layer]}** | | | | |")
 			last = layer
 		cl = " ".join(clauses)
-		L.append(f"| {w} | {idea} | {nsm} | `{cl}` |")
+		L.append(f"| {layer} | {w} | {idea} | {nsm} | `{cl}` |")
 	L.append("")
 
 	# ── 3b. diferidos a la doctrina relacional ──
@@ -253,11 +253,11 @@ def main() -> None:
 	L.append("Sibling necesita sibling/2 + axioma de simetría; el parentesco migra con él")
 	L.append("para no re-sembrar bajo L2 (la inyectividad impediría cambiar huellas). Gramática verde,")
 	L.append("pero fuera de la siembra hasta que las relaciones simétricas tengan diseño.\n")
-	L.append("| molécula | idea fuente (EN) | descomposición NSM | K-65P (diseño en espera) |")
-	L.append("|---|---|---|---|")
+	L.append("| capa | molécula | idea fuente (EN) | descomposición NSM | K-65P (diseño en espera) |")
+	L.append("|---|---|---|---|---|")
 	for w, idea, nsm, clauses, layer in DEFERRED_DRAFTS:
 		cl = " ".join(clauses)
-		L.append(f"| {w} | {idea} | {nsm} | `{cl}` |")
+		L.append(f"| {layer} | {w} | {idea} | {nsm} | `{cl}` |")
 	L.append("")
 
 	# ── 4. superficies (sinónimos) ──

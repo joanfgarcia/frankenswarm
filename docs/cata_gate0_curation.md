@@ -119,81 +119,81 @@
 | capa | molécula | idea fuente (EN) | descomposición NSM | K-65P (borrador) |
 |---|---|---|---|---|
 | **A — la base animal** | | | | |
-| vegetal | a living thing not at all like someone, that does not move, is eaten, and needs water and light | vive; no es como alguien; no es alguien; no se mueve; se come; es de la familia del agua; es de la luz | `[live vegetal] [not [like vegetal someone]] [not [move vegetal]] [G eat vegetal] [G water vegetal] [G light vegetal]` |
+| A | vegetal | a living thing not at all like someone, that does not move, is eaten, and needs water and light | vive; no es como alguien; no es alguien; no se mueve; se come; es de la familia del agua; es de la luz | `[live vegetal] [not [like vegetal someone]] [not [move vegetal]] [G eat vegetal] [G water vegetal] [G light vegetal]` |
 | **B — gente y familia** | | | | |
-| parent | a person who feels something good toward their baby and acts for it (care = feel-good + do-for, NSM) | es alguien; siente algo bueno hacia el bebé; hace por el bebé | `[feel parent [G baby good]] [do parent [G baby good]]` |
-| offspring | someone who belongs to a parent; who comes from a body (hijo-descendiente, NO baby-niño) | es alguien; es de parent; viene de un cuerpo | `[G offspring someone] [G offspring parent] [G offspring body]` |
-| male | someone in whom babies do not live (NSM: the male cannot bear) | es alguien; los bebés no viven en él | `[G male someone] [not [live baby male]]` |
-| female | someone in whom babies live (NSM: can bear) | es alguien; los bebés viven en ella | `[G female someone] [live baby female]` |
-| boy | a young male person | es child; es macho | `[G boy child] [G boy male]` |
-| man | a big male someone (an adult) | es alguien; es macho; es grande | `[G man someone] [G man male] [G man big]` |
+| B | parent | a person who feels something good toward their baby and acts for it (care = feel-good + do-for, NSM) | es alguien; siente algo bueno hacia el bebé; hace por el bebé | `[feel parent [G baby good]] [do parent [G baby good]]` |
+| B | offspring | someone who belongs to a parent; who comes from a body (hijo-descendiente, NO baby-niño) | es alguien; es de parent; viene de un cuerpo | `[G offspring someone] [G offspring parent] [G offspring body]` |
+| B | male | someone in whom babies do not live (NSM: the male cannot bear) | es alguien; los bebés no viven en él | `[G male someone] [not [live baby male]]` |
+| B | female | someone in whom babies live (NSM: can bear) | es alguien; los bebés viven en ella | `[G female someone] [live baby female]` |
+| B | boy | a young male person | es child; es macho | `[G boy child] [G boy male]` |
+| B | man | a big male someone (an adult) | es alguien; es macho; es grande | `[G man someone] [G man male] [G man big]` |
 | **D — naturaleza** | | | | |
-| tree | a tall living vegetal with green parts that needs light to live | vive; es grande; tiene partes verdes; es vegetal; es de la luz | `[live tree] [big tree] [G tree green] [G tree vegetal] [G tree light]` |
-| forest | many trees together (collection = group + quantity, DL-017) | árboles juntos; muchos juntos | `[G forest tree] [G forest much] [G forest dark] [live animal forest]` |
-| river | water that moves | es de la familia del agua; se mueve | `[G river water] [move river]` |
-| sea | very big water that does not move, of the earth (the opposite of river) | es agua; no se mueve; es muy grande; es de la tierra | `[G sea water] [not [move sea]] [very [big sea]] [G sea earth]` |
-| rain | water that falls from above | es agua; se mueve hacia abajo | `[G rain water] [below [move rain]] [G rain sky]` |
-| storm | bad much-rain weather from the sky, like dark | es de la familia de rain; es malo; es mucho; como lo oscuro; es del cielo | `[G storm rain] [bad storm] [G storm much] [like storm dark] [G storm sky]` |
-| quiet | neither spoken nor heard | no se dice; no se oye | `[not [G say quiet]] [not [G hear quiet]]` |
-| night | the quiet dark time | es oscuro; es un momento; es quiet | `[dark night] [G night moment] [G night quiet]` |
-| moon | the light in the dark sky | es de la luz; es del oscuro — la luz de la noche; es del cielo | `[G moon light] [G moon dark] [big moon] [G moon far] [G moon night] [G moon sky]` |
-| star | a small bright light in the night sky | es luz; es pequeña; es del cielo | `[G star light] [G star small] [G star sky]` |
-| stone | a hard thing that does not move by itself | es cosa; no se mueve | `[G stone thing] [not [move stone]] [not [like stone water]] [G stone earth]` |
-| cave | a dark thing | es oscuro; es cosa | `[dark cave] [G cave thing] [G cave inside] [G cave earth] [like cave house]` |
+| D | tree | a tall living vegetal with green parts that needs light to live | vive; es grande; tiene partes verdes; es vegetal; es de la luz | `[live tree] [big tree] [G tree green] [G tree vegetal] [G tree light]` |
+| D | forest | many trees together (collection = group + quantity, DL-017) | árboles juntos; muchos juntos | `[G forest tree] [G forest much] [G forest dark] [live animal forest]` |
+| D | river | water that moves | es de la familia del agua; se mueve | `[G river water] [move river]` |
+| D | sea | very big water that does not move, of the earth (the opposite of river) | es agua; no se mueve; es muy grande; es de la tierra | `[G sea water] [not [move sea]] [very [big sea]] [G sea earth]` |
+| D | rain | water that falls from above | es agua; se mueve hacia abajo | `[G rain water] [below [move rain]] [G rain sky]` |
+| D | storm | bad much-rain weather from the sky, like dark | es de la familia de rain; es malo; es mucho; como lo oscuro; es del cielo | `[G storm rain] [bad storm] [G storm much] [like storm dark] [G storm sky]` |
+| D | quiet | neither spoken nor heard | no se dice; no se oye | `[not [G say quiet]] [not [G hear quiet]]` |
+| D | night | the quiet dark time | es oscuro; es un momento; es quiet | `[dark night] [G night moment] [G night quiet]` |
+| D | moon | the light in the dark sky | es de la luz; es del oscuro — la luz de la noche; es del cielo | `[G moon light] [G moon dark] [big moon] [G moon far] [G moon night] [G moon sky]` |
+| D | star | a small bright light in the night sky | es luz; es pequeña; es del cielo | `[G star light] [G star small] [G star sky]` |
+| D | stone | a hard thing that does not move by itself | es cosa; no se mueve | `[G stone thing] [not [move stone]] [not [like stone water]] [G stone earth]` |
+| D | cave | a dark thing | es oscuro; es cosa | `[dark cave] [G cave thing] [G cave inside] [G cave earth] [like cave house]` |
 | **E — comida y acciones** | | | | |
-| food | the things living beings eat — what keeps alive | es cosa; es buena | `[G food thing] [good food]` |
-| play | do things for feel-good | se hace; es bueno | `[do people play] [good play]` |
-| eat | put food in the body | se hace; es de la familia de la comida; es del cuerpo | `[do people eat] [G eat food] [G eat body]` |
-| drink | put water in the body | se hace; es de la familia del agua; es del cuerpo | `[do people drink] [G drink water] [G drink body]` |
-| taste | what you feel when you eat, by touch (the contact sense of eating) | se siente; es de la familia de comer; es de la familia de tocar | `[feel people taste] [G taste eat] [G taste touch]` |
-| sweet | very good taste | es de la familia del gusto; es muy bueno | `[G sweet taste] [very [good sweet]]` |
-| salty | sea flavor | es de la familia del gusto; como el mar | `[G salty taste] [like salty sea]` |
-| bitter | very bad taste (the poison signal) | es de la familia del gusto; es muy malo | `[G bitter taste] [very [bad bitter]]` |
-| sour | bad green taste (unripe) | es de la familia del gusto; es malo; es verde (no maduro) | `[G sour taste] [bad sour] [G sour green]` |
-| spicy | hot taste | es de la familia del gusto; como lo caliente | `[G spicy taste] [like spicy hot]` |
-| smell | what you feel at a distance, like hearing (the distant-perception family) | se siente; es de la familia de oír | `[feel people smell] [G smell hear]` |
-| stink | smell very bad, brown-associated (rot/excrement — the Rozin biology) | es de la familia de oler; es muy malo; es marrón | `[G stink smell] [very [bad stink]] [G stink brown]` |
-| sleep | the body rests and does not move | el cuerpo no se mueve; es un momento | `[not [move sleep]] [G sleep moment] [G sleep body]` |
-| give | do, touching, something good for someone | se hace; se toca; es bueno | `[do people give] [touch people give] [G give good]` |
-| help | do something so someone feels good and can do it | se hace; se siente algo bueno | `[do people help] [feel people [G help good]]` |
-| kiss | touch with the mouth to feel-good (mouth → capa de partes del cuerpo) | se toca; se siente algo bueno | `[touch people kiss] [feel people [G kiss good]]` |
-| make | do so a new thing exists | se hace; hace existir | `[do people make] [G make exist]` |
-| need | want something very much | se quiere; es muy bueno tenerlo | `[want people need] [very [good need]]` |
-| put | move a thing to a place and touch it there | se hace; se mueve; se toca; en un lado | `[do people put] [move people put] [touch people put] [G put side]` |
-| read | see words and know them | se ven las palabras; se saben | `[see people read] [know people read] [G read word]` |
-| sit | the body moves down and then does not move | el cuerpo se mueve hacia abajo; luego no se mueve | `[below [move sit]] [not [move sit]] [G sit body]` |
-| take | touch a thing and move it to oneself | se toca; se mueve | `[touch people take] [move people take]` |
-| try | do wanting it to work, not knowing if it can — and if it works, it turns out good | se hace; se quiere; no se sabe si se puede; y si sale, queda bueno | `[do people try] [want people try] [not [know people [can [do try]]]] [if [do people try] [good try]]` |
-| turn | the body or a thing changes side | el cuerpo se mueve; cambia de lado | `[move turn] [G turn side] [G turn body]` |
-| way | the thing one moves along from here | es cosa; desde aquí; se mueve por él | `[G way thing] [G way here] [move way]` |
+| E | food | the things living beings eat — what keeps alive | es cosa; es buena | `[G food thing] [good food]` |
+| E | play | do things for feel-good | se hace; es bueno | `[do people play] [good play]` |
+| E | eat | put food in the body | se hace; es de la familia de la comida; es del cuerpo | `[do people eat] [G eat food] [G eat body]` |
+| E | drink | put water in the body | se hace; es de la familia del agua; es del cuerpo | `[do people drink] [G drink water] [G drink body]` |
+| E | taste | what you feel when you eat, by touch (the contact sense of eating) | se siente; es de la familia de comer; es de la familia de tocar | `[feel people taste] [G taste eat] [G taste touch]` |
+| E | sweet | very good taste | es de la familia del gusto; es muy bueno | `[G sweet taste] [very [good sweet]]` |
+| E | salty | sea flavor | es de la familia del gusto; como el mar | `[G salty taste] [like salty sea]` |
+| E | bitter | very bad taste (the poison signal) | es de la familia del gusto; es muy malo | `[G bitter taste] [very [bad bitter]]` |
+| E | sour | bad green taste (unripe) | es de la familia del gusto; es malo; es verde (no maduro) | `[G sour taste] [bad sour] [G sour green]` |
+| E | spicy | hot taste | es de la familia del gusto; como lo caliente | `[G spicy taste] [like spicy hot]` |
+| E | smell | what you feel at a distance, like hearing (the distant-perception family) | se siente; es de la familia de oír | `[feel people smell] [G smell hear]` |
+| E | stink | smell very bad, brown-associated (rot/excrement — the Rozin biology) | es de la familia de oler; es muy malo; es marrón | `[G stink smell] [very [bad stink]] [G stink brown]` |
+| E | sleep | the body rests and does not move | el cuerpo no se mueve; es un momento | `[not [move sleep]] [G sleep moment] [G sleep body]` |
+| E | give | do, touching, something good for someone | se hace; se toca; es bueno | `[do people give] [touch people give] [G give good]` |
+| E | help | do something so someone feels good and can do it | se hace; se siente algo bueno | `[do people help] [feel people [G help good]]` |
+| E | kiss | touch with the mouth to feel-good (mouth → capa de partes del cuerpo) | se toca; se siente algo bueno | `[touch people kiss] [feel people [G kiss good]]` |
+| E | make | do so a new thing exists | se hace; hace existir | `[do people make] [G make exist]` |
+| E | need | want something very much | se quiere; es muy bueno tenerlo | `[want people need] [very [good need]]` |
+| E | put | move a thing to a place and touch it there | se hace; se mueve; se toca; en un lado | `[do people put] [move people put] [touch people put] [G put side]` |
+| E | read | see words and know them | se ven las palabras; se saben | `[see people read] [know people read] [G read word]` |
+| E | sit | the body moves down and then does not move | el cuerpo se mueve hacia abajo; luego no se mueve | `[below [move sit]] [not [move sit]] [G sit body]` |
+| E | take | touch a thing and move it to oneself | se toca; se mueve | `[touch people take] [move people take]` |
+| E | try | do wanting it to work, not knowing if it can — and if it works, it turns out good | se hace; se quiere; no se sabe si se puede; y si sale, queda bueno | `[do people try] [want people try] [not [know people [can [do try]]]] [if [do people try] [good try]]` |
+| E | turn | the body or a thing changes side | el cuerpo se mueve; cambia de lado | `[move turn] [G turn side] [G turn body]` |
+| E | way | the thing one moves along from here | es cosa; desde aquí; se mueve por él | `[G way thing] [G way here] [move way]` |
 | **T — taxonomía animal** | | | | |
-| mammal | an animal whose babies drink its milk | es animal; es de la familia de la leche | `[G animal mammal] [G milk mammal] [G live mammal] [G hot mammal]` |
-| fish | a cold animal that lives in water | es animal; vive en el agua; es frío (sangre fría) | `[G animal fish] [live fish water] [G cold fish]` |
-| bird | an animal that moves above | es animal; se mueve arriba | `[G animal bird] [above [move bird]]` |
-| reptile | a crawling cold animal (cold-blooded) | es animal; se mueve abajo; no es caliente | `[G animal reptile] [below [move reptile]] [not [hot reptile]]` |
-| amphibian | an animal that lives in water and on earth | es animal; vive en el agua y en la tierra | `[G animal amphibian] [live amphibian water] [live amphibian earth]` |
-| terrestrial | an animal that lives on earth | es animal; vive en la tierra | `[G animal terrestrial] [live terrestrial earth] [G move terrestrial]` |
-| aquatic | an animal that lives in water | es animal; vive en el agua | `[G animal aquatic] [live aquatic water]` |
-| flier | an animal that moves above and far (range) | es animal; se mueve arriba; va lejos | `[G animal flier] [above [move flier]] [far [move flier]]` |
-| prey | an animal that is food (for someone) | es animal; es comida | `[G animal prey] [G food prey] [G move prey]` |
-| predator | an animal that kills prey and eats it | es animal; hace morir a la presa; come presa | `[G animal predator] [do predator [G die prey]] [do predator [G eat prey]]` |
+| T | mammal | an animal whose babies drink its milk | es animal; es de la familia de la leche | `[G animal mammal] [G milk mammal] [G live mammal] [G hot mammal]` |
+| T | fish | a cold animal that lives in water | es animal; vive en el agua; es frío (sangre fría) | `[G animal fish] [live fish water] [G cold fish]` |
+| T | bird | an animal that moves above | es animal; se mueve arriba | `[G animal bird] [above [move bird]]` |
+| T | reptile | a crawling cold animal (cold-blooded) | es animal; se mueve abajo; no es caliente | `[G animal reptile] [below [move reptile]] [not [hot reptile]]` |
+| T | amphibian | an animal that lives in water and on earth | es animal; vive en el agua y en la tierra | `[G animal amphibian] [live amphibian water] [live amphibian earth]` |
+| T | terrestrial | an animal that lives on earth | es animal; vive en la tierra | `[G animal terrestrial] [live terrestrial earth] [G move terrestrial]` |
+| T | aquatic | an animal that lives in water | es animal; vive en el agua | `[G animal aquatic] [live aquatic water]` |
+| T | flier | an animal that moves above and far (range) | es animal; se mueve arriba; va lejos | `[G animal flier] [above [move flier]] [far [move flier]]` |
+| T | prey | an animal that is food (for someone) | es animal; es comida | `[G animal prey] [G food prey] [G move prey]` |
+| T | predator | an animal that kills prey and eats it | es animal; hace morir a la presa; come presa | `[G animal predator] [do predator [G die prey]] [do predator [G eat prey]]` |
 | **F — cosas** | | | | |
-| ball | a thing children play with | es cosa; se juega con ella; de niños | `[G ball thing] [G ball move] [G ball play] [G ball child]` |
-| apple | a sweet food eaten with the mouth, also sour when small and green (covers sweet and sour kinds) | es comida; es MUY buena; se come; como lo agrio-pequeño; como lo dulce-pequeño | `[G apple food] [very [good apple]] [do people [G apple eat]] [like apple [G sour small]] [like apple [G sweet small]]` |
-| bread | the hot good brown food from the earth | es comida; viene de la tierra; es marrón; es caliente; es buena | `[G bread food] [G bread earth] [G bread brown] [G bread hot] [G bread good]` |
-| bed | the thing one sleeps on, for the night hours | es cosa; de la familia de dormir; es de la noche | `[G bed thing] [G bed sleep] [G bed night]` |
-| book | things with words inside to read | es cosa; tiene palabras; se lee; tiene dentro | `[G book word] [G book read] [G book inside]` |
-| box | the thing for putting things in | es cosa; de la familia de put | `[G box thing] [G box inside] [G box put]` |
-| car | a thing that moves people | es cosa; se mueve; lleva gente | `[G car thing] [move car] [G car people]` |
-| train | the big thing that moves people | es cosa; se mueve; lleva gente; es grande | `[G train thing] [move train] [G train people] [big train]` |
-| house | the place where people live | es cosa; la gente vive en él | `[G house thing] [live people house]` |
-| home | the place where the family lives — a good house | es cosa; la gente vive; es bueno | `[G home thing] [live people home] [good home]` |
-| milk | the white food one drinks | es comida; es blanca; de la familia de beber | `[G milk food] [G milk white] [G milk drink] [G milk water] [G milk cold]` |
-| toys | the things children play with | es cosa; se juega; de niños | `[G toys thing] [G toys small] [G toys play] [G toys child]` |
+| F | ball | a thing children play with | es cosa; se juega con ella; de niños | `[G ball thing] [G ball move] [G ball play] [G ball child]` |
+| F | apple | a sweet food eaten with the mouth, also sour when small and green (covers sweet and sour kinds) | es comida; es MUY buena; se come; como lo agrio-pequeño; como lo dulce-pequeño | `[G apple food] [very [good apple]] [do people [G apple eat]] [like apple [G sour small]] [like apple [G sweet small]]` |
+| F | bread | the hot good brown food from the earth | es comida; viene de la tierra; es marrón; es caliente; es buena | `[G bread food] [G bread earth] [G bread brown] [G bread hot] [G bread good]` |
+| F | bed | the thing one sleeps on, for the night hours | es cosa; de la familia de dormir; es de la noche | `[G bed thing] [G bed sleep] [G bed night]` |
+| F | book | things with words inside to read | es cosa; tiene palabras; se lee; tiene dentro | `[G book word] [G book read] [G book inside]` |
+| F | box | the thing for putting things in | es cosa; de la familia de put | `[G box thing] [G box inside] [G box put]` |
+| F | car | a thing that moves people | es cosa; se mueve; lleva gente | `[G car thing] [move car] [G car people]` |
+| F | train | the big thing that moves people | es cosa; se mueve; lleva gente; es grande | `[G train thing] [move train] [G train people] [big train]` |
+| F | house | the place where people live | es cosa; la gente vive en él | `[G house thing] [live people house]` |
+| F | home | the place where the family lives — a good house | es cosa; la gente vive; es bueno | `[G home thing] [live people home] [good home]` |
+| F | milk | the white food one drinks | es comida; es blanca; de la familia de beber | `[G milk food] [G milk white] [G milk drink] [G milk water] [G milk cold]` |
+| F | toys | the things children play with | es cosa; se juega; de niños | `[G toys thing] [G toys small] [G toys play] [G toys child]` |
 | **G — cualidades y cuerpo** | | | | |
-| color | what things look like in the light | es cosa; se ve; es de la luz | `[G color thing] [see people color] [G color light]` |
-| hurt | the body feels bad | el cuerpo siente algo malo | `[feel body hurt] [bad hurt]` |
-| wound | the place in the body that hurts; big ones may kill; it hurts | es del cuerpo; es malo; es grande si puede matar; duele | `[G wound body] [bad wound] [if [G wound big Xsomeone] [maybe [die Xsomeone]]] [hurt wound] [G wound mine]` |
+| G | color | what things look like in the light | es cosa; se ve; es de la luz | `[G color thing] [see people color] [G color light]` |
+| G | hurt | the body feels bad | el cuerpo siente algo malo | `[feel body hurt] [bad hurt]` |
+| G | wound | the place in the body that hurts; big ones may kill; it hurts | es del cuerpo; es malo; es grande si puede matar; duele | `[G wound body] [bad wound] [if [G wound big Xsomeone] [maybe [die Xsomeone]]] [hurt wound] [G wound mine]` |
 
 ## 3b. Diferidos a la doctrina de reciprocidad/relacional (NO sembrar)
 
@@ -201,19 +201,19 @@ Sibling necesita sibling/2 + axioma de simetría; el parentesco migra con él
 para no re-sembrar bajo L2 (la inyectividad impediría cambiar huellas). Gramática verde,
 pero fuera de la siembra hasta que las relaciones simétricas tengan diseño.
 
-| molécula | idea fuente (EN) | descomposición NSM | K-65P (diseño en espera) |
-|---|---|---|---|
-| mom | a female parent | es hembra; es de la clase parent | `[female mom] [G mom parent]` |
-| dad | a male parent | es macho; es de la clase parent | `[male dad] [G dad parent]` |
-| grandpa | an old male parent (the parent of a parent) | es macho; es parent; es viejo | `[male grandpa] [G grandpa parent] [G grandpa old]` |
-| grandma | an old female parent (the parent of a parent) | es hembra; es parent; es vieja | `[female grandma] [G grandma parent] [G grandma old]` |
-| son | a male offspring who belongs to a parent | es offspring; es macho; es DE parent; es de alguien | `[male son] [G son offspring] [G son parent] [mine son]` |
-| daughter | a female offspring who belongs to a parent | es offspring; es hembra; es DE parent; es de alguien | `[female daughter] [G daughter offspring] [G daughter parent] [mine daughter]` |
-| uncle | a male son of a grandparent (the parent's brother) | es macho; es son; es de la familia grandpa | `[male uncle] [G uncle son] [G uncle grandpa]` |
-| aunt | a female daughter of a grandparent (the parent's sister) | es hembra; es daughter; es de la familia grandpa | `[female aunt] [G aunt daughter] [G aunt grandpa]` |
-| sibling | those who share parents — the same ones | es alguien; es de parent; son los mismos | `[G sibling someone] [G sibling parent] [G sibling same]` |
-| brother | a male sibling whose mom and dad are the same (ones) | es macho; es sibling | `[male brother] [G brother sibling]` |
-| sister | a female sibling whose mom and dad are the same (ones) | es hembra; es sibling | `[female sister] [G sister sibling]` |
+| capa | molécula | idea fuente (EN) | descomposición NSM | K-65P (diseño en espera) |
+|---|---|---|---|---|
+| B | mom | a female parent | es hembra; es de la clase parent | `[female mom] [G mom parent]` |
+| B | dad | a male parent | es macho; es de la clase parent | `[male dad] [G dad parent]` |
+| B | grandpa | an old male parent (the parent of a parent) | es macho; es parent; es viejo | `[male grandpa] [G grandpa parent] [G grandpa old]` |
+| B | grandma | an old female parent (the parent of a parent) | es hembra; es parent; es vieja | `[female grandma] [G grandma parent] [G grandma old]` |
+| B | son | a male offspring who belongs to a parent | es offspring; es macho; es DE parent; es de alguien | `[male son] [G son offspring] [G son parent] [mine son]` |
+| B | daughter | a female offspring who belongs to a parent | es offspring; es hembra; es DE parent; es de alguien | `[female daughter] [G daughter offspring] [G daughter parent] [mine daughter]` |
+| B | uncle | a male son of a grandparent (the parent's brother) | es macho; es son; es de la familia grandpa | `[male uncle] [G uncle son] [G uncle grandpa]` |
+| B | aunt | a female daughter of a grandparent (the parent's sister) | es hembra; es daughter; es de la familia grandpa | `[female aunt] [G aunt daughter] [G aunt grandpa]` |
+| B | sibling | those who share parents — the same ones | es alguien; es de parent; son los mismos | `[G sibling someone] [G sibling parent] [G sibling same]` |
+| B | brother | a male sibling whose mom and dad are the same (ones) | es macho; es sibling | `[male brother] [G brother sibling]` |
+| B | sister | a female sibling whose mom and dad are the same (ones) | es hembra; es sibling | `[female sister] [G sister sibling]` |
 
 ## 4. Superposiciones léxicas (sinónimos → surfaces, no moléculas nuevas)
 
