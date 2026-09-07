@@ -129,6 +129,7 @@
 | tree | a tall living vegetal with green parts that needs light to live | vive; es grande; tiene partes verdes; es vegetal; es de la luz | `[live tree] [big tree] [G tree green] [G tree vegetal] [G tree light]` |
 | forest | many trees together (collection = group + quantity, DL-017) | árboles juntos; muchos juntos | `[G forest tree] [G forest much] [G forest dark]` |
 | river | water that moves | es de la familia del agua; se mueve | `[G river water] [move river]` |
+| sea | very big water that does not move, of the earth (the opposite of river) | es agua; no se mueve; es muy grande; es de la tierra | `[G sea water] [not [move sea]] [very [big sea]] [G sea earth]` |
 | rain | water that falls from above | es agua; se mueve hacia abajo | `[G rain water] [below [move rain]]` |
 | storm | bad much-rain weather, like dark | es de la familia de rain; es malo; es mucho; como lo oscuro | `[G storm rain] [bad storm] [G storm much] [like storm dark]` |
 | night | the time when it is dark | es oscuro; es un momento | `[dark night] [G night moment]` |
@@ -142,7 +143,7 @@
 | drink | put water in the body | se hace; es de la familia del agua; es del cuerpo | `[do people drink] [G drink water] [G drink body]` |
 | taste | what you feel when you eat, by touch (the contact sense of eating) | se siente; es de la familia de comer; es de la familia de tocar | `[feel people taste] [G taste eat] [G taste touch]` |
 | sweet | very good taste | es de la familia del gusto; es muy bueno | `[G sweet taste] [very [good sweet]]` |
-| salty | taste like water | es de la familia del gusto; como el agua | `[G salty taste] [like salty water]` |
+| salty | sea flavor | es de la familia del gusto; como el mar | `[G salty taste] [like salty sea]` |
 | bitter | very bad taste (the poison signal) | es de la familia del gusto; es muy malo | `[G bitter taste] [very [bad bitter]]` |
 | sour | bad green taste (unripe) | es de la familia del gusto; es malo; es verde (no maduro) | `[G sour taste] [bad sour] [G sour green]` |
 | smell | what you feel at a distance, like hearing (the distant-perception family) | se siente; es de la familia de oír | `[feel people smell] [G smell hear]` |

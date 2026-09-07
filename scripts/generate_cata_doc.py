@@ -49,6 +49,8 @@ DRAFTS = [
 	("forest", "many trees together (collection = group + quantity, DL-017)",
 	 "árboles juntos; muchos juntos", ["[G forest tree]", "[G forest much]", "[G forest dark]"], "D"),
 	("river", "water that moves", "es de la familia del agua; se mueve", ["[G river water]", "[move river]"], "D"),
+	("sea", "very big water that does not move, of the earth (the opposite of river)",
+	 "es agua; no se mueve; es muy grande; es de la tierra", ["[G sea water]", "[not [move sea]]", "[very [big sea]]", "[G sea earth]"], "D"),
 	("rain", "water that falls from above", "es agua; se mueve hacia abajo", ["[G rain water]", "[below [move rain]]"], "D"),
 	("storm", "bad much-rain weather, like dark", "es de la familia de rain; es malo; es mucho; como lo oscuro", ["[G storm rain]", "[bad storm]", "[G storm much]", "[like storm dark]"], "D"),
 	("night", "the time when it is dark", "es oscuro; es un momento", ["[dark night]", "[G night moment]"], "D"),
@@ -65,7 +67,7 @@ DRAFTS = [
 	("taste", "what you feel when you eat, by touch (the contact sense of eating)",
 	 "se siente; es de la familia de comer; es de la familia de tocar", ["[feel people taste]", "[G taste eat]", "[G taste touch]"], "E"),
 	("sweet", "very good taste", "es de la familia del gusto; es muy bueno", ["[G sweet taste]", "[very [good sweet]]"], "E"),
-	("salty", "taste like water", "es de la familia del gusto; como el agua", ["[G salty taste]", "[like salty water]"], "E"),
+	("salty", "sea flavor", "es de la familia del gusto; como el mar", ["[G salty taste]", "[like salty sea]"], "E"),
 	("bitter", "very bad taste (the poison signal)", "es de la familia del gusto; es muy malo", ["[G bitter taste]", "[very [bad bitter]]"], "E"),
 	("sour", "bad green taste (unripe)", "es de la familia del gusto; es malo; es verde (no maduro)", ["[G sour taste]", "[bad sour]", "[G sour green]"], "E"),
 	# umami DIFERIDO: sin prototipos de carne/caldo, "sabor bueno" no añade nada a taste
