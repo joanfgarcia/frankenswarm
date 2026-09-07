@@ -15,8 +15,8 @@ seed = json.loads((BASE / "configs" / "k65p_v2" / "moleculas.json").read_text(en
 # ⚠ = hueco doctrinal detectado al redactar (ver Preguntas nuevas)
 DRAFTS = [
 	# ── capa A: la base animal ──
-	("vegetal", "a living thing not at all like someone",
-	 "vive; no es como alguien; no es alguien", ["[live vegetal]", "[not [like vegetal someone]]"], "A"),
+	("vegetal", "a living thing not at all like someone, that does not move, is eaten, and needs water and light",
+	 "vive; no es como alguien; no es alguien; no se mueve; se come; es de la familia del agua; es de la luz", ["[live vegetal]", "[not [like vegetal someone]]", "[not [move vegetal]]", "[G eat vegetal]", "[G water vegetal]", "[G light vegetal]"], "A"),
 	# ── capa B: gente y familia (compuestos de SOMEONE) ──
 	("parent", "a person who feels something good toward their baby and acts for it (care = feel-good + do-for, NSM)",
 	 "es alguien; siente algo bueno hacia el bebé; hace por el bebé", ["[feel parent [G baby good]]", "[do parent [G baby good]]"], "B"),

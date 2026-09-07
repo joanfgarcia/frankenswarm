@@ -119,7 +119,7 @@
 | capa | molécula | idea fuente (EN) | descomposición NSM | K-65P (borrador) |
 |---|---|---|---|---|
 | **A — la base animal** | | | | |
-| vegetal | a living thing not at all like someone | vive; no es como alguien; no es alguien | `[live vegetal] [not [like vegetal someone]]` |
+| vegetal | a living thing not at all like someone, that does not move, is eaten, and needs water and light | vive; no es como alguien; no es alguien; no se mueve; se come; es de la familia del agua; es de la luz | `[live vegetal] [not [like vegetal someone]] [not [move vegetal]] [G eat vegetal] [G water vegetal] [G light vegetal]` |
 | **B — gente y familia** | | | | |
 | parent | a person who feels something good toward their baby and acts for it (care = feel-good + do-for, NSM) | es alguien; siente algo bueno hacia el bebé; hace por el bebé | `[feel parent [G baby good]] [do parent [G baby good]]` |
 | offspring | someone who belongs to a parent; who comes from a body (hijo-descendiente, NO baby-niño) | es alguien; es de parent; viene de un cuerpo | `[G offspring someone] [G offspring parent] [G offspring body]` |
