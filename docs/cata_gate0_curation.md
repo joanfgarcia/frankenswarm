@@ -140,6 +140,13 @@
 | play | do things for feel-good | se hace; es bueno | `[do people play] [good play]` |
 | eat | put food in the body | se hace; es de la familia de la comida; es del cuerpo | `[do people eat] [G eat food] [G eat body]` |
 | drink | put water in the body | se hace; es de la familia del agua; es del cuerpo | `[do people drink] [G drink water] [G drink body]` |
+| taste | what you feel when you eat, by touch (the contact sense of eating) | se siente; es de la familia de comer; es de la familia de tocar | `[feel people taste] [G taste eat] [G taste touch]` |
+| sweet | very good taste | es de la familia del gusto; es muy bueno | `[G sweet taste] [very [good sweet]]` |
+| salty | taste like water | es de la familia del gusto; como el agua | `[G salty taste] [like salty water]` |
+| bitter | very bad taste (the poison signal) | es de la familia del gusto; es muy malo | `[G bitter taste] [very [bad bitter]]` |
+| sour | bad green taste (unripe) | es de la familia del gusto; es malo; es verde (no maduro) | `[G sour taste] [bad sour] [G sour green]` |
+| smell | what you feel at a distance, like hearing (the distant-perception family) | se siente; es de la familia de oír | `[feel people smell] [G smell hear]` |
+| stink | smell very bad, brown-associated (rot/excrement — the Rozin biology) | es de la familia de oler; es muy malo; es marrón | `[G stink smell] [very [bad stink]] [G stink brown]` |
 | sleep | the body rests and does not move | el cuerpo no se mueve; es un momento | `[not [move sleep]] [G sleep moment] [G sleep body]` |
 | give | do, touching, something good for someone | se hace; se toca; es bueno | `[do people give] [touch people give] [G give good]` |
 | help | do something so someone feels good and can do it | se hace; se siente algo bueno | `[do people help] [feel people [G help good]]` |
