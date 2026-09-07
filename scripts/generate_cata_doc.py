@@ -52,7 +52,7 @@ DRAFTS = [
 	("sea", "very big water that does not move, of the earth (the opposite of river)",
 	 "es agua; no se mueve; es muy grande; es de la tierra", ["[G sea water]", "[not [move sea]]", "[very [big sea]]", "[G sea earth]"], "D"),
 	("rain", "water that falls from above", "es agua; se mueve hacia abajo", ["[G rain water]", "[below [move rain]]"], "D"),
-	("storm", "bad much-rain weather, like dark", "es de la familia de rain; es malo; es mucho; como lo oscuro", ["[G storm rain]", "[bad storm]", "[G storm much]", "[like storm dark]"], "D"),
+	("storm", "bad much-rain weather from the sky, like dark", "es de la familia de rain; es malo; es mucho; como lo oscuro; es del cielo", ["[G storm rain]", "[bad storm]", "[G storm much]", "[like storm dark]", "[G storm sky]"], "D"),
 	("night", "the time when it is dark", "es oscuro; es un momento", ["[dark night]", "[G night moment]"], "D"),
 	("moon", "the light in the dark sky", "es de la luz; es del oscuro — la luz de la noche",
 	 ["[G moon light]", "[G moon dark]"], "D"),
@@ -70,6 +70,7 @@ DRAFTS = [
 	("salty", "sea flavor", "es de la familia del gusto; como el mar", ["[G salty taste]", "[like salty sea]"], "E"),
 	("bitter", "very bad taste (the poison signal)", "es de la familia del gusto; es muy malo", ["[G bitter taste]", "[very [bad bitter]]"], "E"),
 	("sour", "bad green taste (unripe)", "es de la familia del gusto; es malo; es verde (no maduro)", ["[G sour taste]", "[bad sour]", "[G sour green]"], "E"),
+	("spicy", "hot taste", "es de la familia del gusto; como lo caliente", ["[G spicy taste]", "[like spicy hot]"], "E"),
 	# umami DIFERIDO: sin prototipos de carne/caldo, "sabor bueno" no añade nada a taste
 	# (ya trae bueno vía eat→food) — colisionaría. Volverá con meat/broth. (5ª familia de receptores: sí, existe.)
 	("smell", "what you feel at a distance, like hearing (the distant-perception family)",
@@ -93,7 +94,7 @@ DRAFTS = [
 	("way", "the thing one moves along from here", "es cosa; desde aquí; se mueve por él", ["[G way thing]", "[G way here]", "[move way]"], "E"),
 	# ── capa F: cosas (referencian acciones ya definidas) ──
 	("ball", "a thing children play with", "es cosa; se juega con ella; de niños", ["[G ball thing]", "[G ball move]", "[G ball play]", "[G ball child]"], "F"),
-	("apple", "a sweet food eaten with the mouth (sweet = very-good; mouth → capa de partes del cuerpo)", "es comida; es MUY buena; se come", ["[G apple food]", "[very [good apple]]", "[do people [G apple eat]]"], "F"),
+	("apple", "a sweet food eaten with the mouth, also sour when small and green (covers sweet and sour kinds)", "es comida; es MUY buena; se come; como lo agrio-pequeño; como lo dulce-pequeño", ["[G apple food]", "[very [good apple]]", "[do people [G apple eat]]", "[like apple [G sour small]]", "[like apple [G sweet small]]"], "F"),
 	("bread", "the hot good brown food from the earth", "es comida; viene de la tierra; es marrón; es caliente; es buena", ["[G bread food]", "[G bread earth]", "[G bread brown]", "[G bread hot]", "[G bread good]"], "F"),
 	("bed", "the thing one sleeps on, for the dark hours", "es cosa; de la familia de dormir; es de lo oscuro", ["[G bed thing]", "[G bed sleep]", "[G bed dark]"], "F"),
 	("book", "things with words inside to read", "es cosa; tiene palabras; se lee; tiene dentro", ["[G book word]", "[G book read]", "[G book inside]"], "F"),

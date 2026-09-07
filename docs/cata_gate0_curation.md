@@ -79,6 +79,7 @@
 | molécula | idea fuente (EN) | descomposición NSM | K-65P |
 |---|---|---|---|
 | **fire** | hot light that can burn | es de la familia de la luz; es caliente; no es frío; puede hacer algo malo (quemar) | `[G fire light] [hot fire] [not [cold fire]] [can [do fire [G something bad]]]` |
+| **sky** | the big place above where sun, moon and stars live |  | `[G thing sky] [big sky] [above [exist sky]]` |
 | **sun** | the very big bright thing above, far away, of the fire family | es de la familia del fuego; es muy grande; está muy lejos; está arriba | `[G sun fire] [very [big sun]] [very [far [exist sun]]] [above [exist sun]]` |
 | **earth** | the very big ground everything lives on, near under our feet, that does not move | es cosa; es muy grande; la gente vive en él abajo; es lo cercano que se toca; no se mueve | `[G earth thing] [very [big earth]] [below [live people earth]] [very [near [touch people earth]]] [not [move earth]]` |
 | **new** | like the short-time thing | como la cosa de poco-tiempo | `[like new [G thing short_time]]` |
@@ -131,7 +132,7 @@
 | river | water that moves | es de la familia del agua; se mueve | `[G river water] [move river]` |
 | sea | very big water that does not move, of the earth (the opposite of river) | es agua; no se mueve; es muy grande; es de la tierra | `[G sea water] [not [move sea]] [very [big sea]] [G sea earth]` |
 | rain | water that falls from above | es agua; se mueve hacia abajo | `[G rain water] [below [move rain]]` |
-| storm | bad much-rain weather, like dark | es de la familia de rain; es malo; es mucho; como lo oscuro | `[G storm rain] [bad storm] [G storm much] [like storm dark]` |
+| storm | bad much-rain weather from the sky, like dark | es de la familia de rain; es malo; es mucho; como lo oscuro; es del cielo | `[G storm rain] [bad storm] [G storm much] [like storm dark] [G storm sky]` |
 | night | the time when it is dark | es oscuro; es un momento | `[dark night] [G night moment]` |
 | moon | the light in the dark sky | es de la luz; es del oscuro — la luz de la noche | `[G moon light] [G moon dark]` |
 | stone | a hard thing that does not move by itself | es cosa; no se mueve | `[G stone thing] [not [move stone]]` |
@@ -146,6 +147,7 @@
 | salty | sea flavor | es de la familia del gusto; como el mar | `[G salty taste] [like salty sea]` |
 | bitter | very bad taste (the poison signal) | es de la familia del gusto; es muy malo | `[G bitter taste] [very [bad bitter]]` |
 | sour | bad green taste (unripe) | es de la familia del gusto; es malo; es verde (no maduro) | `[G sour taste] [bad sour] [G sour green]` |
+| spicy | hot taste | es de la familia del gusto; como lo caliente | `[G spicy taste] [like spicy hot]` |
 | smell | what you feel at a distance, like hearing (the distant-perception family) | se siente; es de la familia de oír | `[feel people smell] [G smell hear]` |
 | stink | smell very bad, brown-associated (rot/excrement — the Rozin biology) | es de la familia de oler; es muy malo; es marrón | `[G stink smell] [very [bad stink]] [G stink brown]` |
 | sleep | the body rests and does not move | el cuerpo no se mueve; es un momento | `[not [move sleep]] [G sleep moment] [G sleep body]` |
@@ -163,7 +165,7 @@
 | way | the thing one moves along from here | es cosa; desde aquí; se mueve por él | `[G way thing] [G way here] [move way]` |
 | **F — cosas** | | | | |
 | ball | a thing children play with | es cosa; se juega con ella; de niños | `[G ball thing] [G ball move] [G ball play] [G ball child]` |
-| apple | a sweet food eaten with the mouth (sweet = very-good; mouth → capa de partes del cuerpo) | es comida; es MUY buena; se come | `[G apple food] [very [good apple]] [do people [G apple eat]]` |
+| apple | a sweet food eaten with the mouth, also sour when small and green (covers sweet and sour kinds) | es comida; es MUY buena; se come; como lo agrio-pequeño; como lo dulce-pequeño | `[G apple food] [very [good apple]] [do people [G apple eat]] [like apple [G sour small]] [like apple [G sweet small]]` |
 | bread | the hot good brown food from the earth | es comida; viene de la tierra; es marrón; es caliente; es buena | `[G bread food] [G bread earth] [G bread brown] [G bread hot] [G bread good]` |
 | bed | the thing one sleeps on, for the dark hours | es cosa; de la familia de dormir; es de lo oscuro | `[G bed thing] [G bed sleep] [G bed dark]` |
 | book | things with words inside to read | es cosa; tiene palabras; se lee; tiene dentro | `[G book word] [G book read] [G book inside]` |
